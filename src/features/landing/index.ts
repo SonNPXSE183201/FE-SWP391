@@ -1,3 +1,4 @@
+export { Navbar } from './components/Navbar';
 export { HeroSection } from './components/HeroSection';
 export { FeaturesSection } from './components/FeaturesSection';
 export { WorkflowSection } from './components/WorkflowSection';
