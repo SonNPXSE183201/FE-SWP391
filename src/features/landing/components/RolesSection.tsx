@@ -9,6 +9,7 @@ const roles = [
     capabilities: ['Tạo & quản lý Series', 'Phân vùng Region', 'Giao Task cho Assistant', 'Quản lý Wallet & Fund'],
     accent: '#6C5CE7',
     gradient: 'from-[#6C5CE7] to-[#7C6EF0]',
+    onboarding: { text: 'Liên hệ Hotline để hợp tác', link: 'tel:+84123456789' },
   },
   {
     role: 'Tantou Editor',
@@ -18,6 +19,7 @@ const roles = [
     capabilities: ['Review trên Canvas', 'Annotation lỗi (QC)', 'Approve / Request Revision', 'Quản lý Genkoūryō'],
     accent: '#FFAA00',
     gradient: 'from-[#FFAA00] to-[#FFB833]',
+    onboarding: { text: 'Tài khoản cấp nội bộ (Admin)', link: null },
   },
   {
     role: 'Assistant',
@@ -27,6 +29,7 @@ const roles = [
     capabilities: ['Nhận Task & Download assets', 'Upload TaskVersion', 'Quản lý Profile & Portfolio', 'Rút tiền về tài khoản'],
     accent: '#00CECE',
     gradient: 'from-[#00CECE] to-[#00E5E5]',
+    onboarding: { text: 'Đăng ký Assistant tự do', link: '/register' },
   },
 ];
 
@@ -202,6 +205,21 @@ export const RolesSection = () => {
                           <span className="text-sm text-text-secondary">{cap}</span>
                         </div>
                       ))}
+                    </div>
+                    
+                    {/* Onboarding Action */}
+                    <div className={`mt-6 pt-5 border-t border-border-custom/50 transition-all duration-500 ${isRevealed ? 'opacity-100' : 'opacity-0'}`} style={{ transitionDelay: `${800 + index * 100}ms` }}>
+                      {role.onboarding.link ? (
+                        <a href={role.onboarding.link} className="flex items-center justify-between group/action text-[13px] font-bold tracking-wide uppercase" style={{ color: role.accent }}>
+                          <span>{role.onboarding.text}</span>
+                          <svg className="w-4 h-4 transition-transform duration-300 group-hover/action:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                        </a>
+                      ) : (
+                        <div className="flex items-center gap-2 text-[13px] font-bold tracking-wide uppercase text-text-muted">
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                          <span>{role.onboarding.text}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
