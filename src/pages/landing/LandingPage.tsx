@@ -7,6 +7,7 @@ import {
   MangaShowcaseSection,
   CTASection,
 } from '@/features/landing';
+import { SectionDivider } from '@/features/landing/components/SectionDivider';
 
 export const LandingPage = () => {
   const navigate = useNavigate();
@@ -28,10 +29,15 @@ export const LandingPage = () => {
         onGetStarted={handleGetStarted}
         onLearnMore={handleLearnMore}
       />
+      <SectionDivider variant="gradient" color="brand" />
       <FeaturesSection />
+      <SectionDivider variant="dots" color="mixed" />
       <WorkflowSection />
+      <SectionDivider variant="glow" color="secondary" />
       <RolesSection />
+      <SectionDivider variant="gradient" color="mixed" />
       <MangaShowcaseSection />
+      <SectionDivider variant="dots" color="brand" />
       <CTASection onAction={handleGetStarted} />
     </main>
   );
