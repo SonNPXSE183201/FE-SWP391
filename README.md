@@ -15,6 +15,7 @@
   <img src="https://img.shields.io/badge/Fabric.js-6-FF6600?logo=javascript&logoColor=white" alt="Fabric.js"/>
   <img src="https://img.shields.io/badge/Zustand-State-433E38?logo=react&logoColor=white" alt="Zustand"/>
   <img src="https://img.shields.io/badge/React_Query-5-FF4154?logo=reactquery&logoColor=white" alt="React Query"/>
+  <img src="https://img.shields.io/badge/Tailwind_CSS-3-38B2AC?logo=tailwindcss&logoColor=white" alt="Tailwind CSS"/>
 </p>
 
 ---
@@ -236,6 +237,8 @@ Hiển thị **2 ngăn quỹ** riêng biệt:
 | Fabric.js | 6+ | Canvas manipulation |
 | Zustand | Latest | Global state (Auth, Canvas) |
 | React Query | 5+ | Server state (API caching) |
+| Tailwind CSS | 3+ | Styling framework |
+| shadcn/ui | Latest | UI Component library |
 | Axios | Latest | HTTP Client + JWT Interceptors |
 | @microsoft/signalr | Latest | Real-time notifications |
 | Jest | Latest | Unit testing |
