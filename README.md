@@ -1,1 +1,314 @@
-# FE-SWP391
+<p align="center">
+  <img src="../diagrams/Context Diagram - English.png" alt="Manga Publishing System" width="600"/>
+</p>
+
+<h1 align="center">Manga Publishing System — Frontend</h1>
+
+<p align="center">
+  <strong>React 18 · TypeScript · Vite · Fabric.js · Zustand · React Query</strong>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white" alt="React"/>
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript"/>
+  <img src="https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white" alt="Vite"/>
+  <img src="https://img.shields.io/badge/Fabric.js-6-FF6600?logo=javascript&logoColor=white" alt="Fabric.js"/>
+  <img src="https://img.shields.io/badge/Zustand-State-433E38?logo=react&logoColor=white" alt="Zustand"/>
+  <img src="https://img.shields.io/badge/React_Query-5-FF4154?logo=reactquery&logoColor=white" alt="React Query"/>
+</p>
+
+---
+
+## 📋 Giới thiệu
+
+Frontend cho **Manga Creation Workflows & Publishing Management System** — Giao diện Digital Workspace dành cho 5 vai trò trong hệ thống xuất bản manga: **Admin**, **Editor**, **Board**, **Mangaka**, **Assistant**.
+
+### Tính năng chính
+- 🎨 **Canvas Viewer** — Xem trang truyện High-Res với Pan/Zoom (Fabric.js)
+- ✏️ **Region Selector** — Khoanh vùng trên trang để phân công Assistant
+- 📝 **Annotation Tool** — Ghim lỗi QC (Technical / Art / Content) lên trang
+- 💰 **Wallet Dashboard** — 2 ngăn quỹ, lịch sử giao dịch, nạp/rút VNPay
+- 📊 **Ranking Dashboard** — Biểu đồ xếp hạng Series theo thời gian
+- 🔔 **Real-time Notifications** — SignalR WebSocket
+- 🗳️ **Board Voting** — Bỏ phiếu duyệt/hủy Series
+- 👤 **Role-based UI** — Mỗi vai trò thấy giao diện khác nhau
+
+## 🎨 Design System
+
+| Thuộc tính | Giá trị |
+|-----------|---------|
+| **Theme** | Dark Mode (mặc định) |
+| **Primary Color** | `#6C5CE7` (Tím manga) |
+| **Font chính** | Inter |
+| **Font số liệu** | JetBrains Mono |
+| **Border Radius** | 8-12px |
+| **Spacing** | Bội số 8px |
+
+> Chi tiết: xem [design.md](../design.md)
+
+## 📁 Cấu trúc thư mục
+
+```
+src/
+├── api/                        # API client & service functions
+│   ├── axios.ts                # Axios instance + JWT interceptors
+│   ├── auth.api.ts             # Login, Register, Refresh
+│   ├── series.api.ts           # Series CRUD
+│   ├── tasks.api.ts            # Task lifecycle
+│   ├── wallet.api.ts           # Wallet & Transactions
+│   └── ...
+│
+├── assets/                     # Images, fonts, icons
+│
+├── components/                 # Reusable UI components
+│   ├── common/                 # Button, Input, Modal, Badge, Spinner, Toast
+│   ├── canvas/                 # Fabric.js components
+│   │   ├── CanvasViewer.tsx    #   Pan/Zoom viewer
+│   │   ├── RegionSelector.tsx  #   Khoanh vùng → JSON coords
+│   │   ├── AnnotationTool.tsx  #   Ghim lỗi QC
+│   │   └── LayerCompositor.tsx #   Tinh chỉnh Z-Index layers
+│   ├── layout/                 # Header, Sidebar, Footer, Breadcrumb
+│   └── ui/                     # Card, Table, Chart, StatusBadge
+│
+├── features/                   # Feature modules
+│   ├── auth/                   # Login, Register forms
+│   ├── dashboard/              # Role-based dashboards
+│   ├── series/                 # Series management
+│   ├── chapters/               # Chapter management
+│   ├── tasks/                  # Task lifecycle UI
+│   ├── wallet/                 # Wallet dashboard, Deposit/Withdraw
+│   ├── ranking/                # Ranking charts
+│   ├── notifications/          # Notification dropdown
+│   └── admin/                  # Admin tools
+│
+├── hooks/                      # Custom hooks
+│   ├── useAuth.ts
+│   ├── useWallet.ts
+│   ├── useSignalR.ts           # SignalR real-time connection
+│   └── useNotifications.ts
+│
+├── layouts/                    # Page layouts
+│   ├── MainLayout.tsx          # Sidebar + Header + Content
+│   ├── AuthLayout.tsx          # Login/Register layout
+│   └── AdminLayout.tsx         # Admin panel layout
+│
+├── pages/                      # Route pages (per role)
+│   ├── auth/                   # /login, /register
+│   ├── mangaka/                # /mangaka/*
+│   ├── assistant/              # /assistant/*
+│   ├── editor/                 # /editor/*
+│   ├── board/                  # /board/*
+│   └── admin/                  # /admin/*
+│
+├── routes/                     # Routing config
+│   ├── index.tsx               # Route definitions
+│   ├── ProtectedRoute.tsx      # Auth guard
+│   └── RoleGuard.tsx           # Role-based access
+│
+├── stores/                     # Zustand global stores
+│   ├── authStore.ts            # User + JWT token
+│   ├── notificationStore.ts    # Notification state
+│   └── canvasStore.ts          # Canvas tool state
+│
+├── types/                      # TypeScript definitions
+│   ├── auth.types.ts
+│   ├── series.types.ts
+│   ├── task.types.ts
+│   ├── wallet.types.ts
+│   └── api.types.ts            # ApiResponse<T> generic
+│
+├── utils/                      # Utilities
+│   ├── formatCurrency.ts       # Intl.NumberFormat('vi-VN')
+│   ├── dateUtils.ts
+│   └── constants.ts
+│
+├── styles/                     # Global CSS
+│   ├── variables.css           # CSS custom properties (design tokens)
+│   ├── reset.css               # CSS reset
+│   └── index.css               # Global styles
+│
+├── App.tsx
+├── main.tsx
+└── vite-env.d.ts
+```
+
+## 🗺️ Route Map
+
+### Public
+| Route | Page |
+|-------|------|
+| `/` | Landing Page |
+| `/login` | Đăng nhập |
+| `/register` | Đăng ký (chỉ Assistant) |
+
+### Mangaka
+| Route | Page |
+|-------|------|
+| `/mangaka` | Dashboard |
+| `/mangaka/series` | Quản lý Series |
+| `/mangaka/series/:id` | Chi tiết Series |
+| `/mangaka/series/:id/chapters` | Chapters trong Series |
+| `/mangaka/chapters/:id/pages` | Canvas — Upload & Khoanh vùng |
+| `/mangaka/wallet` | Wallet Dashboard |
+
+### Assistant
+| Route | Page |
+|-------|------|
+| `/assistant` | Dashboard |
+| `/assistant/tasks` | Task Queue |
+| `/assistant/tasks/:id` | Chi tiết Task + Upload kết quả |
+| `/assistant/wallet` | Wallet + Thu nhập |
+| `/assistant/profile` | Profile + SpecialtyTags |
+
+### Editor
+| Route | Page |
+|-------|------|
+| `/editor` | Dashboard + Progress |
+| `/editor/series/:id/review` | Review Chapter + Annotation Tool |
+| `/editor/disputes` | Phân xử tranh chấp |
+
+### Board
+| Route | Page |
+|-------|------|
+| `/board` | Dashboard |
+| `/board/voting` | Bỏ phiếu duyệt Series |
+| `/board/ranking` | Ranking Dashboard + Charts |
+
+### Admin
+| Route | Page |
+|-------|------|
+| `/admin` | Dashboard |
+| `/admin/users` | Quản lý Users + Approve |
+| `/admin/contracts` | Quản lý Hợp đồng |
+| `/admin/reconciliation` | Đối soát VNPay |
+
+## 🖌️ Canvas Components (Fabric.js)
+
+| Component | Mô tả | Role |
+|-----------|--------|------|
+| **CanvasViewer** | Xem trang truyện, Pan/Zoom mượt mà | All |
+| **RegionSelector** | Vẽ rectangle khoanh vùng → export `{x, y, width, height}` | Mangaka |
+| **AnnotationTool** | Click ghim lỗi → chọn loại QC → nhập comment | Editor, Mangaka |
+| **LayerCompositor** | Kéo thả reorder Z-Index layers trước khi lưu Final | Mangaka |
+
+### Annotation Colors
+- 🔴 `Technical_Error` — Lỗi kỹ thuật
+- 🟡 `Art_Error` — Lỗi hội họa
+- 🔵 `Content_Error` — Lỗi nội dung
+
+> ⚠️ Canvas chỉ hiển thị trên Desktop/Tablet. Mobile sẽ show cảnh báo xoay ngang.
+
+## 💰 Wallet UI
+
+Hiển thị **2 ngăn quỹ** riêng biệt:
+
+```
+┌─────────────────────────────────────────┐
+│  💰 Wallet Dashboard                     │
+│                                          │
+│  ┌──────────────┐  ┌──────────────────┐ │
+│  │ 🔵 Quỹ SX    │  │ 🟢 Quỹ khả dụng │ │
+│  │ 5,000,000 ₫  │  │ 12,500,000 ₫    │ │
+│  └──────────────┘  └──────────────────┘ │
+│                                          │
+│  🔒 Đang khóa: 2,000,000 ₫              │
+│                                          │
+│  [Nạp tiền]  [Rút tiền]                 │
+│                                          │
+│  📋 Lịch sử giao dịch                   │
+│  ┌──────┬──────────┬───────────┬──────┐ │
+│  │ Loại │ Số tiền  │ Thời gian │ Ref  │ │
+│  ├──────┼──────────┼───────────┼──────┤ │
+│  │ Lock │ -500,000 │ 01/06     │ T-12 │ │
+│  │ ...  │ ...      │ ...       │ ...  │ │
+│  └──────┴──────────┴───────────┴──────┘ │
+└─────────────────────────────────────────┘
+```
+
+## ⚙️ Tech Stack
+
+| Công nghệ | Version | Mục đích |
+|-----------|---------|----------|
+| React | 18+ | UI Framework |
+| TypeScript | 5+ | Type safety |
+| Vite | 5+ | Build tool (HMR nhanh) |
+| React Router | 6+ | Role-based routing |
+| Fabric.js | 6+ | Canvas manipulation |
+| Zustand | Latest | Global state (Auth, Canvas) |
+| React Query | 5+ | Server state (API caching) |
+| Axios | Latest | HTTP Client + JWT Interceptors |
+| @microsoft/signalr | Latest | Real-time notifications |
+| Jest | Latest | Unit testing |
+| React Testing Library | Latest | Component testing |
+
+## 🚀 Getting Started
+
+### Prerequisites
+- [Node.js](https://nodejs.org/) >= 18
+- [npm](https://www.npmjs.com/) hoặc [yarn](https://yarnpkg.com/)
+- Backend API đang chạy (xem [backend/README.md](../backend/README.md))
+
+### Cài đặt & Chạy
+
+```bash
+# 1. Clone repo
+git clone <repo-url>
+cd frontend
+
+# 2. Install dependencies
+npm install
+
+# 3. Tạo file .env.local
+cp .env.example .env.local
+# Sửa VITE_API_URL=https://localhost:5001
+
+# 4. Chạy dev server
+npm run dev
+
+# App: http://localhost:5173
+```
+
+### Build Production
+
+```bash
+npm run build
+npm run preview
+```
+
+### Chạy Tests
+
+```bash
+npm run test
+```
+
+### Environment Variables
+
+| Variable | Mô tả | Default |
+|----------|--------|---------|
+| `VITE_API_URL` | Backend API base URL | `https://localhost:5001` |
+| `VITE_SIGNALR_URL` | SignalR Hub URL | `https://localhost:5001/hubs/notification` |
+
+## 📱 Responsive Breakpoints
+
+| Breakpoint | Size | Layout |
+|-----------|------|--------|
+| Mobile | < 768px | Stack layout, Canvas ẩn |
+| Tablet | 768px – 1024px | Sidebar collapse, Canvas basic |
+| Desktop | > 1024px | Full layout, Canvas đầy đủ |
+
+## 📖 Tài liệu tham khảo
+
+- [Manga.md](../Manga.md) — Tài liệu tổng quan dự án
+- [GEMINI.md](./GEMINI.md) — Frontend coding rules & conventions
+- [design.md](../design.md) — Design System (Colors, Typography, Components)
+- [Diagrams](../diagrams/) — ERD, Context Diagram, Swimlane Flows
+
+## 👥 Team
+
+| Thành viên | MSSV | Phụ trách |
+|-----------|------|-----------|
+| Nguyễn Phạm Xuân Sơn | SE183201 | Infra, Auth, User, Contract |
+| Phạm Lê Hoàng Phúc | SE183189 | Series, Chapter, Voting, Ranking |
+| Nguyễn Phạm Thiên Bảo | SE183336 | Task, Canvas, Region, TaskVersion |
+| Trần Duy Anh | SE190675 | Wallet, Transaction, VNPay, Dispute |
+| Lê Trung Kiên | SE193179 | Notification, SignalR, Background Jobs |
