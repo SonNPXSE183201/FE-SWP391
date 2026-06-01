@@ -79,7 +79,7 @@ export const WorkflowSection = () => {
         <div className={`text-center max-w-2xl mx-auto mb-20 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-brand/10 border border-brand/25 rounded-full mb-6">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-brand">
-              <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>
+              <polyline points="22,12 18,12 15,21 9,3 6,12 2,12" />
             </svg>
             <span className="text-[13px] font-medium text-brand-hover tracking-wide">Quy trình</span>
           </div>
@@ -96,9 +96,8 @@ export const WorkflowSection = () => {
 
         {/* Workflow image banner */}
         <div
-          className={`relative rounded-2xl overflow-hidden mb-20 border border-border-custom/40 shadow-[0_20px_60px_rgba(0,0,0,0.4)] transition-all duration-1000 ${
-            isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-[0.97]'
-          }`}
+          className={`relative rounded-2xl overflow-hidden mb-20 border border-border-custom/40 shadow-[0_20px_60px_rgba(0,0,0,0.4)] transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-[0.97]'
+            }`}
           style={{ transitionDelay: '200ms' }}
         >
           <img
@@ -128,15 +127,14 @@ export const WorkflowSection = () => {
           {steps.map((step, index) => {
             const isRevealed = activeStep >= index;
             const isFromLeft = index % 2 === 0;
-            
+
             return (
               <div
                 key={step.number}
-                className={`group flex gap-5 md:gap-6 transition-all duration-700 ease-out relative z-10 ${
-                  isRevealed
+                className={`group flex gap-5 md:gap-6 transition-all duration-700 ease-out relative z-10 ${isRevealed
                     ? 'opacity-100 translate-x-0 translate-y-0'
                     : `opacity-0 ${isFromLeft ? '-translate-x-8' : 'translate-x-8'} translate-y-4`
-                }`}
+                  }`}
               >
                 {/* Step image */}
                 <div className="shrink-0 w-[100px] h-[100px] md:w-[130px] md:h-[130px] rounded-xl overflow-hidden border border-border-custom/50 shadow-lg-custom group-hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)] transition-all duration-500 group-hover:border-brand/40 relative">

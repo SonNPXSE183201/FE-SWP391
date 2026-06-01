@@ -5,8 +5,18 @@ interface HeroSectionProps {
   onLearnMore?: () => void;
 }
 
-/** Animated counting number */
-const AnimatedCounter = ({ end, suffix = '', duration = 2000, delay = 0 }: { end: number; suffix?: string; duration?: number; delay?: number }) => {
+/** Animated counting number with easing */
+const AnimatedCounter = ({
+  end,
+  suffix = '',
+  duration = 2200,
+  delay = 0,
+}: {
+  end: number;
+  suffix?: string;
+  duration?: number;
+  delay?: number;
+}) => {
   const [count, setCount] = useState(0);
   const [started, setStarted] = useState(false);
 
@@ -21,7 +31,6 @@ const AnimatedCounter = ({ end, suffix = '', duration = 2000, delay = 0 }: { end
     const animate = (now: number) => {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease-out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       setCount(Math.floor(eased * end));
       if (progress < 1) requestAnimationFrame(animate);
@@ -29,50 +38,92 @@ const AnimatedCounter = ({ end, suffix = '', duration = 2000, delay = 0 }: { end
     requestAnimationFrame(animate);
   }, [started, end, duration]);
 
-  return <>{count.toLocaleString()}{suffix}</>;
+  return (
+    <>
+      {count.toLocaleString()}
+      {suffix}
+    </>
+  );
 };
+
+/** Typewriter text effect */
+const TypewriterText = ({ text, delay = 0 }: { text: string; delay?: number }) => {
+  const [displayed, setDisplayed] = useState('');
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setStarted(true), delay);
+    return () => clearTimeout(timer);
+  }, [delay]);
+
+  useEffect(() => {
+    if (!started) return;
+    let i = 0;
+    const interval = setInterval(() => {
+      i++;
+      setDisplayed(text.slice(0, i));
+      if (i >= text.length) clearInterval(interval);
+    }, 35);
+    return () => clearInterval(interval);
+  }, [started, text]);
+
+  return (
+    <span>
+      {displayed}
+      <span
+        className="inline-block w-[2px] h-[1em] bg-brand ml-0.5 align-middle"
+        style={{
+          animation: started && displayed.length === text.length ? 'blink-cursor 1s step-end infinite' : 'none',
+          opacity: started ? 1 : 0,
+        }}
+      />
+    </span>
+  );
+};
+
+/** Floating manga panel decoration */
+const FloatingPanel = ({
+  className,
+  delay,
+  children,
+}: {
+  className: string;
+  delay: number;
+  children?: React.ReactNode;
+}) => (
+  <div
+    className={`absolute pointer-events-none ${className}`}
+    style={{
+      animationDelay: `${delay}s`,
+    }}
+  >
+    {children}
+  </div>
+);
 
 export const HeroSection = ({ onGetStarted, onLearnMore }: HeroSectionProps) => {
   const heroRef = useRef<HTMLElement>(null);
+  const cardsRef = useRef<HTMLDivElement>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isVisible, setIsVisible] = useState(false);
 
-  // Parallax mouse-follow effect for background gradients and floating elements
+  // Entrance animation trigger
   useEffect(() => {
-    const hero = heroRef.current;
-    if (!hero) return;
+    const timer = setTimeout(() => setIsVisible(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
-    const gradients = hero.querySelectorAll<HTMLElement>('.hero-bg-gradient');
-    const floatingEls = hero.querySelectorAll<HTMLElement>('.hero-float-el');
-    let animationFrameId: number;
+  // 3D tilt effect for card gallery
+  const handleCardMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!cardsRef.current) return;
+    const rect = cardsRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    setMousePos({ x, y });
+  }, []);
 
-    const handleMouseMove = (e: MouseEvent) => {
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
-
-      animationFrameId = requestAnimationFrame(() => {
-        const { clientX, clientY } = e;
-        const { innerWidth, innerHeight } = window;
-        const xPercent = (clientX / innerWidth - 0.5) * 2;
-        const yPercent = (clientY / innerHeight - 0.5) * 2;
-
-        setMousePos({ x: xPercent, y: yPercent });
-
-        gradients.forEach((grad, i) => {
-          const speed = (i + 1) * 8;
-          grad.style.transform = `translate(${xPercent * speed}px, ${yPercent * speed}px)`;
-        });
-
-        floatingEls.forEach((el, i) => {
-          const speed = (i + 1) * 5;
-          el.style.transform = `translate(${xPercent * speed}px, ${yPercent * speed}px)`;
-        });
-      });
-    };
-
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
-    };
+  const handleCardMouseLeave = useCallback(() => {
+    setMousePos({ x: 0, y: 0 });
   }, []);
 
   // Interactive cursor glow
@@ -103,136 +154,234 @@ export const HeroSection = ({ onGetStarted, onLearnMore }: HeroSectionProps) => 
       {/* Interactive cursor glow */}
       <div
         ref={cursorGlowRef}
-        className="absolute w-[400px] h-[400px] rounded-full pointer-events-none z-0 opacity-0 transition-opacity duration-500"
+        className="absolute w-[500px] h-[500px] rounded-full pointer-events-none z-0 opacity-0 transition-opacity duration-700"
         style={{
-          background: 'radial-gradient(circle, rgba(108, 92, 231, 0.08) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(108, 92, 231, 0.06) 0%, rgba(0, 206, 206, 0.03) 40%, transparent 70%)',
           transform: 'translate(-50%, -50%)',
         }}
         aria-hidden="true"
       />
 
-      {/* Animated Background */}
+      {/* ═══ ANIMATED BACKGROUND ═══ */}
       <div className="absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
-        <div className="hero-bg-gradient absolute rounded-full blur-[120px] opacity-40 animate-float w-[600px] h-[600px] -top-[10%] -right-[5%] bg-[radial-gradient(circle,_#6C5CE7_0%,_transparent_70%)]" />
-        <div className="hero-bg-gradient absolute rounded-full blur-[120px] opacity-40 animate-float w-[500px] h-[500px] -bottom-[15%] -left-[5%] bg-[radial-gradient(circle,_#00CECE_0%,_transparent_70%)] [animation-delay:-7s]" />
-        <div className="hero-bg-gradient absolute rounded-full blur-[120px] opacity-20 animate-float w-[400px] h-[400px] top-1/2 left-[40%] bg-[radial-gradient(circle,_#e84393_0%,_transparent_70%)] [animation-delay:-14s]" />
-
-        {/* Manga halftone pattern overlay */}
+        {/* Morphing gradient orbs */}
         <div
-          className="absolute inset-0 opacity-[0.03]"
+          className="absolute w-[700px] h-[700px] -top-[15%] -right-[10%] rounded-full blur-[140px] opacity-30"
           style={{
-            backgroundImage: `radial-gradient(circle, #F0F0F5 1px, transparent 1px)`,
-            backgroundSize: '16px 16px',
+            background: 'radial-gradient(circle, #6C5CE7 0%, #4834d4 40%, transparent 70%)',
+            animation: 'morph-orb 25s ease-in-out infinite, float 20s ease-in-out infinite',
+          }}
+        />
+        <div
+          className="absolute w-[600px] h-[600px] -bottom-[20%] -left-[10%] rounded-full blur-[140px] opacity-25"
+          style={{
+            background: 'radial-gradient(circle, #00CECE 0%, #0097A7 40%, transparent 70%)',
+            animation: 'morph-orb 30s ease-in-out infinite reverse, float 22s ease-in-out infinite reverse',
+          }}
+        />
+        <div
+          className="absolute w-[400px] h-[400px] top-[30%] left-[50%] rounded-full blur-[120px] opacity-15"
+          style={{
+            background: 'radial-gradient(circle, #e84393 0%, transparent 70%)',
+            animation: 'morph-orb 20s ease-in-out infinite 5s',
           }}
         />
 
-        {/* Grid lines */}
+        {/* Dot matrix pattern */}
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 opacity-[0.025]"
           style={{
-            backgroundImage: `linear-gradient(rgba(108, 92, 231, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(108, 92, 231, 0.03) 1px, transparent 1px)`,
-            backgroundSize: '60px 60px',
-            maskImage: 'radial-gradient(ellipse 80% 60% at 50% 50%, black 30%, transparent 100%)',
-            WebkitMaskImage: 'radial-gradient(ellipse 80% 60% at 50% 50%, black 30%, transparent 100%)',
+            backgroundImage: 'radial-gradient(circle, #F0F0F5 1px, transparent 1px)',
+            backgroundSize: '20px 20px',
           }}
         />
 
-        {/* Manga speed lines radiating from center-right */}
+        {/* Perspective grid floor */}
         <div
-          className="absolute top-1/2 right-[25%] -translate-y-1/2 w-[800px] h-[800px] opacity-[0.04] pointer-events-none"
+          className="absolute bottom-0 left-0 right-0 h-[50%] opacity-[0.04]"
           style={{
-            background: `repeating-conic-gradient(transparent 0deg, transparent 3deg, rgba(108,92,231,0.3) 3.5deg, transparent 4deg)`,
-            maskImage: 'radial-gradient(circle, transparent 20%, black 40%, transparent 80%)',
-            WebkitMaskImage: 'radial-gradient(circle, transparent 20%, black 40%, transparent 80%)',
-            animation: 'rotate-slow 60s linear infinite',
+            backgroundImage: `
+              linear-gradient(rgba(108,92,231,0.5) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(108,92,231,0.5) 1px, transparent 1px)
+            `,
+            backgroundSize: '80px 80px',
+            transform: 'perspective(500px) rotateX(60deg)',
+            transformOrigin: 'center bottom',
+            maskImage: 'linear-gradient(to top, black 0%, transparent 80%)',
+            WebkitMaskImage: 'linear-gradient(to top, black 0%, transparent 80%)',
           }}
         />
 
-        {/* Floating particles — more varied */}
-        {Array.from({ length: 10 }).map((_, i) => (
+        {/* Animated scan line */}
+        <div
+          className="absolute left-0 right-0 h-[1px] opacity-[0.06] pointer-events-none"
+          style={{
+            background: 'linear-gradient(90deg, transparent, #6C5CE7, #00CECE, transparent)',
+            animation: 'scan-line 8s ease-in-out infinite',
+          }}
+        />
+
+        {/* Floating manga speed lines */}
+        <div
+          className="absolute top-1/2 right-[20%] -translate-y-1/2 w-[900px] h-[900px] opacity-[0.03] pointer-events-none"
+          style={{
+            background: 'repeating-conic-gradient(transparent 0deg, transparent 3deg, rgba(108,92,231,0.4) 3.5deg, transparent 4deg)',
+            maskImage: 'radial-gradient(circle, transparent 15%, black 35%, transparent 75%)',
+            WebkitMaskImage: 'radial-gradient(circle, transparent 15%, black 35%, transparent 75%)',
+            animation: 'rotate-slow 80s linear infinite',
+          }}
+        />
+
+        {/* Floating particles — more organic feel */}
+        {Array.from({ length: 15 }).map((_, i) => (
           <div
             key={`particle-${i}`}
-            className="absolute rounded-full animate-float-particle pointer-events-none"
+            className="absolute rounded-full pointer-events-none"
             style={{
-              width: `${2 + (i % 4) * 2}px`,
-              height: `${2 + (i % 4) * 2}px`,
-              left: `${5 + i * 9.5}%`,
-              bottom: '-20px',
-              backgroundColor: ['#6C5CE740', '#00CECE40', '#e8439340', '#00D68F40'][i % 4],
-              animationDuration: `${10 + (i % 5) * 4}s`,
-              animationDelay: `${i * 1.8}s`,
+              width: `${1.5 + (i % 5) * 1.5}px`,
+              height: `${1.5 + (i % 5) * 1.5}px`,
+              left: `${3 + i * 6.5}%`,
+              bottom: '-10px',
+              backgroundColor: ['#6C5CE750', '#00CECE50', '#e8439350', '#00D68F50', '#FFAA0050'][i % 5],
+              animation: `float-particle ${12 + (i % 6) * 3}s linear infinite`,
+              animationDelay: `${i * 1.3}s`,
             }}
           />
         ))}
-
-        {/* Floating manga element shapes */}
-        <div className="absolute top-[15%] left-[8%] w-16 h-16 border border-brand/10 rounded-xl rotate-12 animate-float-card opacity-20 pointer-events-none" />
-        <div className="absolute bottom-[20%] right-[8%] w-12 h-12 border border-secondary/10 rounded-full animate-float-card [animation-delay:-2s] opacity-20 pointer-events-none" />
-        <div className="absolute top-[60%] left-[3%] w-8 h-8 bg-brand/5 rounded-md rotate-45 animate-float-card [animation-delay:-4s] pointer-events-none" />
       </div>
 
-      <div className="relative z-[1] w-full max-w-[1280px] mx-auto px-8 pt-28 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-        {/* Left Content */}
-        <div className="flex flex-col gap-6 text-center lg:text-left items-center lg:items-start">
-          {/* Announcement Badge */}
-          <div className="animate-fade-in-down [animation-delay:0.1s] inline-flex items-center gap-2 px-4 py-1.5 bg-brand/10 border border-brand/25 rounded-full w-fit backdrop-blur-sm hover:bg-brand/15 hover:border-brand/40 transition-all duration-300 cursor-default">
-            <span className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_#00D68F] animate-pulse-dot" />
-            <span className="text-[13px] font-medium text-brand-hover tracking-wide">
+      {/* ═══ DECORATIVE MANGA PANELS ═══ */}
+      <FloatingPanel className="top-[12%] left-[5%] w-20 h-28 animate-float-card opacity-[0.08]" delay={0}>
+        <div className="w-full h-full border border-brand/30 rounded-lg bg-brand/5 backdrop-blur-sm" />
+      </FloatingPanel>
+      <FloatingPanel className="top-[18%] right-[6%] w-14 h-14 animate-float-card opacity-[0.06]" delay={1.5}>
+        <div className="w-full h-full border border-secondary/30 rounded-full bg-secondary/5" />
+      </FloatingPanel>
+      <FloatingPanel className="bottom-[25%] left-[3%] w-10 h-10 rotate-45 animate-float-card opacity-[0.07]" delay={3}>
+        <div className="w-full h-full border border-[#e84393]/30 rounded-md bg-[#e84393]/5" />
+      </FloatingPanel>
+      <FloatingPanel className="bottom-[15%] right-[4%] w-16 h-24 animate-float-card opacity-[0.05]" delay={2}>
+        <div className="w-full h-full border border-brand/20 rounded-lg bg-gradient-to-b from-brand/5 to-transparent" />
+      </FloatingPanel>
+
+      {/* ═══ MAIN CONTENT ═══ */}
+      <div className="relative z-[1] w-full max-w-[1280px] mx-auto px-8 pt-28 pb-8 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        {/* ── LEFT: Text Content ── */}
+        <div className="flex flex-col gap-5 text-center lg:text-left items-center lg:items-start">
+          {/* Announcement Badge — pill with animated border */}
+          <div
+            className="relative inline-flex items-center gap-2.5 px-5 py-2 rounded-full w-fit cursor-default group"
+            style={{
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible ? 'translateY(0)' : 'translateY(-20px)',
+              transition: 'all 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s',
+            }}
+          >
+            {/* Animated border */}
+            <div
+              className="absolute inset-0 rounded-full p-[1px] overflow-hidden"
+              style={{
+                background: 'linear-gradient(135deg, rgba(108,92,231,0.5), rgba(0,206,206,0.3), rgba(108,92,231,0.2))',
+                backgroundSize: '200% 200%',
+                animation: 'gradient-shimmer 4s ease-in-out infinite',
+              }}
+            >
+              <div className="w-full h-full rounded-full bg-bg-primary/90 backdrop-blur-xl" />
+            </div>
+            <span className="relative w-2 h-2 rounded-full bg-success shadow-[0_0_8px_#00D68F,0_0_16px_rgba(0,214,143,0.3)] animate-pulse-dot" />
+            <span className="relative text-[13px] font-medium text-text-secondary tracking-wide">
               Nền tảng xuất bản manga thế hệ mới
             </span>
           </div>
 
-          {/* Heading — staggered text reveal */}
-          <h1 className="font-primary text-[clamp(40px,5vw,72px)] font-extrabold leading-[1.1] tracking-tight text-text-primary">
-            <span className="block overflow-hidden">
-              <span className="block animate-text-reveal [animation-delay:0.15s]">Sáng tạo.</span>
+          {/* ── MAIN HEADING ── */}
+          <h1
+            className="font-primary text-[clamp(42px,5.5vw,78px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-text-primary"
+            style={{
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible ? 'translateY(0)' : 'translateY(40px)',
+              filter: isVisible ? 'blur(0px)' : 'blur(8px)',
+              transition: 'all 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.2s',
+            }}
+          >
+            Manga{' '}
+            <span
+              className="bg-clip-text text-transparent"
+              style={{
+                backgroundImage: 'linear-gradient(135deg, #6C5CE7, #00CECE, #e84393, #6C5CE7)',
+                backgroundSize: '300% 300%',
+                animation: isVisible ? 'gradient-shimmer 5s ease-in-out infinite' : 'none',
+              }}
+            >
+              Workspace
             </span>
-            <span className="block overflow-hidden">
-              <span
-                className="block bg-gradient-to-r from-brand via-secondary to-[#e84393] bg-clip-text text-transparent bg-[length:200%_200%]"
-                style={{
-                  animationName: 'text-reveal, gradient-shimmer',
-                  animationDuration: '0.8s, 6s',
-                  animationTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1), ease-in-out',
-                  animationFillMode: 'both, none',
-                  animationIterationCount: '1, infinite',
-                  animationDelay: '0.3s, 0s',
-                }}
-              >
-                Cộng tác.
-              </span>
-            </span>
-            <span className="block overflow-hidden">
-              <span className="block animate-text-reveal [animation-delay:0.45s]">Xuất bản.</span>
-            </span>
+            <span className="text-brand">.</span>
           </h1>
 
-          {/* Description */}
-          <p className="animate-blur-in [animation-delay:0.55s] text-[clamp(16px,1.15vw,19px)] text-text-secondary leading-[1.7] max-w-[500px] mx-auto lg:mx-0 mt-1">
-            Nền tảng Digital Workspace chuyên nghiệp kết nối Mangaka, Editor và Assistant — số hóa toàn bộ quy trình từ bản thảo đến xuất bản, quản lý tài chính minh bạch.
-          </p>
+          {/* ── Subtitle — Typewriter effect ── */}
+          <div
+            className="max-w-[520px] mx-auto lg:mx-0"
+            style={{
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
+              transition: 'all 0.8s ease-out 0.9s',
+            }}
+          >
+            <p className="text-[clamp(15px,1.1vw,18px)] text-text-secondary leading-[1.8]">
+              <TypewriterText
+                text="Digital Workspace chuyên nghiệp cho Mangaka, Editor và Assistant — quản lý quy trình từ bản thảo đến xuất bản, tài chính minh bạch trong từng giao dịch."
+                delay={1100}
+              />
+            </p>
+          </div>
 
-          {/* CTA Buttons */}
-          <div className="animate-fade-in-up [animation-delay:0.7s] flex gap-4 items-center flex-wrap justify-center lg:justify-start">
+          {/* ── CTA Buttons ── */}
+          <div
+            className="flex gap-4 items-center flex-wrap justify-center lg:justify-start mt-2"
+            style={{
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible ? 'translateY(0)' : 'translateY(24px)',
+              transition: 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1) 1.1s',
+            }}
+          >
+            {/* Primary CTA */}
             <button
-              className="group inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-br from-brand to-brand-hover text-white text-[15px] font-semibold border-none rounded-lg-custom cursor-pointer transition-all duration-300 shadow-brand hover:-translate-y-1 hover:shadow-[0_12px_35px_rgba(108,92,231,0.5)] active:translate-y-0 relative overflow-hidden"
+              className="group relative inline-flex items-center gap-2.5 px-8 py-4 text-white text-[15px] font-semibold border-none rounded-xl cursor-pointer transition-all duration-400 overflow-hidden"
               id="hero-cta-get-started"
               onClick={onGetStarted}
+              style={{
+                background: 'linear-gradient(135deg, #6C5CE7, #7C6EF0)',
+                boxShadow: '0 4px 24px rgba(108, 92, 231, 0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px) scale(1.02)';
+                (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 40px rgba(108, 92, 231, 0.55), inset 0 1px 0 rgba(255,255,255,0.15)';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)';
+                (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 24px rgba(108, 92, 231, 0.4), inset 0 1px 0 rgba(255,255,255,0.1)';
+              }}
             >
-              <span className="absolute inset-0 bg-gradient-to-br from-white/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-              {/* Shimmer sweep effect */}
-              <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
-              {/* Pulsing border glow */}
-              <span className="absolute -inset-[1px] rounded-lg-custom bg-gradient-to-r from-brand via-secondary to-brand bg-[length:200%_100%] opacity-0 group-hover:opacity-60 transition-opacity duration-300 -z-10 blur-sm animate-gradient-shimmer" />
+              {/* Shimmer sweep */}
+              <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+              {/* Glow border */}
+              <span
+                className="absolute -inset-[1px] rounded-xl opacity-0 group-hover:opacity-60 transition-opacity duration-500 -z-10 blur-sm"
+                style={{
+                  background: 'linear-gradient(135deg, #6C5CE7, #00CECE)',
+                  backgroundSize: '200% 200%',
+                  animation: 'gradient-shimmer 3s ease-in-out infinite',
+                }}
+              />
               <span className="relative">Bắt đầu ngay</span>
               <svg
-                className="relative transition-transform duration-300 group-hover:translate-x-1"
+                className="relative transition-transform duration-300 group-hover:translate-x-1.5"
                 width="18"
                 height="18"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="2"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
@@ -240,15 +389,36 @@ export const HeroSection = ({ onGetStarted, onLearnMore }: HeroSectionProps) => 
                 <path d="m12 5 7 7-7 7" />
               </svg>
             </button>
+
+            {/* Secondary CTA — Ghost button with animated border */}
             <button
-              className="group inline-flex items-center gap-2 px-7 py-3.5 bg-transparent text-text-primary text-[15px] font-medium border border-border-custom rounded-lg-custom cursor-pointer transition-all duration-300 hover:border-brand hover:text-brand-hover hover:bg-brand/5 hover:shadow-[0_0_20px_rgba(108,92,231,0.15)] relative overflow-hidden"
+              className="group relative inline-flex items-center gap-2.5 px-7 py-4 text-text-primary text-[15px] font-medium border-none rounded-xl cursor-pointer transition-all duration-400 bg-transparent overflow-hidden"
               id="hero-cta-learn-more"
               onClick={onLearnMore}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+                (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 30px rgba(108, 92, 231, 0.15)';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+                (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+              }}
             >
-              {/* Border shimmer effect */}
-              <span className="absolute inset-0 rounded-lg-custom opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ boxShadow: 'inset 0 0 0 1px rgba(108,92,231,0.3)' }} />
+              {/* Animated gradient border */}
+              <span
+                className="absolute inset-0 rounded-xl p-[1px]"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(108,92,231,0.5), rgba(0,206,206,0.3), rgba(108,92,231,0.2))',
+                  backgroundSize: '200% 200%',
+                  animation: 'gradient-shimmer 4s ease-in-out infinite',
+                }}
+              >
+                <span className="block w-full h-full rounded-[11px] bg-bg-primary group-hover:bg-bg-secondary/50 transition-colors duration-300" />
+              </span>
+              {/* Hover glow fill */}
+              <span className="absolute inset-[1px] rounded-[11px] bg-brand/0 group-hover:bg-brand/5 transition-colors duration-300" />
               <svg
-                className="transition-all duration-300 group-hover:scale-110 group-hover:text-brand"
+                className="relative transition-all duration-300 group-hover:scale-110 group-hover:text-brand"
                 width="18"
                 height="18"
                 viewBox="0 0 24 24"
@@ -261,64 +431,74 @@ export const HeroSection = ({ onGetStarted, onLearnMore }: HeroSectionProps) => 
                 <circle cx="12" cy="12" r="10" />
                 <polygon points="10,8 16,12 10,16 10,8" />
               </svg>
-              Tìm hiểu thêm
+              <span className="relative group-hover:text-brand transition-colors duration-300">Tìm hiểu thêm</span>
             </button>
-          </div>
-
-          {/* Stats Row — animated counters */}
-          <div className="animate-fade-in-up [animation-delay:0.85s] flex gap-8 pt-4 justify-center lg:justify-start">
-            {[
-              { end: 500, suffix: '+', label: 'Mangaka', delay: 1200 },
-              { end: 2000, suffix: '+', label: 'Chapters', delay: 1400 },
-              { end: 99.9, suffix: '%', label: 'Uptime', delay: 1600 },
-            ].map((stat, i) => (
-              <div
-                key={stat.label}
-                className="flex flex-col gap-0.5 group cursor-default relative"
-              >
-                <span className="font-mono text-2xl font-bold text-text-primary transition-colors duration-300 group-hover:text-brand">
-                  {stat.label === 'Uptime' ? '99.9%' : <AnimatedCounter end={stat.end} suffix={stat.suffix} delay={stat.delay} />}
-                </span>
-                <span className="text-[13px] text-text-muted tracking-wide transition-colors duration-300 group-hover:text-text-secondary">{stat.label}</span>
-                {/* Hover underline glow */}
-                <div className="absolute -bottom-1 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-brand to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 scale-x-0 group-hover:scale-x-100" style={{ transition: 'opacity 0.3s, transform 0.4s' }} />
-              </div>
-            ))}
           </div>
         </div>
 
-        {/* Right Visual — Hero Manga Illustration */}
-        <div className="animate-scale-in [animation-delay:0.4s] relative flex justify-center items-center max-w-[560px] mx-auto lg:max-w-none">
-          <div className="relative w-full">
-            {/* Orbiting glow dots — multiple at different speeds */}
-            <div className="absolute -inset-6 rounded-2xl opacity-30 animate-rotate-slow pointer-events-none" aria-hidden="true">
-              <div className="absolute top-0 left-1/2 w-6 h-6 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand/70 blur-md" />
-              <div className="absolute bottom-0 left-1/2 w-4 h-4 -translate-x-1/2 translate-y-1/2 rounded-full bg-secondary/50 blur-md" />
-            </div>
-            <div className="absolute -inset-8 rounded-2xl opacity-20 pointer-events-none" aria-hidden="true" style={{ animation: 'rotate-slow 45s linear infinite reverse' }}>
-              <div className="absolute top-1/2 right-0 w-5 h-5 translate-x-1/2 -translate-y-1/2 rounded-full bg-[#e84393]/50 blur-md" />
-            </div>
-
-
-
-            {/* Main Hero Image — Mangaka at work */}
-            <div className="relative rounded-2xl overflow-hidden border border-brand/20 shadow-[0_20px_60px_rgba(108,92,231,0.25)] group hover:shadow-[0_25px_70px_rgba(108,92,231,0.35)] transition-all duration-500">
+        {/* ── RIGHT: Interactive 3D Card Gallery ── */}
+        <div
+          className="relative flex justify-center items-center"
+          style={{
+            opacity: isVisible ? 1 : 0,
+            transform: isVisible ? 'translateX(0)' : 'translateX(60px)',
+            transition: 'all 1s cubic-bezier(0.16, 1, 0.3, 1) 0.5s',
+            perspective: '1000px',
+          }}
+        >
+          <div
+            ref={cardsRef}
+            className="relative w-full max-w-[520px] aspect-[4/3.3]"
+            onMouseMove={handleCardMouseMove}
+            onMouseLeave={handleCardMouseLeave}
+            style={{
+              transformStyle: 'preserve-3d',
+              transform: `rotateY(${mousePos.x * 8}deg) rotateX(${-mousePos.y * 8}deg)`,
+              transition: mousePos.x === 0 && mousePos.y === 0 ? 'transform 0.6s ease-out' : 'transform 0.1s ease-out',
+            }}
+          >
+            <div
+              className="relative w-full h-full rounded-2xl overflow-hidden group border border-brand/25"
+              style={{
+                boxShadow: '0 25px 60px rgba(108, 92, 231, 0.25), 0 8px 20px rgba(0, 0, 0, 0.3)',
+              }}
+            >
               <img
                 src="/images/landing/hero-mangaka.png"
-                alt="Mangaka creating manga on digital tablet"
-                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                alt="Mangaka creating manga on digital workspace"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.05]"
                 loading="eager"
               />
-              {/* Gradient overlay at bottom for blending */}
-              <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/60 via-transparent to-transparent" />
-              {/* Animated top glow line */}
-              <div className="absolute -top-2 -left-2 -right-2 h-1 bg-gradient-to-r from-transparent via-brand to-transparent blur-sm animate-glow-line" />
-              {/* Bottom glow line */}
-              <div className="absolute -bottom-1 left-[10%] right-[10%] h-[2px] bg-gradient-to-r from-transparent via-secondary/50 to-transparent blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-              {/* Corner accents */}
-              <div className="absolute top-0 left-0 w-12 h-12 border-t-2 border-l-2 border-brand/30 rounded-tl-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="absolute bottom-0 right-0 w-12 h-12 border-b-2 border-r-2 border-secondary/30 rounded-br-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              {/* Animated glow line at top */}
+              <div
+                className="absolute -top-1 left-0 right-0 h-[2px] blur-sm animate-glow-line"
+                style={{
+                  background: 'linear-gradient(90deg, transparent, #6C5CE7, #00CECE, transparent)',
+                }}
+              />
+
+              {/* Corner decorations on hover */}
+              <div className="absolute top-3 left-3 w-8 h-8 border-t-2 border-l-2 border-brand/40 rounded-tl-lg opacity-0 group-hover:opacity-100 transition-all duration-500 group-hover:w-12 group-hover:h-12" />
+              <div className="absolute top-3 right-3 w-8 h-8 border-t-2 border-r-2 border-secondary/40 rounded-tr-lg opacity-0 group-hover:opacity-100 transition-all duration-500 group-hover:w-12 group-hover:h-12" />
+              <div className="absolute bottom-3 left-3 w-8 h-8 border-b-2 border-l-2 border-secondary/40 rounded-bl-lg opacity-0 group-hover:opacity-100 transition-all duration-500 group-hover:w-12 group-hover:h-12" />
+              <div className="absolute bottom-3 right-3 w-8 h-8 border-b-2 border-r-2 border-brand/40 rounded-br-lg opacity-0 group-hover:opacity-100 transition-all duration-500 group-hover:w-12 group-hover:h-12" />
+
+            </div>
+
+            {/* Orbiting glow accents */}
+            <div
+              className="absolute -inset-8 pointer-events-none"
+              style={{ animation: 'rotate-slow 40s linear infinite' }}
+            >
+              <div className="absolute top-0 left-1/2 w-5 h-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand/50 blur-md" />
+              <div className="absolute bottom-0 left-1/2 w-3 h-3 -translate-x-1/2 translate-y-1/2 rounded-full bg-secondary/40 blur-md" />
+            </div>
+            <div
+              className="absolute -inset-12 pointer-events-none"
+              style={{ animation: 'rotate-slow 55s linear infinite reverse' }}
+            >
+              <div className="absolute top-1/2 right-0 w-4 h-4 translate-x-1/2 -translate-y-1/2 rounded-full bg-[#e84393]/30 blur-md" />
             </div>
           </div>
         </div>
@@ -326,11 +506,38 @@ export const HeroSection = ({ onGetStarted, onLearnMore }: HeroSectionProps) => 
 
 
 
-      {/* CSS for progress bar animation */}
+      {/* ═══ CUSTOM KEYFRAMES ═══ */}
       <style>{`
-        @keyframes progress-fill {
-          from { width: 0%; }
-          to { width: 78%; }
+        @keyframes morph-orb {
+          0%, 100% {
+            border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+            transform: translate(0, 0) rotate(0deg);
+          }
+          25% {
+            border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+          }
+          50% {
+            border-radius: 50% 60% 30% 60% / 30% 40% 70% 50%;
+            transform: translate(20px, -20px) rotate(5deg);
+          }
+          75% {
+            border-radius: 60% 30% 50% 40% / 60% 50% 40% 30%;
+          }
+        }
+
+        @keyframes scan-line {
+          0% { top: -2%; }
+          100% { top: 102%; }
+        }
+
+        @keyframes blink-cursor {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+
+        @keyframes rotate-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
       `}</style>
     </section>

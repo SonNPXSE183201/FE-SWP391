@@ -74,17 +74,15 @@ export const Navbar = ({ onGetStarted }: NavbarProps) => {
   return (
     <nav
       id="landing-navbar"
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out ${
-        isScrolled
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out ${isScrolled
           ? 'bg-bg-primary/75 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.4)]'
           : 'bg-transparent'
-      }`}
+        }`}
     >
       {/* Bottom border — only visible when scrolled */}
       <div
-        className={`absolute bottom-0 left-0 right-0 h-[1px] transition-opacity duration-500 ${
-          isScrolled ? 'opacity-100' : 'opacity-0'
-        }`}
+        className={`absolute bottom-0 left-0 right-0 h-[1px] transition-opacity duration-500 ${isScrolled ? 'opacity-100' : 'opacity-0'
+          }`}
         style={{
           background: 'linear-gradient(90deg, transparent 5%, rgba(108,92,231,0.25) 30%, rgba(0,206,206,0.15) 70%, transparent 95%)',
         }}
@@ -142,18 +140,16 @@ export const Navbar = ({ onGetStarted }: NavbarProps) => {
               <button
                 key={link.targetId}
                 onClick={() => scrollToSection(link.targetId)}
-                className={`relative px-4 py-2 text-[14px] font-medium rounded-lg transition-all duration-300 cursor-pointer bg-transparent border-none ${
-                  isActive
+                className={`relative px-4 py-2 text-[14px] font-medium rounded-lg transition-all duration-300 cursor-pointer bg-transparent border-none ${isActive
                     ? 'text-brand'
                     : 'text-text-secondary hover:text-text-primary hover:bg-white/[0.04]'
-                }`}
+                  }`}
               >
                 {link.label}
                 {/* Active underline glow */}
                 <span
-                  className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] rounded-full bg-brand transition-all duration-300 ${
-                    isActive ? 'w-4 opacity-100' : 'w-0 opacity-0'
-                  }`}
+                  className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] rounded-full bg-brand transition-all duration-300 ${isActive ? 'w-4 opacity-100' : 'w-0 opacity-0'
+                    }`}
                 />
               </button>
             );
@@ -191,19 +187,16 @@ export const Navbar = ({ onGetStarted }: NavbarProps) => {
             aria-expanded={isMobileMenuOpen}
           >
             <span
-              className={`block w-5 h-[2px] rounded-full transition-all duration-300 origin-center ${
-                isScrolled ? 'bg-text-secondary group-hover:bg-text-primary' : 'bg-text-primary/70 group-hover:bg-text-primary'
-              } ${isMobileMenuOpen ? 'rotate-45 translate-y-[5px]' : ''}`}
+              className={`block w-5 h-[2px] rounded-full transition-all duration-300 origin-center ${isScrolled ? 'bg-text-secondary group-hover:bg-text-primary' : 'bg-text-primary/70 group-hover:bg-text-primary'
+                } ${isMobileMenuOpen ? 'rotate-45 translate-y-[5px]' : ''}`}
             />
             <span
-              className={`block w-5 h-[2px] rounded-full transition-all duration-300 ${
-                isScrolled ? 'bg-text-secondary group-hover:bg-text-primary' : 'bg-text-primary/70 group-hover:bg-text-primary'
-              } ${isMobileMenuOpen ? 'opacity-0 scale-x-0' : ''}`}
+              className={`block w-5 h-[2px] rounded-full transition-all duration-300 ${isScrolled ? 'bg-text-secondary group-hover:bg-text-primary' : 'bg-text-primary/70 group-hover:bg-text-primary'
+                } ${isMobileMenuOpen ? 'opacity-0 scale-x-0' : ''}`}
             />
             <span
-              className={`block w-5 h-[2px] rounded-full transition-all duration-300 origin-center ${
-                isScrolled ? 'bg-text-secondary group-hover:bg-text-primary' : 'bg-text-primary/70 group-hover:bg-text-primary'
-              } ${isMobileMenuOpen ? '-rotate-45 -translate-y-[5px]' : ''}`}
+              className={`block w-5 h-[2px] rounded-full transition-all duration-300 origin-center ${isScrolled ? 'bg-text-secondary group-hover:bg-text-primary' : 'bg-text-primary/70 group-hover:bg-text-primary'
+                } ${isMobileMenuOpen ? '-rotate-45 -translate-y-[5px]' : ''}`}
             />
           </button>
         </div>
@@ -211,20 +204,18 @@ export const Navbar = ({ onGetStarted }: NavbarProps) => {
 
       {/* Mobile dropdown menu */}
       <div
-        className={`md:hidden absolute top-full left-0 right-0 bg-bg-primary/95 backdrop-blur-xl border-b border-border-custom/50 transition-all duration-300 overflow-hidden ${
-          isMobileMenuOpen ? 'max-h-[300px] opacity-100' : 'max-h-0 opacity-0'
-        }`}
+        className={`md:hidden absolute top-full left-0 right-0 bg-bg-primary/95 backdrop-blur-xl border-b border-border-custom/50 transition-all duration-300 overflow-hidden ${isMobileMenuOpen ? 'max-h-[300px] opacity-100' : 'max-h-0 opacity-0'
+          }`}
       >
         <div className="px-8 py-4 flex flex-col gap-1">
           {NAV_LINKS.map((link, index) => (
             <button
               key={link.targetId}
               onClick={() => scrollToSection(link.targetId)}
-              className={`text-left px-4 py-3 text-[15px] font-medium rounded-lg transition-all duration-300 cursor-pointer bg-transparent border-none ${
-                activeSection === link.targetId
+              className={`text-left px-4 py-3 text-[15px] font-medium rounded-lg transition-all duration-300 cursor-pointer bg-transparent border-none ${activeSection === link.targetId
                   ? 'text-brand bg-brand/10'
                   : 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary/50'
-              }`}
+                }`}
               style={{ animationDelay: `${index * 50}ms` }}
             >
               {link.label}
