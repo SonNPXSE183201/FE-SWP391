@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import {
+  Navbar,
   HeroSection,
   FeaturesSection,
   WorkflowSection,
@@ -25,6 +26,7 @@ export const LandingPage = () => {
 
   return (
     <main className="bg-bg-primary min-h-screen">
+      <Navbar onGetStarted={handleGetStarted} />
       <HeroSection
         onGetStarted={handleGetStarted}
         onLearnMore={handleLearnMore}

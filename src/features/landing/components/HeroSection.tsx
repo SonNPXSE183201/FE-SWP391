@@ -171,9 +171,9 @@ export const HeroSection = ({ onGetStarted, onLearnMore }: HeroSectionProps) => 
         <div className="absolute top-[60%] left-[3%] w-8 h-8 bg-brand/5 rounded-md rotate-45 animate-float-card [animation-delay:-4s] pointer-events-none" />
       </div>
 
-      <div className="relative z-[1] w-full max-w-[1280px] mx-auto px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+      <div className="relative z-[1] w-full max-w-[1280px] mx-auto px-8 pt-28 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
         {/* Left Content */}
-        <div className="flex flex-col gap-6 text-center lg:text-left items-center lg:items-start pt-24 lg:pt-0">
+        <div className="flex flex-col gap-6 text-center lg:text-left items-center lg:items-start">
           {/* Announcement Badge */}
           <div className="animate-fade-in-down [animation-delay:0.1s] inline-flex items-center gap-2 px-4 py-1.5 bg-brand/10 border border-brand/25 rounded-full w-fit backdrop-blur-sm hover:bg-brand/15 hover:border-brand/40 transition-all duration-300 cursor-default">
             <span className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_#00D68F] animate-pulse-dot" />
