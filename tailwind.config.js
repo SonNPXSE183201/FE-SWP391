@@ -72,6 +72,10 @@ export default {
           '0%, 100%': { top: '8px', opacity: '1' },
           '50%': { top: '18px', opacity: '0.3' },
         },
+        'scroll-x': {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
       },
       animation: {
         'float': 'float 20s ease-in-out infinite',
@@ -80,6 +84,7 @@ export default {
         'fade-in-up': 'fade-in-up 0.6s ease-out both',
         'pulse-dot': 'pulse-dot 2s ease-in-out infinite',
         'scroll-bounce': 'scroll-bounce 2s ease-in-out infinite',
+        'scroll-x': 'scroll-x 40s linear infinite',
       },
     },
   },
