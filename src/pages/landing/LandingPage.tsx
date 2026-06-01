@@ -7,6 +7,8 @@ import {
   RolesSection,
   MangaShowcaseSection,
   CTASection,
+  Footer,
+  BackToTop,
 } from '@/features/landing';
 import { SectionDivider } from '@/features/landing/components/SectionDivider';
 
@@ -41,6 +43,8 @@ export const LandingPage = () => {
       <MangaShowcaseSection />
       <SectionDivider variant="dots" color="brand" />
       <CTASection onAction={handleGetStarted} />
+      <Footer />
+      <BackToTop />
     </main>
   );
 };
