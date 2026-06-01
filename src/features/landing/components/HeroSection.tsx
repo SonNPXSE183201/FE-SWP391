@@ -9,12 +9,13 @@ interface HeroSectionProps {
 export const HeroSection = ({ onGetStarted, onLearnMore }: HeroSectionProps) => {
   const heroRef = useRef<HTMLElement>(null);
 
-  // Parallax mouse-follow effect for background gradients
+  // Parallax mouse-follow effect for background gradients and floating images
   useEffect(() => {
     const hero = heroRef.current;
     if (!hero) return;
 
     const gradients = hero.querySelectorAll<HTMLElement>('.hero-bg-gradient');
+    const floatingEls = hero.querySelectorAll<HTMLElement>('.hero-float-el');
     let animationFrameId: number;
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -31,6 +32,11 @@ export const HeroSection = ({ onGetStarted, onLearnMore }: HeroSectionProps) => 
         gradients.forEach((grad, i) => {
           const speed = (i + 1) * 8;
           grad.style.transform = `translate(${xPercent * speed}px, ${yPercent * speed}px)`;
+        });
+
+        floatingEls.forEach((el, i) => {
+          const speed = (i + 1) * 4;
+          el.style.transform = `translate(${xPercent * speed}px, ${yPercent * speed}px)`;
         });
       });
     };
@@ -55,6 +61,15 @@ export const HeroSection = ({ onGetStarted, onLearnMore }: HeroSectionProps) => 
         <div className="hero-bg-gradient absolute rounded-full blur-[120px] opacity-40 animate-float w-[600px] h-[600px] -top-[10%] -right-[5%] bg-[radial-gradient(circle,_#6C5CE7_0%,_transparent_70%)]" />
         <div className="hero-bg-gradient absolute rounded-full blur-[120px] opacity-40 animate-float w-[500px] h-[500px] -bottom-[15%] -left-[5%] bg-[radial-gradient(circle,_#00CECE_0%,_transparent_70%)] [animation-delay:-7s]" />
         <div className="hero-bg-gradient absolute rounded-full blur-[120px] opacity-20 animate-float w-[400px] h-[400px] top-1/2 left-[40%] bg-[radial-gradient(circle,_#e84393_0%,_transparent_70%)] [animation-delay:-14s]" />
+        {/* Manga halftone pattern overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `radial-gradient(circle, #F0F0F5 1px, transparent 1px)`,
+            backgroundSize: '16px 16px',
+          }}
+        />
+        {/* Grid lines */}
         <div
           className="absolute inset-0"
           style={{
@@ -156,84 +171,63 @@ export const HeroSection = ({ onGetStarted, onLearnMore }: HeroSectionProps) => 
           </div>
         </div>
 
-        {/* Right Visual — Workflow Cards */}
-        <div className="animate-fade-in-up [animation-delay:0.3s] relative flex justify-center items-center max-w-[500px] mx-auto lg:max-w-none">
-          <div className="relative w-full max-w-[520px] aspect-[4/3]">
+        {/* Right Visual — Hero Manga Illustration */}
+        <div className="animate-fade-in-up [animation-delay:0.3s] relative flex justify-center items-center max-w-[560px] mx-auto lg:max-w-none">
+          <div className="relative w-full">
+            {/* Main Hero Image — Mangaka at work */}
+            <div className="relative rounded-2xl overflow-hidden border border-brand/20 shadow-[0_20px_60px_rgba(108,92,231,0.25)]">
+              <img
+                src="/images/landing/hero-mangaka.png"
+                alt="Mangaka creating manga on digital tablet"
+                className="w-full h-auto object-cover"
+                loading="eager"
+              />
+              {/* Gradient overlay at bottom for blending */}
+              <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/60 via-transparent to-transparent" />
+              {/* Purple glow at top */}
+              <div className="absolute -top-2 -left-2 -right-2 h-1 bg-gradient-to-r from-transparent via-brand to-transparent blur-sm" />
+            </div>
+
+            {/* Floating manga panel — top right */}
+            <div className="hero-float-el absolute -top-4 -right-6 w-[140px] rounded-xl overflow-hidden border border-border-custom/60 shadow-lg-custom animate-float-card rotate-3 z-10 hidden md:block">
+              <img
+                src="/images/landing/manga-panels.png"
+                alt="Manga panels"
+                className="w-full h-[100px] object-cover"
+                loading="eager"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/40 to-transparent" />
+            </div>
+
+            {/* Floating collaboration badge — bottom left */}
+            <div className="hero-float-el absolute -bottom-3 -left-4 bg-bg-secondary/90 backdrop-blur-[16px] border border-border-custom/60 rounded-xl-custom px-4 py-3 flex items-center gap-3 shadow-lg-custom animate-float-card [animation-delay:-3s] z-10 hidden md:block">
+              <div className="flex -space-x-2">
+                <div className="w-8 h-8 rounded-full bg-brand/30 border-2 border-bg-secondary flex items-center justify-center text-[10px] font-bold text-brand-hover">M</div>
+                <div className="w-8 h-8 rounded-full bg-secondary/30 border-2 border-bg-secondary flex items-center justify-center text-[10px] font-bold text-secondary">E</div>
+                <div className="w-8 h-8 rounded-full bg-success/30 border-2 border-bg-secondary flex items-center justify-center text-[10px] font-bold text-success">A</div>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-semibold text-text-primary">12 đang hoạt động</span>
+                <span className="text-[10px] text-text-muted">Cộng tác real-time</span>
+              </div>
+            </div>
+
+            {/* Floating progress badge — top left */}
+            <div className="hero-float-el absolute top-6 -left-8 bg-bg-secondary/90 backdrop-blur-[16px] border border-border-custom/60 rounded-xl-custom px-3 py-2.5 shadow-lg-custom animate-float-card [animation-delay:-5s] z-10 hidden lg:block">
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className="w-2 h-2 rounded-full bg-success animate-pulse-dot" />
+                <span className="text-[11px] font-semibold text-text-primary">Chapter 24</span>
+              </div>
+              <div className="w-24 h-1.5 bg-bg-surface rounded-full overflow-hidden">
+                <div className="h-full w-[78%] bg-gradient-to-r from-brand to-secondary rounded-full" />
+              </div>
+              <span className="text-[10px] text-text-muted mt-1 block">78% hoàn thành</span>
+            </div>
+
             {/* Floating particles */}
             <div className="absolute rounded-full opacity-30 animate-float-particle w-1.5 h-1.5 bg-brand top-[20%] left-[30%]" />
             <div className="absolute rounded-full opacity-30 animate-float-particle w-1 h-1 bg-secondary top-[60%] right-[20%] [animation-delay:-5s]" />
             <div className="absolute rounded-full opacity-30 animate-float-particle w-[5px] h-[5px] bg-success bottom-[25%] left-1/2 [animation-delay:-10s]" />
-            <div className="absolute rounded-full opacity-30 animate-float-particle w-[3px] h-[3px] bg-[#e84393] top-[40%] left-[15%] [animation-delay:-3s]" />
-
-            {/* Connector SVG */}
-            <svg
-              className="absolute z-[1]"
-              width="100%"
-              height="100%"
-              viewBox="0 0 520 390"
-              preserveAspectRatio="none"
-              aria-hidden="true"
-            >
-              <path
-                className="stroke-border-custom opacity-50"
-                d="M 160 80 Q 300 140 360 170"
-                fill="none"
-                strokeWidth="1.5"
-                strokeDasharray="6, 4"
-              />
-              <path
-                className="stroke-border-custom opacity-50"
-                d="M 360 220 Q 280 280 200 310"
-                fill="none"
-                strokeWidth="1.5"
-                strokeDasharray="6, 4"
-              />
-            </svg>
-
-            {/* Card 1: Create */}
-            <div className="absolute z-[2] bg-bg-secondary/75 backdrop-blur-[16px] border border-border-custom/60 rounded-xl-custom p-4 px-5 flex items-center gap-3 shadow-lg-custom transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.5)] top-[8%] left-0 animate-float-card">
-              <div className="w-11 h-11 rounded-lg-custom flex items-center justify-center shrink-0 bg-brand/20 text-brand-hover">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 20h9" />
-                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                </svg>
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-semibold text-text-primary">Sáng tác bản thảo</span>
-                <span className="text-xs text-text-secondary">Upload & quản lý trang truyện</span>
-              </div>
-              <span className="ml-auto px-2.5 py-1 rounded-full text-[11px] font-semibold shrink-0 bg-brand/15 text-brand-hover">Active</span>
-            </div>
-
-            {/* Card 2: Review */}
-            <div className="absolute z-[2] bg-bg-secondary/75 backdrop-blur-[16px] border border-border-custom/60 rounded-xl-custom p-4 px-5 flex items-center gap-3 shadow-lg-custom transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.5)] top-[38%] right-0 animate-float-card [animation-delay:-2s]">
-              <div className="w-11 h-11 rounded-lg-custom flex items-center justify-center shrink-0 bg-warning/20 text-warning">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="m21 21-4.35-4.35" />
-                </svg>
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-semibold text-text-primary">Xét duyệt & QC</span>
-                <span className="text-xs text-text-secondary">Annotation lỗi trên Canvas</span>
-              </div>
-              <span className="ml-auto px-2.5 py-1 rounded-full text-[11px] font-semibold shrink-0 bg-warning/15 text-warning">Review</span>
-            </div>
-
-            {/* Card 3: Publish */}
-            <div className="absolute z-[2] bg-bg-secondary/75 backdrop-blur-[16px] border border-border-custom/60 rounded-xl-custom p-4 px-5 flex items-center gap-3 shadow-lg-custom transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.5)] bottom-[8%] left-[12%] animate-float-card [animation-delay:-4s]">
-              <div className="w-11 h-11 rounded-lg-custom flex items-center justify-center shrink-0 bg-success/20 text-success">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                  <polyline points="22,4 12,14.01 9,11.01" />
-                </svg>
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-semibold text-text-primary">Xuất bản & Giải ngân</span>
-                <span className="text-xs text-text-secondary">Vote duyệt & thanh toán tự động</span>
-              </div>
-              <span className="ml-auto px-2.5 py-1 rounded-full text-[11px] font-semibold shrink-0 bg-success/15 text-success">Done</span>
-            </div>
           </div>
         </div>
       </div>

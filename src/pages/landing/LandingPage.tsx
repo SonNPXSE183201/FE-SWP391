@@ -1,5 +1,12 @@
 import { useNavigate } from 'react-router-dom';
-import { HeroSection, FeaturesSection, CTASection } from '@/features/landing';
+import {
+  HeroSection,
+  FeaturesSection,
+  WorkflowSection,
+  RolesSection,
+  MangaShowcaseSection,
+  CTASection,
+} from '@/features/landing';
 
 export const LandingPage = () => {
   const navigate = useNavigate();
@@ -22,6 +29,9 @@ export const LandingPage = () => {
         onLearnMore={handleLearnMore}
       />
       <FeaturesSection />
+      <WorkflowSection />
+      <RolesSection />
+      <MangaShowcaseSection />
       <CTASection onAction={handleGetStarted} />
     </main>
   );
