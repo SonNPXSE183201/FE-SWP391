@@ -14,6 +14,8 @@
 | Zustand | Latest | Global state management |
 | Axios | Latest | HTTP Client + JWT Interceptors |
 | React Query (TanStack) | 5+ | Server state (caching, optimistic updates) |
+| Tailwind CSS | 3+ | Styling framework |
+| shadcn/ui | Latest | UI Component library |
 
 ## 2. Cấu trúc thư mục
 
@@ -362,4 +364,4 @@ export const formatCurrency = (amount: number): string => {
 
 - Xem file `design.md` tại root project cho Color Palette, Typography, Component Styles.
 - CSS Variables cho design tokens (colors, spacing, typography).
-- Sử dụng CSS Modules hoặc Vanilla CSS — **KHÔNG** dùng TailwindCSS trừ khi được yêu cầu.
+- Sử dụng Tailwind CSS v3 kết hợp với shadcn/ui để xây dựng components nhanh chóng và nhất quán.

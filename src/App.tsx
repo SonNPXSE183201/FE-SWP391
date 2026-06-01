@@ -1,10 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { RoleGuard } from './routes/RoleGuard';
+import { LandingPage } from './pages/landing/LandingPage';
 
 // Placeholder Components
 const LoginPage = () => <div style={{ padding: '20px' }}><h1>Login Page</h1></div>;
-const LandingPage = () => <div style={{ padding: '20px' }}><h1>Welcome to Manga Publishing System</h1></div>;
 const UnauthorizedPage = () => <div style={{ padding: '20px' }}><h1>403 - Unauthorized</h1></div>;
 const MangakaDashboard = () => <div style={{ padding: '20px' }}><h1>Mangaka Dashboard</h1></div>;
 const AssistantDashboard = () => <div style={{ padding: '20px' }}><h1>Assistant Dashboard</h1></div>;
