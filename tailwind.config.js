@@ -54,6 +54,10 @@ export default {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-12px)' },
         },
+        'text-float': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-8px)' },
+        },
         'float-particle': {
           '0%': { transform: 'translateY(0) translateX(0)', opacity: '0' },
           '10%': { opacity: '0.3' },
@@ -178,6 +182,7 @@ export default {
         'slide-in-up': 'slide-in-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both',
         'hero-text-reveal': 'hero-text-reveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) both',
         'orbit': 'orbit 25s linear infinite',
+        'text-float': 'text-float 5s ease-in-out infinite',
       },
     },
   },
