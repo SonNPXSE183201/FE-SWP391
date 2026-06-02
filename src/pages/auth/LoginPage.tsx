@@ -18,29 +18,52 @@ export const LoginPage: React.FC = () => {
               alt="Manga workspace"
               className="w-full h-full object-cover"
             />
-            {/* Gradient overlay for text readability */}
+            {/* Gradient overlays for depth */}
             <div className="absolute inset-0 bg-gradient-to-r from-[#0F0F14]/90 via-[#0F0F14]/75 to-[#0F0F14]/60" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0F0F14]/80 via-transparent to-[#0F0F14]/40" />
           </div>
 
           {/* Content over image */}
           <div className="relative z-10">
-            <Logo size="lg" />
+            <div className="animate-fade-in-down" style={{ animationDelay: '0.1s' }}>
+              <Logo size="lg" />
+            </div>
             <div className="mt-12 space-y-6">
               <h1 className="text-4xl xl:text-5xl font-bold leading-tight drop-shadow-lg">
-                Nền tảng <br />
-                Xuất bản Manga <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-hover">
+                <span
+                  className="inline-block animate-hero-text-reveal"
+                  style={{ animationDelay: '0.2s' }}
+                >
+                  Nền tảng
+                </span>
+                <br />
+                <span
+                  className="inline-block animate-hero-text-reveal"
+                  style={{ animationDelay: '0.35s' }}
+                >
+                  Xuất bản Manga
+                </span>
+                <br />
+                <span
+                  className="inline-block animate-hero-text-reveal text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-hover"
+                  style={{ animationDelay: '0.5s' }}
+                >
                   Chuyên nghiệp
                 </span>
               </h1>
-              <p className="text-lg text-text-secondary max-w-md drop-shadow-md">
+              <p
+                className="text-lg text-text-secondary max-w-md drop-shadow-md animate-fade-in-up"
+                style={{ animationDelay: '0.65s' }}
+              >
                 Quản lý quy trình sản xuất, xét duyệt và xuất bản manga trên cùng một không gian làm việc số hoá.
               </p>
             </div>
           </div>
 
-          <div className="relative z-10 text-sm text-text-tertiary">
+          <div
+            className="relative z-10 text-sm text-text-tertiary animate-fade-in-up"
+            style={{ animationDelay: '0.8s' }}
+          >
             &copy; {new Date().getFullYear()} Inku. Đây là dự án học tập — không phục vụ mục đích thương mại.
           </div>
         </div>
@@ -48,7 +71,7 @@ export const LoginPage: React.FC = () => {
         {/* Right Column - Login Form */}
         <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 sm:p-12">
           {/* Mobile Logo */}
-          <div className="lg:hidden mb-12 self-start sm:self-center">
+          <div className="lg:hidden mb-12 self-start sm:self-center animate-fade-in-down">
             <Logo />
           </div>
 
