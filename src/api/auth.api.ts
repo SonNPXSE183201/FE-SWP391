@@ -1,6 +1,22 @@
+import { axiosInstance } from './axios';
 import type { User } from '../stores/authStore';
 
-// Temporary mock type for login response
+// --- Register API ---
+export interface RegisterAssistantRequest {
+  userName: string;
+  email: string;
+  passwordHash: string;
+  fullName: string;
+  portfolioUrl: string;
+  specialtyTags: string[];
+}
+
+export const authApi = {
+  registerAssistant: (data: RegisterAssistantRequest) => 
+    axiosInstance.post('/api/auth/register', data),
+};
+
+// --- Login API ---
 export interface LoginResponse {
   success: boolean;
   message: string;
