@@ -12,7 +12,7 @@ const steps = [
   {
     number: '02',
     title: 'Phân công & Cộng tác',
-    description: 'Phân chia regions, giao task cho Assistant xử lý inking, coloring, và screentone. Quản lý tiến độ real-time.',
+    description: 'Phân chia regions, giao task cho Trợ lý vẽ xử lý inking, coloring, và screentone. Quản lý tiến độ real-time.',
     image: '/images/landing/assistant-coloring.png',
     color: 'secondary',
     accent: '#00CECE',
