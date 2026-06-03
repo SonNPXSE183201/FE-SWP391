@@ -11,7 +11,7 @@ export const AuthLayout = () => {
     <div className="flex min-h-screen bg-bg-primary">
       <div className="flex flex-col flex-1">
         {/* Top navigation bar */}
-        <header className="flex items-center justify-between px-6 py-4 absolute top-0 left-0 right-0 z-10">
+        <header className="flex items-center justify-between px-6 py-4 absolute top-0 left-0 right-0 z-50 pointer-events-auto">
           <Link to="/" className="inline-flex items-center gap-2">
             <Logo size="sm" showText />
           </Link>
