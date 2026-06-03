@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import { User, Mail, Lock, Briefcase, Tags, Loader2, Pen, ArrowRight, ArrowLeft, UserCheck, ShieldCheck } from 'lucide-react';
+import { User, Mail, Lock, Briefcase, Tags, Loader2, Pen, ArrowRight, ArrowLeft, UserCheck } from 'lucide-react';
 import { useRegisterForm } from '../hooks/useRegisterForm';
 import { RegisterInput } from './RegisterInput';
 import { StepIndicator } from './StepIndicator';
+import { RegisterConfirmModal } from './RegisterConfirmModal';
 
 const STEP_LABELS = ['Tài khoản', 'Hồ sơ'];
 
@@ -12,8 +13,11 @@ export const RegisterForm = () => {
     errors,
     isLoading,
     currentStep,
+    showConfirmModal,
     handleChange,
     handleSubmit,
+    confirmSubmit,
+    closeConfirmModal,
     nextStep,
     prevStep,
   } = useRegisterForm();
@@ -25,6 +29,15 @@ export const RegisterForm = () => {
       <div className="absolute bottom-[-200px] left-[-200px] w-[500px] h-[500px] bg-info/8 rounded-full blur-[150px] pointer-events-none" />
 
       <div className="w-full max-w-lg mx-auto relative z-10">
+        {/* Back to landing */}
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-text-muted hover:text-text-secondary text-sm mb-6 group transition-colors duration-200"
+        >
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform duration-200" />
+          <span>Trang chủ</span>
+        </Link>
+
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
@@ -177,37 +190,6 @@ export const RegisterForm = () => {
               hint="Mangaka sẽ tìm kiếm bạn theo các kỹ năng này — cách nhau bằng dấu phẩy"
             />
 
-            {/* Info cards */}
-            <div className="space-y-3">
-              {/* Approval notice */}
-              <div className="bg-warning/5 border border-warning/20 rounded-xl p-4 flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <ShieldCheck className="w-4 h-4 text-warning" />
-                </div>
-                <div>
-                  <p className="text-warning text-xs font-medium mb-0.5">Cần phê duyệt</p>
-                  <p className="text-text-secondary text-xs leading-relaxed">
-                    Sau khi đăng ký, tài khoản cần được <strong className="text-text-primary">Admin phê duyệt</strong> trước khi bạn có thể nhận task từ Mangaka.
-                  </p>
-                </div>
-              </div>
-
-              {/* Work model notice */}
-              <div className="bg-brand/5 border border-brand/20 rounded-xl p-4 flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <svg className="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-brand text-xs font-medium mb-0.5">Mô hình làm việc</p>
-                  <p className="text-text-secondary text-xs leading-relaxed">
-                    Bạn sẽ làm việc trực tiếp với từng Mangaka — nhận task, nộp bài, nhận thanh toán. Không có nhóm hay đội ngũ cố định.
-                  </p>
-                </div>
-              </div>
-            </div>
-
             {/* Buttons */}
             <div className="flex gap-3 pt-3">
               <button
@@ -223,14 +205,7 @@ export const RegisterForm = () => {
                 disabled={isLoading}
                 className="flex-1 bg-gradient-to-r from-brand to-brand-hover hover:from-brand-hover hover:to-brand text-white font-semibold py-3.5 rounded-xl transition-all duration-300 shadow-brand hover:shadow-brand-hover active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none flex items-center justify-center gap-2"
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    Đang xử lý...
-                  </>
-                ) : (
-                  'Gửi đăng ký'
-                )}
+                Gửi đăng ký
               </button>
             </div>
           </div>
@@ -246,16 +221,15 @@ export const RegisterForm = () => {
             Đăng nhập ngay
           </Link>
         </p>
-
-        {/* Terms */}
-        <p className="text-center text-text-muted text-[11px] mt-4 leading-relaxed">
-          Bằng việc đăng ký, bạn đồng ý với{' '}
-          <a href="#" className="text-text-secondary hover:text-text-primary underline">Điều khoản sử dụng</a>
-          {' '}và{' '}
-          <a href="#" className="text-text-secondary hover:text-text-primary underline">Chính sách bảo mật</a>
-          {' '}của chúng tôi.
-        </p>
       </div>
+
+      {/* Confirmation Modal */}
+      <RegisterConfirmModal
+        isOpen={showConfirmModal}
+        isLoading={isLoading}
+        onClose={closeConfirmModal}
+        onConfirm={confirmSubmit}
+      />
     </div>
   );
 };

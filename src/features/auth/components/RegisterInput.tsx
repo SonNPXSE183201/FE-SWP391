@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
+
 interface RegisterInputProps {
   name: string;
   label: string;
@@ -25,6 +28,10 @@ export const RegisterInput = ({
   hint,
   onChange,
 }: RegisterInputProps) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const isPassword = type === 'password';
+  const inputType = isPassword ? (showPassword ? 'text' : 'password') : type;
+
   return (
     <div className="space-y-1.5">
       <label
@@ -46,14 +53,14 @@ export const RegisterInput = ({
         </div>
         <input
           id={`register-${name}`}
-          type={type}
+          type={inputType}
           name={name}
           required={required}
           minLength={minLength}
           value={value}
           onChange={onChange}
-          autoComplete={type === 'password' ? 'new-password' : 'off'}
-          className={`w-full bg-bg-surface/60 border text-text-primary rounded-xl pl-11 pr-4 py-3 
+          autoComplete={isPassword ? 'new-password' : 'off'}
+          className={`w-full bg-bg-surface/60 border text-text-primary rounded-xl pl-11 ${isPassword ? 'pr-11' : 'pr-4'} py-3 
             focus:outline-none focus:ring-2 transition-all duration-200
             placeholder:text-text-muted shadow-inner backdrop-blur-sm
             ${
@@ -63,6 +70,21 @@ export const RegisterInput = ({
             }`}
           placeholder={placeholder}
         />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            className="absolute inset-y-0 right-0 pr-3.5 flex items-center z-10 text-text-muted hover:text-text-secondary transition-colors duration-200"
+            tabIndex={-1}
+            aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+          >
+            {showPassword ? (
+              <EyeOff className="h-[18px] w-[18px]" />
+            ) : (
+              <Eye className="h-[18px] w-[18px]" />
+            )}
+          </button>
+        )}
       </div>
       {error && (
         <p className="text-danger text-xs mt-1 flex items-center gap-1 animate-fade-in">
