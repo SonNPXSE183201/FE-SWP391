@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { RoleGuard } from './routes/RoleGuard';
 import { LandingPage } from './pages/landing/LandingPage';
+import { RegisterPage } from './pages/auth/RegisterPage';
 
 // Placeholder Components
 const LoginPage = () => <div style={{ padding: '20px' }}><h1>Login Page</h1></div>;
@@ -17,6 +18,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
         {/* Mangaka Routes */}
