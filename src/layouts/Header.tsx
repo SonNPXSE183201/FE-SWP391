@@ -1,5 +1,4 @@
 import { useLocation } from 'react-router-dom';
-import { useAuthStore } from '../stores/authStore';
 import {
   Bell,
   Search,
@@ -11,7 +10,7 @@ interface HeaderProps {
   onMobileMenuToggle: () => void;
 }
 
-// Breadcrumb map — maps paths to readable labels
+// Breadcrumb map — maps path segments to readable labels
 const pathLabels: Record<string, string> = {
   mangaka: 'Mangaka',
   assistant: 'Trợ lý vẽ',
@@ -38,7 +37,6 @@ const pathLabels: Record<string, string> = {
 };
 
 export const Header = ({ onMobileMenuToggle }: HeaderProps) => {
-  const { user } = useAuthStore();
   const location = useLocation();
 
   // Generate breadcrumbs from current path
@@ -50,11 +48,15 @@ export const Header = ({ onMobileMenuToggle }: HeaderProps) => {
   }));
 
   return (
-    <header className="main-header" id="main-header">
-      <div className="header__left">
+    <header
+      id="main-header"
+      className="sticky top-0 z-30 flex items-center justify-between h-16 px-6 bg-bg-primary/85 backdrop-blur-xl border-b border-border-custom"
+    >
+      {/* Left side */}
+      <div className="flex items-center gap-4">
         {/* Mobile hamburger */}
         <button
-          className="header__mobile-toggle"
+          className="flex items-center justify-center w-[38px] h-[38px] rounded-lg-custom bg-transparent text-text-secondary border-none cursor-pointer lg:hidden hover:bg-bg-surface hover:text-text-primary transition-all duration-200"
           onClick={onMobileMenuToggle}
           aria-label="Mở menu"
         >
@@ -62,15 +64,17 @@ export const Header = ({ onMobileMenuToggle }: HeaderProps) => {
         </button>
 
         {/* Breadcrumb */}
-        <nav className="header__breadcrumb" aria-label="Breadcrumb">
+        <nav className="flex items-center gap-1 text-sm" aria-label="Breadcrumb">
           {breadcrumbs.map((crumb, index) => (
-            <span key={crumb.path} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span key={crumb.path} className="flex items-center gap-1">
               {index > 0 && (
-                <ChevronRight size={14} className="header__breadcrumb-separator" />
+                <ChevronRight size={14} className="text-text-muted" />
               )}
               <span
-                className={`header__breadcrumb-item ${
-                  crumb.isLast ? 'header__breadcrumb-item--active' : ''
+                className={`transition-colors duration-150 ${
+                  crumb.isLast
+                    ? 'text-text-primary font-medium'
+                    : 'text-text-muted hover:text-text-secondary'
                 }`}
               >
                 {crumb.label}
@@ -80,50 +84,30 @@ export const Header = ({ onMobileMenuToggle }: HeaderProps) => {
         </nav>
       </div>
 
-      <div className="header__right">
-        {/* Search (desktop) */}
-        <button className="header__search" aria-label="Tìm kiếm">
+      {/* Right side */}
+      <div className="flex items-center gap-2">
+        {/* Search (hidden on mobile) */}
+        <button
+          className="hidden md:flex items-center gap-2 px-3.5 py-2 bg-bg-surface border border-border-custom rounded-lg-custom text-text-muted text-[13px] cursor-pointer min-w-[220px] hover:border-brand hover:bg-bg-secondary transition-all duration-200"
+          aria-label="Tìm kiếm"
+        >
           <Search size={16} />
           <span>Tìm kiếm...</span>
-          <span className="header__search-shortcut">⌘K</span>
+          <span className="ml-auto inline-flex items-center px-1.5 py-0.5 rounded bg-bg-primary border border-border-custom text-[11px] font-mono text-text-muted">
+            ⌘K
+          </span>
         </button>
 
         {/* Notifications */}
         <button
-          className="header__icon-btn"
-          aria-label="Thông báo"
           id="notification-bell"
+          className="relative flex items-center justify-center w-[38px] h-[38px] rounded-lg-custom bg-transparent text-text-secondary border-none cursor-pointer hover:bg-bg-surface hover:text-text-primary transition-all duration-200"
+          aria-label="Thông báo"
         >
           <Bell size={20} />
-          {/* Notification dot — conditionally rendered */}
-          <span className="header__notification-dot" />
+          {/* Notification dot */}
+          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-danger border-2 border-bg-primary animate-pulse" />
         </button>
-
-        {/* User avatar — visible only on small screens where sidebar is hidden */}
-        {user && (
-          <div
-            className="header__icon-btn"
-            style={{ display: 'none' }}
-            aria-label="Tài khoản"
-          >
-            <div
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #6C5CE7, #00CECE)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 11,
-                fontWeight: 700,
-                color: '#fff',
-              }}
-            >
-              {user.fullName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
-            </div>
-          </div>
-        )}
       </div>
     </header>
   );

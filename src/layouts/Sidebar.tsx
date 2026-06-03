@@ -19,7 +19,6 @@ import {
   PanelLeft,
   Palette,
   BriefcaseBusiness,
-  UserCircle,
   Sparkles,
   LogOut,
   Settings,
@@ -179,28 +178,30 @@ export const Sidebar = ({ collapsed, mobileOpen, onToggleCollapse, onCloseMobile
     .join('')
     .toUpperCase();
 
-  const sidebarClasses = [
-    'sidebar',
-    collapsed ? 'sidebar--collapsed' : '',
-    mobileOpen ? 'sidebar--mobile-open' : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
-
   return (
     <>
       {/* Mobile overlay */}
-      <div
-        className={`sidebar-overlay ${mobileOpen ? 'sidebar-overlay--visible' : ''}`}
-        onClick={onCloseMobile}
-      />
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-[35] bg-black/50 backdrop-blur-sm lg:hidden"
+          onClick={onCloseMobile}
+        />
+      )}
 
-      <aside className={sidebarClasses} id="main-sidebar">
+      <aside
+        id="main-sidebar"
+        className={`
+          fixed top-0 left-0 z-40 flex flex-col h-screen bg-bg-primary border-r border-border-custom
+          transition-all duration-300 ease-in-out
+          ${collapsed ? 'w-[72px]' : 'w-[260px]'}
+          ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
+        `}
+      >
         {/* Sidebar Header */}
-        <div className="sidebar__header">
+        <div className={`flex items-center h-16 px-4 border-b border-border-custom flex-shrink-0 ${collapsed ? 'justify-center' : 'justify-between'}`}>
           {!collapsed && <Logo size="sm" showText />}
           <button
-            className="sidebar__toggle"
+            className="flex items-center justify-center w-8 h-8 rounded-lg-custom bg-transparent text-text-secondary hover:bg-bg-surface hover:text-text-primary transition-all duration-200 border-none cursor-pointer"
             onClick={onToggleCollapse}
             aria-label={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
           >
@@ -209,10 +210,14 @@ export const Sidebar = ({ collapsed, mobileOpen, onToggleCollapse, onCloseMobile
         </div>
 
         {/* Navigation */}
-        <nav className="sidebar__nav">
+        <nav className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-bg-surface">
           {navSections.map((section) => (
-            <div key={section.title} className="nav-section">
-              <div className="nav-section__title">{section.title}</div>
+            <div key={section.title} className="mb-6">
+              {!collapsed && (
+                <div className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+                  {section.title}
+                </div>
+              )}
               {section.items.map((item) => {
                 const isActive =
                   item.path === `/${user.role.toLowerCase()}`
@@ -223,14 +228,28 @@ export const Sidebar = ({ collapsed, mobileOpen, onToggleCollapse, onCloseMobile
                   <NavLink
                     key={item.path}
                     to={item.path}
-                    className={`nav-item ${isActive ? 'nav-item--active' : ''}`}
-                    data-tooltip={item.label}
+                    title={collapsed ? item.label : undefined}
+                    className={`
+                      group flex items-center gap-2 my-0.5 rounded-lg-custom text-sm font-medium
+                      transition-all duration-200 no-underline border border-transparent
+                      ${collapsed ? 'justify-center p-2.5' : 'px-4 py-2.5'}
+                      ${isActive
+                        ? 'bg-brand/[0.12] text-brand border-brand/20 hover:bg-brand/[0.18] hover:text-brand-hover'
+                        : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'
+                      }
+                    `}
                     onClick={onCloseMobile}
                   >
-                    <span className="nav-item__icon">{item.icon}</span>
-                    <span className="nav-item__label">{item.label}</span>
-                    {item.badge && item.badge > 0 && (
-                      <span className="nav-item__badge">{item.badge > 99 ? '99+' : item.badge}</span>
+                    <span className="flex items-center justify-center shrink-0 w-5 h-5">
+                      {item.icon}
+                    </span>
+                    {!collapsed && (
+                      <span className="flex-1 truncate">{item.label}</span>
+                    )}
+                    {!collapsed && item.badge && item.badge > 0 && (
+                      <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-danger text-white text-[11px] font-bold shrink-0">
+                        {item.badge > 99 ? '99+' : item.badge}
+                      </span>
                     )}
                   </NavLink>
                 );
@@ -239,33 +258,59 @@ export const Sidebar = ({ collapsed, mobileOpen, onToggleCollapse, onCloseMobile
           ))}
         </nav>
 
-        {/* Footer — User + Settings + Logout */}
-        <div className="sidebar__footer">
+        {/* Footer — Settings + User + Logout */}
+        <div className="p-2 border-t border-border-custom flex-shrink-0">
+          {/* Settings */}
           <NavLink
             to={`/${user.role.toLowerCase()}/settings`}
-            className={`nav-item ${location.pathname.includes('/settings') ? 'nav-item--active' : ''}`}
-            data-tooltip="Cài đặt"
+            title={collapsed ? 'Cài đặt' : undefined}
+            className={`
+              flex items-center gap-2 rounded-lg-custom text-sm font-medium transition-all duration-200 no-underline border border-transparent
+              ${collapsed ? 'justify-center p-2.5' : 'px-4 py-2.5'}
+              ${location.pathname.includes('/settings')
+                ? 'bg-brand/[0.12] text-brand border-brand/20'
+                : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'
+              }
+            `}
           >
-            <span className="nav-item__icon"><Settings size={20} /></span>
-            <span className="nav-item__label">Cài đặt</span>
+            <span className="flex items-center justify-center shrink-0 w-5 h-5">
+              <Settings size={20} />
+            </span>
+            {!collapsed && <span className="flex-1 truncate">Cài đặt</span>}
           </NavLink>
 
-          <div className="sidebar__user" onClick={() => { /* navigate to profile */ }}>
-            <div className="sidebar__avatar">{initials}</div>
-            <div className="sidebar__user-info">
-              <div className="sidebar__user-name">{user.fullName}</div>
-              <div className="sidebar__user-role">{roleDisplayNames[user.role]}</div>
+          {/* User info */}
+          <div className={`flex items-center gap-2 rounded-lg-custom cursor-pointer transition-colors duration-200 hover:bg-bg-secondary mt-1 ${collapsed ? 'justify-center p-2' : 'px-4 py-2'}`}>
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand to-secondary flex items-center justify-center text-sm font-bold text-white shrink-0">
+              {initials}
             </div>
+            {!collapsed && (
+              <div className="flex-1 min-w-0 overflow-hidden">
+                <div className="text-[13px] font-semibold text-text-primary truncate">
+                  {user.fullName}
+                </div>
+                <div className="text-[11px] text-text-muted">
+                  {roleDisplayNames[user.role]}
+                </div>
+              </div>
+            )}
           </div>
 
+          {/* Logout */}
           <button
-            className="nav-item"
             onClick={() => logout()}
-            data-tooltip="Đăng xuất"
-            style={{ width: '100%', border: 'none', marginTop: '2px' }}
+            title={collapsed ? 'Đăng xuất' : undefined}
+            className={`
+              flex items-center gap-2 w-full rounded-lg-custom text-sm font-medium
+              transition-all duration-200 border-none cursor-pointer bg-transparent mt-0.5
+              text-text-secondary hover:bg-danger/10 hover:text-danger
+              ${collapsed ? 'justify-center p-2.5' : 'px-4 py-2.5'}
+            `}
           >
-            <span className="nav-item__icon"><LogOut size={20} /></span>
-            <span className="nav-item__label" style={{ color: 'var(--color-danger)' }}>Đăng xuất</span>
+            <span className="flex items-center justify-center shrink-0 w-5 h-5">
+              <LogOut size={20} />
+            </span>
+            {!collapsed && <span className="flex-1 text-left truncate">Đăng xuất</span>}
           </button>
         </div>
       </aside>
