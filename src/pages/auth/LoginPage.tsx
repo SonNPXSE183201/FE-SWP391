@@ -70,11 +70,6 @@ export const LoginPage: React.FC = () => {
 
         {/* Right Column - Login Form */}
         <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 sm:p-12">
-          {/* Mobile Logo */}
-          <div className="lg:hidden mb-12 self-start sm:self-center animate-fade-in-down">
-            <Logo />
-          </div>
-
           <LoginForm />
         </div>
       </div>
