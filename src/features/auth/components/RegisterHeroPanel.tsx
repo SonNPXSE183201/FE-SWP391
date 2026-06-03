@@ -1,47 +1,44 @@
-import { useState, useEffect } from 'react';
+import { Palette, Clock, Wallet, Star } from 'lucide-react';
 
-const TESTIMONIALS = [
+const FEATURES = [
   {
-    quote: 'Manga Studio giúp tôi kết nối với các Mangaka hàng đầu và phát triển kỹ năng vượt bậc.',
-    author: 'Minh Anh',
-    role: 'Background Artist',
-    avatar: '🎨',
+    icon: Palette,
+    title: 'Chọn task theo chuyên môn',
+    desc: 'Inking, Coloring, Background, Screentone',
+    color: 'brand',
   },
   {
-    quote: 'Hệ thống phân công task rõ ràng, thanh toán nhanh chóng — môi trường làm việc chuyên nghiệp.',
-    author: 'Hiro Tanaka',
-    role: 'Inking Specialist',
-    avatar: '✒️',
+    icon: Clock,
+    title: 'Lịch trình linh hoạt',
+    desc: 'Freelancer — tự sắp xếp thời gian',
+    color: 'info',
   },
   {
-    quote: 'Từ freelancer đến assistant chính thức, Manga Studio thay đổi sự nghiệp của tôi hoàn toàn.',
-    author: 'Sakura Đào',
-    role: 'Colorist & Screentoner',
-    avatar: '🌸',
+    icon: Wallet,
+    title: 'Thanh toán bảo đảm',
+    desc: 'Thanh toán tự động khi task được duyệt',
+    color: 'success',
+  },
+  {
+    icon: Star,
+    title: 'Xây dựng uy tín',
+    desc: 'Hồ sơ & đánh giá từ các Mangaka',
+    color: 'warning',
   },
 ];
 
-const BENEFITS = [
-  { icon: '💰', text: 'Nhận nhuận bút (Genkoūryō) minh bạch' },
-  { icon: '🎯', text: 'Nhận task phù hợp chuyên môn' },
-  { icon: '📈', text: 'Xây dựng hồ sơ chuyên nghiệp' },
-  { icon: '🤝', text: 'Cộng tác với Mangaka hàng đầu' },
-];
+const COLOR_MAP: Record<string, { bg: string; text: string; border: string }> = {
+  brand: { bg: 'bg-brand/10', text: 'text-brand', border: 'border-brand/20' },
+  info: { bg: 'bg-info/10', text: 'text-info', border: 'border-info/20' },
+  success: { bg: 'bg-success/10', text: 'text-success', border: 'border-success/20' },
+  warning: { bg: 'bg-warning/10', text: 'text-warning', border: 'border-warning/20' },
+};
 
 interface RegisterHeroPanelProps {
   currentStep: number;
 }
 
 export const RegisterHeroPanel = ({ currentStep }: RegisterHeroPanelProps) => {
-  const [activeTestimonial, setActiveTestimonial] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveTestimonial((prev) => (prev + 1) % TESTIMONIALS.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <div className="hidden lg:flex lg:w-[48%] relative overflow-hidden">
       {/* Background image layers */}
@@ -51,97 +48,125 @@ export const RegisterHeroPanel = ({ currentStep }: RegisterHeroPanelProps) => {
           alt="Manga creation workspace"
           className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-1000"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f1e] via-[#0a0f1e]/60 to-[#0a0f1e]/20" />
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#0a0f1e]/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-bg-primary via-bg-primary/80 to-bg-primary/30" />
+        <div className="absolute inset-0 bg-gradient-to-r from-bg-primary/60 to-transparent" />
+        <div className="absolute inset-0 bg-bg-primary/20" />
       </div>
 
+      {/* Decorative elements */}
+      <div className="absolute top-20 right-10 w-32 h-32 rounded-full bg-brand/5 blur-[80px]" />
+      <div className="absolute bottom-40 left-10 w-40 h-40 rounded-full bg-info/5 blur-[100px]" />
+
       {/* Content overlay */}
-      <div className="relative z-20 flex flex-col justify-between p-10 w-full">
+      <div className="relative z-20 flex flex-col justify-between p-10 xl:p-12 w-full h-full">
         {/* Top branding */}
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-              </svg>
-            </div>
-            <span className="text-white/80 font-semibold text-sm tracking-wider uppercase">Manga Studio</span>
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-brand to-brand-hover flex items-center justify-center shadow-brand ring-1 ring-white/10">
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-white font-bold text-[15px] tracking-wide leading-tight">Manga Studio</span>
+            <span className="text-white/30 text-[10px] font-medium tracking-[0.15em] uppercase leading-tight">Xưởng vẽ Manga</span>
           </div>
         </div>
 
-        {/* Main heading */}
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-4xl xl:text-5xl font-extrabold text-white leading-tight drop-shadow-lg">
-              Sáng tạo cùng
-              <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-blue-400">
-                Manga Studio
+        {/* Center — Main content */}
+        <div className="space-y-7 -mt-4">
+          {/* Headline */}
+          <div className="space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="h-px w-12 bg-gradient-to-r from-brand to-transparent" />
+              <span className="text-brand/60 text-[11px] font-medium tracking-[0.25em] uppercase">
+                アシスタント登録
               </span>
-            </h2>
-            <p className="text-slate-300/90 text-base mt-4 max-w-sm leading-relaxed">
-              Gia nhập đội ngũ Assistant — trở thành cánh tay phải đắc lực cho các Mangaka hàng đầu.
+            </div>
+
+            <div>
+              <h2 className="text-[2.5rem] xl:text-[3rem] font-extrabold text-white leading-[1.1] tracking-tight">
+                <span className="text-white/90">Cộng tác</span>
+                <br />
+                <span className="text-white/60 font-bold">cùng </span>
+                <span className="relative inline-block">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand via-[#9b7dff] to-info">
+                    Mangaka
+                  </span>
+                  <span className="absolute -bottom-1.5 left-0 right-0 h-[2px] bg-gradient-to-r from-brand/60 via-[#9b7dff]/40 to-info/60 rounded-full" />
+                </span>
+              </h2>
+            </div>
+
+            <p className="text-white/40 text-[13px] max-w-sm leading-[1.7] font-light">
+              Đăng ký tài khoản{' '}
+              <span className="text-white/70 font-medium border-b border-white/10 pb-px">Assistant</span>
+              {' '}— nhận task vẽ trực tiếp từ các Mangaka, làm việc tự do với lịch trình linh hoạt.
             </p>
           </div>
 
-          {/* Benefits list */}
+          {/* Feature highlights */}
           <div className="grid grid-cols-2 gap-2.5">
-            {BENEFITS.map((benefit, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-2.5 bg-white/5 backdrop-blur-sm rounded-lg px-3 py-2.5 border border-white/5"
-              >
-                <span className="text-lg">{benefit.icon}</span>
-                <span className="text-slate-300 text-xs font-medium leading-tight">{benefit.text}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Testimonial carousel */}
-          <div className="bg-white/5 backdrop-blur-md rounded-xl p-5 border border-white/10 shadow-xl">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">{TESTIMONIALS[activeTestimonial].avatar}</span>
-              <div className="flex-1">
-                <p className="text-slate-200 text-sm italic leading-relaxed mb-3">
-                  "{TESTIMONIALS[activeTestimonial].quote}"
-                </p>
-                <div>
-                  <p className="text-white text-sm font-semibold">{TESTIMONIALS[activeTestimonial].author}</p>
-                  <p className="text-emerald-400/80 text-xs">{TESTIMONIALS[activeTestimonial].role}</p>
-                </div>
-              </div>
-            </div>
-            {/* Dots */}
-            <div className="flex gap-1.5 mt-4">
-              {TESTIMONIALS.map((_, i) => (
-                <button
+            {FEATURES.map((feature, i) => {
+              const colors = COLOR_MAP[feature.color];
+              const Icon = feature.icon;
+              return (
+                <div
                   key={i}
-                  onClick={() => setActiveTestimonial(i)}
-                  className={`h-1 rounded-full transition-all duration-300 ${
-                    i === activeTestimonial ? 'w-6 bg-emerald-400' : 'w-1.5 bg-slate-600 hover:bg-slate-500'
-                  }`}
-                  aria-label={`Testimonial ${i + 1}`}
-                />
-              ))}
-            </div>
+                  className={`group flex flex-col gap-2.5 rounded-xl px-4 py-3.5 border backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 ${colors.border} bg-white/[0.02] hover:bg-white/[0.05]`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-8 h-8 rounded-lg ${colors.bg} flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110`}>
+                      <Icon className={`w-4 h-4 ${colors.text}`} />
+                    </div>
+                    <span className={`text-[10px] font-bold tracking-wider uppercase ${colors.text} opacity-50`}>
+                      0{i + 1}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-white/85 text-[13px] font-semibold leading-tight">{feature.title}</p>
+                    <p className="text-white/30 text-[11px] mt-1 leading-snug">{feature.desc}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Bottom stats */}
-        <div className="flex items-center gap-6 pt-4">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-white">500+</p>
-            <p className="text-slate-400 text-xs">Assistants</p>
-          </div>
-          <div className="w-px h-8 bg-slate-700" />
-          <div className="text-center">
-            <p className="text-2xl font-bold text-white">120+</p>
-            <p className="text-slate-400 text-xs">Mangaka</p>
-          </div>
-          <div className="w-px h-8 bg-slate-700" />
-          <div className="text-center">
-            <p className="text-2xl font-bold text-white">2K+</p>
-            <p className="text-slate-400 text-xs">Tasks hoàn thành</p>
+        {/* Bottom — Workflow pipeline */}
+        <div className="pt-6">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-col items-center gap-1">
+              <div className="w-10 h-10 rounded-lg bg-brand/10 flex items-center justify-center border border-brand/20">
+                <span className="text-lg">🎨</span>
+              </div>
+              <span className="text-[10px] text-white/40 font-medium">Mangaka</span>
+            </div>
+
+            <div className="flex-1 flex items-center gap-1">
+              <div className="flex-1 h-px bg-gradient-to-r from-brand/50 to-brand/20" />
+              <span className="text-[10px] text-brand px-1.5 py-0.5 rounded-full bg-brand/10 font-medium whitespace-nowrap">Tạo task</span>
+              <div className="flex-1 h-px bg-gradient-to-r from-brand/20 to-success/50" />
+            </div>
+
+            <div className="flex flex-col items-center gap-1">
+              <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center border border-success/20">
+                <span className="text-lg">✍️</span>
+              </div>
+              <span className="text-[10px] text-white/40 font-medium">Assistant</span>
+            </div>
+
+            <div className="flex-1 flex items-center gap-1">
+              <div className="flex-1 h-px bg-gradient-to-r from-success/50 to-success/20" />
+              <span className="text-[10px] text-success px-1.5 py-0.5 rounded-full bg-success/10 font-medium whitespace-nowrap">Nộp bài</span>
+              <div className="flex-1 h-px bg-gradient-to-r from-success/20 to-warning/50" />
+            </div>
+
+            <div className="flex flex-col items-center gap-1">
+              <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center border border-warning/20">
+                <span className="text-lg">💰</span>
+              </div>
+              <span className="text-[10px] text-white/40 font-medium">Nhận tiền</span>
+            </div>
           </div>
         </div>
       </div>

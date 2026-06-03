@@ -1,13 +1,10 @@
-import { useState } from 'react';
 import { RegisterForm, RegisterHeroPanel } from '@/features/auth';
 
 export const RegisterPage = () => {
-  const [currentStep, setCurrentStep] = useState(0);
-
   return (
-    <div className="min-h-screen bg-[#0a0f1e] text-slate-200 flex">
-      {/* Left Side — Hero Panel with images & testimonials */}
-      <RegisterHeroPanel currentStep={currentStep} />
+    <div className="min-h-screen bg-bg-primary text-text-primary flex">
+      {/* Left Side — Hero Panel with workflow & testimonials */}
+      <RegisterHeroPanel currentStep={0} />
 
       {/* Right Side — Registration Form */}
       <RegisterForm />
