@@ -215,7 +215,7 @@ export const FeaturesSection = () => {
   // Auto-scroll: scroll one card every 3s, reverse at edges
   const autoDirectionRef = useRef<'left' | 'right'>('right');
   const pausedRef = useRef(false);
-  const resumeTimerRef = useRef<number>();
+  const resumeTimerRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     if (!isVisible) return;

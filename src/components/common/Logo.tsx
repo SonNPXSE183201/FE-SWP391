@@ -22,50 +22,43 @@ export const Logo = ({ size = 'md', showText = true, className = '' }: LogoProps
         viewBox="0 0 48 48"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        aria-label="MangaPress Logo"
+        aria-label="Inku Logo"
       >
         <defs>
           <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" style={{ stopColor: '#6C5CE7', stopOpacity: 1 }} />
-            <stop offset="50%" style={{ stopColor: '#00CECE', stopOpacity: 1 }} />
+            <stop offset="100%" style={{ stopColor: '#00CECE', stopOpacity: 1 }} />
+          </linearGradient>
+          <linearGradient id="logoInkDrop" x1="50%" y1="0%" x2="50%" y2="100%">
+            <stop offset="0%" style={{ stopColor: '#8B7CF0', stopOpacity: 1 }} />
             <stop offset="100%" style={{ stopColor: '#6C5CE7', stopOpacity: 1 }} />
           </linearGradient>
-          <linearGradient id="penGradLogo" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style={{ stopColor: '#ffffff', stopOpacity: 0.95 }} />
-            <stop offset="100%" style={{ stopColor: '#ede6ff', stopOpacity: 0.8 }} />
+          <linearGradient id="logoNibGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style={{ stopColor: '#00CECE', stopOpacity: 1 }} />
+            <stop offset="100%" style={{ stopColor: '#00A5A5', stopOpacity: 1 }} />
           </linearGradient>
-          <filter id="logoGlow">
-            <feGaussianBlur stdDeviation="1.5" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
         </defs>
         {/* Background */}
-        <rect x="2" y="2" width="44" height="44" rx="12" fill="#0F0F12" />
-        <rect x="2" y="2" width="44" height="44" rx="12" stroke="url(#logoGrad)" strokeWidth="1.5" fill="none" opacity="0.4" />
-        {/* Comic panel frame */}
-        <g filter="url(#logoGlow)">
-          <rect x="10" y="9" width="28" height="24" rx="3" stroke="url(#logoGrad)" strokeWidth="2" fill="none" opacity="0.6" />
-          <line x1="24" y1="9" x2="24" y2="33" stroke="url(#logoGrad)" strokeWidth="1.2" opacity="0.3" />
-          <line x1="10" y1="21" x2="38" y2="21" stroke="url(#logoGrad)" strokeWidth="1.2" opacity="0.3" />
-        </g>
+        <rect x="1" y="1" width="46" height="46" rx="14" fill="#0F0F12" />
+        <rect x="1" y="1" width="46" height="46" rx="14" stroke="url(#logoGrad)" strokeWidth="1.5" fill="none" opacity="0.35" />
+        {/* Ink drop */}
+        <path d="M24 8 C24 8, 14 20, 14 27 C14 32.5 18.5 37 24 37 C29.5 37 34 32.5 34 27 C34 20 24 8 24 8Z" fill="url(#logoInkDrop)" opacity="0.9" />
+        <ellipse cx="20" cy="24" rx="3.5" ry="5" fill="white" opacity="0.1" transform="rotate(-15 20 24)" />
         {/* Pen nib */}
-        <g filter="url(#logoGlow)">
-          <path d="M28 18 L36 38 L32 38 L30 32 L26 32 L24 38 L20 38 L28 18Z" fill="url(#logoGrad)" opacity="0.9" />
-          <path d="M28 22 L31 32 L25 32 Z" fill="url(#penGradLogo)" opacity="0.3" />
-        </g>
-        {/* Accent dots */}
-        <circle cx="16" cy="15" r="1.5" fill="#00CECE" opacity="0.8" />
-        <circle cx="33" cy="13" r="1" fill="#6C5CE7" opacity="0.6" />
+        <path d="M24 6 L27 14 L24 12.5 L21 14 Z" fill="url(#logoNibGrad)" opacity="0.95" />
+        {/* Panel lines */}
+        <line x1="18" y1="26" x2="30" y2="26" stroke="white" strokeWidth="0.6" opacity="0.15" />
+        <line x1="24" y1="22" x2="24" y2="33" stroke="white" strokeWidth="0.6" opacity="0.12" />
+        {/* Sparkles */}
+        <circle cx="31" cy="15" r="1.2" fill="#00CECE" opacity="0.7" />
+        <circle cx="15" cy="18" r="0.8" fill="#6C5CE7" opacity="0.5" />
       </svg>
 
       {/* Logo Text */}
       {showText && (
         <span className={`${text} font-bold tracking-tight`}>
-          <span className="text-text-primary">Manga</span>
-          <span className="bg-gradient-to-r from-brand to-secondary bg-clip-text text-transparent">Press</span>
+          <span className="text-text-primary">Ink</span>
+          <span className="bg-gradient-to-r from-brand to-secondary bg-clip-text text-transparent">u</span>
         </span>
       )}
     </div>
