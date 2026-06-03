@@ -29,15 +29,6 @@ export const RegisterForm = () => {
       <div className="absolute bottom-[-200px] left-[-200px] w-[500px] h-[500px] bg-info/8 rounded-full blur-[150px] pointer-events-none animate-float" style={{ animationDelay: '5s' }} />
 
       <div className="w-full max-w-lg mx-auto relative z-10">
-        {/* Back to landing — slide in */}
-        <Link
-          to="/"
-          className="inline-flex items-center gap-1.5 text-text-muted hover:text-text-secondary text-sm mb-6 group transition-colors duration-200 animate-fade-in-down"
-          style={{ animationDelay: '0.1s' }}
-        >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform duration-200" />
-          <span>Trang chủ</span>
-        </Link>
 
         {/* Header — staggered entrance */}
         <div className="mb-6">
