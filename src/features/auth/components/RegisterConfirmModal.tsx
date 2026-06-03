@@ -41,16 +41,22 @@ export const RegisterConfirmModal = ({
         if (e.target === overlayRef.current && !isLoading) onClose();
       }}
     >
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-md animate-fade-in" />
+      {/* Backdrop — fade in */}
+      <div
+        className="absolute inset-0 bg-black/70 backdrop-blur-md"
+        style={{ animation: 'fade-in 0.2s ease-out both' }}
+      />
 
-      {/* Modal */}
-      <div className="relative w-full max-w-md bg-bg-secondary border border-border-custom rounded-2xl shadow-2xl animate-fade-in ring-1 ring-white/5">
+      {/* Modal — scale + fade in */}
+      <div
+        className="relative w-full max-w-md bg-bg-secondary border border-border-custom rounded-2xl shadow-2xl ring-1 ring-white/5"
+        style={{ animation: 'modal-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) both' }}
+      >
         {/* Close button */}
         <button
           onClick={onClose}
           disabled={isLoading}
-          className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-bg-surface/50 border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-bg-surface transition-all duration-200 disabled:opacity-40 disabled:pointer-events-none"
+          className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-bg-surface/50 border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-bg-surface hover:rotate-90 transition-all duration-300 disabled:opacity-40 disabled:pointer-events-none"
           aria-label="Đóng"
         >
           <X className="w-4 h-4" />
@@ -59,7 +65,7 @@ export const RegisterConfirmModal = ({
         {/* Header */}
         <div className="px-6 pt-6 pb-4">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center animate-scale-in" style={{ animationDelay: '0.15s' }}>
               <CheckCircle2 className="w-5 h-5 text-brand" />
             </div>
             <div>
@@ -72,10 +78,13 @@ export const RegisterConfirmModal = ({
         {/* Divider */}
         <div className="h-px bg-border-custom" />
 
-        {/* Info cards */}
+        {/* Info cards — staggered */}
         <div className="px-6 py-5 space-y-3">
           {/* Approval notice */}
-          <div className="bg-warning/5 border border-warning/15 rounded-xl p-4 flex items-start gap-3">
+          <div
+            className="bg-warning/5 border border-warning/15 rounded-xl p-4 flex items-start gap-3 animate-fade-in-up"
+            style={{ animationDelay: '0.2s' }}
+          >
             <div className="w-9 h-9 rounded-lg bg-warning/10 flex items-center justify-center flex-shrink-0 mt-0.5">
               <ShieldCheck className="w-[18px] h-[18px] text-warning" />
             </div>
@@ -89,7 +98,10 @@ export const RegisterConfirmModal = ({
           </div>
 
           {/* Work model notice */}
-          <div className="bg-brand/5 border border-brand/15 rounded-xl p-4 flex items-start gap-3">
+          <div
+            className="bg-brand/5 border border-brand/15 rounded-xl p-4 flex items-start gap-3 animate-fade-in-up"
+            style={{ animationDelay: '0.3s' }}
+          >
             <div className="w-9 h-9 rounded-lg bg-brand/10 flex items-center justify-center flex-shrink-0 mt-0.5">
               <Info className="w-[18px] h-[18px] text-brand" />
             </div>
@@ -102,7 +114,7 @@ export const RegisterConfirmModal = ({
           </div>
 
           {/* Terms */}
-          <p className="text-text-muted text-[11px] leading-relaxed pt-1">
+          <p className="text-text-muted text-[11px] leading-relaxed pt-1 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
             Bằng việc xác nhận, bạn đồng ý với{' '}
             <a href="#" className="text-text-secondary hover:text-text-primary underline transition-colors">
               Điều khoản sử dụng
@@ -118,13 +130,13 @@ export const RegisterConfirmModal = ({
         {/* Divider */}
         <div className="h-px bg-border-custom" />
 
-        {/* Actions */}
-        <div className="px-6 py-4 flex gap-3">
+        {/* Actions — slide up */}
+        <div className="px-6 py-4 flex gap-3 animate-fade-in-up" style={{ animationDelay: '0.45s' }}>
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 px-4 py-3 rounded-xl border border-border-custom text-text-secondary hover:bg-bg-surface/50 hover:border-text-muted font-medium text-sm transition-all duration-200 disabled:opacity-40 disabled:pointer-events-none"
+            className="flex-1 px-4 py-3 rounded-xl border border-border-custom text-text-secondary hover:bg-bg-surface/50 hover:border-text-muted hover:-translate-y-0.5 active:translate-y-0 font-medium text-sm transition-all duration-200 disabled:opacity-40 disabled:pointer-events-none"
           >
             Quay lại
           </button>
@@ -132,7 +144,7 @@ export const RegisterConfirmModal = ({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className="flex-1 bg-gradient-to-r from-brand to-brand-hover hover:from-brand-hover hover:to-brand text-white font-semibold py-3 rounded-xl transition-all duration-300 shadow-brand hover:shadow-brand-hover active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none flex items-center justify-center gap-2 text-sm"
+            className="flex-1 bg-gradient-to-r from-brand to-brand-hover hover:from-brand-hover hover:to-brand text-white font-semibold py-3 rounded-xl transition-all duration-300 shadow-brand hover:shadow-brand-hover hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none flex items-center justify-center gap-2 text-sm"
           >
             {isLoading ? (
               <>
