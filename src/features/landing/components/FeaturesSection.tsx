@@ -41,7 +41,7 @@ const FeatureCard = ({ title, description, icon, image, imageAlt }: FeatureCardP
 const FEATURES = [
   {
     title: 'Quản lý Bản thảo',
-    description: 'Mangaka và Assistant dễ dàng upload, phân chia Task, và theo dõi tiến độ từng trang truyện theo thời gian thực.',
+    description: 'Mangaka và Trợ lý vẽ dễ dàng upload, phân chia Task, và theo dõi tiến độ từng trang truyện theo thời gian thực.',
     image: '/images/landing/feature-manuscript.png',
     imageAlt: 'Manga manuscript management workspace',
     icon: (
@@ -81,7 +81,7 @@ const FEATURES = [
   },
   {
     title: 'Cộng tác thời gian thực',
-    description: 'Mangaka, Editor và Assistant kết nối liền mạch trên cùng nền tảng với thông báo real-time qua SignalR.',
+    description: 'Mangaka, Editor và Trợ lý vẽ kết nối liền mạch trên cùng nền tảng với thông báo real-time qua SignalR.',
     image: '/images/landing/feature-collaboration.png',
     imageAlt: 'Real-time team collaboration on manga project',
     icon: (
@@ -134,7 +134,7 @@ const FEATURES = [
   },
   {
     title: 'Phân công & Nghiệm thu',
-    description: 'Mangaka tạo Task, chọn vùng cần vẽ, giao cho Assistant. Theo dõi version độc lập, nghiệm thu trực quan.',
+    description: 'Mangaka tạo Task, chọn vùng cần vẽ, giao cho Trợ lý vẽ. Theo dõi version độc lập, nghiệm thu trực quan.',
     image: '/images/landing/feature-task-assign.png',
     imageAlt: 'Task assignment and region-based review',
     icon: (
