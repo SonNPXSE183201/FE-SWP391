@@ -20,6 +20,7 @@ export const useRegisterForm = () => {
   const [formData, setFormData] = useState<RegisterFormData>(INITIAL_FORM_DATA);
   const [errors, setErrors] = useState<RegisterFormErrors>({});
   const [currentStep, setCurrentStep] = useState(0);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -74,11 +75,13 @@ export const useRegisterForm = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 0));
   }, []);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateStep(currentStep)) return;
+    setShowConfirmModal(true);
+  }, [currentStep, validateStep]);
 
+  const confirmSubmit = useCallback(async () => {
     try {
       setIsLoading(true);
       const tagsArray = formData.specialtyTags
@@ -95,6 +98,7 @@ export const useRegisterForm = () => {
         specialtyTags: tagsArray,
       });
 
+      setShowConfirmModal(false);
       toast.success('Đăng ký thành công! Vui lòng chờ Admin duyệt tài khoản.');
       navigate('/login');
     } catch (error: unknown) {
@@ -103,15 +107,22 @@ export const useRegisterForm = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [formData, currentStep, validateStep, navigate]);
+  }, [formData, navigate]);
+
+  const closeConfirmModal = useCallback(() => {
+    if (!isLoading) setShowConfirmModal(false);
+  }, [isLoading]);
 
   return {
     formData,
     errors,
     isLoading,
     currentStep,
+    showConfirmModal,
     handleChange,
     handleSubmit,
+    confirmSubmit,
+    closeConfirmModal,
     nextStep,
     prevStep,
   };
