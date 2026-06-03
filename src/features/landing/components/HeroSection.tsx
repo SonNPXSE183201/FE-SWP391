@@ -290,7 +290,7 @@ export const HeroSection = ({ onGetStarted, onLearnMore }: HeroSectionProps) => 
           >
             <p className="text-[clamp(15px,1.1vw,18px)] text-text-secondary leading-[1.8]">
               <TypewriterText
-                text="Digital Workspace chuyên nghiệp cho Mangaka, Editor và Assistant — quản lý quy trình từ bản thảo đến xuất bản, tài chính minh bạch trong từng giao dịch."
+                text="Digital Workspace chuyên nghiệp cho Mangaka, Editor và Trợ lý vẽ — quản lý quy trình từ bản thảo đến xuất bản, tài chính minh bạch trong từng giao dịch."
                 delay={1100}
               />
             </p>

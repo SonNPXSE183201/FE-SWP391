@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { Link } from 'react-router-dom';
 
 const FOOTER_NAV = [
   {
@@ -8,6 +9,13 @@ const FOOTER_NAV = [
       { label: 'Quy trình', targetId: 'workflow-section' },
       { label: 'Vai trò', targetId: 'roles-section' },
       { label: 'Showcase', targetId: 'showcase-section' },
+    ],
+  },
+  {
+    title: 'Tài khoản',
+    links: [
+      { label: 'Đăng nhập', route: '/login' },
+      { label: 'Đăng ký Trợ lý vẽ', route: '/register' },
     ],
   },
   {
@@ -181,7 +189,7 @@ export const Footer = () => {
             </button>
 
             <p className="text-text-secondary text-[14px] leading-relaxed mb-4">
-              Nền tảng quản lý quy trình sáng tác và xuất bản manga chuyên nghiệp — kết nối Mangaka, Editor và Assistant trên cùng một workspace.
+              Nền tảng quản lý quy trình sáng tác và xuất bản manga chuyên nghiệp — kết nối Mangaka, Editor và Trợ lý vẽ trên cùng một workspace.
             </p>
 
             {/* Contact Information for Mangaka / General Inquiries */}
@@ -237,6 +245,13 @@ export const Footer = () => {
                         >
                           {link.label}
                         </button>
+                      ) : 'route' in link && link.route ? (
+                        <Link
+                          to={link.route}
+                          className="text-text-secondary text-[13px] hover:text-brand transition-colors duration-300 no-underline"
+                        >
+                          {link.label}
+                        </Link>
                       ) : (
                         <a
                           href={'href' in link ? link.href : '#'}
