@@ -114,7 +114,7 @@ export const RegisterHeroPanel = ({ currentStep }: RegisterHeroPanelProps) => {
 
             <p className="text-white/40 text-[13px] max-w-sm leading-[1.7] font-light animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
               Đăng ký tài khoản{' '}
-              <span className="text-white/70 font-medium border-b border-white/10 pb-px">Assistant</span>
+              <span className="text-white/70 font-medium border-b border-white/10 pb-px">Trợ lý vẽ</span>
               {' '}— nhận task vẽ trực tiếp từ các Mangaka, làm việc tự do với lịch trình linh hoạt.
             </p>
           </div>
@@ -168,7 +168,7 @@ export const RegisterHeroPanel = ({ currentStep }: RegisterHeroPanelProps) => {
               <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center border border-success/20">
                 <span className="text-lg">✍️</span>
               </div>
-              <span className="text-[10px] text-white/40 font-medium">Assistant</span>
+              <span className="text-[10px] text-white/40 font-medium">Trợ lý vẽ</span>
             </div>
 
             <div className="flex-1 flex items-center gap-1">

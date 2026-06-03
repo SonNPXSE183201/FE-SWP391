@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { Link } from 'react-router-dom';
 
 interface NavbarProps {
   onGetStarted?: () => void;
@@ -156,15 +157,25 @@ export const Navbar = ({ onGetStarted }: NavbarProps) => {
           })}
         </div>
 
-        {/* CTA Button + Mobile hamburger */}
+        {/* Auth Buttons + Mobile hamburger */}
         <div className="flex items-center gap-3">
-          <button
-            onClick={onGetStarted}
+          {/* Login — ghost style */}
+          <Link
+            to="/login"
+            className="hidden sm:inline-flex items-center px-4 py-2 text-text-secondary text-[13px] font-medium rounded-lg transition-all duration-300 hover:text-text-primary hover:bg-white/[0.04] relative group"
+            id="navbar-cta-login"
+          >
+            <span className="relative">Đăng nhập</span>
+          </Link>
+
+          {/* Register — primary CTA */}
+          <Link
+            to="/register"
             className="hidden sm:inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-br from-brand to-brand-hover text-white text-[13px] font-semibold border-none rounded-lg cursor-pointer transition-all duration-300 shadow-brand hover:-translate-y-0.5 hover:shadow-brand-hover active:translate-y-0 relative overflow-hidden group"
-            id="navbar-cta-get-started"
+            id="navbar-cta-register"
           >
             <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
-            <span className="relative">Bắt đầu ngay</span>
+            <span className="relative">Đăng ký Trợ lý vẽ</span>
             <svg
               className="relative w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5"
               viewBox="0 0 24 24"
@@ -177,7 +188,7 @@ export const Navbar = ({ onGetStarted }: NavbarProps) => {
               <path d="M5 12h14" />
               <path d="m12 5 7 7-7 7" />
             </svg>
-          </button>
+          </Link>
 
           {/* Mobile hamburger */}
           <button
@@ -221,12 +232,22 @@ export const Navbar = ({ onGetStarted }: NavbarProps) => {
               {link.label}
             </button>
           ))}
-          <button
-            onClick={onGetStarted}
-            className="sm:hidden mt-2 px-4 py-3 bg-gradient-to-br from-brand to-brand-hover text-white text-[14px] font-semibold border-none rounded-lg cursor-pointer transition-all duration-300"
-          >
-            Bắt đầu ngay →
-          </button>
+          <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-border-custom/30">
+            <Link
+              to="/login"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="sm:hidden px-4 py-3 text-text-secondary text-[14px] font-medium rounded-lg hover:text-text-primary hover:bg-bg-secondary/50 transition-all duration-300 text-center no-underline"
+            >
+              Đăng nhập
+            </Link>
+            <Link
+              to="/register"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="sm:hidden px-4 py-3 bg-gradient-to-br from-brand to-brand-hover text-white text-[14px] font-semibold border-none rounded-lg transition-all duration-300 text-center no-underline"
+            >
+              Đăng ký Trợ lý vẽ →
+            </Link>
+          </div>
         </div>
       </div>
     </nav>

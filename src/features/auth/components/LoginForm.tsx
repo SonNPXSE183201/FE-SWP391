@@ -216,11 +216,11 @@ export const LoginForm: React.FC = () => {
           style={{ animationDelay: '0.65s' }}
         >
           <p className="text-sm text-text-secondary">
-            Bạn là Assistant chưa có tài khoản?{' '}
-            <a href="#" className="text-brand font-medium hover:text-brand-hover transition-colors relative group/link">
+            Bạn là Trợ lý vẽ chưa có tài khoản?{' '}
+            <Link to="/register" className="text-brand font-medium hover:text-brand-hover transition-colors relative group/link">
               Đăng ký ngay
               <span className="absolute left-0 -bottom-0.5 w-0 h-px bg-brand group-hover/link:w-full transition-all duration-300" />
-            </a>
+            </Link>
           </p>
         </div>
       </div>

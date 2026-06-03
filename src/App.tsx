@@ -8,7 +8,7 @@ import { LoginPage } from './pages/auth/LoginPage';
 // Placeholder Components
 const UnauthorizedPage = () => <div style={{ padding: '20px' }}><h1>403 - Unauthorized</h1></div>;
 const MangakaDashboard = () => <div style={{ padding: '20px' }}><h1>Mangaka Dashboard</h1></div>;
-const AssistantDashboard = () => <div style={{ padding: '20px' }}><h1>Assistant Dashboard</h1></div>;
+const AssistantDashboard = () => <div style={{ padding: '20px' }}><h1>Bảng điều khiển Trợ lý vẽ</h1></div>;
 const EditorDashboard = () => <div style={{ padding: '20px' }}><h1>Editor Dashboard</h1></div>;
 
 function App() {

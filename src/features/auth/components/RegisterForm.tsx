@@ -44,7 +44,7 @@ export const RegisterForm = () => {
           <div className="flex items-center gap-2 mb-3 animate-fade-in-up" style={{ animationDelay: '0.15s' }}>
             <div className="h-1 w-8 rounded-full bg-gradient-to-r from-brand to-brand-hover animate-glow-line" />
             <span className="text-brand text-xs font-semibold tracking-widest uppercase">
-              Đăng ký Assistant
+              Đăng ký Trợ lý vẽ
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1.5 animate-fade-in-up" style={{ animationDelay: '0.25s' }}>
@@ -62,7 +62,7 @@ export const RegisterForm = () => {
         >
           <UserCheck className="w-4 h-4 text-brand" />
           <span className="text-brand text-xs font-medium">
-            Vai trò: Assistant (Trợ lý vẽ tự do)
+            Vai trò: Trợ lý vẽ tự do (Freelancer)
           </span>
         </div>
 
