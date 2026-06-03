@@ -1,12 +1,8 @@
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link } from 'react-router-dom';
 import { Logo } from '../components/common/Logo';
 import { ArrowLeft } from 'lucide-react';
 
 export const AuthLayout = () => {
-  const location = useLocation();
-  const isLogin = location.pathname === '/login';
-  const isRegister = location.pathname === '/register';
-
   return (
     <div className="flex min-h-screen bg-bg-primary">
       <div className="flex flex-col flex-1">
@@ -24,24 +20,6 @@ export const AuthLayout = () => {
               <ArrowLeft size={16} />
               Trang chủ
             </Link>
-
-            {isLogin && (
-              <Link
-                to="/register"
-                className="px-4 py-2 rounded-lg-custom text-sm font-semibold bg-brand text-white hover:bg-brand-hover transition-all duration-200"
-              >
-                Đăng ký
-              </Link>
-            )}
-
-            {isRegister && (
-              <Link
-                to="/login"
-                className="px-4 py-2 rounded-lg-custom text-sm font-semibold bg-brand text-white hover:bg-brand-hover transition-all duration-200"
-              >
-                Đăng nhập
-              </Link>
-            )}
           </nav>
         </header>
 
