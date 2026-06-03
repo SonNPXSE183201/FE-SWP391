@@ -1,7 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Logo } from '../components/common/Logo';
 import { ArrowLeft } from 'lucide-react';
-import './AuthLayout.css';
 
 export const AuthLayout = () => {
   const location = useLocation();
@@ -9,28 +8,37 @@ export const AuthLayout = () => {
   const isRegister = location.pathname === '/register';
 
   return (
-    <div className="auth-layout">
-      <div className="auth-layout__content">
+    <div className="flex min-h-screen bg-bg-primary">
+      <div className="flex flex-col flex-1">
         {/* Top navigation bar */}
-        <header className="auth-header">
-          <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+        <header className="flex items-center justify-between px-6 py-4 absolute top-0 left-0 right-0 z-10">
+          <Link to="/" className="inline-flex items-center gap-2">
             <Logo size="sm" showText />
           </Link>
 
-          <nav className="auth-header__nav">
-            <Link to="/" className="auth-header__link">
+          <nav className="flex items-center gap-4">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1 px-4 py-2 rounded-lg-custom text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-bg-surface transition-all duration-200"
+            >
               <ArrowLeft size={16} />
               Trang chủ
             </Link>
 
             {isLogin && (
-              <Link to="/register" className="auth-header__link auth-header__link--primary">
+              <Link
+                to="/register"
+                className="px-4 py-2 rounded-lg-custom text-sm font-semibold bg-brand text-white hover:bg-brand-hover transition-all duration-200"
+              >
                 Đăng ký
               </Link>
             )}
 
             {isRegister && (
-              <Link to="/login" className="auth-header__link auth-header__link--primary">
+              <Link
+                to="/login"
+                className="px-4 py-2 rounded-lg-custom text-sm font-semibold bg-brand text-white hover:bg-brand-hover transition-all duration-200"
+              >
                 Đăng nhập
               </Link>
             )}

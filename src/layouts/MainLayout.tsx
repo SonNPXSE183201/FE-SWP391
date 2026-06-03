@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
-import './MainLayout.css';
 
 export const MainLayout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -10,7 +9,6 @@ export const MainLayout = () => {
 
   const handleToggleCollapse = useCallback(() => {
     setSidebarCollapsed((prev) => !prev);
-    // Close mobile menu when toggling collapse
     setMobileOpen(false);
   }, []);
 
@@ -23,7 +21,7 @@ export const MainLayout = () => {
   }, []);
 
   return (
-    <div className="main-layout">
+    <div className="flex min-h-screen bg-bg-primary">
       {/* Sidebar */}
       <Sidebar
         collapsed={sidebarCollapsed}
@@ -34,15 +32,15 @@ export const MainLayout = () => {
 
       {/* Main content area */}
       <div
-        className={`main-content-wrapper ${
-          sidebarCollapsed ? 'main-content-wrapper--collapsed' : ''
-        }`}
+        className={`flex-1 flex flex-col min-h-screen transition-[margin-left] duration-300 ease-in-out
+          ${sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-[260px]'}
+        `}
       >
         {/* Header */}
         <Header onMobileMenuToggle={handleMobileMenuToggle} />
 
-        {/* Page content via Outlet */}
-        <main className="main-content">
+        {/* Page content */}
+        <main className="flex-1 p-6 max-w-[1440px] w-full">
           <Outlet />
         </main>
       </div>
