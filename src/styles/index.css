@@ -39,23 +39,6 @@ body {
   background: var(--border-color);
 }
 
-/* Register page scrollbar */
-.register-scrollbar::-webkit-scrollbar {
-  width: 6px;
-}
-
-.register-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.register-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(51, 65, 85, 0.4);
-  border-radius: 9999px;
-}
-
-.register-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(51, 65, 85, 0.7);
-}
 
 /* Animation utilities */
 @keyframes fade-in {

@@ -12,12 +12,11 @@ export const StepIndicator = ({ currentStep, totalSteps, labels }: StepIndicator
           <div className="flex items-center gap-2.5 flex-1">
             <div
               className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 flex-shrink-0
-                ${
-                  i < currentStep
-                    ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
-                    : i === currentStep
-                    ? 'bg-gradient-to-br from-emerald-400 to-blue-500 text-white shadow-lg shadow-blue-500/30 ring-2 ring-blue-400/30'
-                    : 'bg-slate-800 text-slate-500 border border-slate-700'
+                ${i < currentStep
+                  ? 'bg-success text-white shadow-lg shadow-success/30'
+                  : i === currentStep
+                    ? 'bg-gradient-to-br from-brand to-brand-hover text-white shadow-lg shadow-brand/30 ring-2 ring-brand/30'
+                    : 'bg-bg-surface text-text-muted border border-border-custom'
                 }`}
             >
               {i < currentStep ? (
@@ -30,8 +29,7 @@ export const StepIndicator = ({ currentStep, totalSteps, labels }: StepIndicator
             </div>
             <span
               className={`text-xs font-medium transition-colors duration-200 hidden sm:block
-                ${
-                  i <= currentStep ? 'text-slate-200' : 'text-slate-500'
+                ${i <= currentStep ? 'text-text-primary' : 'text-text-muted'
                 }`}
             >
               {labels[i]}
@@ -40,7 +38,7 @@ export const StepIndicator = ({ currentStep, totalSteps, labels }: StepIndicator
           {i < totalSteps - 1 && (
             <div
               className={`h-0.5 flex-1 rounded-full transition-all duration-500 min-w-[20px]
-                ${i < currentStep ? 'bg-emerald-500' : 'bg-slate-700'}`}
+                ${i < currentStep ? 'bg-success' : 'bg-border-custom'}`}
             />
           )}
         </div>
