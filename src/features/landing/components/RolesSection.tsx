@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { PublisherContactModal } from './PublisherContactModal';
 
 const roles = [
   {
@@ -10,7 +11,7 @@ const roles = [
     capabilities: ['Tạo & quản lý Series', 'Phân vùng Region', 'Giao Task cho Trợ lý vẽ', 'Quản lý Wallet & Fund'],
     accent: '#6C5CE7',
     gradient: 'from-[#6C5CE7] to-[#7C6EF0]',
-    onboarding: { text: 'Liên hệ Hotline để hợp tác', link: 'tel:+84123456789' },
+    onboarding: { text: 'Liên hệ Hotline để hợp tác', link: null, openContactModal: true },
   },
   {
     role: 'Tantou Editor',
@@ -75,6 +76,7 @@ export const RolesSection = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [revealedCards, setRevealedCards] = useState<Set<number>>(new Set());
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -210,7 +212,16 @@ export const RolesSection = () => {
                     
                     {/* Onboarding Action */}
                     <div className={`mt-6 pt-5 border-t border-border-custom/50 transition-all duration-500 ${isRevealed ? 'opacity-100' : 'opacity-0'}`} style={{ transitionDelay: `${800 + index * 100}ms` }}>
-                      {role.onboarding.link ? (
+                      {'openContactModal' in role.onboarding && role.onboarding.openContactModal ? (
+                          <button
+                            onClick={() => setIsContactModalOpen(true)}
+                            className="flex items-center justify-between group/action text-[13px] font-bold tracking-wide uppercase w-full bg-transparent border-none cursor-pointer p-0"
+                            style={{ color: role.accent }}
+                          >
+                            <span>{role.onboarding.text}</span>
+                            <svg className="w-4 h-4 transition-transform duration-300 group-hover/action:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                          </button>
+                      ) : role.onboarding.link ? (
                         role.onboarding.link.startsWith('/') ? (
                           <Link to={role.onboarding.link} className="flex items-center justify-between group/action text-[13px] font-bold tracking-wide uppercase" style={{ color: role.accent }}>
                             <span>{role.onboarding.text}</span>
@@ -242,6 +253,12 @@ export const RolesSection = () => {
           })}
         </div>
       </div>
+
+      {/* Publisher Contact Modal */}
+      <PublisherContactModal
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
+      />
     </section>
   );
 };
