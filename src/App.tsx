@@ -11,6 +11,7 @@ import { LoginPage } from './pages/auth/LoginPage';
 import {
   MangakaDashboardPage,
   SeriesListPage,
+  CreateSeriesPage,
   ManuscriptsPage,
   MangakaTasksPage,
   MangakaWalletPage,
@@ -109,6 +110,7 @@ function App() {
           <Route element={<MainLayout />}>
             <Route path="/mangaka" element={<MangakaDashboardPage />} />
             <Route path="/mangaka/series" element={<SeriesListPage />} />
+            <Route path="/mangaka/series/create" element={<CreateSeriesPage />} />
             <Route path="/mangaka/manuscripts" element={<ManuscriptsPage />} />
             <Route path="/mangaka/tasks" element={<MangakaTasksPage />} />
             <Route path="/mangaka/wallet" element={<MangakaWalletPage />} />
