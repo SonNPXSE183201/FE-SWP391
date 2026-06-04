@@ -1,9 +1,10 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { FileText, Upload, ChevronDown, Clock, CheckCircle2, AlertCircle, Eye, RotateCcw, ImagePlus, X, BookOpen } from 'lucide-react';
+import { FileText, Upload, Clock, CheckCircle2, AlertCircle, Eye, RotateCcw, ImagePlus, X, BookOpen } from 'lucide-react';
 import type { Chapter, ChapterStatus } from '../../types/entities';
 import { usePagination } from '../../hooks/usePagination';
 import { Pagination } from '../../components/common/Pagination';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 // ─── Mock Data ───────────────────────────────────────────────
 const MOCK_CHAPTERS: (Chapter & { seriesTitle: string })[] = [
@@ -250,7 +251,7 @@ export const ManuscriptsPage = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
 
-  const seriesOptions = [...new Set(MOCK_CHAPTERS.map((c) => c.seriesTitle))];
+  const seriesFilterOptions = [...new Set(MOCK_CHAPTERS.map((c) => c.seriesTitle))];
 
   const filtered = useMemo(() => MOCK_CHAPTERS.filter((c) => {
     const matchesSeries = !seriesFilter || c.seriesTitle === seriesFilter;
@@ -289,36 +290,32 @@ export const ManuscriptsPage = () => {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3 mt-6">
-        <div className="relative">
-          <BookOpen size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-          <select
+        <div className="w-[180px]">
+          <CustomSelect
+            options={seriesFilterOptions.map((s) => ({ value: s, label: s }))}
             value={seriesFilter}
-            onChange={(e) => setSeriesFilter(e.target.value)}
-            className="appearance-none pl-8 pr-8 py-2 bg-bg-secondary border border-border-custom rounded-xl text-sm text-text-primary focus:outline-none focus:border-brand/50 cursor-pointer"
-          >
-            <option value="">Tất cả Series</option>
-            {seriesOptions.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-          <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+            onChange={(v) => setSeriesFilter(v)}
+            placeholder="Tất cả Series"
+            icon={<BookOpen size={14} />}
+            size="sm"
+          />
         </div>
 
-        <div className="relative">
-          <select
+        <div className="w-[180px]">
+          <CustomSelect
+            options={[
+              { value: 'Draft', label: 'Bản nháp' },
+              { value: 'Submitted', label: 'Đã nộp' },
+              { value: 'UnderReview', label: 'Đang review' },
+              { value: 'Approved', label: 'Đã duyệt' },
+              { value: 'Revision', label: 'Yêu cầu sửa' },
+              { value: 'Published', label: 'Đã xuất bản' },
+            ]}
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="appearance-none pl-3 pr-8 py-2 bg-bg-secondary border border-border-custom rounded-xl text-sm text-text-primary focus:outline-none focus:border-brand/50 cursor-pointer"
-          >
-            <option value="">Tất cả trạng thái</option>
-            <option value="Draft">Bản nháp</option>
-            <option value="Submitted">Đã nộp</option>
-            <option value="UnderReview">Đang review</option>
-            <option value="Approved">Đã duyệt</option>
-            <option value="Revision">Yêu cầu sửa</option>
-            <option value="Published">Đã xuất bản</option>
-          </select>
-          <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+            onChange={(v) => setStatusFilter(v)}
+            placeholder="Tất cả trạng thái"
+            size="sm"
+          />
         </div>
 
         <span className="text-xs text-text-muted ml-auto">

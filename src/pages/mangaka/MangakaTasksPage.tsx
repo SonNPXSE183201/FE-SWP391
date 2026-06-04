@@ -1,102 +1,17 @@
 import { useState, useMemo, useEffect } from 'react';
 import {
-  ClipboardList, Plus, Search, ChevronDown, Eye,
-  UserCheck, X, Send, Calendar, DollarSign, Filter, ArrowUpDown, AlertCircle,
+  ClipboardList, Plus, Search, Eye,
+  UserCheck, X, Calendar, DollarSign, Filter, ArrowUpDown,
   Clock,
 } from 'lucide-react';
 
 // ─── Import from features (Feature-Driven Architecture) ─────
-import { TASK_STATUS_CONFIG, TASK_STATUS_FILTER_OPTIONS, formatDeadline, MOCK_TASKS } from '../../features/tasks';
+import { TASK_STATUS_CONFIG, TASK_STATUS_FILTER_OPTIONS, formatDeadline, MOCK_TASKS, CreateTaskModal } from '../../features/tasks';
 import { formatVND } from '../../features/wallet';
 import { usePagination } from '../../hooks/usePagination';
 import { Pagination } from '../../components/common/Pagination';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
-
-// ─── Create Task Modal ──────────────────────────────────────
-const CreateTaskModal = ({ onClose }: { onClose: () => void }) => {
-  const [creating, setCreating] = useState(false);
-
-  const handleCreate = async () => {
-    setCreating(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setCreating(false);
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-lg shadow-lg-custom animate-scale-in">
-        <div className="px-6 py-4 border-b border-border-custom flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-brand/10 flex items-center justify-center">
-              <Plus size={18} className="text-brand" />
-            </div>
-            <h2 className="text-base font-semibold text-text-primary">Tạo Task mới</h2>
-          </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-surface transition-colors bg-transparent border-none cursor-pointer">
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-text-secondary mb-1.5">Region / Vùng cần vẽ</label>
-            <select className="w-full px-3 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary focus:outline-none focus:border-brand/50 cursor-pointer appearance-none">
-              <option>Chọn region từ trang...</option>
-              <option>Panel A1 — Trang 5, Ch.4</option>
-              <option>Background B1 — Trang 8, Ch.4</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-text-secondary mb-1.5">Trợ lý vẽ (Assistant)</label>
-            <select className="w-full px-3 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary focus:outline-none focus:border-brand/50 cursor-pointer appearance-none">
-              <option>Chọn assistant...</option>
-              <option>Minh Anh — ⭐ 4.8 (24 tasks)</option>
-              <option>Thiên Kim — ⭐ 4.5 (18 tasks)</option>
-              <option>Đức Minh — ⭐ 4.6 (12 tasks)</option>
-            </select>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                <DollarSign size={11} className="inline mr-0.5" />
-                Số tiền (VND)
-              </label>
-              <input type="number" placeholder="350,000" className="w-full px-3 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                <Calendar size={11} className="inline mr-0.5" />
-                Deadline
-              </label>
-              <input type="date" className="w-full px-3 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all" />
-            </div>
-          </div>
-          <div className="bg-warning/5 border border-warning/20 rounded-xl p-3">
-            <p className="text-[11px] text-warning font-medium flex items-center gap-1.5">
-              <AlertCircle size={13} />
-              Tạo task sẽ Lock số tiền trên từ ví của bạn (T01)
-            </p>
-          </div>
-        </div>
-
-        <div className="px-6 py-4 border-t border-border-custom flex items-center justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-secondary hover:text-text-primary transition-colors cursor-pointer">
-            Hủy
-          </button>
-          <button onClick={handleCreate} disabled={creating} className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium border-none cursor-pointer transition-all ${creating ? 'bg-brand/50 text-white/70 cursor-not-allowed' : 'bg-brand hover:bg-brand-hover text-white shadow-brand'}`}>
-            {creating ? (
-              <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Đang tạo...</>
-            ) : (
-              <><Send size={14} />Tạo & Lock tiền</>
-            )}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // ─── Main Page ───────────────────────────────────────────────
 export const MangakaTasksPage = () => {
@@ -195,23 +110,28 @@ export const MangakaTasksPage = () => {
             className="w-full pl-10 pr-4 py-2.5 bg-bg-secondary border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all"
           />
         </div>
-        <div className="relative">
-          <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-            className="appearance-none pl-8 pr-8 py-2.5 bg-bg-secondary border border-border-custom rounded-xl text-sm text-text-primary focus:outline-none focus:border-brand/50 cursor-pointer min-w-[150px]">
-            {TASK_STATUS_FILTER_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-          <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+        <div className="w-[170px]">
+          <CustomSelect
+            options={TASK_STATUS_FILTER_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+            value={statusFilter}
+            onChange={(v) => setStatusFilter(v)}
+            placeholder="Tất cả trạng thái"
+            icon={<Filter size={14} />}
+            size="sm"
+          />
         </div>
-        <div className="relative">
-          <ArrowUpDown size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="appearance-none pl-8 pr-8 py-2.5 bg-bg-secondary border border-border-custom rounded-xl text-sm text-text-primary focus:outline-none focus:border-brand/50 cursor-pointer">
-            <option value="newest">Mới nhất</option>
-            <option value="deadline">Deadline</option>
-            <option value="amount">Số tiền</option>
-          </select>
-          <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+        <div className="w-[140px]">
+          <CustomSelect
+            options={[
+              { value: 'newest', label: 'Mới nhất' },
+              { value: 'deadline', label: 'Deadline' },
+              { value: 'amount', label: 'Số tiền' },
+            ]}
+            value={sortBy}
+            onChange={(v) => setSortBy(v as typeof sortBy)}
+            icon={<ArrowUpDown size={14} />}
+            size="sm"
+          />
         </div>
       </div>
 
@@ -238,7 +158,7 @@ export const MangakaTasksPage = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-sm font-semibold text-text-primary group-hover:text-brand transition-colors">
-                      {task.regionLabel}
+                      {task.taskName}
                     </h3>
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusCfg.bg} ${statusCfg.color}`}>
                       {statusCfg.label}
@@ -250,7 +170,7 @@ export const MangakaTasksPage = () => {
                     )}
                   </div>
                   <p className="text-xs text-text-muted mt-1">
-                    {task.pageName} · {task.chapterTitle} · {task.seriesTitle}
+                    {[task.regionLabel, task.pageName, task.chapterTitle, task.seriesTitle].filter(Boolean).join(' · ')}
                   </p>
 
                   {/* Bottom row */}
