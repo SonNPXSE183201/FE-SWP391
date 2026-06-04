@@ -2,7 +2,7 @@
 
 // API
 export { taskApi } from './api/task.api';
-export type { CreateTaskRequest, SubmitTaskResultRequest, ReviewTaskRequest } from './api/task.api';
+export type { CreateTaskRequest, SubmitTaskResultRequest, RequestExtensionRequest } from './api/task.api';
 
 // Constants
 export { TASK_STATUS_CONFIG, TASK_STATUS_FILTER_OPTIONS, formatDeadline } from './constants';
