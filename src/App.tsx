@@ -7,43 +7,53 @@ import { LandingPage } from './pages/landing/LandingPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 import { LoginPage } from './pages/auth/LoginPage';
 
-// Placeholder — will be replaced with real dashboard pages
-const PlaceholderPage = ({ title }: { title: string }) => (
-  <div>
-    <div className="page-header">
-      <h1 className="page-header__title">{title}</h1>
-      <p className="page-header__subtitle">Trang này đang được phát triển</p>
-    </div>
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-        gap: '16px',
-        marginTop: '16px',
-      }}
-    >
-      {[1, 2, 3, 4].map((i) => (
-        <div
-          key={i}
-          style={{
-            background: 'var(--bg-secondary)',
-            border: '1px solid var(--border-color)',
-            borderRadius: '12px',
-            padding: '24px',
-            minHeight: '140px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
-            Widget #{i}
-          </span>
-        </div>
-      ))}
-    </div>
-  </div>
-);
+// ─── Mangaka Pages ───
+import {
+  MangakaDashboardPage,
+  SeriesListPage,
+  ManuscriptsPage,
+  MangakaTasksPage,
+  MangakaWalletPage,
+  MangakaSettingsPage,
+} from './pages/mangaka';
+
+// ─── Assistant Pages ───
+import {
+  AssistantDashboardPage,
+  TaskQueuePage,
+  PortfolioPage,
+  AssistantProfilePage,
+  AssistantWalletPage,
+  AssistantSettingsPage,
+} from './pages/assistant';
+
+// ─── Editor Pages ───
+import {
+  EditorDashboardPage,
+  ReviewPage,
+  AnnotationsPage,
+  DisputesPage,
+  EditorSettingsPage,
+} from './pages/editor';
+
+// ─── Board Pages ───
+import {
+  BoardDashboardPage,
+  VotingPage,
+  RankingPage,
+  PublishSchedulePage,
+  BoardSettingsPage,
+} from './pages/board';
+
+// ─── Admin Pages ───
+import {
+  AdminDashboardPage,
+  AdminUsersPage,
+  AdminRolesPage,
+  AdminContractsPage,
+  AdminReconciliationPage,
+  AdminSettingsPage,
+} from './pages/admin';
 
 // Unauthorized page
 const UnauthorizedPage = () => (
@@ -97,58 +107,58 @@ function App() {
         {/* ─── Mangaka Routes ─── */}
         <Route element={<RoleGuard allowedRoles={['Mangaka']} />}>
           <Route element={<MainLayout />}>
-            <Route path="/mangaka" element={<PlaceholderPage title="Dashboard Mangaka" />} />
-            <Route path="/mangaka/series" element={<PlaceholderPage title="Series của tôi" />} />
-            <Route path="/mangaka/manuscripts" element={<PlaceholderPage title="Quản lý bản thảo" />} />
-            <Route path="/mangaka/tasks" element={<PlaceholderPage title="Quản lý Task" />} />
-            <Route path="/mangaka/wallet" element={<PlaceholderPage title="Ví tiền" />} />
-            <Route path="/mangaka/settings" element={<PlaceholderPage title="Cài đặt" />} />
+            <Route path="/mangaka" element={<MangakaDashboardPage />} />
+            <Route path="/mangaka/series" element={<SeriesListPage />} />
+            <Route path="/mangaka/manuscripts" element={<ManuscriptsPage />} />
+            <Route path="/mangaka/tasks" element={<MangakaTasksPage />} />
+            <Route path="/mangaka/wallet" element={<MangakaWalletPage />} />
+            <Route path="/mangaka/settings" element={<MangakaSettingsPage />} />
           </Route>
         </Route>
 
         {/* ─── Assistant Routes ─── */}
         <Route element={<RoleGuard allowedRoles={['Assistant']} />}>
           <Route element={<MainLayout />}>
-            <Route path="/assistant" element={<PlaceholderPage title="Dashboard Trợ lý vẽ" />} />
-            <Route path="/assistant/tasks" element={<PlaceholderPage title="Task Queue" />} />
-            <Route path="/assistant/portfolio" element={<PlaceholderPage title="Portfolio" />} />
-            <Route path="/assistant/profile" element={<PlaceholderPage title="Hồ sơ nghề nghiệp" />} />
-            <Route path="/assistant/wallet" element={<PlaceholderPage title="Thu nhập" />} />
-            <Route path="/assistant/settings" element={<PlaceholderPage title="Cài đặt" />} />
+            <Route path="/assistant" element={<AssistantDashboardPage />} />
+            <Route path="/assistant/tasks" element={<TaskQueuePage />} />
+            <Route path="/assistant/portfolio" element={<PortfolioPage />} />
+            <Route path="/assistant/profile" element={<AssistantProfilePage />} />
+            <Route path="/assistant/wallet" element={<AssistantWalletPage />} />
+            <Route path="/assistant/settings" element={<AssistantSettingsPage />} />
           </Route>
         </Route>
 
         {/* ─── Editor Routes ─── */}
         <Route element={<RoleGuard allowedRoles={['Editor']} />}>
           <Route element={<MainLayout />}>
-            <Route path="/editor" element={<PlaceholderPage title="Dashboard Biên tập" />} />
-            <Route path="/editor/review" element={<PlaceholderPage title="Review bản thảo" />} />
-            <Route path="/editor/annotations" element={<PlaceholderPage title="Annotation Tool" />} />
-            <Route path="/editor/disputes" element={<PlaceholderPage title="Phân xử tranh chấp" />} />
-            <Route path="/editor/settings" element={<PlaceholderPage title="Cài đặt" />} />
+            <Route path="/editor" element={<EditorDashboardPage />} />
+            <Route path="/editor/review" element={<ReviewPage />} />
+            <Route path="/editor/annotations" element={<AnnotationsPage />} />
+            <Route path="/editor/disputes" element={<DisputesPage />} />
+            <Route path="/editor/settings" element={<EditorSettingsPage />} />
           </Route>
         </Route>
 
         {/* ─── Board Routes ─── */}
         <Route element={<RoleGuard allowedRoles={['Board']} />}>
           <Route element={<MainLayout />}>
-            <Route path="/board" element={<PlaceholderPage title="Dashboard Hội đồng BT" />} />
-            <Route path="/board/voting" element={<PlaceholderPage title="Bỏ phiếu xét duyệt" />} />
-            <Route path="/board/ranking" element={<PlaceholderPage title="Xếp hạng Series" />} />
-            <Route path="/board/schedule" element={<PlaceholderPage title="Lịch xuất bản" />} />
-            <Route path="/board/settings" element={<PlaceholderPage title="Cài đặt" />} />
+            <Route path="/board" element={<BoardDashboardPage />} />
+            <Route path="/board/voting" element={<VotingPage />} />
+            <Route path="/board/ranking" element={<RankingPage />} />
+            <Route path="/board/schedule" element={<PublishSchedulePage />} />
+            <Route path="/board/settings" element={<BoardSettingsPage />} />
           </Route>
         </Route>
 
         {/* ─── Admin Routes ─── */}
         <Route element={<RoleGuard allowedRoles={['Admin']} />}>
           <Route element={<MainLayout />}>
-            <Route path="/admin" element={<PlaceholderPage title="Dashboard Quản trị" />} />
-            <Route path="/admin/users" element={<PlaceholderPage title="Quản lý người dùng" />} />
-            <Route path="/admin/roles" element={<PlaceholderPage title="Phân quyền RBAC" />} />
-            <Route path="/admin/contracts" element={<PlaceholderPage title="Hợp đồng" />} />
-            <Route path="/admin/reconciliation" element={<PlaceholderPage title="Đối soát giao dịch" />} />
-            <Route path="/admin/settings" element={<PlaceholderPage title="Cài đặt" />} />
+            <Route path="/admin" element={<AdminDashboardPage />} />
+            <Route path="/admin/users" element={<AdminUsersPage />} />
+            <Route path="/admin/roles" element={<AdminRolesPage />} />
+            <Route path="/admin/contracts" element={<AdminContractsPage />} />
+            <Route path="/admin/reconciliation" element={<AdminReconciliationPage />} />
+            <Route path="/admin/settings" element={<AdminSettingsPage />} />
           </Route>
         </Route>
 
