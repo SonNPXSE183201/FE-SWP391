@@ -1,4 +1,4 @@
-import type { TransactionType } from '../../types/entities';
+import type { TransactionType } from '../../../types/entities';
 
 // TODO: Replace with React Query hooks when backend API is ready
 
