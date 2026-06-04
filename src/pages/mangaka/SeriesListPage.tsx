@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BookOpen, Plus, Search, Filter, LayoutGrid, List,
-  ChevronDown, FileText, Clock, TrendingUp,
+  FileText, Clock, TrendingUp,
 } from 'lucide-react';
 
 // ─── Import from features (Feature-Driven Architecture) ─────
@@ -15,6 +15,7 @@ import {
 import { formatVND } from '../../features/wallet';
 import { usePagination } from '../../hooks/usePagination';
 import { Pagination } from '../../components/common/Pagination';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 export const SeriesListPage = () => {
   const navigate = useNavigate();
@@ -100,15 +101,15 @@ export const SeriesListPage = () => {
             className="w-full pl-10 pr-4 py-2.5 bg-bg-secondary border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all"
           />
         </div>
-        <div className="relative">
-          <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-            className="appearance-none pl-8 pr-8 py-2.5 bg-bg-secondary border border-border-custom rounded-xl text-sm text-text-primary focus:outline-none focus:border-brand/50 cursor-pointer min-w-[160px]">
-            {SERIES_STATUS_FILTER_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-          <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+        <div className="w-[170px]">
+          <CustomSelect
+            options={SERIES_STATUS_FILTER_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label }))}
+            value={statusFilter}
+            onChange={(v) => setStatusFilter(v)}
+            placeholder="Tất cả trạng thái"
+            icon={<Filter size={14} />}
+            size="sm"
+          />
         </div>
         <div className="flex items-center bg-bg-secondary border border-border-custom rounded-xl overflow-hidden">
           <button onClick={() => setViewMode('grid')}

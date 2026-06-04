@@ -60,3 +60,18 @@ body {
     transform: scale(1) translateY(0);
   }
 }
+
+@keyframes dropdown-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-dropdown-enter {
+  animation: dropdown-enter 0.15s ease-out both;
+}
