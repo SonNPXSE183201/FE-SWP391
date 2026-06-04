@@ -1,6 +1,6 @@
-import { axiosInstance } from '../../api/axios';
-import type { ApiResponse, PaginatedResponse } from '../../types';
-import type { AssistantProfile } from '../../types';
+import { axiosInstance } from '../../../api/axios';
+import type { ApiResponse, PaginatedResponse } from '../../../types';
+import type { AssistantProfile } from '../../../types';
 
 // ─── Request DTOs ────────────────────────────────────────────
 
