@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BookOpen, Plus, Search, Filter, LayoutGrid, List,
@@ -13,6 +13,8 @@ import {
   SeriesRow,
 } from '../../features/series';
 import { formatVND } from '../../features/wallet';
+import { usePagination } from '../../hooks/usePagination';
+import { Pagination } from '../../components/common/Pagination';
 
 export const SeriesListPage = () => {
   const navigate = useNavigate();
@@ -30,6 +32,13 @@ export const SeriesListPage = () => {
       const matchesStatus = !statusFilter || s.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
+  }, [searchQuery, statusFilter]);
+
+  const pagination = usePagination(filteredSeries, { pageSize: 8 });
+
+  useEffect(() => {
+    pagination.goToPage(1);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, statusFilter]);
 
   const stats = useMemo(() => ({
@@ -116,7 +125,7 @@ export const SeriesListPage = () => {
       {/* Results count */}
       <div className="flex items-center justify-between mt-4">
         <p className="text-xs text-text-muted">
-          Hiển thị <span className="text-text-primary font-medium">{filteredSeries.length}</span> / {MOCK_SERIES.length} series
+          Tìm thấy <span className="text-text-primary font-medium">{filteredSeries.length}</span> / {MOCK_SERIES.length} series
         </p>
         {(searchQuery || statusFilter) && (
           <button onClick={() => { setSearchQuery(''); setStatusFilter(''); }}
@@ -130,13 +139,13 @@ export const SeriesListPage = () => {
       {filteredSeries.length > 0 ? (
         viewMode === 'grid' ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4">
-            {filteredSeries.map((series, i) => (
+            {pagination.paginatedData.map((series, i) => (
               <SeriesCard key={series.id} series={series} index={i} />
             ))}
           </div>
         ) : (
           <div className="flex flex-col gap-3 mt-4">
-            {filteredSeries.map((series, i) => (
+            {pagination.paginatedData.map((series, i) => (
               <SeriesRow key={series.id} series={series} index={i} />
             ))}
           </div>
@@ -152,6 +161,22 @@ export const SeriesListPage = () => {
           </div>
         </div>
       )}
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={pagination.currentPage}
+        totalPages={pagination.totalPages}
+        pageRange={pagination.pageRange}
+        totalItems={pagination.totalItems}
+        startItem={pagination.startItem}
+        endItem={pagination.endItem}
+        canGoNext={pagination.canGoNext}
+        canGoPrev={pagination.canGoPrev}
+        onPageChange={pagination.goToPage}
+        onNextPage={pagination.nextPage}
+        onPrevPage={pagination.prevPage}
+        itemLabel="series"
+      />
     </div>
   );
 };

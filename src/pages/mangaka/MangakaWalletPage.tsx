@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Wallet, ArrowDownToLine, ArrowUpFromLine, TrendingUp,
   Clock, Lock, ChevronDown, Search, Filter, CreditCard,
@@ -7,6 +7,8 @@ import {
 
 // ─── Import from features (Feature-Driven Architecture) ─────
 import { TX_TYPE_CONFIG, TX_FILTER_OPTIONS, formatVND, MOCK_WALLET, MOCK_TRANSACTIONS } from '../../features/wallet';
+import { usePagination } from '../../hooks/usePagination';
+import { Pagination } from '../../components/common/Pagination';
 
 
 // ─── Deposit / Withdraw Modal ────────────────────────────────
@@ -141,6 +143,13 @@ export const MangakaWalletPage = () => {
     });
   }, [txTypeFilter, searchQuery]);
 
+  const pagination = usePagination(filteredTx, { pageSize: 10 });
+
+  useEffect(() => {
+    pagination.goToPage(1);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [txTypeFilter, searchQuery]);
+
   return (
     <div className="animate-fade-in">
       {/* Header */}
@@ -270,7 +279,7 @@ export const MangakaWalletPage = () => {
 
         {/* Transaction List */}
         <div className="space-y-2">
-          {filteredTx.map((tx) => {
+          {pagination.paginatedData.map((tx) => {
             const cfg = TX_TYPE_CONFIG[tx.type];
             const TxIcon = cfg.icon;
             const date = new Date(tx.createdAt).toLocaleDateString('vi-VN', {
@@ -329,6 +338,22 @@ export const MangakaWalletPage = () => {
             <p className="text-sm text-text-secondary">Không có giao dịch nào</p>
           </div>
         )}
+
+        {/* Pagination */}
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          pageRange={pagination.pageRange}
+          totalItems={pagination.totalItems}
+          startItem={pagination.startItem}
+          endItem={pagination.endItem}
+          canGoNext={pagination.canGoNext}
+          canGoPrev={pagination.canGoPrev}
+          onPageChange={pagination.goToPage}
+          onNextPage={pagination.nextPage}
+          onPrevPage={pagination.prevPage}
+          itemLabel="giao dịch"
+        />
       </div>
 
       {/* Modals */}
