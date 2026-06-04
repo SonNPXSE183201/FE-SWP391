@@ -1,5 +1,5 @@
-import { axiosInstance } from '../../api/axios';
-import type { ApiResponse, Wallet, Transaction, PaginatedResponse } from '../../types';
+import { axiosInstance } from '../../../api/axios';
+import type { ApiResponse, Wallet, Transaction, PaginatedResponse } from '../../../types';
 
 // ─── Request DTOs ────────────────────────────────────────────
 
