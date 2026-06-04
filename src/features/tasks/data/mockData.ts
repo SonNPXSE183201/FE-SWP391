@@ -1,4 +1,4 @@
-import type { TaskStatus } from '../../types/entities';
+import type { TaskStatus } from '../../../types/entities';
 
 // TODO: Replace with React Query hooks when backend API is ready
 export interface MockTask {

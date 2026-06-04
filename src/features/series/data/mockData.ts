@@ -1,4 +1,4 @@
-import type { Series, Chapter } from '../../types/entities';
+import type { Series, Chapter } from '../../../types/entities';
 
 // ─── Mock Series ─────────────────────────────────────────────
 // TODO: Replace with React Query hooks when backend API is ready
