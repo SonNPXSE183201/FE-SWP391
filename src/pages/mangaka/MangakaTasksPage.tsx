@@ -1,12 +1,15 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   ClipboardList, Plus, Search, ChevronDown, Eye,
   UserCheck, X, Send, Calendar, DollarSign, Filter, ArrowUpDown, AlertCircle,
+  Clock,
 } from 'lucide-react';
 
 // ─── Import from features (Feature-Driven Architecture) ─────
 import { TASK_STATUS_CONFIG, TASK_STATUS_FILTER_OPTIONS, formatDeadline, MOCK_TASKS } from '../../features/tasks';
 import { formatVND } from '../../features/wallet';
+import { usePagination } from '../../hooks/usePagination';
+import { Pagination } from '../../components/common/Pagination';
 
 
 // ─── Create Task Modal ──────────────────────────────────────
@@ -122,6 +125,15 @@ export const MangakaTasksPage = () => {
     return result;
   }, [searchQuery, statusFilter, sortBy]);
 
+  // Pagination
+  const pagination = usePagination(filtered, { pageSize: 10 });
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    pagination.goToPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, statusFilter, sortBy]);
+
   // Stats
   const stats = {
     total: MOCK_TASKS.length,
@@ -203,14 +215,14 @@ export const MangakaTasksPage = () => {
         </div>
       </div>
 
-      {/* Results */}
+      {/* Results count */}
       <p className="text-xs text-text-muted mt-4">
-        Hiển thị <span className="text-text-primary font-medium">{filtered.length}</span> / {MOCK_TASKS.length} tasks
+        Tìm thấy <span className="text-text-primary font-medium">{filtered.length}</span> / {MOCK_TASKS.length} tasks
       </p>
 
       {/* Task List */}
       <div className="space-y-3 mt-3">
-        {filtered.map((task) => {
+        {pagination.paginatedData.map((task) => {
           const statusCfg = TASK_STATUS_CONFIG[task.status];
           const StatusIcon = statusCfg.icon;
           const dl = formatDeadline(task.deadline);
@@ -286,6 +298,22 @@ export const MangakaTasksPage = () => {
           <p className="text-sm text-text-secondary">Không tìm thấy task nào</p>
         </div>
       )}
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={pagination.currentPage}
+        totalPages={pagination.totalPages}
+        pageRange={pagination.pageRange}
+        totalItems={pagination.totalItems}
+        startItem={pagination.startItem}
+        endItem={pagination.endItem}
+        canGoNext={pagination.canGoNext}
+        canGoPrev={pagination.canGoPrev}
+        onPageChange={pagination.goToPage}
+        onNextPage={pagination.nextPage}
+        onPrevPage={pagination.prevPage}
+        itemLabel="tasks"
+      />
 
       {showCreateModal && <CreateTaskModal onClose={() => setShowCreateModal(false)} />}
     </div>

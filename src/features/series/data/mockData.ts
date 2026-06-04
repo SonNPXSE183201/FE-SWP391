@@ -81,6 +81,30 @@ export const MOCK_SERIES: Series[] = [
     createdAt: '2026-02-01T08:00:00Z',
     updatedAt: '2026-03-15T10:00:00Z',
   },
+  {
+    id: '7', title: 'Thợ Săn Linh Hồn', synopsis: 'Một thợ săn trừ tà dạo bước giữa hai thế giới.', genre: ['Action', 'Supernatural'], coverImageUrl: '', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'Published', chapterCount: 20, createdAt: '2025-10-01T08:00:00Z', updatedAt: '2026-05-20T10:00:00Z',
+  },
+  {
+    id: '8', title: 'Hoàng Hôn Màu Đỏ', synopsis: 'Bí ẩn về một ngôi làng ma cà rồng ẩn mình trong rừng sâu.', genre: ['Horror', 'Mystery'], coverImageUrl: '', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'Approved', chapterCount: 0, createdAt: '2026-06-01T08:00:00Z', updatedAt: '2026-06-02T10:00:00Z',
+  },
+  {
+    id: '9', title: 'Siêu Thám Tử', synopsis: 'Câu chuyện về thám tử trẻ tuổi với bộ óc siêu việt.', genre: ['Mystery', 'Shōnen'], coverImageUrl: '', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'Published', chapterCount: 15, createdAt: '2025-12-01T08:00:00Z', updatedAt: '2026-06-03T10:00:00Z',
+  },
+  {
+    id: '10', title: 'Kẻ Sống Sót Cuối Cùng', synopsis: 'Trái Đất hậu tận thế, con người phải sinh tồn trước quái vật.', genre: ['Sci-Fi', 'Action'], coverImageUrl: '', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'PendingApproval', chapterCount: 4, createdAt: '2026-05-15T08:00:00Z', updatedAt: '2026-06-01T10:00:00Z',
+  },
+  {
+    id: '11', title: 'Chiến Binh Rồng', synopsis: 'Hành trình thuần phục rồng thiêng để bảo vệ vương quốc.', genre: ['Fantasy', 'Adventure'], coverImageUrl: '', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'Draft', chapterCount: 1, createdAt: '2026-06-04T08:00:00Z', updatedAt: '2026-06-04T10:00:00Z',
+  },
+  {
+    id: '12', title: 'Thiên Cung Truyền Kỳ', synopsis: 'Cung đấu khốc liệt chốn hậu cung.', genre: ['Historical', 'Drama'], coverImageUrl: '', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'OnHold', chapterCount: 10, createdAt: '2025-11-01T08:00:00Z', updatedAt: '2026-01-20T10:00:00Z',
+  },
+  {
+    id: '13', title: 'Cỗ Máy Thời Gian', synopsis: 'Du hành thời gian để thay đổi quá khứ bi thảm.', genre: ['Sci-Fi', 'Psychological'], coverImageUrl: '', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'Cancelled', chapterCount: 3, createdAt: '2026-01-01T08:00:00Z', updatedAt: '2026-02-15T10:00:00Z',
+  },
+  {
+    id: '14', title: 'Đỉnh Cao Ma Pháp', synopsis: 'Trường học phép thuật và những bí mật rùng rợn.', genre: ['Fantasy', 'Shōnen'], coverImageUrl: '', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'Published', chapterCount: 35, createdAt: '2025-05-01T08:00:00Z', updatedAt: '2026-06-04T10:00:00Z',
+  },
 ];
 
 // ─── Mock Chapters ───────────────────────────────────────────
@@ -125,5 +149,53 @@ export const MOCK_CHAPTERS: (Chapter & { seriesTitle: string })[] = [
     chapterNumber: 1, title: 'Ngày đầu tiên',
     status: 'Draft', pageCount: 18, validPageCount: 0,
     createdAt: '2026-06-01T08:00:00Z', updatedAt: '2026-06-03T10:00:00Z',
+  },
+  {
+    id: 'ch-7', seriesId: 's-1', seriesTitle: 'Huyền Thoại Samurai',
+    chapterNumber: 5, title: 'Sức mạnh thức tỉnh',
+    status: 'Draft', pageCount: 24, validPageCount: 0,
+    createdAt: '2026-06-03T08:00:00Z', updatedAt: '2026-06-04T10:00:00Z',
+  },
+  {
+    id: 'ch-8', seriesId: 's-2', seriesTitle: 'Lạc Giữa Ngân Hà',
+    chapterNumber: 2, title: 'Hành tinh hoang vu',
+    status: 'UnderReview', pageCount: 22, validPageCount: 0,
+    submittedAt: '2026-06-02T10:00:00Z',
+    createdAt: '2026-05-25T08:00:00Z', updatedAt: '2026-06-02T10:00:00Z',
+  },
+  {
+    id: 'ch-9', seriesId: 's-7', seriesTitle: 'Thợ Săn Linh Hồn',
+    chapterNumber: 20, title: 'Trận chiến cuối cùng',
+    status: 'Published', pageCount: 30, validPageCount: 30,
+    submittedAt: '2026-05-15T10:00:00Z', approvedAt: '2026-05-18T10:00:00Z',
+    createdAt: '2026-05-10T08:00:00Z', updatedAt: '2026-05-18T10:00:00Z',
+  },
+  {
+    id: 'ch-10', seriesId: 's-9', seriesTitle: 'Siêu Thám Tử',
+    chapterNumber: 15, title: 'Mật mã bóng đêm',
+    status: 'Approved', pageCount: 25, validPageCount: 25,
+    submittedAt: '2026-05-28T10:00:00Z', approvedAt: '2026-06-01T10:00:00Z',
+    createdAt: '2026-05-20T08:00:00Z', updatedAt: '2026-06-01T10:00:00Z',
+  },
+  {
+    id: 'ch-11', seriesId: 's-10', seriesTitle: 'Kẻ Sống Sót Cuối Cùng',
+    chapterNumber: 4, title: 'Khu an toàn',
+    status: 'Revision', pageCount: 20, validPageCount: 15,
+    submittedAt: '2026-05-30T10:00:00Z',
+    createdAt: '2026-05-25T08:00:00Z', updatedAt: '2026-06-01T10:00:00Z',
+  },
+  {
+    id: 'ch-12', seriesId: 's-14', seriesTitle: 'Đỉnh Cao Ma Pháp',
+    chapterNumber: 35, title: 'Cấm thuật',
+    status: 'Published', pageCount: 28, validPageCount: 28,
+    submittedAt: '2026-06-01T10:00:00Z', approvedAt: '2026-06-03T10:00:00Z',
+    createdAt: '2026-05-28T08:00:00Z', updatedAt: '2026-06-03T10:00:00Z',
+  },
+  {
+    id: 'ch-13', seriesId: 's-14', seriesTitle: 'Đỉnh Cao Ma Pháp',
+    chapterNumber: 36, title: 'Hậu quả khôn lường',
+    status: 'Submitted', pageCount: 24, validPageCount: 0,
+    submittedAt: '2026-06-04T08:00:00Z',
+    createdAt: '2026-06-02T08:00:00Z', updatedAt: '2026-06-04T08:00:00Z',
   },
 ];

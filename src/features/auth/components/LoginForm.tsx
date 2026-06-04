@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { Mail, Lock, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '../../../stores/authStore';
-import { loginApi } from '../../../api/auth.api';
+import { loginApi } from '../api/auth.api';
 
 export const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');

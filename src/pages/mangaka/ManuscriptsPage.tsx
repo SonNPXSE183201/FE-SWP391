@@ -1,19 +1,9 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import {
-  FileText,
-  Upload,
-  ChevronDown,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  Eye,
-  RotateCcw,
-  ImagePlus,
-  X,
-  BookOpen,
-} from 'lucide-react';
+import { FileText, Upload, ChevronDown, Clock, CheckCircle2, AlertCircle, Eye, RotateCcw, ImagePlus, X, BookOpen } from 'lucide-react';
 import type { Chapter, ChapterStatus } from '../../types/entities';
+import { usePagination } from '../../hooks/usePagination';
+import { Pagination } from '../../components/common/Pagination';
 
 // ─── Mock Data ───────────────────────────────────────────────
 const MOCK_CHAPTERS: (Chapter & { seriesTitle: string })[] = [
@@ -262,11 +252,18 @@ export const ManuscriptsPage = () => {
 
   const seriesOptions = [...new Set(MOCK_CHAPTERS.map((c) => c.seriesTitle))];
 
-  const filtered = MOCK_CHAPTERS.filter((c) => {
+  const filtered = useMemo(() => MOCK_CHAPTERS.filter((c) => {
     const matchesSeries = !seriesFilter || c.seriesTitle === seriesFilter;
     const matchesStatus = !statusFilter || c.status === statusFilter;
     return matchesSeries && matchesStatus;
-  });
+  }), [seriesFilter, statusFilter]);
+
+  const pagination = usePagination(filtered, { pageSize: 10 });
+
+  useEffect(() => {
+    pagination.goToPage(1);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seriesFilter, statusFilter]);
 
   return (
     <div className="animate-fade-in">
@@ -331,7 +328,7 @@ export const ManuscriptsPage = () => {
 
       {/* Chapter List */}
       <div className="space-y-3 mt-5">
-        {filtered.map((chapter) => {
+        {pagination.paginatedData.map((chapter) => {
           const statusCfg = CHAPTER_STATUS_CONFIG[chapter.status];
           const StatusIcon = statusCfg.icon;
           const date = chapter.submittedAt
@@ -399,6 +396,22 @@ export const ManuscriptsPage = () => {
           <p className="text-sm text-text-secondary">Không có chapter nào</p>
         </div>
       )}
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={pagination.currentPage}
+        totalPages={pagination.totalPages}
+        pageRange={pagination.pageRange}
+        totalItems={pagination.totalItems}
+        startItem={pagination.startItem}
+        endItem={pagination.endItem}
+        canGoNext={pagination.canGoNext}
+        canGoPrev={pagination.canGoPrev}
+        onPageChange={pagination.goToPage}
+        onNextPage={pagination.nextPage}
+        onPrevPage={pagination.prevPage}
+        itemLabel="chapters"
+      />
 
       {/* Upload Modal */}
       {showUploadModal && <UploadChapterModal onClose={() => setShowUploadModal(false)} />}
