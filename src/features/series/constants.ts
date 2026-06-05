@@ -39,3 +39,27 @@ export const COVER_GRADIENTS = [
   'from-secondary/30 to-success/30',
   'from-danger/30 to-warning/30',
 ];
+
+// ─── Series Status Timeline ─────────────────────────────────
+export const SERIES_STATUS_STEPS: { key: SeriesStatus; label: string }[] = [
+  { key: 'Draft', label: 'Bản nháp' },
+  { key: 'PendingApproval', label: 'Chờ duyệt' },
+  { key: 'Approved', label: 'Đã duyệt' },
+  { key: 'Published', label: 'Đang xuất bản' },
+];
+
+export type StepState = 'completed' | 'current' | 'inactive';
+
+export const getStepState = (currentStatus: SeriesStatus, stepKey: SeriesStatus): StepState => {
+  const order = SERIES_STATUS_STEPS.map((s) => s.key);
+  const currentIdx = order.indexOf(currentStatus);
+  const stepIdx = order.indexOf(stepKey);
+
+  if (currentStatus === 'Cancelled' || currentStatus === 'OnHold') {
+    if (stepIdx === 0) return 'completed';
+    return 'inactive';
+  }
+  if (stepIdx < currentIdx) return 'completed';
+  if (stepIdx === currentIdx) return 'current';
+  return 'inactive';
+};

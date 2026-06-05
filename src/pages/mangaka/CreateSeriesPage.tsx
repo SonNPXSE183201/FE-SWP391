@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
@@ -13,14 +14,12 @@ import {
   Save,
   Eye,
   Banknote,
-  FileText,
 } from 'lucide-react';
 import { useSeriesForm, GENRE_OPTIONS } from '../../features/series';
 
 export const CreateSeriesPage = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const nameFileInputRef = useRef<HTMLInputElement>(null);
   const {
     formData,
     errors,
@@ -28,7 +27,6 @@ export const CreateSeriesPage = () => {
     setIsSubmitting,
     updateField,
     handleCoverImage,
-    handleNameFile,
     toggleGenre,
     validate,
     reset,
@@ -36,16 +34,19 @@ export const CreateSeriesPage = () => {
 
   const [showPreview, setShowPreview] = useState(false);
 
-  const handleSubmit = async () => {
+  // Create Series → saves with status "Draft"
+  const handleCreateSeries = async () => {
     if (!validate()) return;
 
     setIsSubmitting(true);
     try {
-      // TODO: Replace with real API call
-      // await seriesApi.create({ title, synopsis, genre, coverImage });
+      // TODO: Replace with real API call — response will contain the new seriesId
+      // const { data } = await seriesApi.create({ ...formData, status: 'Draft' });
+      // navigate(`/mangaka/series/${data.id}`);
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      toast.success('Tạo Series thành công!');
-      navigate('/mangaka/series');
+      toast.success('Tạo Series thành công! Trạng thái: Bản nháp (Draft)');
+      // Mock: navigate to series ID '4' (Bóng Ma Học Đường — Draft status)
+      navigate('/mangaka/series/4');
     } catch {
       toast.error('Có lỗi xảy ra. Vui lòng thử lại.');
     } finally {
@@ -68,22 +69,6 @@ export const CreateSeriesPage = () => {
     }
   };
 
-  // Handle Name (storyboard) PDF file
-  const handleNameFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 20 * 1024 * 1024) {
-        toast.error('File phác thảo không được vượt quá 20MB');
-        return;
-      }
-      if (file.type !== 'application/pdf') {
-        toast.error('Vui lòng chọn file PDF');
-        return;
-      }
-      handleNameFile(file);
-    }
-  };
-
   // Currency formatting helpers
   const formatCurrency = (value: string): string => {
     const numericValue = value.replace(/[^0-9]/g, '');
@@ -97,7 +82,7 @@ export const CreateSeriesPage = () => {
   };
 
   return (
-    <div className="animate-fade-in max-w-4xl mx-auto">
+    <div className="animate-fade-in">
       {/* ─── Header ─── */}
       <div className="flex items-center gap-3 mb-8">
         <button
@@ -108,16 +93,21 @@ export const CreateSeriesPage = () => {
         </button>
         <div className="flex-1">
           <h1 className="text-xl font-bold text-text-primary">Tạo Series mới</h1>
-          <p className="text-xs text-text-muted mt-0.5">Điền thông tin cơ bản cho series manga của bạn</p>
+          <p className="text-xs text-text-muted mt-0.5">Điền thông tin hồ sơ cho series manga của bạn</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowPreview(!showPreview)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-bg-secondary border border-border-custom rounded-xl text-sm text-text-secondary hover:text-text-primary hover:border-brand/30 transition-all cursor-pointer"
-          >
-            <Eye size={14} />
-            Xem trước
-          </button>
+      </div>
+
+      {/* ─── Draft Workflow Info ─── */}
+      <div className="mb-6 px-4 py-3 bg-brand/5 border border-brand/15 rounded-xl flex items-start gap-3">
+        <div className="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <Save size={16} className="text-brand" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-text-primary">Quy trình tạo Series</p>
+          <p className="text-xs text-text-muted mt-0.5">
+            Series được lưu ở trạng thái <strong className="text-amber-500">Bản nháp (Draft)</strong>. 
+            Sau khi tạo, bạn có thể upload bản phác thảo (Name) và submit xét duyệt trên trang chi tiết Series.
+          </p>
         </div>
       </div>
 
@@ -127,7 +117,7 @@ export const CreateSeriesPage = () => {
           <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 sticky top-6">
             <div className="flex items-center gap-2 mb-4">
               <ImagePlus size={16} className="text-brand" />
-              <h2 className="text-sm font-semibold text-text-primary">Ảnh bìa</h2>
+              <h2 className="text-sm font-semibold text-text-primary">Ảnh bìa <span className="text-danger">*</span></h2>
             </div>
 
             <div
@@ -191,7 +181,7 @@ export const CreateSeriesPage = () => {
 
         {/* ─── Right Column: Form ─── */}
         <div className="lg:col-span-2 space-y-5">
-          {/* Title */}
+          {/* Title & Synopsis */}
           <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
             <div className="flex items-center gap-2 mb-3">
               <BookOpen size={16} className="text-brand" />
@@ -284,7 +274,7 @@ export const CreateSeriesPage = () => {
             </div>
           </div>
 
-          {/* ─── Finance & Schedule Section ─── */}
+          {/* ─── Finance Section ─── */}
           <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
             <div className="flex items-center gap-2 mb-3">
               <Banknote size={16} className="text-brand" />
@@ -323,118 +313,10 @@ export const CreateSeriesPage = () => {
                   Số tiền đề xuất cho Board duyệt. Board có quyền điều chỉnh.
                 </p>
               </div>
-
-              {/* Name (Storyboard) PDF Upload */}
-              <div>
-                <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                  <FileText size={12} className="inline mr-1" />
-                  Bản phác thảo (Name)
-                </label>
-                <div
-                  onClick={() => nameFileInputRef.current?.click()}
-                  className={`
-                    relative rounded-xl overflow-hidden cursor-pointer group transition-all duration-300
-                    border-2 border-dashed bg-bg-surface
-                    ${formData.nameFile
-                      ? 'border-brand/30 hover:border-brand/50'
-                      : errors.nameFile
-                        ? 'border-danger/50 hover:border-danger/70'
-                        : 'border-border-custom hover:border-brand/30'
-                    }
-                  `}
-                >
-                  {formData.nameFile ? (
-                    <div className="px-4 py-3 flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-brand/10 flex items-center justify-center flex-shrink-0">
-                        <FileText size={18} className="text-brand" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-text-primary truncate">
-                          {formData.nameFileName}
-                        </p>
-                        <p className="text-[10px] text-text-muted">
-                          {formData.nameFile && `${(formData.nameFile.size / (1024 * 1024)).toFixed(2)} MB`}
-                        </p>
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleNameFile(null);
-                        }}
-                        className="w-7 h-7 rounded-full bg-danger/10 hover:bg-danger/20 text-danger flex items-center justify-center transition-colors border-none cursor-pointer"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="px-4 py-6 flex flex-col items-center justify-center gap-2 text-text-muted group-hover:text-brand/70 transition-colors">
-                      <div className="w-10 h-10 rounded-xl bg-bg-secondary flex items-center justify-center">
-                        <Upload size={18} />
-                      </div>
-                      <div className="text-center">
-                        <p className="text-xs font-medium">Kéo thả hoặc click để upload file PDF</p>
-                        <p className="text-[10px] mt-0.5 text-text-muted">Chỉ chấp nhận PDF (tối đa 20MB)</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <input
-                  ref={nameFileInputRef}
-                  type="file"
-                  accept=".pdf,application/pdf"
-                  onChange={handleNameFileChange}
-                  className="hidden"
-                />
-                {errors.nameFile && (
-                  <p className="text-xs text-danger mt-1">{errors.nameFile}</p>
-                )}
-              </div>
             </div>
           </div>
 
-          {/* ─── Preview Card ─── */}
-          {showPreview && (
-            <div className="bg-bg-secondary border border-brand/20 rounded-xl p-5 animate-fade-in">
-              <div className="flex items-center gap-2 mb-4">
-                <Eye size={16} className="text-brand" />
-                <h2 className="text-sm font-semibold text-text-primary">Xem trước</h2>
-              </div>
-              <div className="flex gap-4">
-                <div className="w-24 h-32 rounded-lg overflow-hidden bg-bg-surface flex-shrink-0">
-                  {formData.coverPreviewUrl ? (
-                    <img src={formData.coverPreviewUrl} alt="Preview" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-text-muted">
-                      <ImagePlus size={20} />
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-semibold text-text-primary">
-                    {formData.title || 'Tiêu đề series'}
-                  </h3>
-                  <p className="text-xs text-text-muted mt-1 line-clamp-2">
-                    {formData.synopsis || 'Tóm tắt nội dung sẽ hiển thị ở đây...'}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {formData.genre.length > 0
-                      ? formData.genre.map((g) => (
-                          <span key={g} className="px-2 py-0.5 rounded-md bg-brand/10 text-brand text-[10px] font-medium">
-                            {g}
-                          </span>
-                        ))
-                      : <span className="text-[10px] text-text-muted italic">Chưa chọn thể loại</span>
-                    }
-                  </div>
-                  <div className="mt-2">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-bg-surface text-[10px] text-text-muted font-medium">
-                      Bản nháp
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+
 
           {/* ─── Action Buttons ─── */}
           <div className="flex items-center justify-end gap-3 pt-2">
@@ -447,7 +329,15 @@ export const CreateSeriesPage = () => {
             </button>
             <button
               type="button"
-              onClick={handleSubmit}
+              onClick={() => setShowPreview(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-bg-secondary border border-border-custom rounded-xl text-sm text-text-secondary hover:text-text-primary hover:border-brand/30 transition-all cursor-pointer"
+            >
+              <Eye size={16} />
+              Xem trước
+            </button>
+            <button
+              type="button"
+              onClick={handleCreateSeries}
               disabled={isSubmitting}
               className={`
                 inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-medium border-none cursor-pointer transition-all duration-200
@@ -460,18 +350,137 @@ export const CreateSeriesPage = () => {
               {isSubmitting ? (
                 <>
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Đang tạo...
+                  Đang lưu...
                 </>
               ) : (
                 <>
                   <Save size={16} />
-                  Tạo Series
+                  Lưu nháp
                 </>
               )}
             </button>
           </div>
         </div>
       </div>
+
+      {/* ─── Preview Modal (Portal) ─── */}
+      {showPreview && createPortal(
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowPreview(false)}
+          onKeyDown={(e) => { if (e.key === 'Escape') setShowPreview(false); }}
+        >
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" />
+
+          {/* Modal */}
+          <div
+            className="relative w-full max-w-2xl bg-bg-secondary border border-border-custom rounded-2xl shadow-2xl animate-fade-in overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border-custom">
+              <div className="flex items-center gap-2">
+                <Eye size={16} className="text-brand" />
+                <h2 className="text-sm font-semibold text-text-primary">Xem trước Series</h2>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/10 text-[10px] text-amber-500 font-semibold">
+                  ● Draft
+                </span>
+              </div>
+              <button
+                onClick={() => setShowPreview(false)}
+                className="w-8 h-8 rounded-lg bg-bg-surface hover:bg-danger/10 text-text-muted hover:text-danger flex items-center justify-center transition-colors border-none cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6">
+              <div className="flex gap-6">
+                {/* Cover — larger */}
+                <div className="w-44 flex-shrink-0">
+                  <div className="aspect-[3/4] rounded-xl overflow-hidden bg-bg-surface border border-border-custom">
+                    {formData.coverPreviewUrl ? (
+                      <img src={formData.coverPreviewUrl} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-text-muted">
+                        <ImagePlus size={28} />
+                        <span className="text-[10px]">Chưa có ảnh bìa</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Info — detailed */}
+                <div className="flex-1 min-w-0 space-y-4">
+                  {/* Title */}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">Tiêu đề</p>
+                    <h3 className="text-xl font-bold text-text-primary leading-tight">
+                      {formData.title || <span className="text-text-muted italic font-normal">Chưa nhập tiêu đề</span>}
+                    </h3>
+                  </div>
+
+                  {/* Synopsis */}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">Tóm tắt nội dung</p>
+                    <p className="text-sm text-text-secondary leading-relaxed">
+                      {formData.synopsis || <span className="text-text-muted italic">Chưa nhập tóm tắt</span>}
+                    </p>
+                  </div>
+
+                  {/* Genres */}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1.5">Thể loại</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {formData.genre.length > 0
+                        ? formData.genre.map((g) => (
+                            <span key={g} className="px-2.5 py-1 rounded-lg bg-brand/10 text-brand text-[11px] font-medium border border-brand/15">
+                              {g}
+                            </span>
+                          ))
+                        : <span className="text-xs text-text-muted italic">Chưa chọn thể loại</span>
+                      }
+                    </div>
+                  </div>
+
+                  {/* Budget Card */}
+                  <div className="bg-bg-surface border border-border-custom rounded-xl px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center">
+                        <Banknote size={16} className="text-brand" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-text-muted">Vốn sản xuất Chapter 1</p>
+                        <p className="text-sm font-semibold text-text-primary">
+                          {formData.requestedBudget
+                            ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(formData.requestedBudget))
+                            : <span className="text-text-muted italic font-normal">Chưa nhập</span>}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-text-muted">Chờ Board duyệt</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-border-custom flex items-center justify-between">
+              <p className="text-[10px] text-text-muted">
+                Sau khi tạo, bạn có thể upload bản phác thảo và submit xét duyệt.
+              </p>
+              <button
+                onClick={() => setShowPreview(false)}
+                className="px-5 py-2 rounded-xl bg-bg-surface border border-border-custom text-sm text-text-secondary hover:text-text-primary hover:border-brand/30 transition-all cursor-pointer"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      , document.body)}
     </div>
   );
 };

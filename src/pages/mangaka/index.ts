@@ -7,3 +7,4 @@ export { MangakaTasksPage } from './MangakaTasksPage';
 export { MangakaWalletPage } from './MangakaWalletPage';
 export { MangakaSettingsPage } from './MangakaSettingsPage';
 export { ChapterDetailPage } from './ChapterDetailPage';
+export { SeriesDetailPage } from './SeriesDetailPage';

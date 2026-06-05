@@ -17,6 +17,7 @@ import {
   MangakaWalletPage,
   MangakaSettingsPage,
   ChapterDetailPage,
+  SeriesDetailPage,
 } from './pages/mangaka';
 
 // ─── Assistant Pages ───
@@ -114,6 +115,7 @@ function App() {
             <Route path="/mangaka" element={<MangakaDashboardPage />} />
             <Route path="/mangaka/series" element={<SeriesListPage />} />
             <Route path="/mangaka/series/create" element={<CreateSeriesPage />} />
+            <Route path="/mangaka/series/:seriesId" element={<SeriesDetailPage />} />
             <Route path="/mangaka/manuscripts" element={<ManuscriptsPage />} />
             <Route path="/mangaka/manuscripts/:chapterId" element={<ChapterDetailPage />} />
             <Route path="/mangaka/tasks" element={<MangakaTasksPage />} />

@@ -8,8 +8,6 @@ const INITIAL_FORM_DATA: SeriesFormData = {
   coverImage: null,
   coverPreviewUrl: '',
   requestedBudget: '',
-  nameFile: null,
-  nameFileName: '',
 };
 
 export const useSeriesForm = () => {
@@ -54,23 +52,7 @@ export const useSeriesForm = () => {
     setErrors((prev) => ({ ...prev, genre: undefined }));
   }, []);
 
-  const handleNameFile = useCallback((file: File | null) => {
-    if (file) {
-      setFormData((prev) => ({
-        ...prev,
-        nameFile: file,
-        nameFileName: file.name,
-      }));
-      setErrors((prev) => ({ ...prev, nameFile: undefined }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        nameFile: null,
-        nameFileName: '',
-      }));
-    }
-  }, []);
-
+  // Validate all profile fields for creating Series (Draft)
   const validate = useCallback((): boolean => {
     const newErrors: SeriesFormErrors = {};
 
@@ -90,6 +72,14 @@ export const useSeriesForm = () => {
       newErrors.genre = 'Chọn ít nhất 1 thể loại';
     }
 
+    if (!formData.coverImage) {
+      newErrors.coverImage = 'Ảnh bìa là bắt buộc';
+    }
+
+    if (!formData.requestedBudget || Number(formData.requestedBudget) <= 0) {
+      newErrors.requestedBudget = 'Vốn sản xuất Chapter 1 là bắt buộc';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [formData]);
@@ -107,7 +97,6 @@ export const useSeriesForm = () => {
     setIsSubmitting,
     updateField,
     handleCoverImage,
-    handleNameFile,
     toggleGenre,
     validate,
     reset,

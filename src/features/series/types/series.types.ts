@@ -14,8 +14,6 @@ export interface SeriesFormData {
   coverImage: File | null;
   coverPreviewUrl: string;
   requestedBudget: string;
-  nameFile: File | null;
-  nameFileName: string;
 }
 
 export interface SeriesFormErrors {
@@ -24,7 +22,6 @@ export interface SeriesFormErrors {
   genre?: string;
   coverImage?: string;
   requestedBudget?: string;
-  nameFile?: string;
 }
 
 export interface ChapterFormData {
