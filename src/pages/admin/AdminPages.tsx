@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Shield, FileSignature, Receipt, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, Receipt, Settings } from 'lucide-react';
 
 const AdminPageScaffold = ({ title, subtitle, icon: Icon }: { title: string; subtitle: string; icon: typeof LayoutDashboard }) => (
   <div>
@@ -30,10 +30,6 @@ export const AdminUsersPage = () => (
 
 export const AdminRolesPage = () => (
   <AdminPageScaffold title="Phân quyền RBAC" subtitle="Quản lý vai trò và quyền truy cập" icon={Shield} />
-);
-
-export const AdminContractsPage = () => (
-  <AdminPageScaffold title="Hợp đồng" subtitle="Quản lý hợp đồng và phụ lục" icon={FileSignature} />
 );
 
 export const AdminReconciliationPage = () => (

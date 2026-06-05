@@ -6,3 +6,4 @@ export {
   PublishSchedulePage,
   BoardSettingsPage,
 } from './BoardPages';
+export { BoardApprovalPage } from './BoardApprovalPage';

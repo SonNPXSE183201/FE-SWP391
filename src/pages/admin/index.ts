@@ -3,7 +3,7 @@ export {
   AdminDashboardPage,
   AdminUsersPage,
   AdminRolesPage,
-  AdminContractsPage,
   AdminReconciliationPage,
   AdminSettingsPage,
 } from './AdminPages';
+export { AdminContractsPage } from './AdminContractsPage';

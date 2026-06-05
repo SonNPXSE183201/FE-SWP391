@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { FileText, Upload, Clock, CheckCircle2, AlertCircle, Eye, RotateCcw, ImagePlus, X, BookOpen } from 'lucide-react';
@@ -106,10 +107,10 @@ const UploadChapterModal = ({ onClose }: { onClose: () => void }) => {
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-lg-custom animate-scale-in">
+      <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-lg-custom animate-modal-enter">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-bg-secondary border-b border-border-custom px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
@@ -242,7 +243,8 @@ const UploadChapterModal = ({ onClose }: { onClose: () => void }) => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 
