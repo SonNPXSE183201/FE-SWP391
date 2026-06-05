@@ -38,6 +38,7 @@ export { PagePlaceholder } from './components/PagePlaceholder';
 export { PageCard } from './components/PageCard';
 export { PageLightbox } from './components/PageLightbox';
 export { SeriesPreviewModal } from './components/SeriesPreviewModal';
+export { CreateSeriesForm } from './components/CreateSeriesForm';
 
 // Mock data (temporary — remove when backend API is ready)
 export { MOCK_SERIES, MOCK_CHAPTERS } from './data/mockData';

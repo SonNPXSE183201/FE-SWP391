@@ -24,9 +24,7 @@ export const AdminDashboardPage = () => (
   <AdminPageScaffold title="Dashboard Quản trị" subtitle="Tổng quan hệ thống" icon={LayoutDashboard} />
 );
 
-export const AdminUsersPage = () => (
-  <AdminPageScaffold title="Quản lý người dùng" subtitle="Phê duyệt tài khoản và quản lý RBAC" icon={Users} />
-);
+
 
 export const AdminRolesPage = () => (
   <AdminPageScaffold title="Phân quyền RBAC" subtitle="Quản lý vai trò và quyền truy cập" icon={Shield} />
