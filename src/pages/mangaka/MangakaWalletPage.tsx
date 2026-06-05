@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Wallet, ArrowDownToLine, ArrowUpFromLine, TrendingUp,
   Clock, Lock, Search, Filter, CreditCard,
@@ -29,10 +30,10 @@ const WalletActionModal = ({ mode, onClose }: { mode: 'deposit' | 'withdraw'; on
     onClose();
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-md shadow-lg-custom animate-scale-in">
+      <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-md shadow-lg-custom animate-modal-enter">
         <div className="px-6 py-4 border-b border-border-custom flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${mode === 'deposit' ? 'bg-success/10' : 'bg-danger/10'}`}>
@@ -129,7 +130,8 @@ const WalletActionModal = ({ mode, onClose }: { mode: 'deposit' | 'withdraw'; on
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 

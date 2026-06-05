@@ -12,12 +12,15 @@ import {
   Sparkles,
   Save,
   Eye,
+  Banknote,
+  FileText,
 } from 'lucide-react';
 import { useSeriesForm, GENRE_OPTIONS } from '../../features/series';
 
 export const CreateSeriesPage = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const nameFileInputRef = useRef<HTMLInputElement>(null);
   const {
     formData,
     errors,
@@ -25,6 +28,7 @@ export const CreateSeriesPage = () => {
     setIsSubmitting,
     updateField,
     handleCoverImage,
+    handleNameFile,
     toggleGenre,
     validate,
     reset,
@@ -62,6 +66,34 @@ export const CreateSeriesPage = () => {
       }
       handleCoverImage(file);
     }
+  };
+
+  // Handle Name (storyboard) PDF file
+  const handleNameFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 20 * 1024 * 1024) {
+        toast.error('File phác thảo không được vượt quá 20MB');
+        return;
+      }
+      if (file.type !== 'application/pdf') {
+        toast.error('Vui lòng chọn file PDF');
+        return;
+      }
+      handleNameFile(file);
+    }
+  };
+
+  // Currency formatting helpers
+  const formatCurrency = (value: string): string => {
+    const numericValue = value.replace(/[^0-9]/g, '');
+    if (!numericValue) return '';
+    return new Intl.NumberFormat('vi-VN').format(Number(numericValue));
+  };
+
+  const handleBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/[^0-9]/g, '');
+    updateField('requestedBudget', raw);
   };
 
   return (
@@ -249,6 +281,114 @@ export const CreateSeriesPage = () => {
                   </button>
                 );
               })}
+            </div>
+          </div>
+
+          {/* ─── Finance & Schedule Section ─── */}
+          <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Banknote size={16} className="text-brand" />
+              <h2 className="text-sm font-semibold text-text-primary">
+                Tài chính & Tiến độ
+              </h2>
+            </div>
+
+            <div className="space-y-4">
+              {/* Requested Budget */}
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                  Vốn sản xuất Chapter 1 (VNĐ) <span className="text-danger">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={formData.requestedBudget ? formatCurrency(formData.requestedBudget) : ''}
+                    onChange={handleBudgetChange}
+                    placeholder="VD: 1,000,000"
+                    className={`w-full px-4 py-2.5 pr-14 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 transition-all ${
+                      errors.requestedBudget
+                        ? 'border-danger/50 focus:border-danger focus:ring-danger/20'
+                        : 'border-border-custom focus:border-brand/50 focus:ring-brand/20'
+                    }`}
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-text-muted">
+                    VNĐ
+                  </span>
+                </div>
+                {errors.requestedBudget && (
+                  <p className="text-xs text-danger mt-1">{errors.requestedBudget}</p>
+                )}
+                <p className="text-[10px] text-text-muted mt-1.5">
+                  Số tiền đề xuất cho Board duyệt. Board có quyền điều chỉnh.
+                </p>
+              </div>
+
+              {/* Name (Storyboard) PDF Upload */}
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                  <FileText size={12} className="inline mr-1" />
+                  Bản phác thảo (Name)
+                </label>
+                <div
+                  onClick={() => nameFileInputRef.current?.click()}
+                  className={`
+                    relative rounded-xl overflow-hidden cursor-pointer group transition-all duration-300
+                    border-2 border-dashed bg-bg-surface
+                    ${formData.nameFile
+                      ? 'border-brand/30 hover:border-brand/50'
+                      : errors.nameFile
+                        ? 'border-danger/50 hover:border-danger/70'
+                        : 'border-border-custom hover:border-brand/30'
+                    }
+                  `}
+                >
+                  {formData.nameFile ? (
+                    <div className="px-4 py-3 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-brand/10 flex items-center justify-center flex-shrink-0">
+                        <FileText size={18} className="text-brand" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text-primary truncate">
+                          {formData.nameFileName}
+                        </p>
+                        <p className="text-[10px] text-text-muted">
+                          {formData.nameFile && `${(formData.nameFile.size / (1024 * 1024)).toFixed(2)} MB`}
+                        </p>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleNameFile(null);
+                        }}
+                        className="w-7 h-7 rounded-full bg-danger/10 hover:bg-danger/20 text-danger flex items-center justify-center transition-colors border-none cursor-pointer"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="px-4 py-6 flex flex-col items-center justify-center gap-2 text-text-muted group-hover:text-brand/70 transition-colors">
+                      <div className="w-10 h-10 rounded-xl bg-bg-secondary flex items-center justify-center">
+                        <Upload size={18} />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs font-medium">Kéo thả hoặc click để upload file PDF</p>
+                        <p className="text-[10px] mt-0.5 text-text-muted">Chỉ chấp nhận PDF (tối đa 20MB)</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <input
+                  ref={nameFileInputRef}
+                  type="file"
+                  accept=".pdf,application/pdf"
+                  onChange={handleNameFileChange}
+                  className="hidden"
+                />
+                {errors.nameFile && (
+                  <p className="text-xs text-danger mt-1">{errors.nameFile}</p>
+                )}
+              </div>
             </div>
           </div>
 

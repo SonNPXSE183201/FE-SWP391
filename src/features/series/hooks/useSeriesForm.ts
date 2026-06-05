@@ -7,6 +7,9 @@ const INITIAL_FORM_DATA: SeriesFormData = {
   genre: [],
   coverImage: null,
   coverPreviewUrl: '',
+  requestedBudget: '',
+  nameFile: null,
+  nameFileName: '',
 };
 
 export const useSeriesForm = () => {
@@ -51,6 +54,23 @@ export const useSeriesForm = () => {
     setErrors((prev) => ({ ...prev, genre: undefined }));
   }, []);
 
+  const handleNameFile = useCallback((file: File | null) => {
+    if (file) {
+      setFormData((prev) => ({
+        ...prev,
+        nameFile: file,
+        nameFileName: file.name,
+      }));
+      setErrors((prev) => ({ ...prev, nameFile: undefined }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        nameFile: null,
+        nameFileName: '',
+      }));
+    }
+  }, []);
+
   const validate = useCallback((): boolean => {
     const newErrors: SeriesFormErrors = {};
 
@@ -87,6 +107,7 @@ export const useSeriesForm = () => {
     setIsSubmitting,
     updateField,
     handleCoverImage,
+    handleNameFile,
     toggleGenre,
     validate,
     reset,

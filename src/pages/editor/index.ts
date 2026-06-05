@@ -6,3 +6,4 @@ export {
   DisputesPage,
   EditorSettingsPage,
 } from './EditorPages';
+export { ReviewSeriesPage } from './ReviewSeriesPage';
