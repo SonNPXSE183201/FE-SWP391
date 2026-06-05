@@ -13,6 +13,8 @@ export {
   SERIES_STATUS_CONFIG,
   SERIES_STATUS_FILTER_OPTIONS,
   CHAPTER_STATUS_CONFIG,
+  CHAPTER_STATUS_FILTER_OPTIONS,
+  PAGE_STATUS_FILTER_OPTIONS,
   COVER_GRADIENTS,
   SERIES_STATUS_STEPS,
   getStepState,
@@ -31,6 +33,11 @@ export { StatusTimeline } from './components/StatusTimeline';
 export { NameUploader } from './components/NameUploader';
 export { SubmitChecklist } from './components/SubmitChecklist';
 export { SeriesInfoCard } from './components/SeriesInfoCard';
+export { UploadChapterModal } from './components/UploadChapterModal';
+export { PagePlaceholder } from './components/PagePlaceholder';
+export { PageCard } from './components/PageCard';
+export { PageLightbox } from './components/PageLightbox';
+export { SeriesPreviewModal } from './components/SeriesPreviewModal';
 
 // Mock data (temporary — remove when backend API is ready)
 export { MOCK_SERIES, MOCK_CHAPTERS } from './data/mockData';

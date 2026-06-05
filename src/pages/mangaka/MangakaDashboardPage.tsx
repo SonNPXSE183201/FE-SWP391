@@ -5,141 +5,23 @@ import {
   FileText,
   ClipboardList,
   Wallet,
-  TrendingUp,
   Clock,
-  ArrowUpRight,
-  CheckCircle2,
-  AlertCircle,
-  BarChart3,
   Sparkles,
   ChevronRight,
   Eye,
+  BarChart3,
 } from 'lucide-react';
 
-// ─── Mock Dashboard Data ─────────────────────────────────────
-const STATS = {
-  activeSeries: 3,
-  pendingChapters: 2,
-  activeTasks: 5,
-  walletBalance: 12500000,
-  monthlyGenkouryo: 3200000,
-  completedTasks: 18,
-};
-
-const RECENT_ACTIVITIES = [
-  {
-    id: '1',
-    type: 'chapter_approved' as const,
-    title: 'Chapter 3 "Bí mật của ngôi làng" đã được duyệt',
-    series: 'Huyền Thoại Samurai',
-    time: '2 giờ trước',
-    icon: CheckCircle2,
-    color: 'text-success',
-    bg: 'bg-success/10',
-  },
-  {
-    id: '2',
-    type: 'task_submitted' as const,
-    title: 'Assistant Minh Anh đã nộp bài Task #12',
-    series: 'Huyền Thoại Samurai',
-    time: '5 giờ trước',
-    icon: ClipboardList,
-    color: 'text-info',
-    bg: 'bg-info/10',
-  },
-  {
-    id: '3',
-    type: 'chapter_revision' as const,
-    title: 'Chapter 1 "Tín hiệu cuối cùng" cần chỉnh sửa',
-    series: 'Lạc Giữa Ngân Hà',
-    time: '1 ngày trước',
-    icon: AlertCircle,
-    color: 'text-warning',
-    bg: 'bg-warning/10',
-  },
-  {
-    id: '4',
-    type: 'wallet_received' as const,
-    title: 'Nhận nhuận bút 1.200.000₫ cho Chapter 2',
-    series: 'Huyền Thoại Samurai',
-    time: '2 ngày trước',
-    icon: Wallet,
-    color: 'text-brand',
-    bg: 'bg-brand/10',
-  },
-  {
-    id: '5',
-    type: 'series_approved' as const,
-    title: 'Series "Vườn Hoa Mùa Đông" đã được Board duyệt',
-    series: 'Vườn Hoa Mùa Đông',
-    time: '3 ngày trước',
-    icon: Sparkles,
-    color: 'text-success',
-    bg: 'bg-success/10',
-  },
-];
-
-const SERIES_OVERVIEW = [
-  { id: '1', title: 'Huyền Thoại Samurai', chapters: 12, status: 'Published' as const, trend: '+2 chương/tuần' },
-  { id: '2', title: 'Lạc Giữa Ngân Hà', chapters: 5, status: 'Approved' as const, trend: '+1 chương/tuần' },
-  { id: '3', title: 'Vườn Hoa Mùa Đông', chapters: 3, status: 'PendingApproval' as const, trend: 'Mới tạo' },
-];
-
-const STATUS_COLORS = {
-  Published: { label: 'Đang XB', color: 'text-success', dot: 'bg-success' },
-  Approved: { label: 'Đã duyệt', color: 'text-info', dot: 'bg-info' },
-  PendingApproval: { label: 'Chờ duyệt', color: 'text-warning', dot: 'bg-warning' },
-};
-
-// ─── Format VND ──────────────────────────────────────────────
-const formatVND = (amount: number) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-
-// ─── Stat Card Component ─────────────────────────────────────
-const StatCard = ({
-  label,
-  value,
-  icon: Icon,
-  color,
-  suffix,
-  trend,
-  onClick,
-}: {
-  label: string;
-  value: string | number;
-  icon: typeof BookOpen;
-  color: string;
-  suffix?: string;
-  trend?: string;
-  onClick?: () => void;
-}) => (
-  <div
-    onClick={onClick}
-    className={`bg-bg-secondary border border-border-custom rounded-xl p-5 transition-all duration-300 hover:border-brand/20 hover:shadow-md-custom ${onClick ? 'cursor-pointer hover:-translate-y-0.5' : ''} group`}
-  >
-    <div className="flex items-start justify-between">
-      <div className={`w-10 h-10 rounded-xl ${color.replace('text-', 'bg-')}/10 flex items-center justify-center`}>
-        <Icon size={20} className={color} />
-      </div>
-      {onClick && (
-        <ArrowUpRight size={16} className="text-text-muted opacity-0 group-hover:opacity-100 group-hover:text-brand transition-all" />
-      )}
-    </div>
-    <div className="mt-3">
-      <div className="text-2xl font-bold text-text-primary">
-        {value}
-        {suffix && <span className="text-sm font-normal text-text-muted ml-0.5">{suffix}</span>}
-      </div>
-      <div className="text-xs text-text-muted mt-0.5">{label}</div>
-    </div>
-    {trend && (
-      <div className="flex items-center gap-1 mt-2">
-        <TrendingUp size={12} className="text-success" />
-        <span className="text-[11px] text-success font-medium">{trend}</span>
-      </div>
-    )}
-  </div>
-);
+// ─── Import from features (Feature-Driven Architecture) ─────
+import { SERIES_STATUS_CONFIG } from '../../features/series';
+import { formatVND } from '../../features/wallet';
+import {
+  StatCard,
+  MOCK_DASHBOARD_STATS,
+  MOCK_RECENT_ACTIVITIES,
+  MOCK_SERIES_OVERVIEW,
+  getGreeting,
+} from '../../features/dashboard';
 
 // ─── Main Dashboard ──────────────────────────────────────────
 export const MangakaDashboardPage = () => {
@@ -164,8 +46,8 @@ export const MangakaDashboardPage = () => {
             {user?.fullName || 'Mangaka'}
           </h1>
           <p className="text-sm text-text-muted mt-2 max-w-lg">
-            Bạn có <span className="text-warning font-semibold">{STATS.pendingChapters} chapters chờ duyệt</span> và{' '}
-            <span className="text-info font-semibold">{STATS.activeTasks} tasks đang xử lý</span>. Hãy kiểm tra ngay!
+            Bạn có <span className="text-warning font-semibold">{MOCK_DASHBOARD_STATS.pendingChapters} chapters chờ duyệt</span> và{' '}
+            <span className="text-info font-semibold">{MOCK_DASHBOARD_STATS.activeTasks} tasks đang xử lý</span>. Hãy kiểm tra ngay!
           </p>
 
           <div className="flex flex-wrap items-center gap-3 mt-5">
@@ -187,36 +69,36 @@ export const MangakaDashboardPage = () => {
         </div>
       </div>
 
-      {/* ─── Stat Cards ─── */}
+      {/* ─── Stat Cards (Feature Component) ─── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard
           label="Series đang hoạt động"
-          value={STATS.activeSeries}
+          value={MOCK_DASHBOARD_STATS.activeSeries}
           icon={BookOpen}
           color="text-brand"
-          onClick={() => navigate('/mangaka/series')}
+          navigateTo="/mangaka/series"
         />
         <StatCard
           label="Chapters chờ duyệt"
-          value={STATS.pendingChapters}
+          value={MOCK_DASHBOARD_STATS.pendingChapters}
           icon={Clock}
           color="text-warning"
-          onClick={() => navigate('/mangaka/manuscripts')}
+          navigateTo="/mangaka/manuscripts"
         />
         <StatCard
           label="Tasks đang xử lý"
-          value={STATS.activeTasks}
+          value={MOCK_DASHBOARD_STATS.activeTasks}
           icon={ClipboardList}
           color="text-info"
-          onClick={() => navigate('/mangaka/tasks')}
+          navigateTo="/mangaka/tasks"
         />
         <StatCard
           label="Số dư ví"
-          value={formatVND(STATS.walletBalance)}
+          value={formatVND(MOCK_DASHBOARD_STATS.walletBalance)}
           icon={Wallet}
           color="text-success"
-          onClick={() => navigate('/mangaka/wallet')}
-          trend={`+${formatVND(STATS.monthlyGenkouryo)} tháng này`}
+          navigateTo="/mangaka/wallet"
+          trend={`+${formatVND(MOCK_DASHBOARD_STATS.monthlyGenkouryo)} tháng này`}
         />
       </div>
 
@@ -231,7 +113,7 @@ export const MangakaDashboardPage = () => {
               </h2>
             </div>
             <div className="divide-y divide-border-custom">
-              {RECENT_ACTIVITIES.map((activity) => {
+              {MOCK_RECENT_ACTIVITIES.map((activity) => {
                 const Icon = activity.icon;
                 return (
                   <div
@@ -273,8 +155,8 @@ export const MangakaDashboardPage = () => {
               </button>
             </div>
             <div className="divide-y divide-border-custom">
-              {SERIES_OVERVIEW.map((series) => {
-                const statusCfg = STATUS_COLORS[series.status];
+              {MOCK_SERIES_OVERVIEW.map((series) => {
+                const statusCfg = SERIES_STATUS_CONFIG[series.status];
                 return (
                   <div
                     key={series.id}
@@ -290,7 +172,7 @@ export const MangakaDashboardPage = () => {
                       <div className="flex items-center gap-3 mt-1">
                         <span className="text-[11px] text-text-muted">{series.chapters} chương</span>
                         <span className="flex items-center gap-1">
-                          <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
+                          <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.bg.replace('bg-', 'bg-').replace('/10', '')}`} />
                           <span className={`text-[11px] font-medium ${statusCfg.color}`}>
                             {statusCfg.label}
                           </span>
@@ -310,11 +192,11 @@ export const MangakaDashboardPage = () => {
           {/* Quick Stats Mini */}
           <div className="grid grid-cols-2 gap-3 mt-3">
             <div className="bg-bg-secondary border border-border-custom rounded-xl p-4 text-center">
-              <div className="text-lg font-bold text-text-primary">{STATS.completedTasks}</div>
+              <div className="text-lg font-bold text-text-primary">{MOCK_DASHBOARD_STATS.completedTasks}</div>
               <div className="text-[10px] text-text-muted mt-0.5">Tasks hoàn thành</div>
             </div>
             <div className="bg-bg-secondary border border-border-custom rounded-xl p-4 text-center">
-              <div className="text-lg font-bold text-success">{formatVND(STATS.monthlyGenkouryo)}</div>
+              <div className="text-lg font-bold text-success">{formatVND(MOCK_DASHBOARD_STATS.monthlyGenkouryo)}</div>
               <div className="text-[10px] text-text-muted mt-0.5">Nhuận bút tháng</div>
             </div>
           </div>
@@ -323,11 +205,3 @@ export const MangakaDashboardPage = () => {
     </div>
   );
 };
-
-// ─── Helper ──────────────────────────────────────────────────
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Chào buổi sáng,';
-  if (hour < 18) return 'Chào buổi chiều,';
-  return 'Chào buổi tối,';
-}
