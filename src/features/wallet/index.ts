@@ -7,6 +7,9 @@ export type { DepositRequest, WithdrawRequest, DepositResponse } from './api/wal
 // Constants
 export { TX_TYPE_CONFIG, TX_FILTER_OPTIONS, formatVND } from './constants';
 
+// Components
+export { WalletActionModal } from './components/WalletActionModal';
+
 // Mock data (temporary — remove when backend API is ready)
 export { MOCK_WALLET, MOCK_TRANSACTIONS } from './data/mockData';
 export type { MockWallet, MockTransaction } from './data/mockData';

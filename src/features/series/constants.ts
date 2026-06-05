@@ -20,15 +20,37 @@ export const SERIES_STATUS_FILTER_OPTIONS: { value: string; label: string }[] = 
   { value: 'Cancelled', label: 'Đã hủy' },
 ];
 
+import {
+  FileText, Upload, Eye, CheckCircle2, RotateCcw,
+} from 'lucide-react';
+
 // ─── Chapter Status Config ───────────────────────────────────
-export const CHAPTER_STATUS_CONFIG: Record<ChapterStatus, { label: string; color: string; bg: string }> = {
-  Draft: { label: 'Bản nháp', color: 'text-text-secondary', bg: 'bg-bg-surface' },
-  Submitted: { label: 'Đã nộp', color: 'text-info', bg: 'bg-info/10' },
-  UnderReview: { label: 'Đang review', color: 'text-warning', bg: 'bg-warning/10' },
-  Approved: { label: 'Đã duyệt', color: 'text-success', bg: 'bg-success/10' },
-  Revision: { label: 'Yêu cầu sửa', color: 'text-danger', bg: 'bg-danger/10' },
-  Published: { label: 'Đã xuất bản', color: 'text-success', bg: 'bg-success/10' },
+export const CHAPTER_STATUS_CONFIG: Record<ChapterStatus, { label: string; color: string; bg: string; icon: typeof CheckCircle2 }> = {
+  Draft: { label: 'Bản nháp', color: 'text-text-secondary', bg: 'bg-bg-surface', icon: FileText },
+  Submitted: { label: 'Đã nộp', color: 'text-info', bg: 'bg-info/10', icon: Upload },
+  UnderReview: { label: 'Đang review', color: 'text-warning', bg: 'bg-warning/10', icon: Eye },
+  Approved: { label: 'Đã duyệt', color: 'text-success', bg: 'bg-success/10', icon: CheckCircle2 },
+  Revision: { label: 'Yêu cầu sửa', color: 'text-danger', bg: 'bg-danger/10', icon: RotateCcw },
+  Published: { label: 'Đã xuất bản', color: 'text-success', bg: 'bg-success/10', icon: CheckCircle2 },
 };
+
+export const CHAPTER_STATUS_FILTER_OPTIONS = [
+  { value: '', label: 'Tất cả trạng thái' },
+  { value: 'Draft', label: 'Bản nháp' },
+  { value: 'Submitted', label: 'Đã nộp' },
+  { value: 'UnderReview', label: 'Đang review' },
+  { value: 'Approved', label: 'Đã duyệt' },
+  { value: 'Revision', label: 'Yêu cầu sửa' },
+  { value: 'Published', label: 'Đã xuất bản' },
+];
+
+export const PAGE_STATUS_FILTER_OPTIONS = [
+  { value: '', label: 'Tất cả trạng thái' },
+  { value: 'Pending', label: 'Chờ xử lý' },
+  { value: 'InProgress', label: 'Đang làm' },
+  { value: 'Completed', label: 'Hoàn thành' },
+  { value: 'NeedsRevision', label: 'Cần sửa' },
+];
 
 // ─── Cover Gradients ─────────────────────────────────────────
 export const COVER_GRADIENTS = [
