@@ -20,3 +20,4 @@ export { CoverPlaceholder } from './components/CoverPlaceholder';
 
 // Mock data (temporary — remove when backend API is ready)
 export { MOCK_SERIES, MOCK_CHAPTERS } from './data/mockData';
+export { MOCK_PAGES, getPagesByChapterId, PAGE_STATUS_CONFIG } from './data/mockPages';

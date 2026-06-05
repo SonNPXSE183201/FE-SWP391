@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { FileText, Upload, Clock, CheckCircle2, AlertCircle, Eye, RotateCcw, ImagePlus, X, BookOpen } from 'lucide-react';
 import type { Chapter, ChapterStatus } from '../../types/entities';
@@ -247,6 +248,7 @@ const UploadChapterModal = ({ onClose }: { onClose: () => void }) => {
 
 // ─── Main Page ───────────────────────────────────────────────
 export const ManuscriptsPage = () => {
+  const navigate = useNavigate();
   const [seriesFilter, setSeriesFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -335,6 +337,7 @@ export const ManuscriptsPage = () => {
           return (
             <div
               key={chapter.id}
+              onClick={() => navigate(`/mangaka/manuscripts/${chapter.id}`)}
               className="group flex items-center gap-4 bg-bg-secondary border border-border-custom rounded-xl p-4 hover:border-brand/20 transition-all cursor-pointer"
             >
               {/* Chapter number */}
