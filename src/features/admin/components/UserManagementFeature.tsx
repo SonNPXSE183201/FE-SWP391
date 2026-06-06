@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Users, Search, Filter, MoreVertical, CheckCircle, XCircle } from 'lucide-react';
+import { useState } from 'react';
+import { Users, Search, MoreVertical, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi, type UserListItem } from '../api/admin.api';
