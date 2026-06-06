@@ -4,3 +4,4 @@ export type { ApproveAssistantRequest, UpdateContractRequest, UserListItem } fro
 
 // Components
 export { UserManagementFeature } from './components/UserManagementFeature';
+export { ContractManagementFeature } from './components/ContractManagementFeature';
