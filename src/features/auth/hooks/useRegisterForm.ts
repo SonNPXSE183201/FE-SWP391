@@ -49,8 +49,8 @@ export const useRegisterForm = () => {
 
       // Mật khẩu
       if (!formData.password) newErrors.password = 'Vui lòng nhập mật khẩu';
-      else if (formData.password.length < 6) newErrors.password = 'Mật khẩu phải chứa ít nhất 6 ký tự';
-      else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{6,}$/.test(formData.password)) {
+      else if (formData.password.length < 8) newErrors.password = 'Mật khẩu phải chứa ít nhất 8 ký tự';
+      else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$/.test(formData.password)) {
         newErrors.password = 'Mật khẩu phải chứa chữ hoa, chữ thường, số và ký tự đặc biệt';
       }
 
