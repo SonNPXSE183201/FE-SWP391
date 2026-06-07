@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { Mail, Lock, Loader2, ArrowRight, X } from 'lucide-react';
+import { Mail, Lock, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '../../../stores/authStore';
-import { loginApi } from '../../../api/auth.api';
+import { loginApi } from '../api/auth.api';
 
 export const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -11,6 +11,7 @@ export const LoginForm: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   
   const navigate = useNavigate();
   const { setAuth, setLoading, isLoading, getRoleRedirectPath } = useAuthStore();
@@ -92,15 +93,6 @@ export const LoginForm: React.FC = () => {
 
       {/* Card container with glow pulse */}
       <div className="relative w-full p-8 rounded-2xl bg-bg-secondary/80 backdrop-blur-xl border border-white/10 shadow-2xl animate-slide-in-up animate-glow-pulse">
-        {/* Close (X) button → navigate to Landing Page */}
-        <Link
-          to="/"
-          id="login-close-btn"
-          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-text-secondary hover:text-text-primary hover:bg-white/10 hover:border-white/20 hover:rotate-90 transition-all duration-300 group"
-          aria-label="Quay về trang chủ"
-        >
-          <X size={16} className="group-hover:scale-110 transition-transform" />
-        </Link>
 
         {/* Header */}
         <div
@@ -163,15 +155,24 @@ export const LoginForm: React.FC = () => {
               </div>
               <input
                 id="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onFocus={() => setFocusedField('password')}
                 onBlur={() => setFocusedField(null)}
                 disabled={isLoading}
-                className="w-full pl-10 pr-4 py-2.5 bg-bg-surface border border-border-custom rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all duration-300"
+                className="w-full pl-10 pr-11 py-2.5 bg-bg-surface border border-border-custom rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all duration-300"
                 placeholder="••••••••"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-muted hover:text-text-secondary transition-colors duration-200"
+                aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 
