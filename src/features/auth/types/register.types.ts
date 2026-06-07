@@ -6,6 +6,7 @@ export interface RegisterFormData {
   fullName: string;
   portfolioUrl: string;
   specialtyTags: string;
+  verificationCode: string;
 }
 
 export interface RegisterFormErrors {
@@ -16,6 +17,7 @@ export interface RegisterFormErrors {
   fullName?: string;
   portfolioUrl?: string;
   specialtyTags?: string;
+  verificationCode?: string;
 }
 
 export interface RegisterFieldProps {
