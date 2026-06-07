@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { User, Mail, Lock, Briefcase, Tags, Pen, ArrowRight, ArrowLeft, UserCheck } from 'lucide-react';
+import { User, Mail, Lock, Briefcase, Tags, Pen, ArrowRight, ArrowLeft, UserCheck, Loader2 } from 'lucide-react';
 import { useRegisterForm } from '../hooks/useRegisterForm';
 import { RegisterInput } from './RegisterInput';
 import { StepIndicator } from './StepIndicator';
@@ -70,11 +70,10 @@ export const RegisterForm = () => {
         <form onSubmit={handleSubmit} className="space-y-5" noValidate>
           {/* Step 0: Account info */}
           <div
-            className={`space-y-4 transition-all duration-500 ease-out ${
-              currentStep === 0
+            className={`space-y-4 transition-all duration-500 ease-out ${currentStep === 0
                 ? 'opacity-100 translate-x-0 scale-100'
                 : 'opacity-0 -translate-x-12 scale-95 absolute pointer-events-none'
-            }`}
+              }`}
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="animate-blur-in" style={{ animationDelay: '0.5s' }}>
@@ -152,13 +151,12 @@ export const RegisterForm = () => {
 
           {/* Step 1: Profile info */}
           <div
-            className={`space-y-4 transition-all duration-500 ease-out ${
-              currentStep === 1
+            className={`space-y-4 transition-all duration-500 ease-out ${currentStep === 1
                 ? 'opacity-100 translate-x-0 scale-100'
-                : currentStep > 1 
+                : currentStep > 1
                   ? 'opacity-0 -translate-x-12 scale-95 absolute pointer-events-none'
                   : 'opacity-0 translate-x-12 scale-95 absolute pointer-events-none'
-            }`}
+              }`}
           >
             <RegisterInput
               name="fullName"
@@ -219,14 +217,13 @@ export const RegisterForm = () => {
 
           {/* Step 2: OTP info */}
           <div
-            className={`space-y-4 transition-all duration-500 ease-out ${
-              currentStep === 2
+            className={`space-y-4 transition-all duration-500 ease-out ${currentStep === 2
                 ? 'opacity-100 translate-x-0 scale-100'
                 : 'opacity-0 translate-x-12 scale-95 absolute pointer-events-none'
-            }`}
+              }`}
           >
             <div className="text-center mb-6">
-               <p className="text-text-secondary text-sm">Vui lòng nhập mã OTP gồm 6 chữ số đã được gửi đến email của bạn.</p>
+              <p className="text-text-secondary text-sm">Vui lòng nhập mã OTP gồm 6 chữ số đã được gửi đến email của bạn.</p>
             </div>
             <RegisterInput
               name="verificationCode"
