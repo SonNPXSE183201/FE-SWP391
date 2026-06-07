@@ -28,7 +28,7 @@ export const LandingPage = () => {
 
   return (
     <main className="bg-bg-primary min-h-screen">
-      <Navbar onGetStarted={handleGetStarted} />
+      <Navbar />
       <HeroSection
         onGetStarted={handleGetStarted}
         onLearnMore={handleLearnMore}

@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 interface NavbarProps {
-  onGetStarted?: () => void;
 }
 
 const NAV_LINKS = [
@@ -12,7 +11,7 @@ const NAV_LINKS = [
   { label: 'Showcase', targetId: 'showcase-section' },
 ];
 
-export const Navbar = ({ onGetStarted }: NavbarProps) => {
+export const Navbar = ({}: NavbarProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

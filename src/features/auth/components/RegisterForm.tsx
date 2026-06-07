@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { User, Mail, Lock, Briefcase, Tags, Loader2, Pen, ArrowRight, ArrowLeft, UserCheck } from 'lucide-react';
+import { User, Mail, Lock, Briefcase, Tags, Pen, ArrowRight, ArrowLeft, UserCheck } from 'lucide-react';
 import { useRegisterForm } from '../hooks/useRegisterForm';
 import { RegisterInput } from './RegisterInput';
 import { StepIndicator } from './StepIndicator';
