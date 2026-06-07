@@ -1,8 +1,16 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 
+export interface ApiResponse<T> {
+  IsSuccess: boolean;
+  StatusCode: number;
+  Message: string;
+  Data?: T;
+  Errors?: Record<string, string[]>;
+}
+
 export const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://localhost:5001',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5010',
   headers: {
     'Content-Type': 'application/json',
   },

@@ -5,7 +5,7 @@ import { RegisterInput } from './RegisterInput';
 import { StepIndicator } from './StepIndicator';
 import { RegisterConfirmModal } from './RegisterConfirmModal';
 
-const STEP_LABELS = ['Tài khoản', 'Hồ sơ'];
+const STEP_LABELS = ['Tài khoản', 'Hồ sơ', 'Xác thực OTP'];
 
 export const RegisterForm = () => {
   const {
@@ -70,7 +70,7 @@ export const RegisterForm = () => {
         <div className="animate-fade-in-up" style={{ animationDelay: '0.45s' }}>
           <StepIndicator
             currentStep={currentStep}
-            totalSteps={2}
+            totalSteps={3}
             labels={STEP_LABELS}
           />
         </div>
@@ -164,7 +164,9 @@ export const RegisterForm = () => {
             className={`space-y-4 transition-all duration-500 ease-out ${
               currentStep === 1
                 ? 'opacity-100 translate-x-0 scale-100'
-                : 'opacity-0 translate-x-12 scale-95 absolute pointer-events-none'
+                : currentStep > 1 
+                  ? 'opacity-0 -translate-x-12 scale-95 absolute pointer-events-none'
+                  : 'opacity-0 translate-x-12 scale-95 absolute pointer-events-none'
             }`}
           >
             <RegisterInput
@@ -220,6 +222,42 @@ export const RegisterForm = () => {
                 className="flex-1 bg-gradient-to-r from-brand to-brand-hover hover:from-brand-hover hover:to-brand text-white font-semibold py-3.5 rounded-xl transition-all duration-300 shadow-brand hover:shadow-brand-hover hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none flex items-center justify-center gap-2"
               >
                 Gửi đăng ký
+              </button>
+            </div>
+          </div>
+
+          {/* Step 2: OTP info */}
+          <div
+            className={`space-y-4 transition-all duration-500 ease-out ${
+              currentStep === 2
+                ? 'opacity-100 translate-x-0 scale-100'
+                : 'opacity-0 translate-x-12 scale-95 absolute pointer-events-none'
+            }`}
+          >
+            <div className="text-center mb-6">
+               <p className="text-text-secondary text-sm">Vui lòng nhập mã OTP gồm 6 chữ số đã được gửi đến email của bạn.</p>
+            </div>
+            <RegisterInput
+              name="verificationCode"
+              label="Mã OTP"
+              type="text"
+              placeholder="123456"
+              icon={Lock}
+              value={formData.verificationCode}
+              error={errors.verificationCode}
+              required
+              onChange={handleChange}
+              hint="Mã xác thực gồm 6 số"
+            />
+
+            {/* Buttons */}
+            <div className="flex gap-3 pt-3">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="flex-1 bg-gradient-to-r from-brand to-brand-hover hover:from-brand-hover hover:to-brand text-white font-semibold py-3.5 rounded-xl transition-all duration-300 shadow-brand hover:shadow-brand-hover hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none flex items-center justify-center gap-2"
+              >
+                {isLoading ? <Loader2 className="animate-spin w-5 h-5 mx-auto" /> : 'Xác thực & Hoàn tất'}
               </button>
             </div>
           </div>

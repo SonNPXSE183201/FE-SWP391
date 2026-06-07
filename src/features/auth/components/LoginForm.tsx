@@ -30,12 +30,7 @@ export const LoginForm: React.FC = () => {
 
     // Basic validation
     if (!email || !password) {
-      setLocalError('Vui lòng nhập đầy đủ email và mật khẩu');
-      return;
-    }
-    
-    if (password.length < 6) {
-      setLocalError('Mật khẩu phải có ít nhất 6 ký tự');
+      setLocalError('Username/Email và mật khẩu không được để trống');
       return;
     }
 
@@ -44,7 +39,7 @@ export const LoginForm: React.FC = () => {
     try {
       const response = await loginApi({ email, password });
       
-      if (response.success && response.data) {
+      if (response.IsSuccess && response.Data) {
         // Handle remember me
         if (rememberMe) {
           localStorage.setItem('inku-remembered-email', email);
@@ -52,13 +47,28 @@ export const LoginForm: React.FC = () => {
           localStorage.removeItem('inku-remembered-email');
         }
 
+        // Map backend role to frontend role
+        let mappedRole = response.Data.RoleName;
+        if (mappedRole === 'System Admin') mappedRole = 'Admin';
+        else if (mappedRole === 'Tantou Editor') mappedRole = 'Editor';
+        else if (mappedRole === 'Editorial Board') mappedRole = 'Board';
+
         // Save to store
-        setAuth(response.data.user, response.data.token);
-        toast.success(response.message || 'Đăng nhập thành công');
+        setAuth({
+          id: response.Data.UserId.toString(),
+          userName: response.Data.UserName,
+          email: response.Data.Email,
+          fullName: response.Data.FullName,
+          role: mappedRole as any
+        }, response.Data.Token);
         
-        // Redirect based on role
-        const redirectPath = getRoleRedirectPath();
-        navigate(redirectPath, { replace: true });
+        toast.success(response.Message || 'Đăng nhập thành công');
+        
+        // Wait a tick for Zustand to update its persisted state before navigating
+        setTimeout(() => {
+          const redirectPath = useAuthStore.getState().getRoleRedirectPath();
+          navigate(redirectPath, { replace: true });
+        }, 50);
       }
     } catch (error: any) {
       const errorMsg = error.response?.data?.message || 'Có lỗi xảy ra khi đăng nhập';
@@ -108,13 +118,13 @@ export const LoginForm: React.FC = () => {
             </div>
           )}
 
-          {/* Email field */}
+          {/* Email/Username field */}
           <div
             className="space-y-2 animate-fade-in-up"
             style={{ animationDelay: '0.25s' }}
           >
             <label className="text-sm font-medium text-text-primary" htmlFor="email">
-              Email
+              Tên đăng nhập / Email
             </label>
             <div className={`relative group rounded-lg transition-shadow duration-300 ${focusedField === 'email' ? 'shadow-[0_0_20px_rgba(108,92,231,0.15)]' : ''}`}>
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-secondary group-focus-within:text-brand transition-colors duration-300">
@@ -122,14 +132,14 @@ export const LoginForm: React.FC = () => {
               </div>
               <input
                 id="email"
-                type="email"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onFocus={() => setFocusedField('email')}
                 onBlur={() => setFocusedField(null)}
                 disabled={isLoading}
                 className="w-full pl-10 pr-4 py-2.5 bg-bg-surface border border-border-custom rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all duration-300"
-                placeholder="nhap@email.com"
+                placeholder="mangaka1 hoặc nhap@email.com"
               />
             </div>
           </div>
