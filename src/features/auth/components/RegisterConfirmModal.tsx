@@ -1,4 +1,4 @@
-import { ShieldCheck, Info, X, Loader2, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Info, X, Loader2, CheckCircle2, Mail } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
 interface RegisterConfirmModalProps {
@@ -113,8 +113,24 @@ export const RegisterConfirmModal = ({
             </div>
           </div>
 
+          {/* OTP notice */}
+          <div
+            className="bg-secondary/5 border border-secondary/15 rounded-xl p-4 flex items-start gap-3 animate-fade-in-up"
+            style={{ animationDelay: '0.4s' }}
+          >
+            <div className="w-9 h-9 rounded-lg bg-secondary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Mail className="w-[18px] h-[18px] text-secondary" />
+            </div>
+            <div>
+              <p className="text-secondary text-sm font-semibold mb-1">Xác thực Email</p>
+              <p className="text-text-secondary text-[13px] leading-relaxed">
+                Hệ thống sẽ gửi một <strong className="text-text-primary">mã OTP gồm 6 chữ số</strong> về email đăng ký. Vui lòng chuẩn bị sẵn email để nhận mã ở bước tiếp theo.
+              </p>
+            </div>
+          </div>
+
           {/* Terms */}
-          <p className="text-text-muted text-[11px] leading-relaxed pt-1 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+          <p className="text-text-muted text-[11px] leading-relaxed pt-1 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
             Bằng việc xác nhận, bạn đồng ý với{' '}
             <a href="#" className="text-text-secondary hover:text-text-primary underline transition-colors">
               Điều khoản sử dụng
@@ -131,7 +147,7 @@ export const RegisterConfirmModal = ({
         <div className="h-px bg-border-custom" />
 
         {/* Actions — slide up */}
-        <div className="px-6 py-4 flex gap-3 animate-fade-in-up" style={{ animationDelay: '0.45s' }}>
+        <div className="px-6 py-4 flex gap-3 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
           <button
             type="button"
             onClick={onClose}
