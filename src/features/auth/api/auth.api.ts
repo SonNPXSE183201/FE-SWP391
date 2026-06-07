@@ -1,5 +1,5 @@
-import { axiosInstance } from './axios';
-import type { User } from '../stores/authStore';
+import { axiosInstance } from '../../../api/axios';
+import type { User } from '../../../stores/authStore';
 
 // --- Register API ---
 export interface RegisterAssistantRequest {
