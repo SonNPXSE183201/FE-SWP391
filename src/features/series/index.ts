@@ -1,0 +1,20 @@
+// Series feature barrel
+export { SERIES_STATUS_CONFIG, SERIES_STATUS_FILTER_OPTIONS } from './constants';
+export { CHAPTER_STATUS_CONFIG, CHAPTER_STATUS_FILTER_OPTIONS, PAGE_STATUS_FILTER_OPTIONS } from './constants';
+export { MOCK_SERIES, MOCK_CHAPTERS } from './data/mockData';
+export { getPagesByChapterId } from './data/mockPages';
+export { SeriesCard, SeriesRow } from './components/SeriesCard';
+export { CreateSeriesForm } from './components/CreateSeriesForm';
+export { StatusTimeline } from './components/StatusTimeline';
+export { SeriesInfoCard } from './components/SeriesInfoCard';
+export { NameUploader } from './components/NameUploader';
+export { SubmitChecklist } from './components/SubmitChecklist';
+export { useNameUpload } from './hooks/useNameUpload';
+export { useSeriesSubmit } from './hooks/useSeriesSubmit';
+export { UploadChapterModal } from './components/UploadChapterModal';
+export { PageCard } from './components/PageCard';
+export { PageLightbox } from './components/PageLightbox';
+export { SeriesListFeature } from './components/SeriesListFeature';
+export { SeriesDetailFeature } from './components/SeriesDetailFeature';
+export { ManuscriptsFeature } from './components/ManuscriptsFeature';
+export { ChapterDetailFeature } from './components/ChapterDetailFeature';

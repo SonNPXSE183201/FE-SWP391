@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { authApi } from '../../../api/auth.api';
+import { authApi } from '../api/auth.api';
 import type { RegisterFormData, RegisterFormErrors } from '../types/register.types';
 
 const INITIAL_FORM_DATA: RegisterFormData = {
