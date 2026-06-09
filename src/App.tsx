@@ -6,6 +6,7 @@ import { AuthLayout } from './layouts/AuthLayout';
 import { LandingPage } from './pages/landing/LandingPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 import { LoginPage } from './pages/auth/LoginPage';
+import { DepositCallbackPage } from './pages/wallet/DepositCallbackPage';
 
 // ─── Mangaka Pages ───
 import {
@@ -102,6 +103,9 @@ function App() {
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
+        {/* Callback routes */}
+        <Route path="/wallet/deposit/callback" element={<DepositCallbackPage />} />
 
         {/* Auth routes — wrapped in AuthLayout */}
         <Route element={<AuthLayout />}>

@@ -4,3 +4,6 @@ export { TX_TYPE_CONFIG, TX_FILTER_OPTIONS } from './constants';
 export { MOCK_WALLET, MOCK_TRANSACTIONS } from './data/mockData';
 export { WalletActionModal } from './components/WalletActionModal';
 export { MangakaWalletFeature } from './components/MangakaWalletFeature';
+export { AssistantWalletFeature } from './components/AssistantWalletFeature';
+export { useWallet } from './hooks/useWallet';
+export { useWalletActions } from './hooks/useWalletActions';

@@ -16,7 +16,7 @@ export const axiosInstance = axios.create({
   },
 });
 
-// Intercept requests to add Authorization header
+// Intercept requests to add Authorization header 
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().token;

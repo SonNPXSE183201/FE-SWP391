@@ -203,6 +203,38 @@ export const useApproveTask = () => {
 };
 ```
 
+### 3.5 API Data Mapping (PascalCase vs camelCase)
+
+**RẤT QUAN TRỌNG:** Backend C# (ASP.NET) thường trả về JSON với các thuộc tính dạng **PascalCase** (Ví dụ: `IsSuccess`, `Data`, `SetupFundBalance`). Trong khi Frontend (TypeScript) quy ước sử dụng **camelCase** (Ví dụ: `isSuccess`, `data`, `setupFundBalance`).
+- **KHÔNG** sử dụng trực tiếp dữ liệu PascalCase từ API truyền xuống Components.
+- **BẮT BUỘC** phải thực hiện **Data Mapping** từ `PascalCase` sang `camelCase` ngay tại tầng API hook (trong `queryFn` của React Query) trước khi return dữ liệu cho component.
+- Phải định nghĩa interface `ApiResponse` khớp với response format của backend (Sử dụng PascalCase cho các key root nếu backend cấu hình như vậy).
+
+**Ví dụ:**
+```tsx
+export const useWallet = () => {
+  return useQuery({
+    queryKey: ['wallet'],
+    queryFn: async () => {
+      const response = await walletApi.getMyWallet();
+      
+      // 1. Nhận dữ liệu PascalCase từ backend
+      const backendData = response.data.Data; 
+      
+      // 2. Map sang camelCase theo Entity của Frontend
+      const wallet: Wallet = {
+        id: String(backendData.Id),
+        setupFundBalance: Number(backendData.SetupFundBalance),
+        withdrawableBalance: Number(backendData.WithdrawableBalance),
+        // ...
+      };
+
+      return wallet;
+    }
+  });
+};
+```
+
 ## 4. Routing & Authorization
 
 ### 4.1 Role-based Guard
