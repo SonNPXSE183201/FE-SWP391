@@ -2,7 +2,13 @@
 // Global Hooks — Barrel Export
 // ============================================================
 
-// Will be populated as hooks are created:
-// export { useSignalR } from './useSignalR';
+export { usePagination } from './usePagination';
+export { useAuth } from './useAuth';
+export { useDebounce } from './useDebounce';
+export { useClickOutside } from './useClickOutside';
+export { useWindowSize } from './useWindowSize';
+export { useSignalR } from './useSignalR';
+
+// Future hooks:
 // export { useWallet } from './useWallet';
 // export { useNotifications } from './useNotifications';

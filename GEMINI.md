@@ -37,16 +37,22 @@ src/
 │   │   └── AnnotationTool.tsx
 │   ├── layout/             # Header, Sidebar, Footer, Breadcrumb
 │   └── ui/                 # Design system components (Card, Table, Chart)
-├── features/               # Feature-based modules
-│   ├── auth/
-│   ├── dashboard/
-│   ├── series/
-│   ├── chapters/
-│   ├── tasks/
-│   ├── wallet/
-│   ├── ranking/
-│   ├── notifications/
-│   └── admin/
+├── features/               # Feature-Driven Architecture (Phân chia theo NGHIỆP VỤ cốt lõi)
+│   ├── auth/               # Xác thực
+│   ├── dashboard/          # Tổng quan (Dashboards cho các role)
+│   ├── series/             # Quản lý truyện
+│   ├── chapters/           # Quản lý chapter/bản thảo
+│   ├── tasks/              # Phân công & giao việc
+│   ├── wallet/             # Ví tiền
+│   ├── review/             # Soi lỗi & Annotation
+│   ├── disputes/           # Giải quyết tranh chấp
+│   ├── voting/             # Bỏ phiếu xét duyệt
+│   ├── approvals/          # Duyệt cấp vốn (Setup Fund)
+│   ├── ranking/            # Bảng xếp hạng
+│   ├── users/              # Quản lý tài khoản (Users, Assistant Profiles)
+│   ├── contracts/          # Hợp đồng
+│   ├── reconciliation/     # Đối soát tài chính
+│   └── notifications/      # Thông báo
 ├── hooks/                  # Custom React hooks
 │   ├── useAuth.ts
 │   ├── useWallet.ts
@@ -199,6 +205,38 @@ export const useApproveTask = () => {
   return useMutation({
     mutationFn: tasksApi.approveTask,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+  });
+};
+```
+
+### 3.5 API Data Mapping (PascalCase vs camelCase)
+
+**RẤT QUAN TRỌNG:** Backend C# (ASP.NET) thường trả về JSON với các thuộc tính dạng **PascalCase** (Ví dụ: `IsSuccess`, `Data`, `SetupFundBalance`). Trong khi Frontend (TypeScript) quy ước sử dụng **camelCase** (Ví dụ: `isSuccess`, `data`, `setupFundBalance`).
+- **KHÔNG** sử dụng trực tiếp dữ liệu PascalCase từ API truyền xuống Components.
+- **BẮT BUỘC** phải thực hiện **Data Mapping** từ `PascalCase` sang `camelCase` ngay tại tầng API hook (trong `queryFn` của React Query) trước khi return dữ liệu cho component.
+- Phải định nghĩa interface `ApiResponse` khớp với response format của backend (Sử dụng PascalCase cho các key root nếu backend cấu hình như vậy).
+
+**Ví dụ:**
+```tsx
+export const useWallet = () => {
+  return useQuery({
+    queryKey: ['wallet'],
+    queryFn: async () => {
+      const response = await walletApi.getMyWallet();
+      
+      // 1. Nhận dữ liệu PascalCase từ backend
+      const backendData = response.data.Data; 
+      
+      // 2. Map sang camelCase theo Entity của Frontend
+      const wallet: Wallet = {
+        id: String(backendData.Id),
+        setupFundBalance: Number(backendData.SetupFundBalance),
+        withdrawableBalance: Number(backendData.WithdrawableBalance),
+        // ...
+      };
+
+      return wallet;
+    }
   });
 };
 ```

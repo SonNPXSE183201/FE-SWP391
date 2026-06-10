@@ -1,45 +1,39 @@
-import { axiosInstance } from '../../../api/axios';
-import type { ApiResponse, Wallet, Transaction, PaginatedResponse } from '../../../types';
+import { axiosInstance, type ApiResponse } from '../../../api/axios';
+import type { Wallet, Transaction, PaginatedResponse } from '../../../types';
 
-// ─── Request DTOs ────────────────────────────────────────────
+export interface WalletDetailsResponse {
+  wallet: Wallet;
+  transactions: Transaction[];
+}
 
 export interface DepositRequest {
   amount: number;
-  returnUrl: string;   // VNPay redirect URL
 }
 
 export interface WithdrawRequest {
   amount: number;
-  bankAccount: string;
   bankName: string;
+  bankAccountNumber: string;
+  bankAccountName: string;
 }
-
-export interface DepositResponse {
-  paymentUrl: string;  // VNPay payment URL to redirect user
-}
-
-// ─── API Functions ───────────────────────────────────────────
 
 export const walletApi = {
-  // Get wallet info
   getMyWallet: () =>
-    axiosInstance.get<ApiResponse<Wallet>>('/api/wallet'),
+    axiosInstance.get<ApiResponse<WalletDetailsResponse>>('/api/wallets/me'),
 
-  // Transaction history
-  getTransactions: (params?: {
-    page?: number;
-    pageSize?: number;
-    type?: string;
-    from?: string;
-    to?: string;
-  }) =>
-    axiosInstance.get<PaginatedResponse<Transaction>>('/api/wallet/transactions', { params }),
+  getTransactions: (params?: { page?: number; pageSize?: number }) =>
+    // Assuming backend might still have /api/wallet/transactions or similar, but WalletsController doesn't show it.
+    // The me endpoint returns both. I will keep this signature just in case it's used somewhere, but point it to the correct route if it existed.
+    // Actually, WalletsController doesn't have `getTransactions` endpoint. `GetMyWalletDetails` returns both.
+    // I'll comment it out or leave it throwing an error if not implemented.
+    Promise.reject(new Error("Use getMyWallet instead to get transactions.")),
 
-  // Deposit via VNPay (F1.9)
   deposit: (data: DepositRequest) =>
-    axiosInstance.post<ApiResponse<DepositResponse>>('/api/wallet/deposit', data),
+    axiosInstance.post<ApiResponse<string>>('/api/wallets/deposit', data),
 
-  // Withdraw (F1.8)
+  confirmDeposit: (referenceCode: string, status: string) =>
+    axiosInstance.get<ApiResponse<boolean>>('/api/wallets/deposit/callback', { params: { referenceCode, status } }),
+
   withdraw: (data: WithdrawRequest) =>
-    axiosInstance.post<ApiResponse<null>>('/api/wallet/withdraw', data),
+    axiosInstance.post<ApiResponse<Transaction>>('/api/wallets/withdraw', data),
 };

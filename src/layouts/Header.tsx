@@ -93,9 +93,6 @@ export const Header = ({ onMobileMenuToggle }: HeaderProps) => {
         >
           <Search size={16} />
           <span>Tìm kiếm...</span>
-          <span className="ml-auto inline-flex items-center px-1.5 py-0.5 rounded bg-bg-primary border border-border-custom text-[11px] font-mono text-text-muted">
-            ⌘K
-          </span>
         </button>
 
         {/* Notifications */}
