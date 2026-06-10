@@ -21,8 +21,8 @@ export const MangakaWalletFeature = () => {
 
   const { data: response, isLoading, isError, error } = useWallet();
 
-  const wallet = response?.Data?.wallet;
-  const transactions = response?.Data?.transactions || [];
+  const wallet = response?.wallet;
+  const transactions = response?.transactions || [];
 
   const filteredTx = useMemo(() => {
     return transactions.filter((tx) => {
