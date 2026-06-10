@@ -1,4 +1,4 @@
-import { ContractManagementFeature } from '../../features/admin';
+import { ContractManagementFeature } from '../../features/contracts';
 
 export const AdminContractsPage = () => {
   return <ContractManagementFeature />;

@@ -37,16 +37,22 @@ src/
 │   │   └── AnnotationTool.tsx
 │   ├── layout/             # Header, Sidebar, Footer, Breadcrumb
 │   └── ui/                 # Design system components (Card, Table, Chart)
-├── features/               # Feature-based modules
-│   ├── auth/
-│   ├── dashboard/
-│   ├── series/
-│   ├── chapters/
-│   ├── tasks/
-│   ├── wallet/
-│   ├── ranking/
-│   ├── notifications/
-│   └── admin/
+├── features/               # Feature-Driven Architecture (Phân chia theo NGHIỆP VỤ cốt lõi)
+│   ├── auth/               # Xác thực
+│   ├── dashboard/          # Tổng quan (Dashboards cho các role)
+│   ├── series/             # Quản lý truyện
+│   ├── chapters/           # Quản lý chapter/bản thảo
+│   ├── tasks/              # Phân công & giao việc
+│   ├── wallet/             # Ví tiền
+│   ├── review/             # Soi lỗi & Annotation
+│   ├── disputes/           # Giải quyết tranh chấp
+│   ├── voting/             # Bỏ phiếu xét duyệt
+│   ├── approvals/          # Duyệt cấp vốn (Setup Fund)
+│   ├── ranking/            # Bảng xếp hạng
+│   ├── users/              # Quản lý tài khoản (Users, Assistant Profiles)
+│   ├── contracts/          # Hợp đồng
+│   ├── reconciliation/     # Đối soát tài chính
+│   └── notifications/      # Thông báo
 ├── hooks/                  # Custom React hooks
 │   ├── useAuth.ts
 │   ├── useWallet.ts
