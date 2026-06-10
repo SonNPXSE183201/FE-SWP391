@@ -1,10 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { walletApi } from '../api/wallet.api';
 import type { Wallet, Transaction, TransactionType } from '../../../types/entities';
+import { useAuthStore } from '../../../stores/authStore';
 
 export const useWallet = () => {
+  const user = useAuthStore(state => state.user);
+
   return useQuery<{ wallet: Wallet; transactions: Transaction[] }, Error>({
-    queryKey: ['wallet'],
+    queryKey: ['wallet', user?.id],
     queryFn: async () => {
       const response = await walletApi.getMyWallet();
       

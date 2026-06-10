@@ -38,7 +38,7 @@ export const MangakaWalletFeature = () => {
 
   useEffect(() => {
     pagination.goToPage(1);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [txTypeFilter, searchQuery]);
 
   if (isLoading) {
@@ -103,9 +103,7 @@ export const MangakaWalletFeature = () => {
             <div className="text-3xl font-bold text-text-primary mt-2">
               {formatVND(wallet.setupFundBalance)}
             </div>
-            <p className="text-[11px] text-text-muted mt-2">
-              SetupFundBalance — Vốn do Board cấp. Ưu tiên Lock trước.
-            </p>
+
             <div className="flex items-center gap-2 mt-3">
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-warning/10 text-warning text-[10px] font-medium">
                 <Lock size={10} />
@@ -126,9 +124,7 @@ export const MangakaWalletFeature = () => {
             <div className="text-3xl font-bold text-text-primary mt-2">
               {formatVND(wallet.withdrawableBalance)}
             </div>
-            <p className="text-[11px] text-text-muted mt-2">
-              WithdrawableBalance — Nhuận bút + tự nạp. Có thể rút ra.
-            </p>
+
             <div className="flex items-center gap-2 mt-3">
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-success/10 text-success text-[10px] font-medium">
                 <TrendingUp size={10} />
@@ -269,10 +265,10 @@ export const MangakaWalletFeature = () => {
 
       {/* Modal (Feature Component) */}
       {walletAction && (
-        <WalletActionModal 
-          mode={walletAction} 
-          maxWithdrawAmount={wallet.withdrawableBalance} 
-          onClose={() => setWalletAction(null)} 
+        <WalletActionModal
+          mode={walletAction}
+          maxWithdrawAmount={wallet.withdrawableBalance}
+          onClose={() => setWalletAction(null)}
         />
       )}
     </div>

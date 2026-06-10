@@ -205,6 +205,7 @@ export interface Wallet extends BaseEntity {
   setupFundBalance: number;       // Board-funded balance (VND)
   withdrawableBalance: number;    // Genkouryo + self-deposit (VND)
   lockedAmount: number;           // Currently locked in tasks
+  totalBalance: number;           // Calculated: setup + withdrawable
 }
 
 export interface Transaction extends BaseEntity {
