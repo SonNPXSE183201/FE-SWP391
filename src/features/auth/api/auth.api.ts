@@ -41,6 +41,12 @@ export interface AuthResponseDto {
   FullName: string;
   RoleName: string;
   Token: string;
+  RefreshToken: string;
+}
+
+export interface RefreshTokenRequest {
+  token: string;
+  refreshToken: string;
 }
 
 export const loginApi = async (credentials: { email: string; password: string }): Promise<ApiResponse<AuthResponseDto>> => {
@@ -49,5 +55,10 @@ export const loginApi = async (credentials: { email: string; password: string })
     password: credentials.password
   };
   const response = await axiosInstance.post<ApiResponse<AuthResponseDto>>('/api/auth/login', payload);
+  return response.data;
+};
+
+export const refreshTokenApi = async (payload: RefreshTokenRequest): Promise<ApiResponse<AuthResponseDto>> => {
+  const response = await axiosInstance.post<ApiResponse<AuthResponseDto>>('/api/auth/refresh-token', payload);
   return response.data;
 };

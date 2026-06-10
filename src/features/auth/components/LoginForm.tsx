@@ -61,7 +61,7 @@ export const LoginForm: React.FC = () => {
           email: response.Data.Email,
           fullName: response.Data.FullName,
           role: mappedRole as any
-        }, response.Data.Token);
+        }, response.Data.Token, response.Data.RefreshToken);
         
         toast.success(response.Message || 'Đăng nhập thành công');
         

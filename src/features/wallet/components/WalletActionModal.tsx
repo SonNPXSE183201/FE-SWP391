@@ -1,31 +1,33 @@
-import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ArrowDownToLine, ArrowUpFromLine, CreditCard, ExternalLink,
 } from 'lucide-react';
-import { formatVND, MOCK_WALLET } from '../../wallet';
+import { formatVND } from '../../wallet';
 import { CustomSelect } from '../../../components/common/CustomSelect';
+import { useWalletActions } from '../hooks/useWalletActions';
 
 interface WalletActionModalProps {
   mode: 'deposit' | 'withdraw';
+  maxWithdrawAmount?: number;
   onClose: () => void;
+  onSuccess?: () => void; // Thêm callback onSuccess để reload data
 }
 
-export const WalletActionModal = ({ mode, onClose }: WalletActionModalProps) => {
-  const [amount, setAmount] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const presetAmounts = mode === 'deposit'
-    ? [500000, 1000000, 2000000, 5000000]
-    : [500000, 1000000, 2000000];
-
-  const handleSubmit = async () => {
-    if (!amount || Number(amount) <= 0) return;
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setLoading(false);
-    onClose();
-  };
+export const WalletActionModal = ({ mode, maxWithdrawAmount, onClose, onSuccess }: WalletActionModalProps) => {
+  const {
+    amount,
+    setAmount,
+    loading,
+    error,
+    bankName,
+    setBankName,
+    bankAccountNumber,
+    setBankAccountNumber,
+    bankAccountName,
+    setBankAccountName,
+    presetAmounts,
+    handleSubmit,
+  } = useWalletActions(mode, maxWithdrawAmount, onClose, onSuccess);
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -46,6 +48,12 @@ export const WalletActionModal = ({ mode, onClose }: WalletActionModalProps) => 
         </div>
 
         <div className="p-6 space-y-4">
+          {error && (
+            <div className="p-3 text-sm text-danger bg-danger/10 rounded-xl border border-danger/20">
+              {error}
+            </div>
+          )}
+
           <div>
             <label className="block text-xs font-medium text-text-secondary mb-1.5">Số tiền (VND)</label>
             <input
@@ -61,11 +69,10 @@ export const WalletActionModal = ({ mode, onClose }: WalletActionModalProps) => 
               <button
                 key={a}
                 onClick={() => setAmount(String(a))}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
-                  amount === String(a)
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${amount === String(a)
                     ? 'bg-brand/15 text-brand border-brand/30'
                     : 'bg-bg-surface text-text-secondary border-border-custom hover:border-brand/20'
-                }`}
+                  }`}
               >
                 {formatVND(a)}
               </button>
@@ -83,19 +90,34 @@ export const WalletActionModal = ({ mode, onClose }: WalletActionModalProps) => 
                     { value: 'MB Bank', label: 'MB Bank' },
                     { value: 'BIDV', label: 'BIDV' },
                   ]}
-                  value="Vietcombank"
-                  onChange={() => {}}
+                  value={bankName}
+                  onChange={setBankName}
                   icon={<CreditCard size={14} />}
                 />
               </div>
               <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">Tên chủ tài khoản</label>
+                <input
+                  type="text"
+                  value={bankAccountName}
+                  onChange={(e) => setBankAccountName(e.target.value)}
+                  placeholder="VD: NGUYEN VAN A"
+                  className="w-full px-3 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 transition-all uppercase"
+                />
+              </div>
+              <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">Số tài khoản</label>
-                <input type="text" placeholder="VD: 1234567890" className="w-full px-3 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 transition-all" />
+                <input
+                  type="text"
+                  value={bankAccountNumber}
+                  onChange={(e) => setBankAccountNumber(e.target.value)}
+                  placeholder="VD: 1234567890"
+                  className="w-full px-3 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 transition-all"
+                />
               </div>
               <div className="bg-info/5 border border-info/20 rounded-xl p-3">
                 <p className="text-[11px] text-info">
                   Chỉ rút được từ <span className="font-semibold">Quỹ khả dụng</span> (WithdrawableBalance).
-                  Hiện có: <span className="font-bold">{formatVND(MOCK_WALLET.withdrawableBalance)}</span>
                 </p>
               </div>
             </>
@@ -114,9 +136,8 @@ export const WalletActionModal = ({ mode, onClose }: WalletActionModalProps) => 
           <button onClick={onClose} className="px-4 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-secondary hover:text-text-primary transition-colors cursor-pointer">
             Hủy
           </button>
-          <button onClick={handleSubmit} disabled={loading || !amount} className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium border-none cursor-pointer transition-all ${
-            loading || !amount ? 'bg-brand/40 text-white/60 cursor-not-allowed' : 'bg-brand hover:bg-brand-hover text-white shadow-brand'
-          }`}>
+          <button onClick={handleSubmit} disabled={loading || !amount} className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium border-none cursor-pointer transition-all ${loading || !amount ? 'bg-brand/40 text-white/60 cursor-not-allowed' : 'bg-brand hover:bg-brand-hover text-white shadow-brand'
+            }`}>
             {loading ? (
               <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Đang xử lý...</>
             ) : mode === 'deposit' ? (

@@ -14,11 +14,12 @@ export interface User {
 interface AuthState {
   user: User | null;
   token: string | null;
+  refreshToken: string | null;
   isLoading: boolean;
 }
 
 interface AuthActions {
-  setAuth: (user: User, token: string) => void;
+  setAuth: (user: User, token: string, refreshToken: string) => void;
   setLoading: (isLoading: boolean) => void;
   logout: () => void;
   isAuthenticated: () => boolean;
@@ -32,10 +33,11 @@ export const useAuthStore = create<AuthStore>()(
     (set, get) => ({
       user: null,
       token: null,
+      refreshToken: null,
       isLoading: false,
-      setAuth: (user, token) => set({ user, token }),
+      setAuth: (user, token, refreshToken) => set({ user, token, refreshToken }),
       setLoading: (isLoading) => set({ isLoading }),
-      logout: () => set({ user: null, token: null }),
+      logout: () => set({ user: null, token: null, refreshToken: null }),
       isAuthenticated: () => !!get().token,
       getRoleRedirectPath: () => {
         const role = get().user?.role;
@@ -52,7 +54,7 @@ export const useAuthStore = create<AuthStore>()(
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ user: state.user, token: state.token }), // don't persist isLoading
+      partialize: (state) => ({ user: state.user, token: state.token, refreshToken: state.refreshToken }), // don't persist isLoading
     }
   )
 );

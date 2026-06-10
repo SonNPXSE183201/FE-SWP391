@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import {
-  Wallet, ArrowDownToLine, ArrowUpFromLine, TrendingUp,
-  Clock, Lock, Search, Filter,
-  Shield, Banknote, Loader2
+  Wallet, ArrowUpFromLine, TrendingUp,
+  Clock, Search, Filter,
+  Banknote, Loader2
 } from 'lucide-react';
 
 import {
@@ -14,10 +14,10 @@ import { usePagination } from '../../../hooks/usePagination';
 import { Pagination } from '../../../components/common/Pagination';
 import { CustomSelect } from '../../../components/common/CustomSelect';
 
-export const MangakaWalletFeature = () => {
+export const AssistantWalletFeature = () => {
   const [txTypeFilter, setTxTypeFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [walletAction, setWalletAction] = useState<'deposit' | 'withdraw' | null>(null);
+  const [walletAction, setWalletAction] = useState<'withdraw' | null>(null);
 
   const { data: response, isLoading, isError, error } = useWallet();
 
@@ -69,17 +69,10 @@ export const MangakaWalletFeature = () => {
           </div>
           <div>
             <h1 className="text-xl font-bold text-text-primary">Ví tiền</h1>
-            <p className="text-xs text-text-muted mt-0.5">Quản lý tài chính & giao dịch</p>
+            <p className="text-xs text-text-muted mt-0.5">Quản lý nhuận bút & rút tiền</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setWalletAction('deposit')}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-success/10 hover:bg-success/20 text-success rounded-xl text-sm font-medium transition-all border border-success/20 cursor-pointer"
-          >
-            <ArrowDownToLine size={14} />
-            Nạp tiền
-          </button>
           <button
             onClick={() => setWalletAction('withdraw')}
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-bg-secondary hover:bg-bg-surface text-text-primary rounded-xl text-sm font-medium transition-all border border-border-custom cursor-pointer"
@@ -90,67 +83,23 @@ export const MangakaWalletFeature = () => {
         </div>
       </div>
 
-      {/* ─── Wallet Balances — 2 ngăn ─── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-        {/* Setup Fund Balance — Xanh dương */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-info/[0.08] to-brand/[0.05] border border-info/20 rounded-2xl p-6">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-info/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4" />
-          <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-1">
-              <Shield size={16} className="text-info" />
-              <span className="text-xs font-medium text-info uppercase tracking-wider">Quỹ sản xuất</span>
-            </div>
-            <div className="text-3xl font-bold text-text-primary mt-2">
-              {formatVND(wallet.setupFundBalance)}
-            </div>
-
-            <div className="flex items-center gap-2 mt-3">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-warning/10 text-warning text-[10px] font-medium">
-                <Lock size={10} />
-                Đang lock: {formatVND(wallet.lockedAmount)}
-              </span>
-            </div>
-          </div>
-        </div>
-
+      {/* ─── Wallet Balances — 1 ngăn ─── */}
+      <div className="mt-6">
         {/* Withdrawable Balance — Xanh lá */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-success/[0.08] to-secondary/[0.05] border border-success/20 rounded-2xl p-6">
+        <div className="relative overflow-hidden bg-gradient-to-br from-success/[0.08] to-secondary/[0.05] border border-success/20 rounded-2xl p-6 md:w-1/2">
           <div className="absolute top-0 right-0 w-32 h-32 bg-success/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4" />
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-1">
               <Banknote size={16} className="text-success" />
-              <span className="text-xs font-medium text-success uppercase tracking-wider">Quỹ khả dụng</span>
+              <span className="text-xs font-medium text-success uppercase tracking-wider">Số dư khả dụng</span>
             </div>
             <div className="text-3xl font-bold text-text-primary mt-2">
               {formatVND(wallet.withdrawableBalance)}
             </div>
-
-            <div className="flex items-center gap-2 mt-3">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-success/10 text-success text-[10px] font-medium">
-                <TrendingUp size={10} />
-                Nhuận bút tháng: +{formatVND(3200000)} {/* TODO: Real stats */}
-              </span>
-            </div>
+            <p className="text-[11px] text-text-muted mt-2">
+              WithdrawableBalance — Nhuận bút hoàn thành Task. Có thể rút ra.
+            </p>
           </div>
-        </div>
-      </div>
-
-      {/* Total summary */}
-      <div className="bg-bg-secondary border border-border-custom rounded-xl p-4 mt-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Wallet size={16} className="text-text-muted" />
-          <span className="text-sm text-text-secondary">Tổng số dư:</span>
-          <span className="text-sm font-bold text-text-primary">{formatVND(wallet.totalBalance)}</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-[11px] text-info flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-info inline-block" />
-            SF: {formatVND(wallet.setupFundBalance)}
-          </span>
-          <span className="text-[11px] text-success flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-success inline-block" />
-            WB: {formatVND(wallet.withdrawableBalance)}
-          </span>
         </div>
       </div>
 
@@ -218,22 +167,6 @@ export const MangakaWalletFeature = () => {
                     <div className="text-[10px] text-text-muted mt-0.5">{date}</div>
                   </div>
                 </div>
-
-                {/* Fund breakdown */}
-                {(tx.setupFundAmount !== 0 || tx.withdrawableAmount !== 0) && (
-                  <div className="flex items-center gap-3 mt-2 ml-12 text-[10px]">
-                    {tx.setupFundAmount !== 0 && (
-                      <span className="text-info">
-                        SF: {tx.setupFundAmount >= 0 ? '+' : ''}{formatVND(Math.abs(tx.setupFundAmount))}
-                      </span>
-                    )}
-                    {tx.withdrawableAmount !== 0 && (
-                      <span className="text-success">
-                        WB: {tx.withdrawableAmount >= 0 ? '+' : ''}{formatVND(Math.abs(tx.withdrawableAmount))}
-                      </span>
-                    )}
-                  </div>
-                )}
               </div>
             );
           })}
