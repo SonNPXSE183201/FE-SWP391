@@ -51,16 +51,23 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
       createRegion.mutate(
         { pageId, x: region.x, y: region.y, width: region.width, height: region.height, label: regionLabel || undefined },
         {
-          onSuccess: () => {
+          onSuccess: (res) => {
             toast.success('Đã tạo region mới');
             setRegionLabel('');
             // Auto-switch back to select mode after drawing
             setActiveTool('select');
+            
+            // Auto-select the newly created region and show task modal
+            const newRegion = res.data?.Data;
+            if (newRegion && newRegion.id) {
+              setSelectedRegion(newRegion.id);
+              setShowCreateTask(true);
+            }
           },
         },
       );
     },
-    [pageId, regionLabel, createRegion, setActiveTool],
+    [pageId, regionLabel, createRegion, setActiveTool, setSelectedRegion],
   );
 
   const handleDeleteRegion = useCallback(
