@@ -3,6 +3,7 @@ import {
   Layers, MapPin, SquareDashedBottom, Trash2,
   Tag, CheckCircle2, Clock, AlertTriangle,
   ChevronLeft, ChevronRight, Loader2, ImageOff,
+  Plus,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CanvasViewer } from '../../../components/canvas/CanvasViewer';
@@ -11,6 +12,7 @@ import { MobileCanvasWarning } from '../../../components/canvas/MobileCanvasWarn
 import { useCanvasStore } from '../../../stores/canvasStore';
 import { useRegions, useCreateRegion, useDeleteRegion } from '../hooks/useCanvasData';
 import { MOCK_CANVAS_PAGES, getRegionsByPageId } from '../data/mockData';
+import { CreateTaskModal } from '../../tasks/components/CreateTaskModal';
 import type { Region } from '../../../types/entities';
 
 interface PageCanvasFeatureProps {
@@ -28,6 +30,7 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
   // ─── State ───
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [regionLabel, setRegionLabel] = useState('');
+  const [showCreateTask, setShowCreateTask] = useState(false);
   const { activeTool, zoomLevel, selectedRegionId, setActiveTool, setZoomLevel, setSelectedRegion } = useCanvasStore();
 
   // ─── Data (mock) ───
@@ -219,11 +222,23 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
                       <span>x:{Math.round(region.x)} y:{Math.round(region.y)}</span>
                       <span>{Math.round(region.width)}×{Math.round(region.height)}</span>
                     </div>
-                    {region.taskId && (
+                    {region.taskId ? (
                       <div className="mt-1.5 flex items-center gap-1">
                         <Tag size={10} className="text-info" />
                         <span className="text-[10px] text-info">Đã gán task</span>
                       </div>
+                    ) : (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedRegion(region.id);
+                          setShowCreateTask(true);
+                        }}
+                        className="mt-1.5 inline-flex items-center gap-1 px-2 py-1 rounded-md bg-brand/10 text-brand text-[10px] font-medium hover:bg-brand/20 transition-colors border-none cursor-pointer"
+                      >
+                        <Plus size={10} />
+                        Tạo Task
+                      </button>
                     )}
                   </div>
                 ))
@@ -232,6 +247,17 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
           </div>
         </div>
       </div>
+
+      {/* Create Task Modal */}
+      {showCreateTask && (
+        <CreateTaskModal
+          onClose={() => setShowCreateTask(false)}
+          onTaskCreated={() => {
+            setShowCreateTask(false);
+            toast.success('Task đã được tạo từ Region!');
+          }}
+        />
+      )}
     </>
   );
 };

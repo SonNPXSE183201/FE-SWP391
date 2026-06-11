@@ -118,6 +118,7 @@ export const ChapterDetailFeature = () => {
               Upload thêm trang
             </button>
           </div>
+        </div>
       </div>
 
       {/* Stats */}
