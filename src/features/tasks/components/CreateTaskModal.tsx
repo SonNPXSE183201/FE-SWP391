@@ -184,7 +184,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
       chapterTitle: `Ch.${chapter.chapterNumber}: ${chapter.title}`,
       seriesId: formData.seriesId,
       seriesTitle: series.title,
-      assignedAssistantName: null,  // Đăng lên Task Queue, chờ Assistant nhận
+      assignedAssistantName: null,  // Đăng lên Bảng việc làm, chờ Assistant nhận
       status: 'Pending',
       amount: amountNum,
       deadline: new Date(formData.deadline + 'T23:59:59Z').toISOString(),
@@ -208,7 +208,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
       withdrawableAmount: wb > 0 ? -wb : 0,
       referenceId: taskId,
       referenceCode: refCode,
-      description: `Lock tiền cho Task: ${formData.taskName.trim()} → Task Queue${wb > 0 ? ' (SF thiếu → WB bù)' : ''}`,
+      description: `Lock tiền cho Task: ${formData.taskName.trim()} → Bảng việc làm${wb > 0 ? ' (SF thiếu → WB bù)' : ''}`,
       createdAt: new Date().toISOString(),
     });
 
@@ -219,7 +219,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
     setSuccess(true);
 
     toast.success(
-      `Đã đăng Task "${newTask.taskName}" lên Task Queue & Lock ${formatVND(amountNum)}`,
+      `Đã đăng Task "${newTask.taskName}" lên Bảng việc làm & Lock ${formatVND(amountNum)}`,
       { duration: 4000 },
     );
 
@@ -235,9 +235,9 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
           <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center animate-bounce">
             <CheckCircle2 size={32} className="text-success" />
           </div>
-          <h3 className="text-lg font-bold text-text-primary">Đã đăng lên Task Queue!</h3>
+          <h3 className="text-lg font-bold text-text-primary">Đã đăng lên Bảng việc làm!</h3>
           <p className="text-sm text-text-muted text-center">
-            Lock <span className="text-text-primary font-semibold">{formatVND(amountNum)}</span> · Chờ Assistant nhận việc
+            Lock <span className="text-text-primary font-semibold">{formatVND(amountNum)}</span> · Chờ Trợ lý nhận việc
           </p>
         </div>
       </div>,
@@ -257,8 +257,8 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
               <Plus size={18} className="text-brand" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-text-primary">Đăng Task lên Queue</h2>
-              <p className="text-[11px] text-text-muted">Đăng việc → Lock tiền → Chờ Assistant nhận (T01)</p>
+              <h2 className="text-base font-semibold text-text-primary">Đăng việc mới</h2>
+              <p className="text-[11px] text-text-muted">Đăng việc → Lock tiền → Chờ Trợ lý nhận (T01)</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-surface transition-colors bg-transparent border-none cursor-pointer">
@@ -273,7 +273,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
           <div className="flex items-center gap-2 px-3 py-2.5 bg-info/5 border border-info/20 rounded-lg">
             <Globe size={14} className="text-info flex-shrink-0" />
             <p className="text-[11px] text-info">
-              Task sẽ được đăng lên <strong>Task Queue</strong>. Bất kỳ Assistant nào đều có thể nhận việc.
+              Task sẽ được đăng lên <strong>Bảng việc làm công khai</strong>. Bất kỳ Trợ lý nào đều có thể nhận việc.
             </p>
           </div>
 
@@ -515,7 +515,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
               ) : (
                 <>
                   <Send size={14} />
-                  Đăng lên Task Queue
+                  Đăng lên Bảng việc làm
                 </>
               )}
             </button>

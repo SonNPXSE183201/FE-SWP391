@@ -83,7 +83,7 @@ const getNavSections = (role: UserRole): NavSectionConfig[] => {
         {
           title: 'Công việc',
           items: [
-            { label: 'Task Queue', path: '/assistant/tasks', icon: <ClipboardList size={20} /> },
+            { label: 'Bảng việc làm', path: '/assistant/tasks', icon: <ClipboardList size={20} /> },
             { label: 'Portfolio', path: '/assistant/portfolio', icon: <Palette size={20} /> },
             { label: 'Hồ sơ nghề nghiệp', path: '/assistant/profile', icon: <BriefcaseBusiness size={20} /> },
           ],
