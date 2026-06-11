@@ -41,7 +41,7 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
   const currentPage = pages[currentPageIndex];
   const pageId = currentPage?.id ?? '';
 
-  const regions = useMemo(() => getRegionsByPageId(pageId), [pageId]);
+  const { data: regions = [] } = useRegions(pageId);
   const createRegion = useCreateRegion(pageId);
   const deleteRegion = useDeleteRegion(pageId);
 
