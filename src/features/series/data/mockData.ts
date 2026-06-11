@@ -112,9 +112,8 @@ export const MOCK_CHAPTERS: (Chapter & { seriesTitle: string })[] = [
   {
     id: 'ch-1', seriesId: 's-1', seriesTitle: 'Huyền Thoại Samurai',
     chapterNumber: 1, title: 'Khởi đầu - Thanh kiếm gỉ sét',
-    status: 'InProgress', pageCount: 4, validPageCount: 0,
-    submittedAt: '2026-04-20T10:00:00Z', approvedAt: '2026-04-22T10:00:00Z',
-    createdAt: '2026-04-18T08:00:00Z', updatedAt: '2026-04-22T10:00:00Z',
+    status: 'Draft', pageCount: 4, validPageCount: 0,
+    createdAt: '2026-04-18T08:00:00Z', updatedAt: '2026-06-10T10:00:00Z',
   },
   {
     id: 'ch-2', seriesId: 's-1', seriesTitle: 'Huyền Thoại Samurai',
