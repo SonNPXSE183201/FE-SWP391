@@ -33,7 +33,7 @@ export interface CanvasViewerProps {
   imageUrl: string;
   regions?: Region[];
   annotations?: Annotation[];
-  mode?: 'view' | 'region' | 'annotate' | 'freeform';
+  mode?: 'view' | 'region' | 'annotate' | 'freeform' | 'pan';
   onRegionCreated?: (region: Omit<Region, 'id' | 'createdAt' | 'updatedAt'>) => void;
   onRegionUpdated?: (region: Region) => void;
   onRegionDeleted?: (regionId: string) => void;

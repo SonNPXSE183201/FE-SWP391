@@ -245,7 +245,7 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
               ref={canvasRef}
               imageUrl={currentPage.imageUrl}
               regions={regions}
-              mode={activeTool === 'region' ? 'region' : activeTool === 'freeform' ? 'freeform' : 'view'}
+              mode={activeTool === 'select' ? 'view' : activeTool}
               onRegionCreated={handleRegionCreated}
               selectedRegionId={selectedRegionId}
               onRegionSelect={setSelectedRegion}
