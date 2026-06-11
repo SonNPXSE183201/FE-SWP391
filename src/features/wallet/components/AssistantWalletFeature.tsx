@@ -5,19 +5,25 @@ import {
   Banknote, Loader2
 } from 'lucide-react';
 
-import {
-  TX_TYPE_CONFIG, TX_FILTER_OPTIONS, formatVND,
-  WalletActionModal,
-} from '../index';
+import { TX_TYPE_CONFIG, TX_FILTER_OPTIONS, formatVND } from '../constants';
+import { WalletActionModal } from './WalletActionModal';
+import { TransactionDetailModal } from './TransactionDetailModal';
 import { useWallet } from '../hooks/useWallet';
+import { useWalletSignalR } from '../hooks/useWalletSignalR';
+import { calculateMonthlyStats } from '../utils';
 import { usePagination } from '../../../hooks/usePagination';
 import { Pagination } from '../../../components/common/Pagination';
 import { CustomSelect } from '../../../components/common/CustomSelect';
+import type { Transaction } from '../../../types/entities';
 
 export const AssistantWalletFeature = () => {
   const [txTypeFilter, setTxTypeFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [walletAction, setWalletAction] = useState<'withdraw' | null>(null);
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+
+  // Real-time wallet updates via SignalR
+  useWalletSignalR();
 
   const { data: response, isLoading, isError, error } = useWallet();
 
@@ -99,6 +105,12 @@ export const AssistantWalletFeature = () => {
             <p className="text-[11px] text-text-muted mt-2">
               WithdrawableBalance — Nhuận bút hoàn thành Task. Có thể rút ra.
             </p>
+            <div className="flex items-center gap-2 mt-2">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-success/10 text-success text-[10px] font-medium">
+                <TrendingUp size={10} />
+                Thu nhập tháng: +{formatVND(calculateMonthlyStats(transactions).totalIncome)}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -144,7 +156,7 @@ export const AssistantWalletFeature = () => {
             });
 
             return (
-              <div key={tx.id} className="group bg-bg-secondary border border-border-custom rounded-xl p-4 hover:border-brand/15 transition-all">
+              <div key={tx.id} onClick={() => setSelectedTx(tx)} className="group bg-bg-secondary border border-border-custom rounded-xl p-4 hover:border-brand/15 transition-all cursor-pointer">
                 <div className="flex items-center gap-3">
                   <div className={`w-9 h-9 rounded-lg ${cfg.bg} flex items-center justify-center flex-shrink-0`}>
                     <TxIcon size={16} className={cfg.color} />
@@ -202,6 +214,14 @@ export const AssistantWalletFeature = () => {
           mode={walletAction}
           maxWithdrawAmount={wallet.withdrawableBalance}
           onClose={() => setWalletAction(null)}
+        />
+      )}
+
+      {/* Transaction Detail Modal */}
+      {selectedTx && (
+        <TransactionDetailModal
+          transaction={selectedTx}
+          onClose={() => setSelectedTx(null)}
         />
       )}
     </div>
