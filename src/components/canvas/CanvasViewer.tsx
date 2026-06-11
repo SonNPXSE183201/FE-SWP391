@@ -249,12 +249,13 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
       const handleMouseDown = (opt: { e: MouseEvent; target?: import('fabric').FabricObject }) => {
         const evt = opt.e;
 
-        // Alt+drag OR Middle-click → panning (in any mode)
-        if (evt.altKey || evt.button === 1) {
+        // Alt+drag OR Middle-click OR pan mode -> panning
+        if (evt.altKey || evt.button === 1 || (mode === 'pan' && evt.button === 0)) {
           isPanningRef.current = true;
           lastPanPointRef.current = { x: evt.clientX, y: evt.clientY };
           canvas.selection = false;
-          if (evt.button === 1) {
+          canvas.defaultCursor = 'grabbing';
+          if (evt.button === 1 || mode === 'pan') {
             evt.preventDefault();
             evt.stopPropagation();
           }
@@ -335,6 +336,11 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
         // End panning
         if (isPanningRef.current) {
           isPanningRef.current = false;
+          const canvas = fabricRef.current;
+          if (canvas) {
+            canvas.selection = mode === 'view';
+            canvas.defaultCursor = mode === 'pan' ? 'grab' : mode === 'region' || mode === 'freeform' ? 'crosshair' : mode === 'annotate' ? 'cell' : 'default';
+          }
           return;
         }
 
@@ -550,6 +556,15 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
     }, [fitImageToCanvas]);
 
     // ── Cursor style based on mode ──
+    useEffect(() => {
+      const canvas = fabricRef.current;
+      if (!canvas) return;
+      if (mode === 'pan') canvas.defaultCursor = 'grab';
+      else if (mode === 'region' || mode === 'freeform') canvas.defaultCursor = 'crosshair';
+      else if (mode === 'annotate') canvas.defaultCursor = 'cell';
+      else canvas.defaultCursor = 'default';
+      canvas.renderAll();
+    }, [mode]);
 
     const cursorClass =
       mode === 'region'
@@ -558,7 +573,9 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
           ? 'cursor-crosshair'
           : mode === 'annotate'
             ? 'cursor-cell'
-            : 'cursor-grab';
+            : mode === 'pan'
+              ? 'cursor-grab'
+              : 'cursor-default';
 
     // ── Render ──
 
