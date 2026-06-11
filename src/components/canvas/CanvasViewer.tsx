@@ -63,9 +63,7 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
       mode = 'view',
       onRegionCreated,
       onRegionUpdated,
-      onRegionDeleted,
       onAnnotationCreated,
-      onAnnotationDeleted,
       selectedRegionId,
       selectedAnnotationId,
       onRegionSelect,
@@ -166,7 +164,6 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
         canvas.dispose();
         fabricRef.current = null;
       };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // ── Load image ──
@@ -190,11 +187,11 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
             selectable: false,
             evented: false,
           });
-          (img as any)._isMainImage = true;
+          (img as FabricImage & { _isMainImage?: boolean })._isMainImage = true;
           imageRef.current = img;
 
           // Remove old main image if any to prevent memory leaks
-          const oldImg = canvas.getObjects().find(o => (o as any)._isMainImage);
+          const oldImg = canvas.getObjects().find(o => (o as import('fabric').FabricObject & { _isMainImage?: boolean })._isMainImage);
           if (oldImg) canvas.remove(oldImg);
 
           // Add image to the very bottom layer
@@ -241,7 +238,7 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
       return () => {
         canvas.off('mouse:wheel', handleWheel);
       };
-    }, []);
+    }, [onZoomChange]);
 
     // ── Pan / Region-draw / Annotate handlers ──
 
@@ -249,7 +246,7 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
       const canvas = fabricRef.current;
       if (!canvas) return;
 
-      const handleMouseDown = (opt: { e: MouseEvent }) => {
+      const handleMouseDown = (opt: { e: MouseEvent; target?: import('fabric').FabricObject }) => {
         const evt = opt.e;
 
         // Alt+drag OR Middle-click → panning (in any mode)
@@ -267,7 +264,7 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
         // Region draw mode
         if (mode === 'region') {
           // If clicking on an existing region, let the selection event handle it instead of drawing a new one
-          if (opt.target && (opt.target as any)._regionId) return;
+          if (opt.target && (opt.target as import('fabric').FabricObject & { _regionId?: string })._regionId) return;
 
           const pointer = canvas.getScenePoint(evt);
           isDrawingRef.current = true;
@@ -276,6 +273,8 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
           const rect = new Rect({
             left: pointer.x,
             top: pointer.y,
+            originX: 'left',
+            originY: 'top',
             width: 0,
             height: 0,
             fill: REGION_FILL,
@@ -390,7 +389,7 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
           canvas.freeDrawingBrush.width = 3;
         }
 
-        const handlePathCreated = (opt: any) => {
+        const handlePathCreated = (opt: { path: import('fabric').FabricObject }) => {
           const path = opt.path;
           const rect = path.getBoundingRect();
           
@@ -433,6 +432,8 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
         const rect = new Rect({
           left: region.x,
           top: region.y,
+          originX: 'left',
+          originY: 'top',
           width: region.width,
           height: region.height,
           fill: REGION_FILL,
