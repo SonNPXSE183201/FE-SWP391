@@ -49,6 +49,7 @@ export interface CanvasViewerProps {
 export interface CanvasViewerHandle {
   getCanvas: () => Canvas | null;
   resetView: () => void;
+  zoomTo100: () => void;
 }
 
 // ─── Component ───────────────────────────────────────────────
@@ -102,6 +103,14 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
         fitImageToCanvas(canvas);
         canvas.renderAll();
       },
+      zoomTo100: () => {
+        const canvas = fabricRef.current;
+        if (!canvas) return;
+        const zoomPoint = new Point(canvas.getWidth() / 2, canvas.getHeight() / 2);
+        canvas.zoomToPoint(zoomPoint, 1);
+        canvas.renderAll();
+        if (onZoomChange) onZoomChange(1);
+      }
     }));
 
     // ── Fit image to canvas ──
@@ -115,22 +124,26 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
       const iw = img.width ?? 1;
       const ih = img.height ?? 1;
 
-      const scale = Math.min(cw / iw, ch / ih, 1);
+      // Fit to screen with a 5% padding
+      const scale = Math.min(cw / iw, ch / ih, 1) * 0.95;
+      
       canvas.viewportTransform = [1, 0, 0, 1, 0, 0];
-      canvas.zoomToPoint(new Point(0, 0), scale);
-
-      // Center the image
-      const scaledW = iw * scale;
-      const scaledH = ih * scale;
-      const offsetX = (cw - scaledW) / 2;
-      const offsetY = (ch - scaledH) / 2;
+      
+      // Calculate translation to center the image
+      const tx = cw / 2 - (iw / 2) * scale;
+      const ty = ch / 2 - (ih / 2) * scale;
+      
       const vpt = canvas.viewportTransform;
       if (vpt) {
-        vpt[4] = offsetX;
-        vpt[5] = offsetY;
+        vpt[0] = scale;
+        vpt[3] = scale;
+        vpt[4] = tx;
+        vpt[5] = ty;
         canvas.setViewportTransform(vpt);
       }
-    }, []);
+
+      if (onZoomChange) onZoomChange(scale);
+    }, [onZoomChange]);
 
     // ── Initialize Fabric Canvas ──
 
@@ -171,11 +184,22 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
           const img = await FabricImage.fromURL(imageUrl, { crossOrigin: 'anonymous' });
           if (cancelled) return;
 
-          img.selectable = false;
-          img.evented = false;
+          img.set({
+            left: 0,
+            top: 0,
+            selectable: false,
+            evented: false,
+          });
+          (img as any)._isMainImage = true;
           imageRef.current = img;
 
-          canvas.backgroundImage = img;
+          // Remove old main image if any to prevent memory leaks
+          const oldImg = canvas.getObjects().find(o => (o as any)._isMainImage);
+          if (oldImg) canvas.remove(oldImg);
+
+          // Add image to the very bottom layer
+          canvas.insertAt(0, img);
+          
           fitImageToCanvas(canvas);
           canvas.renderAll();
           setIsLoading(false);

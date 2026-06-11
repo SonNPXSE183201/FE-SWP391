@@ -97,9 +97,8 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
   }, [zoomLevel, setZoomLevel]);
 
   const handleZoomReset = useCallback(() => {
-    canvasRef.current?.resetView();
-    setZoomLevel(1);
-  }, [setZoomLevel]);
+    canvasRef.current?.zoomTo100();
+  }, []);
 
   const handleZoomFit = useCallback(() => {
     canvasRef.current?.resetView();
