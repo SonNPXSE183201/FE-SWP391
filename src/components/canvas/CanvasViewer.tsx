@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { Canvas, FabricImage, Rect, Circle, Point } from 'fabric';
+import { Canvas, FabricImage, Rect, Circle, Point, PencilBrush } from 'fabric';
 import { Loader2 } from 'lucide-react';
 import type { Region, Annotation, AnnotationType } from '../../types/entities';
 
@@ -383,11 +383,13 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
 
       if (mode === 'freeform') {
         canvas.isDrawingMode = true;
-        // Ensure freeDrawingBrush is initialized (it should be by default when isDrawingMode = true)
-        if (canvas.freeDrawingBrush) {
-          canvas.freeDrawingBrush.color = REGION_STROKE;
-          canvas.freeDrawingBrush.width = 3;
+        
+        // Ensure freeDrawingBrush is initialized (Fabric 7 may require manual initialization)
+        if (!canvas.freeDrawingBrush) {
+          canvas.freeDrawingBrush = new PencilBrush(canvas);
         }
+        canvas.freeDrawingBrush.color = REGION_STROKE;
+        canvas.freeDrawingBrush.width = 3;
 
         const handlePathCreated = (opt: { path: import('fabric').FabricObject }) => {
           const path = opt.path;
