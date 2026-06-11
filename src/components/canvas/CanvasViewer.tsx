@@ -252,11 +252,15 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
       const handleMouseDown = (opt: { e: MouseEvent }) => {
         const evt = opt.e;
 
-        // Alt+drag → panning (in any mode)
-        if (evt.altKey) {
+        // Alt+drag OR Middle-click → panning (in any mode)
+        if (evt.altKey || evt.button === 1) {
           isPanningRef.current = true;
           lastPanPointRef.current = { x: evt.clientX, y: evt.clientY };
           canvas.selection = false;
+          if (evt.button === 1) {
+            evt.preventDefault();
+            evt.stopPropagation();
+          }
           return;
         }
 
@@ -587,7 +591,7 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
         {/* Zoom hint */}
         <div className="absolute bottom-3 right-3 z-10 px-2 py-1 rounded bg-bg-surface/70 backdrop-blur-sm">
           <span className="text-[10px] text-text-muted">
-            Scroll to zoom · Alt+drag to pan
+            Scroll to zoom · Alt+drag or Middle-click to pan
           </span>
         </div>
       </div>
