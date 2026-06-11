@@ -6,7 +6,9 @@ import { AuthLayout } from './layouts/AuthLayout';
 import { LandingPage } from './pages/landing/LandingPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 import { LoginPage } from './pages/auth/LoginPage';
-import { DepositCallbackPage } from './pages/wallet/DepositCallbackPage';
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
+//import { UserManagementTable } from './features/user-management/UserManagementTable';
 
 // ─── Mangaka Pages ───
 import {
@@ -102,15 +104,17 @@ function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
-        <Route path="/unauthorized" element={<UnauthorizedPage />} />
-
-        {/* Callback routes */}
-        <Route path="/wallet/deposit/callback" element={<DepositCallbackPage />} />
+        <Route path="/unauthorized" element={<UnauthorizedPage />}
+        />
+        {/* BẠN CHÈN TẠM DÒNG NÀY VÀO ĐÂY */}
+        {/* <Route path="/admin/users" element={<UserManagementTable />} /> */}
 
         {/* Auth routes — wrapped in AuthLayout */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
         </Route>
 
         {/* ─── Mangaka Routes ─── */}
@@ -165,10 +169,14 @@ function App() {
         </Route>
 
         {/* ─── Admin Routes ─── */}
+        {/* ─── Admin Routes ─── */}
         <Route element={<RoleGuard allowedRoles={['Admin']} />}>
           <Route element={<MainLayout />}>
             <Route path="/admin" element={<AdminDashboardPage />} />
-            <Route path="/admin/users" element={<AdminUsersPage />} />
+
+            {/* Đưa thẳng bảng User mới của bạn vào đây để nó ăn theo khung MainLayout */}
+            {/* <Route path="/admin/users" element={<UserManagementTable />} /> */}
+
             <Route path="/admin/roles" element={<AdminRolesPage />} />
             <Route path="/admin/contracts" element={<AdminContractsPage />} />
             <Route path="/admin/reconciliation" element={<AdminReconciliationPage />} />
