@@ -1,8 +1,7 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import {
-  Layers, MapPin, SquareDashedBottom, Trash2,
-  Tag, CheckCircle2, Clock, AlertTriangle,
-  ChevronLeft, ChevronRight, Loader2, ImageOff,
+  Layers, SquareDashedBottom, Trash2,
+  Tag, ChevronLeft, ChevronRight, ImageOff,
   Plus,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -14,6 +13,7 @@ import { useRegions, useCreateRegion, useDeleteRegion } from '../hooks/useCanvas
 import { MOCK_CANVAS_PAGES, getRegionsByPageId } from '../data/mockData';
 import { CreateTaskModal } from '../../tasks/components/CreateTaskModal';
 import type { Region } from '../../../types/entities';
+import type { CanvasViewerHandle } from '../../../components/canvas/CanvasViewer';
 
 interface PageCanvasFeatureProps {
   chapterId?: string;
@@ -27,6 +27,9 @@ const PAGE_STATUS_COLORS: Record<string, { bg: string; text: string; label: stri
 };
 
 export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps) => {
+  // ─── Refs ───
+  const canvasRef = useRef<CanvasViewerHandle>(null);
+
   // ─── State ───
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [regionLabel, setRegionLabel] = useState('');
@@ -51,11 +54,13 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
           onSuccess: () => {
             toast.success('Đã tạo region mới');
             setRegionLabel('');
+            // Auto-switch back to select mode after drawing
+            setActiveTool('select');
           },
         },
       );
     },
-    [pageId, regionLabel, createRegion],
+    [pageId, regionLabel, createRegion, setActiveTool],
   );
 
   const handleDeleteRegion = useCallback(
@@ -70,9 +75,38 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
     [deleteRegion, setSelectedRegion],
   );
 
-  const handleZoomIn = useCallback(() => setZoomLevel(Math.min(zoomLevel * 1.2, 5)), [zoomLevel, setZoomLevel]);
-  const handleZoomOut = useCallback(() => setZoomLevel(Math.max(zoomLevel / 1.2, 0.1)), [zoomLevel, setZoomLevel]);
-  const handleZoomReset = useCallback(() => setZoomLevel(1), [setZoomLevel]);
+  // ─── Zoom handlers that ACTUALLY affect the canvas ───
+  const handleZoomIn = useCallback(() => {
+    const canvas = canvasRef.current?.getCanvas();
+    if (!canvas) return;
+    const newZoom = Math.min(zoomLevel * 1.25, 5);
+    const center = canvas.getCenterPoint();
+    canvas.zoomToPoint(center, newZoom);
+    canvas.renderAll();
+    setZoomLevel(newZoom);
+  }, [zoomLevel, setZoomLevel]);
+
+  const handleZoomOut = useCallback(() => {
+    const canvas = canvasRef.current?.getCanvas();
+    if (!canvas) return;
+    const newZoom = Math.max(zoomLevel / 1.25, 0.1);
+    const center = canvas.getCenterPoint();
+    canvas.zoomToPoint(center, newZoom);
+    canvas.renderAll();
+    setZoomLevel(newZoom);
+  }, [zoomLevel, setZoomLevel]);
+
+  const handleZoomReset = useCallback(() => {
+    canvasRef.current?.resetView();
+    setZoomLevel(1);
+  }, [setZoomLevel]);
+
+  const handleZoomFit = useCallback(() => {
+    canvasRef.current?.resetView();
+    // Read actual zoom from canvas after fit
+    const canvas = canvasRef.current?.getCanvas();
+    if (canvas) setZoomLevel(canvas.getZoom());
+  }, [setZoomLevel]);
 
   if (!currentPage) {
     return (
@@ -88,18 +122,20 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
   return (
     <>
       <MobileCanvasWarning />
-      <div className="hidden md:flex flex-col gap-4 animate-fade-in h-[calc(100vh-120px)]">
-        {/* Header */}
-        <div className="flex items-center justify-between flex-shrink-0">
+      <div className="hidden md:flex flex-col gap-3 animate-fade-in h-[calc(100vh-120px)]">
+
+        {/* ═══ Top Bar: Page info + Toolbar + Page nav ═══ */}
+        <div className="flex items-center justify-between flex-shrink-0 bg-bg-secondary border border-border-custom rounded-xl px-4 py-2.5">
+          {/* Left: Page info */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
-              <Layers size={20} className="text-brand" />
+            <div className="w-9 h-9 rounded-lg bg-brand/10 flex items-center justify-center">
+              <Layers size={18} className="text-brand" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-text-primary">
+              <h2 className="text-sm font-bold text-text-primary">
                 Trang {currentPage.pageNumber} / {pages.length}
               </h2>
-              <div className="flex items-center gap-2 mt-0.5">
+              <div className="flex items-center gap-2">
                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium ${statusConfig.bg} ${statusConfig.text}`}>
                   {statusConfig.label}
                 </span>
@@ -110,12 +146,25 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
             </div>
           </div>
 
-          {/* Page Navigation */}
+          {/* Center: Toolbar */}
+          <CanvasToolbar
+            activeTool={activeTool}
+            zoomLevel={zoomLevel}
+            onToolChange={setActiveTool}
+            onZoomIn={handleZoomIn}
+            onZoomOut={handleZoomOut}
+            onZoomReset={handleZoomReset}
+            onZoomFit={handleZoomFit}
+            showRegionTool
+            showAnnotateTool={false}
+          />
+
+          {/* Right: Page Navigation */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => setCurrentPageIndex(Math.max(0, currentPageIndex - 1))}
               disabled={currentPageIndex === 0}
-              className="w-8 h-8 rounded-lg bg-bg-secondary border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary hover:border-brand/30 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              className="w-8 h-8 rounded-lg bg-bg-primary border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary hover:border-brand/30 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
             >
               <ChevronLeft size={16} />
             </button>
@@ -125,41 +174,28 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
             <button
               onClick={() => setCurrentPageIndex(Math.min(pages.length - 1, currentPageIndex + 1))}
               disabled={currentPageIndex === pages.length - 1}
-              className="w-8 h-8 rounded-lg bg-bg-secondary border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary hover:border-brand/30 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              className="w-8 h-8 rounded-lg bg-bg-primary border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary hover:border-brand/30 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
             >
               <ChevronRight size={16} />
             </button>
           </div>
         </div>
 
-        {/* Main Canvas Area */}
+        {/* ═══ Main Canvas Area ═══ */}
         <div className="flex gap-4 flex-1 min-h-0">
-          {/* Canvas */}
+          {/* Canvas — full height, no toolbar overlay */}
           <div className="flex-1 relative bg-bg-secondary border border-border-custom rounded-xl overflow-hidden">
             <CanvasViewer
+              ref={canvasRef}
               imageUrl={currentPage.imageUrl}
               regions={regions}
-              mode={activeTool === 'region' ? 'region' : 'view'}
+              mode={activeTool === 'region' ? 'region' : activeTool === 'freeform' ? 'freeform' : 'view'}
               onRegionCreated={handleRegionCreated}
               selectedRegionId={selectedRegionId}
               onRegionSelect={setSelectedRegion}
+              onZoomChange={setZoomLevel}
               className="w-full h-full"
             />
-
-            {/* Toolbar overlay */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
-              <CanvasToolbar
-                activeTool={activeTool}
-                zoomLevel={zoomLevel}
-                onToolChange={setActiveTool}
-                onZoomIn={handleZoomIn}
-                onZoomOut={handleZoomOut}
-                onZoomReset={handleZoomReset}
-                onZoomFit={handleZoomReset}
-                showRegionTool
-                showAnnotateTool={false}
-              />
-            </div>
           </div>
 
           {/* Sidebar — Region List */}
@@ -170,8 +206,8 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
                 Danh sách Region
               </h3>
 
-              {/* Region label input (when in region mode) */}
-              {activeTool === 'region' && (
+              {/* Region label input (when in region or freeform mode) */}
+              {(activeTool === 'region' || activeTool === 'freeform') && (
                 <div className="mt-3">
                   <label className="text-[10px] text-text-muted mb-1 block">Tên vùng (tùy chọn)</label>
                   <input
