@@ -102,20 +102,33 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent deleting or switching tools if the user is typing in an input field
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        // Prevent deleting if the user is typing in an input field
-        if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-          return;
-        }
         if (selectedRegionId) {
           handleDeleteRegion(selectedRegionId);
         }
+        return;
+      }
+
+      // Tool shortcuts
+      const key = e.key.toLowerCase();
+      if (key === 'v') setActiveTool('select');
+      if (key === 'r') setActiveTool('region');
+      if (key === 'f') setActiveTool('freeform');
+      if (key === 'a') setActiveTool('annotate');
+      if (e.code === 'Space') {
+        e.preventDefault(); // prevent page scroll
+        setActiveTool('pan');
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedRegionId, handleDeleteRegion]);
+  }, [selectedRegionId, handleDeleteRegion, setActiveTool]);
 
   // ─── Zoom handlers that ACTUALLY affect the canvas ───
   const handleZoomIn = useCallback(() => {

@@ -598,12 +598,6 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
           </div>
         )}
 
-        {/* Zoom hint */}
-        <div className="absolute bottom-3 right-3 z-10 px-2 py-1 rounded bg-bg-surface/70 backdrop-blur-sm">
-          <span className="text-[10px] text-text-muted">
-            Scroll to zoom · Alt+drag or Middle-click to pan
-          </span>
-        </div>
       </div>
     );
   },
