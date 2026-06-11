@@ -82,6 +82,24 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
     [deleteRegion, setSelectedRegion],
   );
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        // Prevent deleting if the user is typing in an input field
+        if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+          return;
+        }
+        if (selectedRegionId) {
+          handleDeleteRegion(selectedRegionId);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedRegionId, handleDeleteRegion]);
+
   // ─── Zoom handlers that ACTUALLY affect the canvas ───
   const handleZoomIn = useCallback(() => {
     const canvas = canvasRef.current?.getCanvas();
@@ -255,7 +273,7 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDeleteRegion(region.id); }}
-                        className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded flex items-center justify-center text-danger hover:bg-danger/10 transition-all cursor-pointer bg-transparent border-none"
+                        className={`w-6 h-6 rounded flex items-center justify-center text-danger hover:bg-danger/10 transition-all cursor-pointer bg-transparent border-none ${region.id === selectedRegionId ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                       >
                         <Trash2 size={12} />
                       </button>
