@@ -60,7 +60,6 @@ const getNavSections = (role: UserRole): NavSectionConfig[] => {
           items: [
             { label: 'Series của tôi', path: '/mangaka/series', icon: <BookOpen size={20} /> },
             { label: 'Bản thảo', path: '/mangaka/manuscripts', icon: <FileText size={20} /> },
-            { label: 'Canvas Studio', path: '/mangaka/canvas', icon: <Palette size={20} /> },
             { label: 'Quản lý Task', path: '/mangaka/tasks', icon: <ClipboardList size={20} /> },
           ],
         },

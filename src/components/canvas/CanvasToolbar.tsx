@@ -7,6 +7,7 @@ import {
   ZoomOut,
   Maximize2,
   RotateCcw,
+  Pencil,
 } from 'lucide-react';
 
 import type { CanvasTool } from '../../stores/canvasStore';
@@ -36,6 +37,7 @@ interface ToolConfig {
 const ALL_TOOLS: ToolConfig[] = [
   { tool: 'select', icon: MousePointer2, label: 'Chọn (V)' },
   { tool: 'region', icon: SquareDashedBottom, label: 'Khoanh vùng (R)' },
+  { tool: 'freeform', icon: Pencil, label: 'Vẽ tự do (F)' },
   { tool: 'annotate', icon: MapPin, label: 'Ghim lỗi (A)' },
   { tool: 'pan', icon: Hand, label: 'Di chuyển (Space)' },
 ];
@@ -54,7 +56,7 @@ export const CanvasToolbar = ({
   showAnnotateTool = true,
 }: CanvasToolbarProps) => {
   const visibleTools = ALL_TOOLS.filter((t) => {
-    if (t.tool === 'region' && !showRegionTool) return false;
+    if ((t.tool === 'region' || t.tool === 'freeform') && !showRegionTool) return false;
     if (t.tool === 'annotate' && !showAnnotateTool) return false;
     return true;
   });
@@ -62,7 +64,7 @@ export const CanvasToolbar = ({
   const zoomPercentage = Math.round(zoomLevel * 100);
 
   return (
-    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1 rounded-2xl bg-bg-primary/90 backdrop-blur-xl border border-border-custom shadow-2xl px-2 py-1.5">
+    <div className="flex items-center gap-1 rounded-2xl bg-bg-primary/90 backdrop-blur-xl border border-border-custom shadow-lg px-2 py-1.5">
       {/* ── Tool Buttons ── */}
       <div className="flex items-center gap-0.5">
         {visibleTools.map(({ tool, icon: Icon, label }) => {

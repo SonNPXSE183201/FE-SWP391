@@ -33,7 +33,7 @@ export interface CanvasViewerProps {
   imageUrl: string;
   regions?: Region[];
   annotations?: Annotation[];
-  mode?: 'view' | 'region' | 'annotate';
+  mode?: 'view' | 'region' | 'annotate' | 'freeform';
   onRegionCreated?: (region: Omit<Region, 'id' | 'createdAt' | 'updatedAt'>) => void;
   onRegionUpdated?: (region: Region) => void;
   onRegionDeleted?: (regionId: string) => void;
@@ -41,8 +41,8 @@ export interface CanvasViewerProps {
   onAnnotationDeleted?: (annotationId: string) => void;
   selectedRegionId?: string | null;
   selectedAnnotationId?: string | null;
-  onRegionSelect?: (regionId: string | null) => void;
   onAnnotationSelect?: (annotationId: string | null) => void;
+  onZoomChange?: (zoom: number) => void;
   className?: string;
 }
 
@@ -69,6 +69,7 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
       selectedAnnotationId,
       onRegionSelect,
       onAnnotationSelect,
+      onZoomChange,
       className,
     },
     ref,
@@ -209,6 +210,7 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
 
         canvas.zoomToPoint(new Point(evt.offsetX, evt.offsetY), zoom);
         canvas.renderAll();
+        if (onZoomChange) onZoomChange(zoom);
       };
 
       canvas.on('mouse:wheel', handleWheel);
@@ -236,6 +238,9 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
 
         // Region draw mode
         if (mode === 'region') {
+          // If clicking on an existing region, let the selection event handle it instead of drawing a new one
+          if (opt.target && (opt.target as any)._regionId) return;
+
           const pointer = canvas.getScenePoint(evt);
           isDrawingRef.current = true;
           drawOriginRef.current = { x: pointer.x, y: pointer.y };
@@ -342,6 +347,47 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
         canvas.off('mouse:up', handleMouseUp);
       };
     }, [mode, onRegionCreated, onAnnotationCreated]);
+
+    // ── Freeform drawing mode ──
+
+    useEffect(() => {
+      const canvas = fabricRef.current;
+      if (!canvas) return;
+
+      if (mode === 'freeform') {
+        canvas.isDrawingMode = true;
+        // Ensure freeDrawingBrush is initialized (it should be by default when isDrawingMode = true)
+        if (canvas.freeDrawingBrush) {
+          canvas.freeDrawingBrush.color = REGION_STROKE;
+          canvas.freeDrawingBrush.width = 3;
+        }
+
+        const handlePathCreated = (opt: any) => {
+          const path = opt.path;
+          const rect = path.getBoundingRect();
+          
+          if (rect.width > 5 && rect.height > 5 && onRegionCreated) {
+            onRegionCreated({
+              pageId: '',
+              x: Math.round(rect.left),
+              y: Math.round(rect.top),
+              width: Math.round(rect.width),
+              height: Math.round(rect.height),
+            });
+          }
+          canvas.remove(path);
+          canvas.renderAll();
+        };
+
+        canvas.on('path:created', handlePathCreated);
+        return () => {
+          canvas.off('path:created', handlePathCreated);
+          canvas.isDrawingMode = false;
+        };
+      } else {
+        canvas.isDrawingMode = false;
+      }
+    }, [mode, onRegionCreated]);
 
     // ── Render regions ──
 
@@ -470,9 +516,11 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
     const cursorClass =
       mode === 'region'
         ? 'cursor-crosshair'
-        : mode === 'annotate'
-          ? 'cursor-cell'
-          : 'cursor-grab';
+        : mode === 'freeform'
+          ? 'cursor-crosshair'
+          : mode === 'annotate'
+            ? 'cursor-cell'
+            : 'cursor-grab';
 
     // ── Render ──
 
@@ -507,7 +555,7 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
         {mode !== 'view' && (
           <div className="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-md bg-bg-surface/90 border border-border-custom backdrop-blur-sm">
             <span className="text-xs font-medium text-text-secondary uppercase tracking-wider">
-              {mode === 'region' ? '⬜ Region Select' : '📌 Annotate'}
+              {mode === 'region' ? '⬜ Region Select' : mode === 'freeform' ? '✏️ Freeform Draw' : '📌 Annotate'}
             </span>
           </div>
         )}

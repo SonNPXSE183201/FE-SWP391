@@ -4,7 +4,7 @@ import type { AnnotationType } from '../types/entities';
 
 // ─── Canvas Tool Types ───────────────────────────────────────
 
-export type CanvasTool = 'select' | 'region' | 'annotate' | 'pan';
+export type CanvasTool = 'select' | 'region' | 'freeform' | 'annotate' | 'pan';
 
 // ─── State ───────────────────────────────────────────────────
 
