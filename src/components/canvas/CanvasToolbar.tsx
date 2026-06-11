@@ -8,6 +8,7 @@ import {
   Maximize2,
   RotateCcw,
   Pencil,
+  Trash2,
 } from 'lucide-react';
 
 import type { CanvasTool } from '../../stores/canvasStore';
@@ -24,6 +25,8 @@ interface CanvasToolbarProps {
   onZoomFit: () => void;
   showRegionTool?: boolean;
   showAnnotateTool?: boolean;
+  canDelete?: boolean;
+  onDelete?: () => void;
 }
 
 // ─── Tool Config ─────────────────────────────────────────────
@@ -54,6 +57,8 @@ export const CanvasToolbar = ({
   onZoomFit,
   showRegionTool = true,
   showAnnotateTool = true,
+  canDelete = false,
+  onDelete,
 }: CanvasToolbarProps) => {
   const visibleTools = ALL_TOOLS.filter((t) => {
     if ((t.tool === 'region' || t.tool === 'freeform') && !showRegionTool) return false;
@@ -147,6 +152,21 @@ export const CanvasToolbar = ({
           <RotateCcw size={18} strokeWidth={1.8} />
         </button>
       </div>
+
+      {/* ── Delete Button ── */}
+      {canDelete && onDelete && (
+        <>
+          <div className="w-px h-6 bg-border-custom mx-1" />
+          <button
+            type="button"
+            title="Xóa vùng đã chọn (Delete/Backspace)"
+            onClick={onDelete}
+            className="flex items-center justify-center w-9 h-9 rounded-xl text-danger hover:bg-danger/10 transition-colors duration-150"
+          >
+            <Trash2 size={18} strokeWidth={1.8} />
+          </button>
+        </>
+      )}
     </div>
   );
 };

@@ -2,14 +2,14 @@ import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import {
   Layers, SquareDashedBottom, Trash2,
   Tag, ChevronLeft, ChevronRight, ImageOff,
-  Plus,
+  Plus, Pencil, Check, X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CanvasViewer } from '../../../components/canvas/CanvasViewer';
 import { CanvasToolbar } from '../../../components/canvas/CanvasToolbar';
 import { MobileCanvasWarning } from '../../../components/canvas/MobileCanvasWarning';
 import { useCanvasStore } from '../../../stores/canvasStore';
-import { useRegions, useCreateRegion, useDeleteRegion } from '../hooks/useCanvasData';
+import { useRegions, useCreateRegion, useDeleteRegion, useUpdateRegion } from '../hooks/useCanvasData';
 import { MOCK_CANVAS_PAGES, getRegionsByPageId } from '../data/mockData';
 import { CreateTaskModal } from '../../tasks/components/CreateTaskModal';
 import type { Region } from '../../../types/entities';
@@ -33,6 +33,8 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
   // ─── State ───
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [regionLabel, setRegionLabel] = useState('');
+  const [editingRegionId, setEditingRegionId] = useState<string | null>(null);
+  const [editingLabel, setEditingLabel] = useState('');
   const [showCreateTask, setShowCreateTask] = useState(false);
   const { activeTool, zoomLevel, selectedRegionId, setActiveTool, setZoomLevel, setSelectedRegion } = useCanvasStore();
 
@@ -43,6 +45,7 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
 
   const { data: regions = [] } = useRegions(pageId);
   const createRegion = useCreateRegion(pageId);
+  const updateRegion = useUpdateRegion(pageId);
   const deleteRegion = useDeleteRegion(pageId);
 
   // ─── Handlers ───
@@ -67,6 +70,21 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
       );
     },
     [pageId, regionLabel, createRegion, setActiveTool, setSelectedRegion],
+  );
+
+  const handleUpdateLabel = useCallback(
+    (regionId: string, newLabel: string) => {
+      updateRegion.mutate(
+        { regionId, data: { label: newLabel } },
+        {
+          onSuccess: () => {
+            toast.success('Đã cập nhật tên vùng');
+            setEditingRegionId(null);
+          },
+        }
+      );
+    },
+    [updateRegion]
   );
 
   const handleDeleteRegion = useCallback(
@@ -180,6 +198,8 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
             onZoomFit={handleZoomFit}
             showRegionTool
             showAnnotateTool={false}
+            canDelete={!!selectedRegionId}
+            onDelete={() => selectedRegionId && handleDeleteRegion(selectedRegionId)}
           />
 
           {/* Right: Page Navigation */}
@@ -261,21 +281,67 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
                         : 'border-border-custom/50 bg-bg-primary hover:border-brand/20'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded bg-brand/10 flex items-center justify-center text-[10px] font-bold text-brand">
-                          {idx + 1}
-                        </div>
-                        <span className="text-xs font-medium text-text-primary truncate max-w-[120px]">
-                          {region.label || `Region ${idx + 1}`}
-                        </span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded bg-brand/10 flex items-center justify-center text-[10px] font-bold text-brand flex-shrink-0">
+                        {idx + 1}
                       </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDeleteRegion(region.id); }}
-                        className={`w-6 h-6 rounded flex items-center justify-center text-danger hover:bg-danger/10 transition-all cursor-pointer bg-transparent border-none ${region.id === selectedRegionId ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-                      >
-                        <Trash2 size={12} />
-                      </button>
+                      <div className="flex-1 min-w-0 flex items-center justify-between group">
+                        {editingRegionId === region.id ? (
+                          <div className="flex items-center gap-1 w-full mr-2">
+                            <input
+                              type="text"
+                              value={editingLabel}
+                              onChange={(e) => setEditingLabel(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleUpdateLabel(region.id, editingLabel);
+                                if (e.key === 'Escape') setEditingRegionId(null);
+                              }}
+                              autoFocus
+                              className="flex-1 text-xs px-2 py-1 bg-bg-surface border border-brand/50 rounded-md outline-none text-text-primary focus:border-brand"
+                            />
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleUpdateLabel(region.id, editingLabel); }}
+                              className="w-6 h-6 flex justify-center items-center rounded bg-brand/10 text-brand hover:bg-brand/20 transition-colors"
+                            >
+                              <Check size={12} />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setEditingRegionId(null); }}
+                              className="w-6 h-6 flex justify-center items-center rounded bg-danger/10 text-danger hover:bg-danger/20 transition-colors"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="truncate text-xs font-medium text-text-primary group-hover:text-brand transition-colors">
+                              {region.label || `Region ${idx + 1}`}
+                            </div>
+                            
+                            {/* Actions wrapper */}
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingRegionId(region.id);
+                                  setEditingLabel(region.label || '');
+                                }}
+                                className={`w-6 h-6 rounded flex items-center justify-center text-text-secondary hover:text-brand hover:bg-brand/10 transition-all cursor-pointer bg-transparent border-none ${region.id === selectedRegionId ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                title="Chỉnh sửa tên"
+                              >
+                                <Pencil size={12} />
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleDeleteRegion(region.id); }}
+                                className={`w-6 h-6 rounded flex items-center justify-center text-danger hover:bg-danger/10 transition-all cursor-pointer bg-transparent border-none ${region.id === selectedRegionId ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                title="Xóa vùng"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
                     <div className="mt-1.5 flex items-center gap-3 text-[10px] text-text-muted">
                       <span>x:{Math.round(region.x)} y:{Math.round(region.y)}</span>
