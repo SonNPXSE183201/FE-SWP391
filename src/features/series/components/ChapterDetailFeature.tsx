@@ -103,13 +103,21 @@ export const ChapterDetailFeature = () => {
             </div>
           </div>
 
-          <button
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition-all duration-200 border-none cursor-pointer shadow-brand hover:shadow-brand-hover hover:-translate-y-0.5"
-          >
-            <ImagePlus size={16} />
-            Upload thêm trang
-          </button>
-        </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate(`/mangaka/canvas/${chapterId}`)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-bg-secondary hover:bg-bg-surface text-text-primary border border-brand/30 hover:border-brand rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer"
+            >
+              <Image size={16} className="text-brand" />
+              Mở Canvas
+            </button>
+            <button
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition-all duration-200 border-none cursor-pointer shadow-brand hover:shadow-brand-hover hover:-translate-y-0.5"
+            >
+              <ImagePlus size={16} />
+              Upload thêm trang
+            </button>
+          </div>
       </div>
 
       {/* Stats */}
