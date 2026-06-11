@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import {
   Layers, SquareDashedBottom, Trash2,
   Tag, ChevronLeft, ChevronRight, ImageOff,
