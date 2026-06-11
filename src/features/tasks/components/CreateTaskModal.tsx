@@ -70,7 +70,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
 
   const availableChapters = useMemo(
     () => formData.seriesId
-      ? MOCK_CHAPTERS.filter((ch) => ch.seriesId === `s-${formData.seriesId}`)
+      ? MOCK_CHAPTERS.filter((ch) => ch.seriesId === formData.seriesId)
       : [],
     [formData.seriesId],
   );
