@@ -1,185 +1,188 @@
 import { useState, useEffect } from 'react';
-import { ClipboardList, Clock, Play, Download, Upload } from 'lucide-react';
+import { ClipboardList, Clock, Play, Download, FileText, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { taskApi } from '../api/task.api';
 
-// --- Mock Types ---
-type TaskStatus = 'Available' | 'In_Progress' | 'Pending_Review' | 'Approved' | 'Revision' | 'Cancelled';
-
-interface MockTask {
-  id: string;
-  seriesTitle: string;
-  chapterNumber: number;
-  regionType: string;
-  amount: number;
-  deadline: string;
-  status: TaskStatus;
-}
-
-const initialMockTasks: MockTask[] = [
-  { id: 't1', seriesTitle: 'One Piece', chapterNumber: 1102, regionType: 'Lineart', amount: 500000, deadline: '2026-06-08T10:00:00Z', status: 'Available' },
-  { id: 't2', seriesTitle: 'Naruto', chapterNumber: 500, regionType: 'Background', amount: 300000, deadline: '2026-06-07T15:00:00Z', status: 'Available' },
-  { id: 't3', seriesTitle: 'Bleach', chapterNumber: 420, regionType: 'Screentone', amount: 250000, deadline: '2026-06-06T12:00:00Z', status: 'In_Progress' },
-  { id: 't4', seriesTitle: 'One Punch Man', chapterNumber: 150, regionType: 'Coloring', amount: 800000, deadline: '2026-06-05T09:00:00Z', status: 'Pending_Review' },
-];
-
 export const TaskQueueFeature = () => {
-  const [tasks, setTasks] = useState<MockTask[]>([]);
+  const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'Available' | 'MyTasks'>('Available');
 
+  // ========== GỌI API THẬT ==========
+  // Trước đây: luôn dùng initialMockTasks (data giả)
+  // Bây giờ: gọi taskApi → lấy data thật từ Backend
   useEffect(() => {
     const fetchTasks = async () => {
       setLoading(true);
       try {
-        // Attempt real API
         if (activeTab === 'Available') {
-          await taskApi.getAvailableTasks();
+          const res = await taskApi.getAvailableTasks();
+          setTasks(res.data?.Data ?? []);
         } else {
-          await taskApi.getMyTasks();
+          const res = await taskApi.getMyTasks();
+          setTasks(res.data?.Data ?? []);
         }
       } catch (error) {
-        // Fallback to Mock
+        console.error('Failed to fetch tasks:', error);
+        toast.error('Không thể tải danh sách task');
+        setTasks([]);
       } finally {
-        setTimeout(() => {
-          if (activeTab === 'Available') {
-            setTasks(initialMockTasks.filter(t => t.status === 'Available'));
-          } else {
-            setTasks(initialMockTasks.filter(t => t.status !== 'Available'));
-          }
-          setLoading(false);
-        }, 600);
+        setLoading(false);
       }
     };
     fetchTasks();
   }, [activeTab]);
 
-  const handleAcceptTask = (taskId: string) => {
+  // ========== NHẬN VIỆC ==========
+  // Trước đây: filter mock array
+  // Bây giờ: gọi API accept → xóa task khỏi list
+  const handleAcceptTask = async (taskId: string) => {
     try {
-      // Mock Accept Task
-      const taskIndex = initialMockTasks.findIndex(t => t.id === taskId);
-      if (taskIndex > -1) {
-        initialMockTasks[taskIndex].status = 'In_Progress';
-        setTasks(prev => prev.filter(t => t.id !== taskId));
-        toast.success('Nhận việc thành công! Task đã được chuyển sang "Việc của tôi"');
-      }
+      await taskApi.accept(taskId);
+      toast.success('Nhận việc thành công!');
+      setTasks(prev => prev.filter(t => (t.Id || t.id) !== taskId));
     } catch (error) {
       toast.error('Lỗi khi nhận việc');
     }
   };
 
-  const handleSubmitTask = (taskId: string) => {
-    try {
-      const taskIndex = initialMockTasks.findIndex(t => t.id === taskId);
-      if (taskIndex > -1) {
-        initialMockTasks[taskIndex].status = 'Pending_Review';
-        // Force re-render if we are in MyTasks
-        setTasks(initialMockTasks.filter(t => t.status !== 'Available'));
-        toast.success('Đã nộp kết quả chờ duyệt!');
-      }
-    } catch (error) {
-      toast.error('Lỗi khi nộp bài');
-    }
+  // ========== HELPER FUNCTIONS ==========
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+
+  const formatDeadline = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
-  const renderTaskCard = (task: MockTask) => (
-    <div key={task.id} className="bg-bg-secondary border border-border-custom hover:border-brand/50 transition-all rounded-xl p-5 flex flex-col gap-4 shadow-sm">
-      <div className="flex justify-between items-start">
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      Available: 'bg-green-500/20 text-green-400',
+      In_Progress: 'bg-blue-500/20 text-blue-400',
+      Pending_Review: 'bg-yellow-500/20 text-yellow-400',
+      Approved: 'bg-emerald-500/20 text-emerald-400',
+      Revision: 'bg-orange-500/20 text-orange-400',
+      Cancelled: 'bg-red-500/20 text-red-400',
+    };
+    return colors[status] || 'bg-gray-500/20 text-gray-400';
+  };
+
+  // ========== GIAO DIỆN ==========
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-bold text-text-primary">{task.seriesTitle} - Ch. {task.chapterNumber}</h3>
-          <span className="inline-block mt-1 px-2.5 py-1 bg-brand/10 text-brand rounded-md text-xs font-medium border border-brand/20">
-            {task.regionType}
-          </span>
-        </div>
-        <div className="text-right">
-          <p className="text-xl font-bold text-green-400">
-            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(task.amount)}
+          <h1 className="text-2xl font-bold text-text-primary flex items-center gap-2">
+            <ClipboardList size={28} />
+            Danh sách công việc
+          </h1>
+          <p className="text-text-secondary text-sm mt-1">
+            {tasks.length} task hiện có
           </p>
         </div>
       </div>
-      
-      <div className="flex items-center gap-2 text-sm text-text-secondary">
-        <Clock size={16} className="text-orange-400" />
-        <span>Deadline: {new Date(task.deadline).toLocaleString('vi-VN')}</span>
-      </div>
 
-      <div className="pt-4 border-t border-border-custom flex justify-end gap-2">
-        {task.status === 'Available' && (
-          <button 
-            onClick={() => handleAcceptTask(task.id)}
-            className="flex items-center gap-2 px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium transition-colors cursor-pointer border-none"
+      {/* Tabs: Việc có sẵn / Việc của tôi */}
+      <div className="flex gap-2 border-b border-border-custom pb-0">
+        {(['Available', 'MyTasks'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-all duration-200 ${activeTab === tab
+                ? 'border-brand text-brand'
+                : 'border-transparent text-text-secondary hover:text-text-primary'
+              }`}
           >
-            <Play size={16} /> Nhận việc
+            {tab === 'Available' ? '🔓 Việc có sẵn' : '📋 Việc của tôi'}
           </button>
-        )}
-        
-        {task.status === 'In_Progress' && (
-          <>
-            <button className="flex items-center gap-2 px-4 py-2 bg-bg-surface hover:bg-bg-primary text-text-primary border border-border-custom rounded-lg text-sm font-medium transition-colors cursor-pointer">
-              <Download size={16} /> Tải tài nguyên
-            </button>
-            <button 
-              onClick={() => handleSubmitTask(task.id)}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer border-none"
-            >
-              <Upload size={16} /> Nộp bài
-            </button>
-          </>
-        )}
-
-        {task.status === 'Pending_Review' && (
-          <span className="flex items-center gap-2 text-yellow-400 font-medium text-sm">
-            <Clock size={16} /> Đang chờ duyệt
-          </span>
-        )}
+        ))}
       </div>
-    </div>
-  );
 
-  return (
-    <div>
-      <div className="page-header">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
-            <ClipboardList size={20} className="text-brand" />
-          </div>
-          <div>
-            <h1 className="page-header__title">Hàng chờ công việc</h1>
-            <p className="page-header__subtitle">Tìm kiếm và nhận Task mới</p>
-          </div>
+      {/* Loading spinner */}
+      {loading && (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="animate-spin text-brand" size={32} />
+          <span className="ml-3 text-text-secondary">Đang tải...</span>
         </div>
-      </div>
+      )}
 
-      {/* Tabs */}
-      <div className="mt-6 flex border-b border-border-custom">
-        <button 
-          onClick={() => setActiveTab('Available')}
-          className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 cursor-pointer bg-transparent ${activeTab === 'Available' ? 'border-brand text-brand' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
-        >
-          Task khả dụng
-        </button>
-        <button 
-          onClick={() => setActiveTab('MyTasks')}
-          className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 cursor-pointer bg-transparent ${activeTab === 'MyTasks' ? 'border-brand text-brand' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
-        >
-          Việc của tôi
-        </button>
-      </div>
+      {/* Khi không có task */}
+      {!loading && tasks.length === 0 && (
+        <div className="text-center py-16 text-text-secondary">
+          <ClipboardList size={48} className="mx-auto mb-4 opacity-30" />
+          <p className="text-lg">Chưa có task nào</p>
+          <p className="text-sm mt-1">
+            {activeTab === 'Available'
+              ? 'Hiện tại không có công việc nào đang chờ nhận'
+              : 'Bạn chưa nhận công việc nào'}
+          </p>
+        </div>
+      )}
 
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {loading ? (
-          <div className="col-span-full py-12 flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div>
-          </div>
-        ) : tasks.length === 0 ? (
-          <div className="col-span-full py-12 text-center text-text-muted">
-            <ClipboardList size={48} className="mx-auto mb-4 opacity-50" />
-            <p>Không có công việc nào trong danh sách này</p>
-          </div>
-        ) : (
-          tasks.map(renderTaskCard)
-        )}
-      </div>
+      {/* Danh sách task */}
+      {!loading && tasks.length > 0 && (
+        <div className="grid gap-4">
+          {tasks.map((task) => (
+            <div
+              key={task.Id || task.id}
+              className="p-5 rounded-xl bg-bg-secondary border border-border-custom hover:border-brand/30 transition-all duration-200"
+            >
+              <div className="flex items-start justify-between gap-4">
+                {/* Thông tin task */}
+                <div className="flex-1">
+                  <h3 className="font-semibold text-text-primary text-lg">
+                    {task.TaskName || task.taskName || task.SeriesTitle || task.seriesTitle || 'Untitled Task'}
+                  </h3>
+                  <div className="flex flex-wrap gap-3 mt-2 text-sm text-text-secondary">
+                    {(task.ChapterTitle || task.chapterTitle) && (
+                      <span className="flex items-center gap-1">
+                        <FileText size={14} />
+                        {task.ChapterTitle || task.chapterTitle}
+                      </span>
+                    )}
+                    {(task.RegionLabel || task.regionLabel || task.RegionType || task.regionType) && (
+                      <span className="flex items-center gap-1">
+                        <Play size={14} />
+                        {task.RegionLabel || task.regionLabel || task.RegionType || task.regionType}
+                      </span>
+                    )}
+                    {(task.Deadline || task.deadline) && (
+                      <span className="flex items-center gap-1">
+                        <Clock size={14} />
+                        {formatDeadline(task.Deadline || task.deadline)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Status + Giá tiền */}
+                <div className="flex flex-col items-end gap-2">
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(task.Status || task.status)}`}>
+                    {task.Status || task.status}
+                  </span>
+                  <span className="text-brand font-bold">
+                    {formatCurrency(task.Amount || task.amount || 0)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Nút nhận việc — chỉ hiện ở tab Available */}
+              {activeTab === 'Available' && (task.Status === 'Available' || task.status === 'Available') && (
+                <div className="mt-4 pt-3 border-t border-border-custom">
+                  <button
+                    onClick={() => handleAcceptTask(task.Id || task.id)}
+                    className="px-4 py-2 bg-gradient-to-br from-brand to-brand-hover text-white rounded-lg text-sm font-medium hover:shadow-lg hover:shadow-brand/25 transition-all duration-200"
+                  >
+                    <Download size={16} className="inline mr-2" />
+                    Nhận việc
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
