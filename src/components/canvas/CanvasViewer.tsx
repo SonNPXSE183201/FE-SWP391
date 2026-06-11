@@ -389,7 +389,9 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
           canvas.freeDrawingBrush = new PencilBrush(canvas);
         }
         canvas.freeDrawingBrush.color = REGION_STROKE;
-        canvas.freeDrawingBrush.width = 3;
+        canvas.freeDrawingBrush.width = 2; // Match region stroke width
+        // Make the brush dashed like the Region tool
+        (canvas.freeDrawingBrush as any).strokeDashArray = [6, 3];
 
         const handlePathCreated = (opt: { path: import('fabric').FabricObject }) => {
           const path = opt.path;
@@ -404,8 +406,13 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
               height: Math.round(rect.height),
             });
           }
-          canvas.remove(path);
-          canvas.renderAll();
+          
+          // In Fabric.js, the path might be added to the canvas AFTER this event fires.
+          // We use setTimeout to ensure it is removed properly after the current call stack.
+          setTimeout(() => {
+            canvas.remove(path);
+            canvas.renderAll();
+          }, 0);
         };
 
         canvas.on('path:created', handlePathCreated);
