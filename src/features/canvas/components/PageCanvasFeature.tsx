@@ -57,11 +57,10 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
             // Auto-switch back to select mode after drawing
             setActiveTool('select');
             
-            // Auto-select the newly created region and show task modal
+            // Auto-select the newly created region (but DO NOT open task modal automatically)
             const newRegion = res.data?.Data;
             if (newRegion && newRegion.id) {
               setSelectedRegion(newRegion.id);
-              setShowCreateTask(true);
             }
           },
         },
