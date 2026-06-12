@@ -5,7 +5,7 @@ import {
   FileText, Clock, TrendingUp,
 } from 'lucide-react';
 import {
-  MOCK_SERIES,
+
   SERIES_STATUS_FILTER_OPTIONS,
   SeriesCard,
   SeriesRow,
@@ -13,15 +13,16 @@ import {
 import { usePagination } from '../../../hooks/usePagination';
 import { Pagination } from '../../../components/common/Pagination';
 import { CustomSelect } from '../../../components/common/CustomSelect';
-
+import { useSeriesList } from '../hooks/useSeries';
 export const SeriesListFeature = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const { data: series = [], isLoading, isError } = useSeriesList();
 
   const filteredSeries = useMemo(() => {
-    return MOCK_SERIES.filter((s) => {
+    return series.filter((s) => {
       const matchesSearch =
         !searchQuery ||
         s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -36,15 +37,15 @@ export const SeriesListFeature = () => {
 
   useEffect(() => {
     pagination.goToPage(1);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, statusFilter]);
 
   const stats = useMemo(() => ({
-    total: MOCK_SERIES.length,
-    published: MOCK_SERIES.filter((s) => s.status === 'Published').length,
-    pending: MOCK_SERIES.filter((s) => s.status === 'PendingApproval').length,
-    totalChapters: MOCK_SERIES.reduce((sum, s) => sum + s.chapterCount, 0),
-  }), []);
+    total: series.length,
+    published: series.filter((s) => s.status === 'Published').length,
+    pending: series.filter((s) => s.status === 'PendingApproval').length,
+    totalChapters: series.reduce((sum, s) => sum + s.chapterCount, 0),
+  }), [series]);
 
   return (
     <div className="animate-fade-in">
@@ -123,7 +124,7 @@ export const SeriesListFeature = () => {
       {/* Results count */}
       <div className="flex items-center justify-between mt-4">
         <p className="text-xs text-text-muted">
-          Tìm thấy <span className="text-text-primary font-medium">{filteredSeries.length}</span> / {MOCK_SERIES.length} series
+          Tìm thấy <span className="text-text-primary font-medium">{filteredSeries.length}</span> / {series.length} series
         </p>
         {(searchQuery || statusFilter) && (
           <button onClick={() => { setSearchQuery(''); setStatusFilter(''); }}
