@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom';
 import {
   ArrowDownToLine, ArrowUpFromLine, CreditCard, ExternalLink,
 } from 'lucide-react';
-import { formatVND } from '../../wallet';
+import { formatVND } from '../constants';
 import { CustomSelect } from '../../../components/common/CustomSelect';
 import { useWalletActions } from '../hooks/useWalletActions';
 

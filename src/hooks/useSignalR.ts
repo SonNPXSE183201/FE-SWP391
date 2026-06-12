@@ -34,6 +34,13 @@ export const useSignalR = () => {
     isConnected,
     lastMessage,
     // Hàm này sau này dùng để gửi tin nhắn thẳng lên Server qua WebSocket
-    sendMessage: (msg: string) => console.log('[useSignalR] Đang gửi tin nhắn lên Server: ', msg)
+    sendMessage: (msg: string) => console.log('[useSignalR] Đang gửi tin nhắn lên Server: ', msg),
+    // Dummy functions để tránh lỗi crash runtime ở các component khác
+    on: (eventName: string, callback: (...args: any[]) => void) => {
+      console.log(`[useSignalR] Đăng ký lắng nghe event: ${eventName}`);
+    },
+    off: (eventName: string, callback: (...args: any[]) => void) => {
+      console.log(`[useSignalR] Hủy lắng nghe event: ${eventName}`);
+    }
   };
 };
