@@ -25,12 +25,12 @@
 Frontend cho **Manga Creation Workflows & Publishing Management System** — Giao diện Digital Workspace dành cho 5 vai trò trong hệ thống xuất bản manga: **Admin**, **Editor**, **Board**, **Mangaka**, **Assistant**.
 
 ### Tính năng chính
-- 🎨 **Canvas Viewer** — Xem trang truyện High-Res với Pan/Zoom (Fabric.js)
-- ✏️ **Region Selector** — Khoanh vùng trên trang để phân công Assistant
-- 📝 **Annotation Tool** — Ghim lỗi QC (Technical / Art / Content) lên trang
+- 🎨 **Canvas Viewer** — Xem trang truyện High-Res với Pan/Zoom (Fabric.js, 624 dòng)
+- 🛠️ **Canvas Toolbar** — Thanh công cụ điều khiển Canvas (zoom, pan, tools)
+- 📱 **Mobile Canvas Warning** — Cảnh báo xoay ngang trên thiết bị nhỏ
 - 💰 **Wallet Dashboard** — 2 ngăn quỹ, lịch sử giao dịch, nạp/rút VNPay
 - 📊 **Ranking Dashboard** — Biểu đồ xếp hạng Series theo thời gian
-- 🔔 **Real-time Notifications** — SignalR WebSocket
+- 🔔 **Real-time Notifications** — SignalR WebSocket (scaffold)
 - 🗳️ **Board Voting** — Bỏ phiếu duyệt/hủy Series
 - 👤 **Role-based UI** — Mỗi vai trò thấy giao diện khác nhau
 
@@ -51,86 +51,80 @@ Frontend cho **Manga Creation Workflows & Publishing Management System** — Gia
 
 ```
 src/
-├── api/                        # API client & service functions
-│   ├── axios.ts                # Axios instance + JWT interceptors
-│   ├── auth.api.ts             # Login, Register, Refresh
-│   ├── series.api.ts           # Series CRUD
-│   ├── tasks.api.ts            # Task lifecycle
-│   ├── wallet.api.ts           # Wallet & Transactions
-│   └── ...
-│
-├── assets/                     # Images, fonts, icons
+├── api/                        # Shared API client
+│   └── axios.ts                # Axios instance + JWT interceptors + token refresh
 │
 ├── components/                 # Reusable UI components
-│   ├── common/                 # Button, Input, Modal, Badge, Spinner, Toast
-│   ├── canvas/                 # Fabric.js components
-│   │   ├── CanvasViewer.tsx    #   Pan/Zoom viewer
-│   │   ├── RegionSelector.tsx  #   Khoanh vùng → JSON coords
-│   │   ├── AnnotationTool.tsx  #   Ghim lỗi QC
-│   │   └── LayerCompositor.tsx #   Tinh chỉnh Z-Index layers
-│   ├── layout/                 # Header, Sidebar, Footer, Breadcrumb
-│   └── ui/                     # Card, Table, Chart, StatusBadge
+│   ├── common/                 # CustomSelect, Logo, PageScaffold, Pagination
+│   └── canvas/                 # Fabric.js components
+│       ├── CanvasViewer.tsx    #   Pan/Zoom viewer (624 dòng)
+│       ├── CanvasToolbar.tsx   #   Thanh công cụ Canvas
+│       └── MobileCanvasWarning.tsx  # Cảnh báo xoay ngang
 │
-├── features/                   # Feature modules
-│   ├── auth/                   # Login, Register forms
-│   ├── dashboard/              # Role-based dashboards
-│   ├── series/                 # Series management
-│   ├── chapters/               # Chapter management
-│   ├── tasks/                  # Task lifecycle UI
-│   ├── wallet/                 # Wallet dashboard, Deposit/Withdraw
-│   ├── ranking/                # Ranking charts
+├── features/                   # Feature modules (co-located: api + components + hooks + types)
+│   ├── admin/                  # Admin tools (api/admin.api.ts, components/)
+│   ├── approvals/              # Phê duyệt tài khoản (components/)
+│   ├── assistant-profile/      # Profile Assistant (components/)
+│   ├── auth/                   # Login, Register (api/, components/, hooks/, types/)
+│   ├── canvas/                 # Canvas feature (api/, components/, data/, hooks/)
+│   ├── contracts/              # Quản lý hợp đồng (components/)
+│   ├── dashboard/              # Role-based dashboards (components/, data/)
+│   ├── landing/                # Landing page (components/, hooks/)
 │   ├── notifications/          # Notification dropdown
-│   └── admin/                  # Admin tools
+│   ├── ranking/                # Ranking charts
+│   ├── review/                 # Review & QC (components/)
+│   ├── series/                 # Series management (api/, components/, data/, hooks/, types/)
+│   ├── tasks/                  # Task lifecycle (api/, components/, data/)
+│   ├── users/                  # User management (components/)
+│   └── wallet/                 # Wallet & VNPay (api/, components/, data/, hooks/)
 │
-├── hooks/                      # Custom hooks
-│   ├── useAuth.ts
-│   ├── useWallet.ts
-│   ├── useSignalR.ts           # SignalR real-time connection
-│   └── useNotifications.ts
+├── hooks/                      # Shared custom hooks
+│   ├── useAuth.ts              # Auth state access
+│   ├── useClickOutside.ts      # Detect click outside element
+│   ├── useDebounce.ts          # Debounce values
+│   ├── usePagination.ts        # Pagination logic
+│   ├── useSignalR.ts           # SignalR real-time connection (scaffold)
+│   ├── useWindowSize.ts        # Responsive window size
+│   └── index.ts                # Barrel exports
 │
 ├── layouts/                    # Page layouts
 │   ├── MainLayout.tsx          # Sidebar + Header + Content
 │   ├── AuthLayout.tsx          # Login/Register layout
-│   └── AdminLayout.tsx         # Admin panel layout
+│   ├── Header.tsx              # Top navigation bar
+│   ├── Sidebar.tsx             # Role-based sidebar menu
+│   └── index.ts                # Barrel exports
 │
 ├── pages/                      # Route pages (per role)
 │   ├── auth/                   # /login, /register
+│   ├── landing/                # / (Landing Page)
 │   ├── mangaka/                # /mangaka/*
 │   ├── assistant/              # /assistant/*
 │   ├── editor/                 # /editor/*
 │   ├── board/                  # /board/*
-│   └── admin/                  # /admin/*
+│   ├── admin/                  # /admin/*
+│   └── wallet/                 # /wallet/deposit-callback (VNPay callback)
 │
 ├── routes/                     # Routing config
-│   ├── index.tsx               # Route definitions
-│   ├── ProtectedRoute.tsx      # Auth guard
-│   └── RoleGuard.tsx           # Role-based access
+│   └── RoleGuard.tsx           # Role-based access guard
 │
 ├── stores/                     # Zustand global stores
-│   ├── authStore.ts            # User + JWT token
-│   ├── notificationStore.ts    # Notification state
+│   ├── authStore.ts            # User + JWT token + refresh
 │   └── canvasStore.ts          # Canvas tool state
 │
 ├── types/                      # TypeScript definitions
-│   ├── auth.types.ts
-│   ├── series.types.ts
-│   ├── task.types.ts
-│   ├── wallet.types.ts
-│   └── api.types.ts            # ApiResponse<T> generic
+│   ├── entities.ts             # Shared entity interfaces
+│   └── index.ts                # Barrel exports
 │
 ├── utils/                      # Utilities
-│   ├── formatCurrency.ts       # Intl.NumberFormat('vi-VN')
-│   ├── dateUtils.ts
-│   └── constants.ts
+│   └── shadcn.ts               # shadcn/ui utility (cn helper)
 │
 ├── styles/                     # Global CSS
 │   ├── variables.css           # CSS custom properties (design tokens)
 │   ├── reset.css               # CSS reset
 │   └── index.css               # Global styles
 │
-├── App.tsx
-├── main.tsx
-└── vite-env.d.ts
+├── App.tsx                     # Root component + Router
+└── main.tsx                    # Entry point
 ```
 
 ## 🗺️ Route Map
@@ -185,19 +179,15 @@ src/
 
 ## 🖌️ Canvas Components (Fabric.js)
 
-| Component | Mô tả | Role |
-|-----------|--------|------|
-| **CanvasViewer** | Xem trang truyện, Pan/Zoom mượt mà | All |
-| **RegionSelector** | Vẽ rectangle khoanh vùng → export `{x, y, width, height}` | Mangaka |
-| **AnnotationTool** | Click ghim lỗi → chọn loại QC → nhập comment | Editor, Mangaka |
-| **LayerCompositor** | Kéo thả reorder Z-Index layers trước khi lưu Final | Mangaka |
+| Component | File | Mô tả | Role |
+|-----------|------|--------|------|
+| **CanvasViewer** | `CanvasViewer.tsx` (624 dòng) | Xem trang truyện, Pan/Zoom mượt mà | All |
+| **CanvasToolbar** | `CanvasToolbar.tsx` | Thanh công cụ: zoom, pan, drawing tools | All |
+| **MobileCanvasWarning** | `MobileCanvasWarning.tsx` | Cảnh báo xoay ngang trên mobile/tablet nhỏ | All |
 
-### Annotation Colors
-- 🔴 `Technical_Error` — Lỗi kỹ thuật
-- 🟡 `Art_Error` — Lỗi hội họa
-- 🔵 `Content_Error` — Lỗi nội dung
+> 📍 Đường dẫn: `src/components/canvas/`
 
-> ⚠️ Canvas chỉ hiển thị trên Desktop/Tablet. Mobile sẽ show cảnh báo xoay ngang.
+> ⚠️ Canvas chỉ hiển thị trên Desktop/Tablet. Mobile sẽ show `MobileCanvasWarning` cảnh báo xoay ngang.
 
 ## 💰 Wallet UI
 
@@ -261,9 +251,9 @@ cd frontend
 # 2. Install dependencies
 npm install
 
-# 3. Tạo file .env.local
-cp .env.example .env.local
-# Sửa VITE_API_URL=https://localhost:5001
+# 3. Tạo file .env.local (nếu cần override)
+# Mặc định VITE_API_URL=http://localhost:5010 (API Gateway)
+# cp .env.example .env.local
 
 # 4. Chạy dev server
 npm run dev
@@ -288,8 +278,7 @@ npm run test
 
 | Variable | Mô tả | Default |
 |----------|--------|---------|
-| `VITE_API_URL` | Backend API base URL | `https://localhost:5001` |
-| `VITE_SIGNALR_URL` | SignalR Hub URL | `https://localhost:5001/hubs/notification` |
+| `VITE_API_URL` | Backend API Gateway URL | `http://localhost:5010` |
 
 ## 📱 Responsive Breakpoints
 
@@ -308,10 +297,8 @@ npm run test
 
 ## 👥 Team
 
-| Thành viên | MSSV | Phụ trách |
-|-----------|------|-----------|
-| Nguyễn Phạm Xuân Sơn | SE183201 | Infra, Auth, User, Contract |
-| Phạm Lê Hoàng Phúc | SE183189 | Series, Chapter, Voting, Ranking |
-| Nguyễn Phạm Thiên Bảo | SE183336 | Task, Canvas, Region, TaskVersion |
-| Trần Duy Anh | SE190675 | Wallet, Transaction, VNPay, Dispute |
-| Lê Trung Kiên | SE193179 | Notification, SignalR, Background Jobs |
+| Thành viên | GitHub | Phụ trách |
+|-----------|--------|-----------|
+| Nguyễn Phạm Xuân Sơn | SonNPXSE183201 | Infra, Auth, User, Contract, Canvas |
+| Phạm Lê Hoàng Phúc | phucplhse183189 | Series, Chapter, Voting, Ranking, Dashboard |
+| Trần Duy Anh | anht876 | Wallet, Transaction, VNPay, Settings, Portfolio |
