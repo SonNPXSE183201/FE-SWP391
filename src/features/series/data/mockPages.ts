@@ -42,10 +42,14 @@ const ch4Pages: Page[] = CH4_STATUSES.map((status, i) => {
   );
 });
 
-// ─── Chapter ch-1 (24 pages) — all completed, no real images ─
-const ch1Pages: Page[] = Array.from({ length: 24 }, (_, i) =>
-  makePage(`pg-1-${i + 1}`, 'ch-1', i + 1, 'Completed', '', Math.floor(Math.random() * 4) + 1),
-);
+// ─── Chapter ch-1 (4 pages) — MUST match canvas/data/mockData.ts ─
+// page-1: InProgress (3 regions), page-2: Pending (0), page-3: Completed (2), page-4: NeedsRevision (1)
+const ch1Pages: Page[] = [
+  makePage('page-1', 'ch-1', 1, 'InProgress', 'https://picsum.photos/seed/manga-page-1/1200/1800', 3),
+  makePage('page-2', 'ch-1', 2, 'Pending', 'https://picsum.photos/seed/manga-page-2/1200/1800', 0),
+  makePage('page-3', 'ch-1', 3, 'Completed', 'https://picsum.photos/seed/manga-page-3/1200/1800', 2),
+  makePage('page-4', 'ch-1', 4, 'NeedsRevision', 'https://picsum.photos/seed/manga-page-4/1200/1800', 1),
+];
 
 // ─── Chapter ch-2 (22 pages) — all completed ─────────────────
 const ch2Pages: Page[] = Array.from({ length: 22 }, (_, i) =>

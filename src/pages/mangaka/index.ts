@@ -8,3 +8,4 @@ export { MangakaWalletPage } from './MangakaWalletPage';
 export { MangakaSettingsPage } from './MangakaSettingsPage';
 export { ChapterDetailPage } from './ChapterDetailPage';
 export { SeriesDetailPage } from './SeriesDetailPage';
+export { PageCanvasPage } from './PageCanvasPage';

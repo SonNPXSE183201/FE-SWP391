@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -6,10 +6,13 @@ import {
   ImagePlus,
   Clock,
   ChevronRight,
+  FileText,
+  Layers,
 } from 'lucide-react';
 
 import {
   MOCK_SERIES,
+  MOCK_CHAPTERS,
   SERIES_STATUS_CONFIG,
   StatusTimeline,
   SeriesInfoCard,
@@ -29,6 +32,13 @@ export const SeriesDetailFeature = () => {
 
   // Local status state (mock — will be server state via React Query)
   const [currentStatus, setCurrentStatus] = useState<SeriesStatus>(series?.status ?? 'Draft');
+
+  // Chapters belonging to this series
+  const chapters = useMemo(
+    () => MOCK_CHAPTERS.filter((ch) => ch.seriesId === seriesId)
+        .sort((a, b) => a.chapterNumber - b.chapterNumber),
+    [seriesId],
+  );
 
   // Feature hooks
   const nameUpload = useNameUpload();
@@ -160,6 +170,65 @@ export const SeriesDetailFeature = () => {
             </div>
           )}
         </div>
+      </div>
+
+      {/* ─── Chapters List ─── */}
+      <div className="mt-6 bg-bg-secondary border border-border-custom rounded-xl p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Layers size={16} className="text-brand" />
+            <h2 className="text-sm font-semibold text-text-primary">Danh sách Chapter</h2>
+            <span className="text-[10px] text-text-muted bg-bg-surface px-2 py-0.5 rounded-full">{chapters.length}</span>
+          </div>
+        </div>
+
+        {chapters.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 gap-2 text-text-muted">
+            <FileText size={28} />
+            <p className="text-xs">Chưa có chapter nào trong series này</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {chapters.map((ch) => (
+              <div
+                key={ch.id}
+                onClick={() => navigate(`/mangaka/manuscripts/${ch.id}`)}
+                className="group flex items-center gap-4 p-3.5 rounded-xl border border-border-custom/50 bg-bg-primary hover:border-brand/30 hover:bg-brand/[0.03] transition-all cursor-pointer"
+              >
+                {/* Chapter number */}
+                <div className="w-10 h-10 rounded-lg bg-brand/10 flex items-center justify-center text-sm font-bold text-brand flex-shrink-0">
+                  {ch.chapterNumber}
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-text-primary truncate">
+                    Ch.{ch.chapterNumber}: {ch.title}
+                  </p>
+                  <p className="text-[11px] text-text-muted mt-0.5">
+                    {ch.totalPages} trang
+                  </p>
+                </div>
+
+                {/* Status badge */}
+                <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-medium flex-shrink-0 ${
+                  ch.status === 'Approved' ? 'bg-success/10 text-success' :
+                  ch.status === 'InProgress' ? 'bg-info/10 text-info' :
+                  ch.status === 'PendingReview' ? 'bg-warning/10 text-warning' :
+                  'bg-bg-surface text-text-muted'
+                }`}>
+                  {ch.status === 'Approved' ? 'Đã duyệt' :
+                   ch.status === 'InProgress' ? 'Đang làm' :
+                   ch.status === 'PendingReview' ? 'Chờ duyệt' :
+                   'Nháp'}
+                </span>
+
+                {/* Arrow */}
+                <ChevronRight size={16} className="text-text-muted group-hover:text-brand transition-colors flex-shrink-0" />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
