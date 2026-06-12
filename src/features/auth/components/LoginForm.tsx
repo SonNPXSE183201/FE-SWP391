@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
@@ -12,7 +13,7 @@ export const LoginForm: React.FC = () => {
   const [localError, setLocalError] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  
+
   const navigate = useNavigate();
   const { setAuth, setLoading, isLoading, getRoleRedirectPath } = useAuthStore();
 
@@ -39,7 +40,7 @@ export const LoginForm: React.FC = () => {
 
     try {
       const response = await loginApi({ email, password });
-      
+
       if (response.IsSuccess && response.Data) {
         // Handle remember me
         if (rememberMe) {
@@ -61,10 +62,10 @@ export const LoginForm: React.FC = () => {
           email: response.Data.Email,
           fullName: response.Data.FullName,
           role: mappedRole as any
-        }, response.Data.Token, response.Data.RefreshToken);
-        
+        }, response.Data.Token);
+
         toast.success(response.Message || 'Đăng nhập thành công');
-        
+
         // Wait a tick for Zustand to update its persisted state before navigating
         setTimeout(() => {
           const redirectPath = useAuthStore.getState().getRoleRedirectPath();
@@ -145,9 +146,9 @@ export const LoginForm: React.FC = () => {
               <label className="text-sm font-medium text-text-primary" htmlFor="password">
                 Mật khẩu
               </label>
-              <a href="#" className="text-xs text-brand hover:text-brand-hover transition-colors">
+              <Link to="/forgot-password" className="text-xs text-brand hover:text-brand-hover transition-colors">
                 Quên mật khẩu?
-              </a>
+              </Link>
             </div>
             <div className={`relative group rounded-lg transition-shadow duration-300 ${focusedField === 'password' ? 'shadow-[0_0_20px_rgba(108,92,231,0.15)]' : ''}`}>
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-secondary group-focus-within:text-brand transition-colors duration-300">
@@ -206,7 +207,7 @@ export const LoginForm: React.FC = () => {
             >
               {/* Shimmer overlay on hover */}
               <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-              
+
               <span className="relative z-10 flex items-center">
                 {isLoading ? (
                   <Loader2 className="animate-spin" size={20} />
