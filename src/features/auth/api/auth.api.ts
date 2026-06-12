@@ -51,7 +51,7 @@ export interface RefreshTokenRequest {
 
 export const loginApi = async (credentials: { email: string; password: string }): Promise<ApiResponse<AuthResponseDto>> => {
   const payload: LoginRequest = {
-    identifier: credentials.email, // backend expects identifier
+    identifier: credentials.email,
     password: credentials.password
   };
   const response = await axiosInstance.post<ApiResponse<AuthResponseDto>>('/api/auth/login', payload);
@@ -60,5 +60,40 @@ export const loginApi = async (credentials: { email: string; password: string })
 
 export const refreshTokenApi = async (payload: RefreshTokenRequest): Promise<ApiResponse<AuthResponseDto>> => {
   const response = await axiosInstance.post<ApiResponse<AuthResponseDto>>('/api/auth/refresh-token', payload);
+  return response.data;
+};
+
+// --- Change Password API (Requires Auth) ---
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
+}
+
+export const changePasswordApi = async (data: ChangePasswordRequest): Promise<ApiResponse<null>> => {
+  const response = await axiosInstance.post<ApiResponse<null>>('/api/auth/change-password', data);
+  return response.data;
+};
+
+// --- Forgot Password Request API (Public) ---
+export interface ForgotPasswordRequestDto {
+  email: string;
+}
+
+export const forgotPasswordRequestApi = async (data: ForgotPasswordRequestDto): Promise<ApiResponse<null>> => {
+  const response = await axiosInstance.post<ApiResponse<null>>('/api/auth/forgot-password/request', data);
+  return response.data;
+};
+
+// --- Reset Password API (Public) ---
+export interface ResetPasswordRequestDto {
+  email: string;
+  resetCode: string;
+  newPassword: string;
+  confirmNewPassword: string;
+}
+
+export const resetPasswordApi = async (data: ResetPasswordRequestDto): Promise<ApiResponse<null>> => {
+  const response = await axiosInstance.post<ApiResponse<null>>('/api/auth/forgot-password/reset', data);
   return response.data;
 };
