@@ -4,7 +4,7 @@ import type { Series, Chapter } from '../../../types/entities';
 // TODO: Replace with React Query hooks when backend API is ready
 export const MOCK_SERIES: Series[] = [
   {
-    id: '1',
+    id: 's-1',
     title: 'Huyền Thoại Samurai',
     synopsis: 'Câu chuyện về một samurai trẻ tuổi bước vào hành trình tìm kiếm sức mạnh thực sự giữa thời loạn.',
     genre: ['Shōnen', 'Action', 'Historical'],
@@ -17,7 +17,7 @@ export const MOCK_SERIES: Series[] = [
     updatedAt: '2026-06-01T10:00:00Z',
   },
   {
-    id: '2',
+    id: 's-2',
     title: 'Lạc Giữa Ngân Hà',
     synopsis: 'Hành trình của một phi hành gia mất liên lạc, trôi dạt giữa vũ trụ rộng lớn với những bí ẩn chưa được khám phá.',
     genre: ['Sci-Fi', 'Mystery'],
@@ -30,7 +30,7 @@ export const MOCK_SERIES: Series[] = [
     updatedAt: '2026-05-28T10:00:00Z',
   },
   {
-    id: '3',
+    id: 's-3',
     title: 'Vườn Hoa Mùa Đông',
     synopsis: 'Chuyện tình lãng mạn giữa hai người làm vườn trong một ngôi làng nhỏ bên bờ biển, nơi mùa đông kéo dài.',
     genre: ['Romance', 'Slice of Life', 'Josei'],
@@ -43,7 +43,7 @@ export const MOCK_SERIES: Series[] = [
     updatedAt: '2026-06-02T10:00:00Z',
   },
   {
-    id: '4',
+    id: 's-4',
     title: 'Bóng Ma Học Đường',
     synopsis: 'Một nhóm học sinh phát hiện trường học của mình ẩn chứa những bí mật kinh hoàng từ 50 năm trước.',
     genre: ['Horror', 'Mystery', 'Shōnen'],
@@ -56,7 +56,7 @@ export const MOCK_SERIES: Series[] = [
     updatedAt: '2026-06-03T10:00:00Z',
   },
   {
-    id: '5',
+    id: 's-5',
     title: 'Kiếm Sĩ Vô Danh',
     synopsis: 'Câu chuyện về một kiếm sĩ lang thang không tên, tìm kiếm ý nghĩa của cuộc sống giữa thời bình.',
     genre: ['Seinen', 'Action', 'Fantasy'],
@@ -69,7 +69,7 @@ export const MOCK_SERIES: Series[] = [
     updatedAt: '2026-04-20T10:00:00Z',
   },
   {
-    id: '6',
+    id: 's-6',
     title: 'Đảo Kho Báu X',
     synopsis: 'Hải tặc, kho báu, và những cuộc phiêu lưu ngoài khơi. Ai sẽ tìm được kho báu truyền thuyết?',
     genre: ['Shōnen', 'Fantasy', 'Comedy'],
@@ -82,28 +82,28 @@ export const MOCK_SERIES: Series[] = [
     updatedAt: '2026-03-15T10:00:00Z',
   },
   {
-    id: '7', title: 'Thợ Săn Linh Hồn', synopsis: 'Một thợ săn trừ tà dạo bước giữa hai thế giới.', genre: ['Action', 'Supernatural'], coverImageUrl: '/images/tho-san-linh-hon/cover.png', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'Published', chapterCount: 20, createdAt: '2025-10-01T08:00:00Z', updatedAt: '2026-05-20T10:00:00Z',
+    id: 's-7', title: 'Thợ Săn Linh Hồn', synopsis: 'Một thợ săn trừ tà dạo bước giữa hai thế giới.', genre: ['Action', 'Supernatural'], coverImageUrl: '/images/tho-san-linh-hon/cover.png', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'Published', chapterCount: 20, createdAt: '2025-10-01T08:00:00Z', updatedAt: '2026-05-20T10:00:00Z',
   },
   {
-    id: '8', title: 'Hoàng Hôn Màu Đỏ', synopsis: 'Bí ẩn về một ngôi làng ma cà rồng ẩn mình trong rừng sâu.', genre: ['Horror', 'Mystery'], coverImageUrl: '/images/hoang-hon-mau-do/cover.png', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'Approved', chapterCount: 0, createdAt: '2026-06-01T08:00:00Z', updatedAt: '2026-06-02T10:00:00Z',
+    id: 's-8', title: 'Hoàng Hôn Màu Đỏ', synopsis: 'Bí ẩn về một ngôi làng ma cà rồng ẩn mình trong rừng sâu.', genre: ['Horror', 'Mystery'], coverImageUrl: '/images/hoang-hon-mau-do/cover.png', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'Approved', chapterCount: 0, createdAt: '2026-06-01T08:00:00Z', updatedAt: '2026-06-02T10:00:00Z',
   },
   {
-    id: '9', title: 'Siêu Thám Tử', synopsis: 'Câu chuyện về thám tử trẻ tuổi với bộ óc siêu việt.', genre: ['Mystery', 'Shōnen'], coverImageUrl: '/images/sieu-tham-tu/cover.png', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'Published', chapterCount: 15, createdAt: '2025-12-01T08:00:00Z', updatedAt: '2026-06-03T10:00:00Z',
+    id: 's-9', title: 'Siêu Thám Tử', synopsis: 'Câu chuyện về thám tử trẻ tuổi với bộ óc siêu việt.', genre: ['Mystery', 'Shōnen'], coverImageUrl: '/images/sieu-tham-tu/cover.png', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'Published', chapterCount: 15, createdAt: '2025-12-01T08:00:00Z', updatedAt: '2026-06-03T10:00:00Z',
   },
   {
-    id: '10', title: 'Kẻ Sống Sót Cuối Cùng', synopsis: 'Trái Đất hậu tận thế, con người phải sinh tồn trước quái vật.', genre: ['Sci-Fi', 'Action'], coverImageUrl: '/images/ke-song-sot-cuoi-cung/cover.png', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'PendingApproval', chapterCount: 4, createdAt: '2026-05-15T08:00:00Z', updatedAt: '2026-06-01T10:00:00Z',
+    id: 's-10', title: 'Kẻ Sống Sót Cuối Cùng', synopsis: 'Trái Đất hậu tận thế, con người phải sinh tồn trước quái vật.', genre: ['Sci-Fi', 'Action'], coverImageUrl: '/images/ke-song-sot-cuoi-cung/cover.png', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'PendingApproval', chapterCount: 4, createdAt: '2026-05-15T08:00:00Z', updatedAt: '2026-06-01T10:00:00Z',
   },
   {
-    id: '11', title: 'Chiến Binh Rồng', synopsis: 'Hành trình thuần phục rồng thiêng để bảo vệ vương quốc.', genre: ['Fantasy', 'Adventure'], coverImageUrl: '/images/chien-binh-rong/cover.png', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'Draft', chapterCount: 1, createdAt: '2026-06-04T08:00:00Z', updatedAt: '2026-06-04T10:00:00Z',
+    id: 's-11', title: 'Chiến Binh Rồng', synopsis: 'Hành trình thuần phục rồng thiêng để bảo vệ vương quốc.', genre: ['Fantasy', 'Adventure'], coverImageUrl: '/images/chien-binh-rong/cover.png', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'Draft', chapterCount: 1, createdAt: '2026-06-04T08:00:00Z', updatedAt: '2026-06-04T10:00:00Z',
   },
   {
-    id: '12', title: 'Thiên Cung Truyền Kỳ', synopsis: 'Cung đấu khốc liệt chốn hậu cung.', genre: ['Historical', 'Drama'], coverImageUrl: '/images/thien-cung-truyen-ky/cover.png', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'OnHold', chapterCount: 10, createdAt: '2025-11-01T08:00:00Z', updatedAt: '2026-01-20T10:00:00Z',
+    id: 's-12', title: 'Thiên Cung Truyền Kỳ', synopsis: 'Cung đấu khốc liệt chốn hậu cung.', genre: ['Historical', 'Drama'], coverImageUrl: '/images/thien-cung-truyen-ky/cover.png', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'OnHold', chapterCount: 10, createdAt: '2025-11-01T08:00:00Z', updatedAt: '2026-01-20T10:00:00Z',
   },
   {
-    id: '13', title: 'Cỗ Máy Thời Gian', synopsis: 'Du hành thời gian để thay đổi quá khứ bi thảm.', genre: ['Sci-Fi', 'Psychological'], coverImageUrl: '/images/co-may-thoi-gian/cover.png', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'Cancelled', chapterCount: 3, createdAt: '2026-01-01T08:00:00Z', updatedAt: '2026-02-15T10:00:00Z',
+    id: 's-13', title: 'Cỗ Máy Thời Gian', synopsis: 'Du hành thời gian để thay đổi quá khứ bi thảm.', genre: ['Sci-Fi', 'Psychological'], coverImageUrl: '/images/co-may-thoi-gian/cover.png', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'Cancelled', chapterCount: 3, createdAt: '2026-01-01T08:00:00Z', updatedAt: '2026-02-15T10:00:00Z',
   },
   {
-    id: '14', title: 'Đỉnh Cao Ma Pháp', synopsis: 'Trường học phép thuật và những bí mật rùng rợn.', genre: ['Fantasy', 'Shōnen'], coverImageUrl: '/images/dinh-cao-ma-phap/cover.png', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'Published', chapterCount: 35, createdAt: '2025-05-01T08:00:00Z', updatedAt: '2026-06-04T10:00:00Z',
+    id: 's-14', title: 'Đỉnh Cao Ma Pháp', synopsis: 'Trường học phép thuật và những bí mật rùng rợn.', genre: ['Fantasy', 'Shōnen'], coverImageUrl: '/images/dinh-cao-ma-phap/cover.png', mangakaId: 'mk-1', mangakaName: 'Phúc Phạm', status: 'Published', chapterCount: 35, createdAt: '2025-05-01T08:00:00Z', updatedAt: '2026-06-04T10:00:00Z',
   },
 ];
 
@@ -112,9 +112,8 @@ export const MOCK_CHAPTERS: (Chapter & { seriesTitle: string })[] = [
   {
     id: 'ch-1', seriesId: 's-1', seriesTitle: 'Huyền Thoại Samurai',
     chapterNumber: 1, title: 'Khởi đầu - Thanh kiếm gỉ sét',
-    status: 'Published', pageCount: 24, validPageCount: 24,
-    submittedAt: '2026-04-20T10:00:00Z', approvedAt: '2026-04-22T10:00:00Z',
-    createdAt: '2026-04-18T08:00:00Z', updatedAt: '2026-04-22T10:00:00Z',
+    status: 'Draft', pageCount: 4, validPageCount: 0,
+    createdAt: '2026-04-18T08:00:00Z', updatedAt: '2026-06-10T10:00:00Z',
   },
   {
     id: 'ch-2', seriesId: 's-1', seriesTitle: 'Huyền Thoại Samurai',

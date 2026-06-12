@@ -175,7 +175,7 @@ export const MangakaTasksFeature = () => {
                     {/* Assistant */}
                     <span className="inline-flex items-center gap-1 text-[11px] text-text-secondary">
                       <UserCheck size={12} />
-                      {task.assignedAssistantName || <span className="text-text-muted italic">Chưa phân công</span>}
+                      {task.assignedAssistantName || <span className="text-text-muted italic">Chờ Trợ lý nhận việc</span>}
                     </span>
 
                     {/* Amount */}
