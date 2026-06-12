@@ -21,79 +21,103 @@
 
 ```
 src/
-├── api/                    # API client & service functions
-│   ├── axios.ts            # Axios instance + JWT interceptors
-│   ├── auth.api.ts
-│   ├── series.api.ts
-│   ├── tasks.api.ts
-│   ├── wallet.api.ts
-│   └── ...
-├── assets/                 # Static assets (images, fonts, icons)
-├── components/             # Reusable UI components
-│   ├── common/             # Button, Input, Modal, Badge, Spinner, etc.
-│   ├── canvas/             # Fabric.js Canvas components
-│   │   ├── CanvasViewer.tsx
-│   │   ├── RegionSelector.tsx
-│   │   └── AnnotationTool.tsx
-│   ├── layout/             # Header, Sidebar, Footer, Breadcrumb
-│   └── ui/                 # Design system components (Card, Table, Chart)
-├── features/               # Feature-Driven Architecture (Phân chia theo NGHIỆP VỤ cốt lõi)
-│   ├── auth/               # Xác thực
-│   ├── dashboard/          # Tổng quan (Dashboards cho các role)
-│   ├── series/             # Quản lý truyện
-│   ├── chapters/           # Quản lý chapter/bản thảo
-│   ├── tasks/              # Phân công & giao việc
-│   ├── wallet/             # Ví tiền
-│   ├── review/             # Soi lỗi & Annotation
-│   ├── disputes/           # Giải quyết tranh chấp
-│   ├── voting/             # Bỏ phiếu xét duyệt
-│   ├── approvals/          # Duyệt cấp vốn (Setup Fund)
-│   ├── ranking/            # Bảng xếp hạng
-│   ├── users/              # Quản lý tài khoản (Users, Assistant Profiles)
-│   ├── contracts/          # Hợp đồng
-│   ├── reconciliation/     # Đối soát tài chính
-│   └── notifications/      # Thông báo
-├── hooks/                  # Custom React hooks
+├── api/
+│   └── axios.ts                        # Axios instance + JWT interceptors + gateway rewrite
+├── components/
+│   ├── canvas/                         # Fabric.js Canvas components (dùng chung)
+│   │   ├── CanvasViewer.tsx            # 624 lines — Pan/Zoom/Draw/Annotate (Fabric.js 6)
+│   │   ├── CanvasToolbar.tsx           # Tool selection, zoom controls, delete
+│   │   └── MobileCanvasWarning.tsx     # Responsive warning (yêu cầu Desktop/Tablet)
+│   └── common/                         # Shared UI components
+│       ├── CustomSelect.tsx
+│       ├── Logo.tsx
+│       ├── PageScaffold.tsx            # Page wrapper (title, breadcrumb, actions)
+│       └── Pagination.tsx
+├── features/                           # Feature-Driven Architecture
+│   ├── admin/
+│   │   └── api/admin.api.ts
+│   ├── approvals/
+│   │   └── components/BoardApprovalFeature.tsx
+│   ├── assistant-profile/
+│   │   └── components/AssistantProfileFeature.tsx
+│   ├── auth/
+│   │   ├── api/auth.api.ts
+│   │   ├── components/                 # LoginForm, RegisterForm, ForgotPasswordForm,
+│   │   │                               # ResetPasswordForm, ChangePasswordModal, ...
+│   │   ├── hooks/useAuthForm.ts
+│   │   └── types/auth.types.ts
+│   ├── canvas/
+│   │   ├── api/canvas.api.ts
+│   │   ├── components/                 # PageCanvasFeature, AnnotationReviewFeature
+│   │   ├── data/mockData.ts
+│   │   └── hooks/useCanvasData.ts
+│   ├── contracts/
+│   │   └── components/ContractManagementFeature.tsx
+│   ├── dashboard/
+│   │   ├── components/                 # MangakaDashboardFeature, AssistantDashboardFeature, StatCard
+│   │   └── data/mockData.ts
+│   ├── landing/
+│   │   └── components/                 # HeroSection, FeaturesSection, Navbar, Footer, ... (11 files)
+│   ├── notifications/                  # Placeholder (index.ts only)
+│   ├── ranking/                        # Placeholder (index.ts only)
+│   ├── review/
+│   │   └── components/ReviewSeriesFeature.tsx
+│   ├── series/                         # Bao gồm cả Chapters & Manuscripts
+│   │   ├── api/series.api.ts
+│   │   ├── components/                 # SeriesListFeature, SeriesDetailFeature, CreateSeriesForm,
+│   │   │                               # ManuscriptsFeature, ChapterDetailFeature, ...
+│   │   ├── data/                       # mockData.ts, mockPages.ts
+│   │   └── hooks/useSeries.ts
+│   ├── tasks/
+│   │   ├── api/task.api.ts
+│   │   ├── components/                 # MangakaTasksFeature, TaskQueueFeature, CreateTaskModal
+│   │   └── data/mockData.ts
+│   ├── users/
+│   │   └── components/UserManagementFeature.tsx
+│   └── wallet/
+│       ├── api/wallet.api.ts
+│       ├── components/                 # MangakaWalletFeature, AssistantWalletFeature,
+│       │                               # WalletActionModal, TransactionDetailModal, DepositCallbackFeature
+│       ├── data/mockData.ts
+│       └── hooks/                      # useWallet.ts, useWalletActions.ts,
+│                                       # useWalletSignalR.ts, useDepositCallback.ts
+├── hooks/                              # Shared custom hooks
 │   ├── useAuth.ts
-│   ├── useWallet.ts
-│   ├── useNotifications.ts
-│   └── useSignalR.ts
-├── layouts/                # Page layouts
+│   ├── useSignalR.ts                   # Scaffold only
+│   ├── usePagination.ts
+│   ├── useClickOutside.ts
+│   ├── useDebounce.ts
+│   └── useWindowSize.ts
+├── layouts/                            # Page layouts
 │   ├── MainLayout.tsx
 │   ├── AuthLayout.tsx
-│   └── AdminLayout.tsx
-├── pages/                  # Route pages (organized by role)
-│   ├── auth/
-│   ├── mangaka/
+│   ├── Header.tsx
+│   └── Sidebar.tsx
+├── pages/                              # Route pages (organized by role)
+│   ├── admin/
 │   ├── assistant/
-│   ├── editor/
+│   ├── auth/
 │   ├── board/
-│   └── admin/
-├── routes/                 # Route configuration
-│   ├── index.tsx
-│   ├── ProtectedRoute.tsx
+│   ├── editor/
+│   ├── landing/
+│   ├── mangaka/
+│   └── wallet/
+├── routes/
 │   └── RoleGuard.tsx
-├── stores/                 # Zustand stores
+├── stores/                             # Zustand stores
 │   ├── authStore.ts
-│   ├── notificationStore.ts
 │   └── canvasStore.ts
-├── types/                  # TypeScript type definitions
-│   ├── auth.types.ts
-│   ├── series.types.ts
-│   ├── task.types.ts
-│   ├── wallet.types.ts
-│   └── api.types.ts
-├── utils/                  # Utility functions
-│   ├── formatCurrency.ts
-│   ├── dateUtils.ts
-│   └── constants.ts
-├── styles/                 # Global styles & Design tokens
+├── types/                              # TypeScript type definitions
+│   ├── entities.ts                     # 261 lines — Tất cả interfaces & types tập trung
+│   └── index.ts                        # Re-exports
+├── utils/
+│   └── shadcn.ts                       # shadcn/ui utility (cn helper)
+├── styles/
 │   ├── index.css
 │   ├── variables.css
 │   └── reset.css
 ├── App.tsx
-├── main.tsx
-└── vite-env.d.ts
+└── main.tsx
 ```
 
 ## 3. Coding Conventions
