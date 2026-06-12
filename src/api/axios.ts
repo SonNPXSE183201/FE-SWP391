@@ -16,6 +16,17 @@ export const axiosInstance = axios.create({
   },
 });
 
+// Intercept requests to rewrite /api/ → /api/v1/ for Gateway routing
+axiosInstance.interceptors.request.use(
+  (config) => {
+    if (config.url?.startsWith('/api/')) {
+      config.url = config.url.replace('/api/', '/api/v1/');
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 // Intercept requests to add Authorization header 
 axiosInstance.interceptors.request.use(
   (config) => {
