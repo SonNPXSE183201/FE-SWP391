@@ -10,21 +10,34 @@ import {
   ChevronRight,
   Eye,
   BarChart3,
+  Loader2,
 } from 'lucide-react';
 import { SERIES_STATUS_CONFIG } from '../../series';
 import { formatVND } from '../../wallet';
 import { StatCard } from '../index';
-import {
-  MOCK_DASHBOARD_STATS,
-  MOCK_RECENT_ACTIVITIES,
-  MOCK_SERIES_OVERVIEW,
-  getGreeting,
-} from '../data/mockData';
+import { useMangakaDashboard, getGreeting } from '../hooks/useMangakaDashboard';
 
 export const MangakaDashboardFeature = () => {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const greeting = getGreeting();
+  const { stats, activities, seriesOverview, isLoading, error } = useMangakaDashboard();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 size={32} className="animate-spin text-brand" />
+      </div>
+    );
+  }
+
+  if (error || !stats) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-text-muted">Không thể tải dữ liệu dashboard. Vui lòng thử lại.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -43,8 +56,8 @@ export const MangakaDashboardFeature = () => {
             {user?.fullName || 'Mangaka'}
           </h1>
           <p className="text-sm text-text-muted mt-2 max-w-lg">
-            Bạn có <span className="text-warning font-semibold">{MOCK_DASHBOARD_STATS.pendingChapters} chapters chờ duyệt</span> và{' '}
-            <span className="text-info font-semibold">{MOCK_DASHBOARD_STATS.activeTasks} tasks đang xử lý</span>. Hãy kiểm tra ngay!
+            Bạn có <span className="text-warning font-semibold">{stats.pendingChapters} chapters chờ duyệt</span> và{' '}
+            <span className="text-info font-semibold">{stats.activeTasks} tasks đang xử lý</span>. Hãy kiểm tra ngay!
           </p>
 
           <div className="flex flex-wrap items-center gap-3 mt-5">
@@ -70,32 +83,32 @@ export const MangakaDashboardFeature = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard
           label="Series đang hoạt động"
-          value={MOCK_DASHBOARD_STATS.activeSeries}
+          value={stats.activeSeries}
           icon={BookOpen}
           color="text-brand"
           navigateTo="/mangaka/series"
         />
         <StatCard
           label="Chapters chờ duyệt"
-          value={MOCK_DASHBOARD_STATS.pendingChapters}
+          value={stats.pendingChapters}
           icon={Clock}
           color="text-warning"
           navigateTo="/mangaka/manuscripts"
         />
         <StatCard
           label="Tasks đang xử lý"
-          value={MOCK_DASHBOARD_STATS.activeTasks}
+          value={stats.activeTasks}
           icon={ClipboardList}
           color="text-info"
           navigateTo="/mangaka/tasks"
         />
         <StatCard
           label="Số dư ví"
-          value={formatVND(MOCK_DASHBOARD_STATS.walletBalance)}
+          value={formatVND(stats.walletBalance)}
           icon={Wallet}
           color="text-success"
           navigateTo="/mangaka/wallet"
-          trend={`+${formatVND(MOCK_DASHBOARD_STATS.monthlyGenkouryo)} tháng này`}
+          trend={`+${formatVND(stats.monthlyGenkouryo)} tháng này`}
         />
       </div>
 
@@ -110,7 +123,7 @@ export const MangakaDashboardFeature = () => {
               </h2>
             </div>
             <div className="divide-y divide-border-custom">
-              {MOCK_RECENT_ACTIVITIES.map((activity) => {
+              {activities.map((activity) => {
                 const Icon = activity.icon;
                 return (
                   <div
@@ -152,7 +165,7 @@ export const MangakaDashboardFeature = () => {
               </button>
             </div>
             <div className="divide-y divide-border-custom">
-              {MOCK_SERIES_OVERVIEW.map((series) => {
+              {seriesOverview.map((series) => {
                 const statusCfg = SERIES_STATUS_CONFIG[series.status];
                 return (
                   <div
@@ -189,11 +202,11 @@ export const MangakaDashboardFeature = () => {
           {/* Quick Stats Mini */}
           <div className="grid grid-cols-2 gap-3 mt-3">
             <div className="bg-bg-secondary border border-border-custom rounded-xl p-4 text-center">
-              <div className="text-lg font-bold text-text-primary">{MOCK_DASHBOARD_STATS.completedTasks}</div>
+              <div className="text-lg font-bold text-text-primary">{stats.completedTasks}</div>
               <div className="text-[10px] text-text-muted mt-0.5">Tasks hoàn thành</div>
             </div>
             <div className="bg-bg-secondary border border-border-custom rounded-xl p-4 text-center">
-              <div className="text-lg font-bold text-success">{formatVND(MOCK_DASHBOARD_STATS.monthlyGenkouryo)}</div>
+              <div className="text-lg font-bold text-success">{formatVND(stats.monthlyGenkouryo)}</div>
               <div className="text-[10px] text-text-muted mt-0.5">Nhuận bút tháng</div>
             </div>
           </div>

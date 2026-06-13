@@ -1,21 +1,26 @@
-import { LayoutDashboard, TrendingUp, CheckCircle, Clock, Star } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, CheckCircle, Clock, Star, Loader2 } from 'lucide-react';
 import { formatVND } from '../../wallet';
-
-// Move mock data out of component
-const MOCK_ASSISTANT_STATS = {
-  inProgress: 2,
-  completed: 15,
-  averageRating: 4.8,
-  monthlyIncome: 15500000
-};
-
-const MOCK_RECENT_TASKS = [
-  { id: 1, title: 'One Piece - Ch. 1102 (Lineart)', status: 'Approved', amount: 500000, date: '2026-06-04' },
-  { id: 2, title: 'Naruto - Ch. 500 (Background)', status: 'In_Progress', amount: 300000, date: '2026-06-05' },
-  { id: 3, title: 'Bleach - Ch. 420 (Screentone)', status: 'Pending_Review', amount: 250000, date: '2026-06-05' }
-];
+import { useAssistantDashboard } from '../hooks/useAssistantDashboard';
 
 export const AssistantDashboardFeature = () => {
+  const { stats, recentTasks, isLoading, error } = useAssistantDashboard();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 size={32} className="animate-spin text-brand" />
+      </div>
+    );
+  }
+
+  if (error || !stats) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-text-muted">Không thể tải dữ liệu dashboard. Vui lòng thử lại.</p>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="page-header">
@@ -38,7 +43,7 @@ export const AssistantDashboardFeature = () => {
             <span className="text-xs text-text-muted uppercase tracking-wider font-medium">Task đang làm</span>
             <Clock size={18} className="text-blue-400" />
           </div>
-          <span className="text-3xl font-bold text-text-primary z-10">{MOCK_ASSISTANT_STATS.inProgress}</span>
+          <span className="text-3xl font-bold text-text-primary z-10">{stats.inProgress}</span>
         </div>
 
         <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 flex flex-col gap-2 relative overflow-hidden group">
@@ -47,7 +52,7 @@ export const AssistantDashboardFeature = () => {
             <span className="text-xs text-text-muted uppercase tracking-wider font-medium">Task hoàn thành</span>
             <CheckCircle size={18} className="text-green-400" />
           </div>
-          <span className="text-3xl font-bold text-text-primary z-10">{MOCK_ASSISTANT_STATS.completed}</span>
+          <span className="text-3xl font-bold text-text-primary z-10">{stats.completed}</span>
         </div>
 
         <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 flex flex-col gap-2 relative overflow-hidden group">
@@ -56,7 +61,7 @@ export const AssistantDashboardFeature = () => {
             <span className="text-xs text-text-muted uppercase tracking-wider font-medium">Đánh giá TB</span>
             <Star size={18} className="text-yellow-400" />
           </div>
-          <span className="text-3xl font-bold text-text-primary z-10">{MOCK_ASSISTANT_STATS.averageRating} / 5.0</span>
+          <span className="text-3xl font-bold text-text-primary z-10">{stats.averageRating} / 5.0</span>
         </div>
 
         <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 flex flex-col gap-2 relative overflow-hidden group">
@@ -66,7 +71,7 @@ export const AssistantDashboardFeature = () => {
             <TrendingUp size={18} className="text-brand" />
           </div>
           <span className="text-2xl font-bold text-brand z-10">
-            {formatVND(MOCK_ASSISTANT_STATS.monthlyIncome)}
+            {formatVND(stats.monthlyIncome)}
           </span>
         </div>
       </div>
@@ -77,7 +82,7 @@ export const AssistantDashboardFeature = () => {
           <h2 className="text-lg font-bold text-text-primary">Hoạt động gần đây</h2>
         </div>
         <div className="divide-y divide-border-custom">
-          {MOCK_RECENT_TASKS.map(task => (
+          {recentTasks.map(task => (
             <div key={task.id} className="p-5 flex items-center justify-between hover:bg-bg-primary/50 transition-colors">
               <div>
                 <p className="font-medium text-text-primary mb-1">{task.title}</p>
