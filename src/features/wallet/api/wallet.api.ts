@@ -3,7 +3,7 @@ import type { Transaction } from '../../../types/entities';
 import { MOCK_WALLET, MOCK_TRANSACTIONS, type MockTransaction } from '../data/mockData';
 
 // ─── Toggle this to false when backend wallet API is ready ───
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 // ─── Request DTOs ────────────────────────────────────────────
 export interface DepositRequest {
