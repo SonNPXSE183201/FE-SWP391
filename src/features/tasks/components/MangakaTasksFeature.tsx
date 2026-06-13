@@ -2,10 +2,10 @@ import { useState, useMemo, useEffect } from 'react';
 import {
   ClipboardList, Plus, Search, Eye,
   UserCheck, Calendar, DollarSign, Filter, ArrowUpDown,
-  Clock,
+  Clock, Loader2,
 } from 'lucide-react';
 
-import { TASK_STATUS_CONFIG, TASK_STATUS_FILTER_OPTIONS, formatDeadline, MOCK_TASKS, CreateTaskModal } from '../index';
+import { TASK_STATUS_CONFIG, TASK_STATUS_FILTER_OPTIONS, formatDeadline, CreateTaskModal, useMangakaTasks } from '../index';
 import { formatVND } from '../../wallet';
 import { usePagination } from '../../../hooks/usePagination';
 import { Pagination } from '../../../components/common/Pagination';
@@ -17,8 +17,10 @@ export const MangakaTasksFeature = () => {
   const [sortBy, setSortBy] = useState<'newest' | 'deadline' | 'amount'>('newest');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
+  const { data: tasks = [], isLoading, error } = useMangakaTasks();
+
   const filtered = useMemo(() => {
-    let result = MOCK_TASKS.filter((t) => {
+    let result = tasks.filter((t) => {
       const matchesSearch = !searchQuery ||
         t.regionLabel.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.seriesTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -35,7 +37,7 @@ export const MangakaTasksFeature = () => {
     });
 
     return result;
-  }, [searchQuery, statusFilter, sortBy]);
+  }, [tasks, searchQuery, statusFilter, sortBy]);
 
   // Pagination
   const pagination = usePagination(filtered, { pageSize: 10 });
@@ -47,13 +49,29 @@ export const MangakaTasksFeature = () => {
   }, [searchQuery, statusFilter, sortBy]);
 
   // Stats
-  const stats = {
-    total: MOCK_TASKS.length,
-    inProgress: MOCK_TASKS.filter((t) => t.status === 'In_Progress').length,
-    pendingReview: MOCK_TASKS.filter((t) => t.status === 'Pending_Review').length,
-    totalLocked: MOCK_TASKS.filter((t) => ['Pending', 'In_Progress', 'Pending_Review', 'Revision'].includes(t.status))
+  const stats = useMemo(() => ({
+    total: tasks.length,
+    inProgress: tasks.filter((t) => t.status === 'In_Progress').length,
+    pendingReview: tasks.filter((t) => t.status === 'Pending_Review').length,
+    totalLocked: tasks.filter((t) => ['Pending', 'In_Progress', 'Pending_Review', 'Revision'].includes(t.status))
       .reduce((sum, t) => sum + t.amount, 0),
-  };
+  }), [tasks]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 size={32} className="animate-spin text-brand" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-text-muted">Không thể tải danh sách tasks. Vui lòng thử lại.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-in">
@@ -134,7 +152,7 @@ export const MangakaTasksFeature = () => {
 
       {/* Results count */}
       <p className="text-xs text-text-muted mt-4">
-        Tìm thấy <span className="text-text-primary font-medium">{filtered.length}</span> / {MOCK_TASKS.length} tasks
+        Tìm thấy <span className="text-text-primary font-medium">{filtered.length}</span> / {tasks.length} tasks
       </p>
 
       {/* Task List */}
