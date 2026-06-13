@@ -9,7 +9,7 @@ import {
 } from '../data/mockData';
 
 // ─── Toggle to false when backend canvas API is ready ────────
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 const mockDelay = (ms = 300) => new Promise((r) => setTimeout(r, ms));
 

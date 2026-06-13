@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   MapPin, MessageCircle, Trash2, CheckCircle2,
   ChevronLeft, ChevronRight, Circle, AlertCircle,
@@ -9,8 +9,15 @@ import { CanvasViewer } from '../../../components/canvas/CanvasViewer';
 import { CanvasToolbar } from '../../../components/canvas/CanvasToolbar';
 import { MobileCanvasWarning } from '../../../components/canvas/MobileCanvasWarning';
 import { useCanvasStore } from '../../../stores/canvasStore';
-import { MOCK_CANVAS_PAGES, getAnnotationsByPageId, getRegionsByPageId } from '../data/mockData';
+import {
+  useCanvasPages, useAnnotations, useRegions,
+  useCreateAnnotation, useDeleteAnnotation, useToggleAnnotationResolved
+} from '../hooks/useCanvasData';
 import type { AnnotationType } from '../../../types/entities';
+
+interface AnnotationReviewFeatureProps {
+  chapterId?: string;
+}
 
 const ANNOTATION_TYPE_CONFIG: Record<AnnotationType, { color: string; bg: string; icon: string; label: string }> = {
   Technical: { color: 'text-red-400', bg: 'bg-red-500/10', icon: '🔴', label: 'Lỗi kỹ thuật' },
@@ -18,7 +25,7 @@ const ANNOTATION_TYPE_CONFIG: Record<AnnotationType, { color: string; bg: string
   Content: { color: 'text-blue-400', bg: 'bg-blue-500/10', icon: '🔵', label: 'Lỗi nội dung' },
 };
 
-export const AnnotationReviewFeature = () => {
+export const AnnotationReviewFeature = ({ chapterId = 'ch-1' }: AnnotationReviewFeatureProps) => {
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [annoComment, setAnnoComment] = useState('');
   const {
@@ -27,12 +34,16 @@ export const AnnotationReviewFeature = () => {
   } = useCanvasStore();
 
   // ─── Data ───
-  const pages = MOCK_CANVAS_PAGES;
+  const { data: pages = [], isLoading: pagesLoading } = useCanvasPages(chapterId);
   const currentPage = pages[currentPageIndex];
   const pageId = currentPage?.id ?? '';
 
-  const annotations = useMemo(() => getAnnotationsByPageId(pageId), [pageId]);
-  const regions = useMemo(() => getRegionsByPageId(pageId), [pageId]);
+  const { data: annotations = [], isLoading: annotationsLoading } = useAnnotations(pageId);
+  const { data: regions = [] } = useRegions(pageId);
+
+  const createAnnotation = useCreateAnnotation(pageId);
+  const deleteAnnotation = useDeleteAnnotation(pageId);
+  const toggleResolved = useToggleAnnotationResolved(pageId);
 
   const unresolvedCount = annotations.filter((a) => !a.resolved).length;
   const resolvedCount = annotations.filter((a) => a.resolved).length;
@@ -44,30 +55,55 @@ export const AnnotationReviewFeature = () => {
         toast.error('Vui lòng nhập nội dung ghi chú');
         return;
       }
-      toast.success(`Đã thêm annotation (${ANNOTATION_TYPE_CONFIG[data.type].label})`);
+      createAnnotation.mutate(
+        { pageId, ...data },
+        {
+          onSuccess: () => {
+            toast.success(`Đã thêm annotation (${ANNOTATION_TYPE_CONFIG[data.type].label})`);
+          },
+          onError: () => toast.error('Lỗi khi tạo annotation'),
+        }
+      );
     },
-    [],
+    [createAnnotation, pageId],
   );
 
   const handleDeleteAnnotation = useCallback((annoId: string) => {
-    toast.success('Đã xoá annotation');
-    setSelectedAnnotation(null);
-  }, [setSelectedAnnotation]);
+    deleteAnnotation.mutate(annoId, {
+      onSuccess: () => {
+        toast.success('Đã xoá annotation');
+        setSelectedAnnotation(null);
+      },
+      onError: () => toast.error('Lỗi khi xoá annotation'),
+    });
+  }, [deleteAnnotation, setSelectedAnnotation]);
 
   const handleToggleResolved = useCallback((annoId: string) => {
-    const anno = annotations.find((a) => a.id === annoId);
-    toast.success(anno?.resolved ? 'Đã mở lại' : 'Đã đánh dấu giải quyết');
-  }, [annotations]);
+    toggleResolved.mutate(annoId, {
+      onSuccess: (res) => {
+        toast.success(res.data?.Message || 'Đã cập nhật trạng thái');
+      },
+      onError: () => toast.error('Lỗi cập nhật trạng thái'),
+    });
+  }, [toggleResolved]);
 
   const handleZoomIn = useCallback(() => setZoomLevel(Math.min(zoomLevel * 1.2, 5)), [zoomLevel, setZoomLevel]);
   const handleZoomOut = useCallback(() => setZoomLevel(Math.max(zoomLevel / 1.2, 0.1)), [zoomLevel, setZoomLevel]);
   const handleZoomReset = useCallback(() => setZoomLevel(1), [setZoomLevel]);
 
+  if (pagesLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 size={32} className="animate-spin text-brand" />
+      </div>
+    );
+  }
+
   if (!currentPage) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4 animate-fade-in">
         <ImageOff size={48} className="text-text-muted" />
-        <p className="text-text-secondary">Không tìm thấy trang nào</p>
+        <p className="text-text-secondary">Không tìm thấy trang nào để review</p>
       </div>
     );
   }
