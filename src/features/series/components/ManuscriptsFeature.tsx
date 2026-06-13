@@ -1,12 +1,12 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Upload, Clock, AlertCircle, BookOpen } from 'lucide-react';
+import { FileText, Upload, Clock, AlertCircle, BookOpen, Loader2 } from 'lucide-react';
 
 import {
-  MOCK_CHAPTERS,
   CHAPTER_STATUS_CONFIG,
   CHAPTER_STATUS_FILTER_OPTIONS,
   UploadChapterModal,
+  useAllChapters,
 } from '../index';
 import { usePagination } from '../../../hooks/usePagination';
 import { Pagination } from '../../../components/common/Pagination';
@@ -18,13 +18,17 @@ export const ManuscriptsFeature = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
 
-  const seriesFilterOptions = [...new Set(MOCK_CHAPTERS.map((c) => c.seriesTitle))];
+  const { data: chapters = [], isLoading, error } = useAllChapters();
 
-  const filtered = useMemo(() => MOCK_CHAPTERS.filter((c) => {
+  const seriesFilterOptions = useMemo(() => {
+    return [...new Set(chapters.map((c) => c.seriesTitle).filter(Boolean))] as string[];
+  }, [chapters]);
+
+  const filtered = useMemo(() => chapters.filter((c) => {
     const matchesSeries = !seriesFilter || c.seriesTitle === seriesFilter;
     const matchesStatus = !statusFilter || c.status === statusFilter;
     return matchesSeries && matchesStatus;
-  }), [seriesFilter, statusFilter]);
+  }), [chapters, seriesFilter, statusFilter]);
 
   const pagination = usePagination(filtered, { pageSize: 10 });
 
@@ -32,6 +36,22 @@ export const ManuscriptsFeature = () => {
     pagination.goToPage(1);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seriesFilter, statusFilter]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 size={32} className="animate-spin text-brand" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-text-muted">Không thể tải dữ liệu bản thảo. Vui lòng thử lại.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-in">

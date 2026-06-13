@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -8,11 +8,10 @@ import {
   ChevronRight,
   FileText,
   Layers,
+  Loader2,
 } from 'lucide-react';
 
 import {
-  MOCK_SERIES,
-  MOCK_CHAPTERS,
   SERIES_STATUS_CONFIG,
   StatusTimeline,
   SeriesInfoCard,
@@ -20,6 +19,8 @@ import {
   SubmitChecklist,
   useNameUpload,
   useSeriesSubmit,
+  useSeriesDetail,
+  useChapters,
 } from '../index';
 import type { SeriesStatus } from '../../../types/entities';
 
@@ -27,18 +28,19 @@ export const SeriesDetailFeature = () => {
   const { seriesId } = useParams<{ seriesId: string }>();
   const navigate = useNavigate();
 
-  // Find series from mock data
-  const series = MOCK_SERIES.find((s) => s.id === seriesId);
+  // Fetch series and chapters via hooks (USE_MOCK handled in API layer)
+  const { data: series, isLoading: seriesLoading } = useSeriesDetail(seriesId);
+  const { data: chapters = [], isLoading: chaptersLoading } = useChapters(seriesId);
 
-  // Local status state (mock — will be server state via React Query)
-  const [currentStatus, setCurrentStatus] = useState<SeriesStatus>(series?.status ?? 'Draft');
+  const isLoading = seriesLoading || chaptersLoading;
 
-  // Chapters belonging to this series
-  const chapters = useMemo(
-    () => MOCK_CHAPTERS.filter((ch) => ch.seriesId === seriesId)
-        .sort((a, b) => a.chapterNumber - b.chapterNumber),
-    [seriesId],
-  );
+  // Local status state (derived from server data)
+  const [currentStatus, setCurrentStatus] = useState<SeriesStatus>('Draft');
+
+  // Sync currentStatus when series data loads
+  useState(() => {
+    if (series?.status) setCurrentStatus(series.status);
+  });
 
   // Feature hooks
   const nameUpload = useNameUpload();
@@ -46,6 +48,15 @@ export const SeriesDetailFeature = () => {
     nameFile: nameUpload.nameFile,
     onStatusChange: useCallback((status: SeriesStatus) => setCurrentStatus(status), []),
   });
+
+  // ─── Loading ───
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 size={32} className="animate-spin text-brand" />
+      </div>
+    );
+  }
 
   // ─── Not Found ───
   if (!series) {
@@ -68,7 +79,7 @@ export const SeriesDetailFeature = () => {
     );
   }
 
-  const isDraft = currentStatus === 'Draft';
+  const isDraft = currentStatus === 'Draft' || series.status === 'Draft';
   const statusConfig = SERIES_STATUS_CONFIG[currentStatus];
 
   // Build checklist items for SubmitChecklist

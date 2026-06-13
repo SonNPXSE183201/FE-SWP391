@@ -7,11 +7,12 @@ import {
 } from 'lucide-react';
 
 import {
-  MOCK_CHAPTERS,
-  getPagesByChapterId,
+import {
   PAGE_STATUS_FILTER_OPTIONS,
   PageCard,
   PageLightbox,
+  useChapterDetail,
+  useChapterPages,
 } from '../index';
 import { usePagination } from '../../../hooks/usePagination';
 import { Pagination } from '../../../components/common/Pagination';
@@ -23,17 +24,11 @@ export const ChapterDetailFeature = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-  // Find chapter
-  const chapter = useMemo(
-    () => MOCK_CHAPTERS.find((c) => c.id === chapterId),
-    [chapterId],
-  );
+  const { data: chapter, isLoading: chapterLoading, error: chapterError } = useChapterDetail(chapterId);
+  const { data: allPages = [], isLoading: pagesLoading, error: pagesError } = useChapterPages(chapterId);
 
-  // Get pages for this chapter
-  const allPages = useMemo(
-    () => (chapterId ? getPagesByChapterId(chapterId) : []),
-    [chapterId],
-  );
+  const isLoading = chapterLoading || pagesLoading;
+  const error = chapterError || pagesError;
 
   // Filter
   const filteredPages = useMemo(
@@ -56,6 +51,22 @@ export const ChapterDetailFeature = () => {
     pending: allPages.filter((p: any) => p.status === 'Pending').length,
     revision: allPages.filter((p: any) => p.status === 'NeedsRevision').length,
   }), [allPages]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 size={32} className="animate-spin text-brand" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-text-muted">Không thể tải dữ liệu chapter. Vui lòng thử lại.</p>
+      </div>
+    );
+  }
 
   if (!chapter) {
     return (
