@@ -14,67 +14,16 @@ import {
 } from 'lucide-react';
 
 // ─── Mock Data ───
-interface ApprovedSeries {
-  id: string;
-  title: string;
-  mangakaName: string;
-  approvedAt: string;
-  approvedBudget: number;
-  publishSchedule: string;
-  hasContract: boolean;
-  genres: string[];
-}
-
-const MOCK_APPROVED_SERIES: ApprovedSeries[] = [
-  {
-    id: 'series-001',
-    title: 'Huyền Thoại Samurai',
-    mangakaName: 'Nguyễn Minh Đức',
-    approvedAt: '2026-06-02T15:00:00Z',
-    approvedBudget: 2300000,
-    publishSchedule: 'Hàng tuần (Weekly)',
-    hasContract: false,
-    genres: ['Shōnen', 'Action', 'Historical'],
-  },
-  {
-    id: 'series-002',
-    title: 'Tokyo Dreamers',
-    mangakaName: 'Lê Thị Hương',
-    approvedAt: '2026-06-03T11:00:00Z',
-    approvedBudget: 1500000,
-    publishSchedule: '2 tuần 1 lần (Bi-weekly)',
-    hasContract: false,
-    genres: ['Shōjo', 'Romance', 'Slice of Life'],
-  },
-  {
-    id: 'series-003',
-    title: 'Cyber Ronin',
-    mangakaName: 'Trần Quốc Anh',
-    approvedAt: '2026-05-28T09:00:00Z',
-    approvedBudget: 2800000,
-    publishSchedule: 'Hàng tuần (Weekly)',
-    hasContract: true,
-    genres: ['Seinen', 'Sci-Fi', 'Action'],
-  },
-  {
-    id: 'series-004',
-    title: 'Mecha Genesis',
-    mangakaName: 'Hoàng Anh Tuấn',
-    approvedAt: '2026-06-04T10:00:00Z',
-    approvedBudget: 3000000,
-    publishSchedule: 'Hàng tháng (Monthly)',
-    hasContract: false,
-    genres: ['Seinen', 'Mecha', 'Sci-Fi'],
-  },
-];
-
+import { useApprovedSeries, useCreateContract } from '../hooks/useContract';
 export const ContractManagementFeature = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'contracted'>('pending');
   const [showContractModal, setShowContractModal] = useState(false);
-  const [selectedSeries, setSelectedSeries] = useState<ApprovedSeries | null>(null);
+  const [selectedSeries, setSelectedSeries] = useState<any | null>(null);
   const [baseGenkouryoPrice, setBaseGenkouryoPrice] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const { data: seriesList = [], isLoading } = useApprovedSeries();
+  const createContract = useCreateContract();
 
   const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
@@ -91,7 +40,7 @@ export const ContractManagementFeature = () => {
     setBaseGenkouryoPrice(raw);
   };
 
-  const handleOpenContractModal = (series: ApprovedSeries) => {
+  const handleOpenContractModal = (series: any) => {
     setSelectedSeries(series);
     setBaseGenkouryoPrice('');
     setShowContractModal(true);
@@ -102,22 +51,23 @@ export const ContractManagementFeature = () => {
       toast.error('Vui lòng nhập đơn giá nhuận bút hợp lệ.');
       return;
     }
-    setIsSubmitting(true);
-    try {
-      // TODO: Replace with API call
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-      toast.success(`Đã tạo hợp đồng cho "${selectedSeries?.title}"!`);
-      setShowContractModal(false);
-      setSelectedSeries(null);
-    } catch {
-      toast.error('Có lỗi xảy ra. Vui lòng thử lại.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    if (!selectedSeries) return;
+
+    createContract.mutate(
+      { seriesId: selectedSeries.id, baseGenkouryoPrice: Number(baseGenkouryoPrice) },
+      {
+        onSuccess: () => {
+          toast.success(`Đã tạo hợp đồng cho "${selectedSeries.title}"!`);
+          setShowContractModal(false);
+          setSelectedSeries(null);
+        },
+        onError: () => toast.error('Có lỗi xảy ra. Vui lòng thử lại.'),
+      }
+    );
   };
 
   // Filter data
-  const filteredData = MOCK_APPROVED_SERIES.filter((s) => {
+  const filteredData = seriesList.filter((s: any) => {
     const matchesSearch =
       s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.mangakaName.toLowerCase().includes(searchQuery.toLowerCase());
@@ -128,7 +78,7 @@ export const ContractManagementFeature = () => {
     return matchesSearch && matchesFilter;
   });
 
-  const pendingCount = MOCK_APPROVED_SERIES.filter((s) => !s.hasContract).length;
+  const pendingCount = seriesList.filter((s: any) => !s.hasContract).length;
 
   return (
     <div className="animate-fade-in">
@@ -141,11 +91,17 @@ export const ContractManagementFeature = () => {
           <div>
             <h1 className="page-header__title">Quản lý Hợp đồng</h1>
             <p className="page-header__subtitle">
-              {pendingCount} series đang chờ lập hợp đồng
+              {isLoading ? 'Đang tải...' : `${pendingCount} series đang chờ lập hợp đồng`}
             </p>
           </div>
         </div>
       </div>
+
+      {isLoading && (
+        <div className="flex justify-center items-center py-10">
+          <div className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
 
       {/* ─── Toolbar ─── */}
       <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-5">
@@ -165,8 +121,8 @@ export const ContractManagementFeature = () => {
         <div className="flex items-center gap-1 bg-bg-surface border border-border-custom rounded-xl p-1">
           {[
             { key: 'pending' as const, label: 'Chờ HĐ', count: pendingCount },
-            { key: 'contracted' as const, label: 'Đã có HĐ', count: MOCK_APPROVED_SERIES.length - pendingCount },
-            { key: 'all' as const, label: 'Tất cả', count: MOCK_APPROVED_SERIES.length },
+            { key: 'contracted' as const, label: 'Đã có HĐ', count: seriesList.length - pendingCount },
+            { key: 'all' as const, label: 'Tất cả', count: seriesList.length },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -382,31 +338,28 @@ export const ContractManagementFeature = () => {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-border-custom">
-              <button
-                onClick={() => setShowContractModal(false)}
-                className="px-4 py-2 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-secondary hover:text-text-primary transition-all cursor-pointer"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleCreateContract}
-                disabled={isSubmitting}
-                className={`
-                  inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium border-none cursor-pointer transition-all
-                  ${isSubmitting
-                    ? 'bg-brand/50 text-white/70 cursor-not-allowed'
-                    : 'bg-brand hover:bg-brand-hover text-white shadow-brand hover:shadow-brand-hover'
-                  }
-                `}
-              >
-                {isSubmitting ? (
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <FileSignature size={14} />
-                )}
-                Tạo và gửi Hợp đồng
-              </button>
+
+              {/* Actions */}
+              <div className="pt-2">
+                <button
+                  onClick={handleCreateContract}
+                  disabled={createContract.isPending}
+                  className={`
+                    w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border-none cursor-pointer transition-all
+                    ${createContract.isPending
+                      ? 'bg-brand/50 text-white/70 cursor-not-allowed'
+                      : 'bg-brand hover:bg-brand-hover text-white shadow-brand hover:shadow-brand-hover hover:-translate-y-0.5 active:translate-y-0'
+                    }
+                  `}
+                >
+                  {createContract.isPending ? (
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <Check size={16} />
+                  )}
+                  Tạo và gửi Hợp đồng
+                </button>
+              </div>
             </div>
           </div>
         </div>,

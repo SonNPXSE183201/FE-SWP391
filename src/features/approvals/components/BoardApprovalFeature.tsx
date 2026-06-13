@@ -42,54 +42,15 @@ interface PendingProposal {
   nameFileName: string;
 }
 
-const MOCK_PROPOSALS: PendingProposal[] = [
-  {
-    id: 'series-001',
-    title: 'Huyền Thoại Samurai',
-    mangakaName: 'Nguyễn Minh Đức',
-    submittedAt: '2026-06-01T10:00:00Z',
-    requestedBudget: 2500000,
-    genres: ['Shōnen', 'Action', 'Historical'],
-    editorName: 'Trần Văn Nam',
-    editorNote: 'Cốt truyện hấp dẫn, tiềm năng thương mại cao. Phác thảo chất lượng tốt. Ngân sách hợp lý cho một chapter đầu tiên.',
-    synopsis: 'Trong thời đại Edo đầy biến động, một samurai trẻ tên Kenji phải tìm lại thanh kiếm bị đánh cắp...',
-    coverUrl: '',
-    nameFileName: 'samurai_name_v1.pdf',
-  },
-  {
-    id: 'series-002',
-    title: 'Tokyo Dreamers',
-    mangakaName: 'Lê Thị Hương',
-    submittedAt: '2026-06-02T14:30:00Z',
-    requestedBudget: 1800000,
-    genres: ['Shōjo', 'Romance', 'Slice of Life'],
-    editorName: 'Phạm Quốc Bảo',
-    editorNote: 'Thể loại romance phù hợp thị trường. Cần điều chỉnh ngân sách do scope nhỏ hơn dự kiến.',
-    synopsis: 'Câu chuyện về những giấc mơ tuổi trẻ giữa Tokyo hoa lệ...',
-    coverUrl: '',
-    nameFileName: 'tokyo_dreamers_name_v1.pdf',
-  },
-  {
-    id: 'series-003',
-    title: 'Mecha Genesis',
-    mangakaName: 'Hoàng Anh Tuấn',
-    submittedAt: '2026-06-03T09:15:00Z',
-    requestedBudget: 3200000,
-    genres: ['Seinen', 'Mecha', 'Sci-Fi'],
-    editorName: 'Trần Văn Nam',
-    editorNote: 'Series Mecha khá độc đáo, ngân sách cao do yêu cầu chi tiết kỹ thuật. Tiềm năng xuất bản dài kỳ.',
-    synopsis: 'Năm 2087, nhân loại đối mặt với mối đe dọa từ những cỗ máy tự tiến hóa...',
-    coverUrl: '',
-    nameFileName: 'mecha_genesis_name_v1.pdf',
-  },
-];
+import { usePendingProposals, useApproveProposal } from '../hooks/useApproval';
 
 export const BoardApprovalFeature = () => {
   const [selectedProposal, setSelectedProposal] = useState<PendingProposal | null>(null);
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [approvedBudget, setApprovedBudget] = useState('');
   const [publishSchedule, setPublishSchedule] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { data: proposals = [], isLoading } = usePendingProposals();
+  const approveProposal = useApproveProposal();
 
   const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
@@ -122,18 +83,19 @@ export const BoardApprovalFeature = () => {
       toast.error('Vui lòng chọn lịch xuất bản.');
       return;
     }
-    setIsSubmitting(true);
-    try {
-      // TODO: Replace with API call
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-      toast.success(`Đã phê duyệt "${selectedProposal?.title}" thành công!`);
-      setShowApproveModal(false);
-      setSelectedProposal(null);
-    } catch {
-      toast.error('Có lỗi xảy ra. Vui lòng thử lại.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    if (!selectedProposal) return;
+    
+    approveProposal.mutate(
+      { seriesId: selectedProposal.id, payload: { approvedBudget: Number(approvedBudget), publishSchedule } },
+      {
+        onSuccess: () => {
+          toast.success(`Đã phê duyệt "${selectedProposal.title}" thành công!`);
+          setShowApproveModal(false);
+          setSelectedProposal(null);
+        },
+        onError: () => toast.error('Có lỗi xảy ra. Vui lòng thử lại.'),
+      }
+    );
   };
 
   // ── Detail View ──
@@ -277,15 +239,21 @@ export const BoardApprovalFeature = () => {
           <div>
             <h1 className="page-header__title">Xét duyệt hồ sơ Series</h1>
             <p className="page-header__subtitle">
-              {MOCK_PROPOSALS.length} hồ sơ đang chờ phê duyệt
+              {isLoading ? 'Đang tải...' : `${proposals.length} hồ sơ đang chờ phê duyệt`}
             </p>
           </div>
         </div>
       </div>
 
+      {isLoading && (
+        <div className="flex justify-center items-center py-10">
+          <div className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+
       {/* ─── Proposal Cards ─── */}
       <div className="mt-6 space-y-4">
-        {MOCK_PROPOSALS.map((proposal) => (
+        {!isLoading && proposals.map((proposal) => (
           <div
             key={proposal.id}
             className="bg-bg-secondary border border-border-custom rounded-xl p-5 hover:border-brand/20 transition-all duration-200 group"
@@ -473,16 +441,16 @@ export const BoardApprovalFeature = () => {
               </button>
               <button
                 onClick={handleApprove}
-                disabled={isSubmitting}
+                disabled={approveProposal.isPending}
                 className={`
                   inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium border-none cursor-pointer transition-all
-                  ${isSubmitting
+                  ${approveProposal.isPending
                     ? 'bg-emerald-500/50 text-white/70 cursor-not-allowed'
                     : 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm'
                   }
                 `}
               >
-                {isSubmitting ? (
+                {approveProposal.isPending ? (
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
                   <Check size={14} />
