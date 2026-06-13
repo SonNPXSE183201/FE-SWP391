@@ -17,23 +17,9 @@ import {
   ClipboardCheck,
   User,
   Calendar,
+  Loader2,
 } from 'lucide-react';
-
-// ─── Mock Data (temporary — replace with API call) ───
-const MOCK_SERIES_DETAIL = {
-  id: 'series-001',
-  title: 'Huyền Thoại Samurai',
-  synopsis:
-    'Trong thời đại Edo đầy biến động, một samurai trẻ tên Kenji phải tìm lại thanh kiếm bị đánh cắp của gia tộc trước khi thế lực bóng tối thống trị thiên hạ.',
-  genres: ['Shōnen', 'Action', 'Historical'],
-  coverUrl: '',
-  mangakaName: 'Nguyễn Minh Đức',
-  submittedAt: '2026-06-01T10:00:00Z',
-  requestedBudget: 2500000,
-  nameFileUrl: '#',
-  nameFileName: 'samurai_name_v1.pdf',
-  status: 'Pending_Review' as const,
-};
+import { useReviewSeriesDetail, useSubmitToBoard, useRequireRevision } from '../hooks/useReview';
 
 export const ReviewSeriesFeature = () => {
   const { seriesId } = useParams();
@@ -42,9 +28,10 @@ export const ReviewSeriesFeature = () => {
   const [editorNotes, setEditorNotes] = useState('');
   const [showRevisionModal, setShowRevisionModal] = useState(false);
   const [revisionReason, setRevisionReason] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const series = MOCK_SERIES_DETAIL;
+  const { data: series, isLoading } = useReviewSeriesDetail(seriesId ?? '');
+  const submitToBoard = useSubmitToBoard();
+  const requireRevision = useRequireRevision();
 
   const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
@@ -55,17 +42,16 @@ export const ReviewSeriesFeature = () => {
       toast.error('Vui lòng nhập nhận xét trước khi trình Hội đồng.');
       return;
     }
-    setIsSubmitting(true);
-    try {
-      // TODO: Replace with API call
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-      toast.success('Đã trình hồ sơ lên Hội đồng Biên tập!');
-      navigate('/editor/review');
-    } catch {
-      toast.error('Có lỗi xảy ra. Vui lòng thử lại.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    submitToBoard.mutate(
+      { seriesId: seriesId ?? '', notes: editorNotes },
+      {
+        onSuccess: () => {
+          toast.success('Đã trình hồ sơ lên Hội đồng Biên tập!');
+          navigate('/editor/review');
+        },
+        onError: () => toast.error('Có lỗi xảy ra. Vui lòng thử lại.'),
+      }
+    );
   };
 
   const handleRequestRevision = async () => {
@@ -73,19 +59,32 @@ export const ReviewSeriesFeature = () => {
       toast.error('Vui lòng nhập lý do yêu cầu sửa.');
       return;
     }
-    setIsSubmitting(true);
-    try {
-      // TODO: Replace with API call
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-      toast.success('Đã gửi yêu cầu sửa đổi cho Mangaka.');
-      setShowRevisionModal(false);
-      navigate('/editor/review');
-    } catch {
-      toast.error('Có lỗi xảy ra. Vui lòng thử lại.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    requireRevision.mutate(
+      { seriesId: seriesId ?? '', reason: revisionReason },
+      {
+        onSuccess: () => {
+          toast.success('Đã gửi yêu cầu sửa đổi cho Mangaka.');
+          setShowRevisionModal(false);
+          navigate('/editor/review');
+        },
+        onError: () => toast.error('Có lỗi xảy ra. Vui lòng thử lại.'),
+      }
+    );
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="animate-spin text-brand" size={32} />
+      </div>
+    );
+  }
+
+  if (!series) {
+    return <div className="text-center py-10 text-text-muted">Không tìm thấy thông tin series.</div>;
+  }
+
+  const isSubmitting = submitToBoard.isPending || requireRevision.isPending;
 
   return (
     <div className="animate-fade-in">

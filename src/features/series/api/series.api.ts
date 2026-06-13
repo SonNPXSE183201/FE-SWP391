@@ -1,5 +1,11 @@
 import { axiosInstance } from '../../../api/axios';
 import type { ApiResponse, PaginatedResponse, Series, Chapter } from '../../../types';
+import { MOCK_SERIES, MOCK_CHAPTERS } from '../data/mockData';
+import { MOCK_PAGES, getPagesByChapterId } from '../data/mockPages';
+import type { Page } from '../../../types/entities';
+
+// ─── Toggle this to false when backend Series API is ready ───
+const USE_MOCK = true;
 
 // ─── Request DTOs ────────────────────────────────────────────
 
@@ -23,18 +29,73 @@ export interface SubmitChapterRequest {
   pages: File[];
 }
 
+// ─── Mock helpers ────────────────────────────────────────────
+const mockDelay = (ms: number = 400) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+const createMockAxiosResponse = <T>(data: T, message = 'Success') => ({
+  data: {
+    IsSuccess: true,
+    Message: message,
+    Data: data,
+  } as ApiResponse<T> & { IsSuccess: boolean; Data: T },
+});
+
+const createMockPaginatedResponse = <T>(
+  items: T[],
+  page = 1,
+  pageSize = 20,
+) => {
+  const start = (page - 1) * pageSize;
+  const paginatedItems = items.slice(start, start + pageSize);
+  return {
+    data: {
+      IsSuccess: true,
+      Message: 'Success',
+      Data: paginatedItems,
+      TotalCount: items.length,
+      PageNumber: page,
+      PageSize: pageSize,
+      TotalPages: Math.ceil(items.length / pageSize),
+    },
+  };
+};
+
 // ─── API Functions ───────────────────────────────────────────
 
 export const seriesApi = {
   // Series CRUD
-  getAll: (params?: { page?: number; pageSize?: number; status?: string }) =>
-    axiosInstance.get<PaginatedResponse<Series>>('/api/series', { params }),
+  getAll: async (params?: { page?: number; pageSize?: number; status?: string }) => {
+    if (USE_MOCK) {
+      await mockDelay(300);
+      let filtered = MOCK_SERIES;
+      if (params?.status) {
+        filtered = filtered.filter((s) => s.status === params.status);
+      }
+      return createMockPaginatedResponse(filtered, params?.page, params?.pageSize);
+    }
+    return axiosInstance.get<PaginatedResponse<Series>>('/api/series', { params });
+  },
 
-  getById: (seriesId: string) =>
-    axiosInstance.get<ApiResponse<Series>>(`/api/series/${seriesId}`),
+  getById: async (seriesId: string) => {
+    if (USE_MOCK) {
+      await mockDelay(200);
+      const series = MOCK_SERIES.find((s) => s.id === seriesId);
+      if (!series) {
+        return { data: { IsSuccess: false, Message: 'Series not found', Data: null } };
+      }
+      return createMockAxiosResponse(series);
+    }
+    return axiosInstance.get<ApiResponse<Series>>(`/api/series/${seriesId}`);
+  },
 
-  getMySeries: (params?: { page?: number; pageSize?: number }) =>
-    axiosInstance.get<PaginatedResponse<Series>>('/api/series/my', { params }),
+  getMySeries: async (params?: { page?: number; pageSize?: number }) => {
+    if (USE_MOCK) {
+      await mockDelay(300);
+      return createMockPaginatedResponse(MOCK_SERIES, params?.page, params?.pageSize);
+    }
+    return axiosInstance.get<PaginatedResponse<Series>>('/api/series/my', { params });
+  },
 
   create: (data: CreateSeriesRequest) => {
     const formData = new FormData();
@@ -59,8 +120,37 @@ export const seriesApi = {
   },
 
   // Chapter operations
-  getChapters: (seriesId: string, params?: { page?: number; pageSize?: number }) =>
-    axiosInstance.get<PaginatedResponse<Chapter>>(`/api/series/${seriesId}/chapters`, { params }),
+  getChapters: async (seriesId: string, params?: { page?: number; pageSize?: number }) => {
+    if (USE_MOCK) {
+      await mockDelay(300);
+      const chapters = MOCK_CHAPTERS.filter((ch) => ch.seriesId === seriesId)
+        .sort((a, b) => a.chapterNumber - b.chapterNumber);
+      return createMockPaginatedResponse(chapters, params?.page, params?.pageSize);
+    }
+    return axiosInstance.get<PaginatedResponse<Chapter>>(`/api/series/${seriesId}/chapters`, { params });
+  },
+
+  getChapterById: async (chapterId: string) => {
+    if (USE_MOCK) {
+      await mockDelay(200);
+      const chapter = MOCK_CHAPTERS.find((ch) => ch.id === chapterId);
+      if (!chapter) {
+        return { data: { IsSuccess: false, Message: 'Chapter not found', Data: null } };
+      }
+      return createMockAxiosResponse(chapter);
+    }
+    return axiosInstance.get<ApiResponse<Chapter>>(`/api/chapters/${chapterId}`);
+  },
+
+  // Pages for a chapter
+  getPages: async (chapterId: string) => {
+    if (USE_MOCK) {
+      await mockDelay(200);
+      const pages = getPagesByChapterId(chapterId);
+      return createMockAxiosResponse(pages);
+    }
+    return axiosInstance.get<ApiResponse<Page[]>>(`/api/chapters/${chapterId}/pages`);
+  },
 
   submitChapter: (seriesId: string, data: SubmitChapterRequest) => {
     const formData = new FormData();

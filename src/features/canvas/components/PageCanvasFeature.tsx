@@ -2,15 +2,14 @@ import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import {
   Layers, SquareDashedBottom, Trash2,
   Tag, ChevronLeft, ChevronRight, ImageOff,
-  Plus, Pencil, Check, X,
+  Plus, Pencil, Check, X, Loader2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CanvasViewer } from '../../../components/canvas/CanvasViewer';
 import { CanvasToolbar } from '../../../components/canvas/CanvasToolbar';
 import { MobileCanvasWarning } from '../../../components/canvas/MobileCanvasWarning';
 import { useCanvasStore } from '../../../stores/canvasStore';
-import { useRegions, useCreateRegion, useDeleteRegion, useUpdateRegion } from '../hooks/useCanvasData';
-import { MOCK_CANVAS_PAGES, getRegionsByPageId } from '../data/mockData';
+import { useRegions, useCreateRegion, useDeleteRegion, useUpdateRegion, useCanvasPages } from '../hooks/useCanvasData';
 import { CreateTaskModal } from '../../tasks/components/CreateTaskModal';
 import type { Region } from '../../../types/entities';
 import type { CanvasViewerHandle } from '../../../components/canvas/CanvasViewer';
@@ -38,8 +37,8 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
   const [showCreateTask, setShowCreateTask] = useState(false);
   const { activeTool, zoomLevel, selectedRegionId, setActiveTool, setZoomLevel, setSelectedRegion } = useCanvasStore();
 
-  // ─── Data (mock) ───
-  const pages = useMemo(() => MOCK_CANVAS_PAGES.filter((p) => p.chapterId === chapterId), [chapterId]);
+  // ─── Data ───
+  const { data: pages = [], isLoading: pagesLoading } = useCanvasPages(chapterId);
   const currentPage = pages[currentPageIndex];
   const pageId = currentPage?.id ?? '';
 
@@ -161,6 +160,14 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
     const canvas = canvasRef.current?.getCanvas();
     if (canvas) setZoomLevel(canvas.getZoom());
   }, [setZoomLevel]);
+
+  if (pagesLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 size={32} className="animate-spin text-brand" />
+      </div>
+    );
+  }
 
   if (!currentPage) {
     return (

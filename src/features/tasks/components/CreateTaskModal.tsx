@@ -1,30 +1,18 @@
 import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus, X, Send, Calendar, DollarSign, AlertCircle,
   BookOpen, FileText, Shield, Banknote, Loader2,
   CheckCircle2, Type, Image, Globe,
 } from 'lucide-react';
-import { formatVND, MOCK_WALLET, MOCK_TRANSACTIONS } from '../../wallet';
-import { MOCK_TASKS } from '../data/mockData';
-import type { MockTask } from '../data/mockData';
-import { MOCK_SERIES, MOCK_CHAPTERS } from '../../series';
+import { formatVND } from '../../wallet';
+import { useWallet } from '../../wallet/hooks/useWallet';
+import { useMySeries, useChapters, useChapterPages } from '../../series';
+import { taskApi } from '../api/task.api';
 import { CustomSelect } from '../../../components/common/CustomSelect';
 import type { SelectOption } from '../../../components/common/CustomSelect';
-
-// ─── Mock Pages (will come from API later) ──────────────────
-// Hierarchy: Series → Chapter → Page → Region → Task (ERD)
-const MOCK_PAGES: Record<string, { id: string; pageNumber: number }[]> = {
-  'ch-4': Array.from({ length: 28 }, (_, i) => ({ id: `pg-4-${i + 1}`, pageNumber: i + 1 })),
-  'ch-3': Array.from({ length: 26 }, (_, i) => ({ id: `pg-3-${i + 1}`, pageNumber: i + 1 })),
-  'ch-2': Array.from({ length: 22 }, (_, i) => ({ id: `pg-2-${i + 1}`, pageNumber: i + 1 })),
-  'ch-7': Array.from({ length: 24 }, (_, i) => ({ id: `pg-7-${i + 1}`, pageNumber: i + 1 })),
-  'ch-5': Array.from({ length: 20 }, (_, i) => ({ id: `pg-5-${i + 1}`, pageNumber: i + 1 })),
-  'ch-8': Array.from({ length: 22 }, (_, i) => ({ id: `pg-8-${i + 1}`, pageNumber: i + 1 })),
-  'ch-6': Array.from({ length: 18 }, (_, i) => ({ id: `pg-6-${i + 1}`, pageNumber: i + 1 })),
-  'ch-1': Array.from({ length: 24 }, (_, i) => ({ id: `pg-1-${i + 1}`, pageNumber: i + 1 })),
-};
 
 // ─── Types ───────────────────────────────────────────────────
 interface CreateTaskFormData {
@@ -48,11 +36,11 @@ interface CreateTaskFormErrors {
 
 interface CreateTaskModalProps {
   onClose: () => void;
-  onTaskCreated?: (task: MockTask) => void;
 }
 
 // ─── Component ───────────────────────────────────────────────
-export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps) => {
+export const CreateTaskModal = ({ onClose }: CreateTaskModalProps) => {
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState<CreateTaskFormData>({
     seriesId: '',
     chapterId: '',
@@ -63,22 +51,19 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
     note: '',
   });
   const [errors, setErrors] = useState<CreateTaskFormErrors>({});
-  const [creating, setCreating] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  // ─── Data Hooks ────────────────────────────────────────────
+  const { data: walletData, isLoading: walletLoading } = useWallet();
+  const wallet = walletData?.wallet;
+  
+  const { data: seriesList = [] } = useMySeries({ pageSize: 100 });
+  const { data: chaptersList = [] } = useChapters(formData.seriesId, { pageSize: 100 });
+  const { data: pagesList = [] } = useChapterPages(formData.chapterId);
+
   // ─── Derived Data ──────────────────────────────────────────
-
-  const availableChapters = useMemo(
-    () => formData.seriesId
-      ? MOCK_CHAPTERS.filter((ch) => ch.seriesId === formData.seriesId)
-      : [],
-    [formData.seriesId],
-  );
-
-  const availablePages = useMemo(
-    () => formData.chapterId ? (MOCK_PAGES[formData.chapterId] || []) : [],
-    [formData.chapterId],
-  );
+  const availableChapters = chaptersList;
+  const availablePages = pagesList;
 
   const selectedPage = useMemo(
     () => availablePages.find((p) => p.id === formData.pageId),
@@ -87,10 +72,10 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
 
   // ─── SelectOption arrays for CustomSelect ──────────────────
   const seriesOptions: SelectOption[] = useMemo(
-    () => MOCK_SERIES
+    () => seriesList
       .filter((s) => s.status !== 'Cancelled' && s.status !== 'Draft')
       .map((s) => ({ value: s.id, label: s.title })),
-    [],
+    [seriesList],
   );
 
   const chapterOptions: SelectOption[] = useMemo(
@@ -110,15 +95,15 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
 
   // Calculate how the lock will split between SF and WB (Rule F03)
   const lockBreakdown = useMemo(() => {
-    if (amountNum <= 0) return { sf: 0, wb: 0, insufficient: false };
+    if (amountNum <= 0 || !wallet) return { sf: 0, wb: 0, insufficient: false };
 
-    const availableSF = MOCK_WALLET.setupFundBalance - MOCK_WALLET.lockedAmount;
+    const availableSF = wallet.setupFundBalance - wallet.lockedAmount; // Rough estimation, accurate one needs locked sf/wb breakdown
     const sfPortion = Math.min(amountNum, Math.max(0, availableSF));
     const wbPortion = amountNum - sfPortion;
-    const insufficient = wbPortion > MOCK_WALLET.withdrawableBalance;
+    const insufficient = wbPortion > wallet.withdrawableBalance;
 
     return { sf: sfPortion, wb: wbPortion, insufficient };
-  }, [amountNum]);
+  }, [amountNum, wallet]);
 
   // Minimum deadline is tomorrow
   const minDeadline = useMemo(() => {
@@ -161,69 +146,33 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
-  // ─── Submit Handler ────────────────────────────────────────
-  const handleCreate = async () => {
+  // ─── Submit Mutation ────────────────────────────────────────
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      const res = await taskApi.create({
+        regionId: formData.pageId, // For now, passing pageId as regionId if canvas region not selected
+        assignedAssistantId: '',
+        amount: amountNum,
+        deadline: new Date(formData.deadline + 'T23:59:59Z').toISOString(),
+      });
+      if (!res.data?.IsSuccess) throw new Error(res.data?.Message || 'Lỗi tạo task');
+      return res.data.Data;
+    },
+    onSuccess: () => {
+      setSuccess(true);
+      toast.success(`Đã đăng Task "${formData.taskName}" lên Bảng việc làm & Lock ${formatVND(amountNum)}`, { duration: 4000 });
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'mangaka'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      setTimeout(() => { onClose(); }, 800);
+    },
+    onError: (err: any) => {
+      toast.error(err.message || 'Có lỗi xảy ra khi tạo task');
+    }
+  });
+
+  const handleCreate = () => {
     if (!validate()) return;
-
-    setCreating(true);
-    await new Promise((r) => setTimeout(r, 1500));
-
-    const page = availablePages.find((p) => p.id === formData.pageId)!;
-    const chapter = availableChapters.find((ch) => ch.id === formData.chapterId)!;
-    const series = MOCK_SERIES.find((s) => s.id === formData.seriesId)!;
-
-    const taskId = `task-${Date.now()}`;
-    const newTask: MockTask = {
-      id: taskId,
-      taskName: formData.taskName.trim(),
-      regionId: '',        // Sẽ gắn khi tạo từ Canvas (chọn Region trước)
-      regionLabel: '',
-      pageId: formData.pageId,
-      pageName: `Trang ${page.pageNumber}`,
-      chapterId: formData.chapterId,
-      chapterTitle: `Ch.${chapter.chapterNumber}: ${chapter.title}`,
-      seriesId: formData.seriesId,
-      seriesTitle: series.title,
-      assignedAssistantName: null,  // Đăng lên Bảng việc làm, chờ Assistant nhận
-      status: 'Pending',
-      amount: amountNum,
-      deadline: new Date(formData.deadline + 'T23:59:59Z').toISOString(),
-      extensionUsed: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    // ─── Mock Lock Funds (T01 + F03) ───────────────────────
-    const { sf, wb } = lockBreakdown;
-    MOCK_WALLET.setupFundBalance -= sf;
-    MOCK_WALLET.withdrawableBalance -= wb;
-    MOCK_WALLET.lockedAmount += amountNum;
-
-    const refCode = `TASK-${String(MOCK_TASKS.length + 1).padStart(3, '0')}`;
-    MOCK_TRANSACTIONS.unshift({
-      id: `tx-${Date.now()}`,
-      type: 'Lock',
-      amount: -amountNum,
-      setupFundAmount: sf > 0 ? -sf : 0,
-      withdrawableAmount: wb > 0 ? -wb : 0,
-      referenceId: taskId,
-      referenceCode: refCode,
-      description: `Lock tiền cho Task: ${formData.taskName.trim()} → Bảng việc làm${wb > 0 ? ' (SF thiếu → WB bù)' : ''}`,
-      createdAt: new Date().toISOString(),
-    });
-
-    MOCK_TASKS.push(newTask);
-    onTaskCreated?.(newTask);
-
-    setCreating(false);
-    setSuccess(true);
-
-    toast.success(
-      `Đã đăng Task "${newTask.taskName}" lên Bảng việc làm & Lock ${formatVND(amountNum)}`,
-      { duration: 4000 },
-    );
-
-    setTimeout(() => { onClose(); }, 800);
+    createMutation.mutate();
   };
 
   // ─── Success Overlay ───────────────────────────────────────
@@ -448,13 +397,13 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] text-info flex items-center gap-1"><Shield size={9} /> SF</span>
                     <span className="text-[10px] font-semibold text-text-secondary">
-                      {formatVND(MOCK_WALLET.setupFundBalance - lockBreakdown.sf)}
+                      {formatVND((wallet?.setupFundBalance || 0) - lockBreakdown.sf)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] text-success flex items-center gap-1"><Banknote size={9} /> WB</span>
                     <span className="text-[10px] font-semibold text-text-secondary">
-                      {formatVND(MOCK_WALLET.withdrawableBalance - lockBreakdown.wb)}
+                      {formatVND((wallet?.withdrawableBalance || 0) - lockBreakdown.wb)}
                     </span>
                   </div>
                 </div>
@@ -463,7 +412,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
               {lockBreakdown.insufficient && (
                 <div className="bg-danger/5 border border-danger/20 rounded-lg p-2">
                   <p className="text-[10px] text-danger font-medium">
-                    ⚠ Số dư không đủ. SF còn: {formatVND(Math.max(0, MOCK_WALLET.setupFundBalance - MOCK_WALLET.lockedAmount))}, WB còn: {formatVND(MOCK_WALLET.withdrawableBalance)}
+                    ⚠ Số dư không đủ. SF còn: {formatVND(Math.max(0, (wallet?.setupFundBalance || 0) - (wallet?.lockedAmount || 0)))}, WB còn: {formatVND((wallet?.withdrawableBalance || 0))}
                   </p>
                 </div>
               )}
@@ -484,11 +433,11 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
           <div className="text-[10px] text-text-muted space-y-0.5">
             <p className="flex items-center gap-1">
               <Shield size={9} className="text-info" />
-              SF: <span className="text-text-secondary font-medium">{formatVND(MOCK_WALLET.setupFundBalance)}</span>
+              SF: <span className="text-text-secondary font-medium">{formatVND(wallet?.setupFundBalance || 0)}</span>
             </p>
             <p className="flex items-center gap-1">
               <Banknote size={9} className="text-success" />
-              WB: <span className="text-text-secondary font-medium">{formatVND(MOCK_WALLET.withdrawableBalance)}</span>
+              WB: <span className="text-text-secondary font-medium">{formatVND(wallet?.withdrawableBalance || 0)}</span>
             </p>
           </div>
           <div className="flex items-center gap-3">

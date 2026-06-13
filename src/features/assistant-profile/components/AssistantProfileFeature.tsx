@@ -1,27 +1,38 @@
-import React, { useState } from 'react';
-import { BriefcaseBusiness, Save, ExternalLink, Star, Award, TrendingUp, CheckCircle, Tag, Link as LinkIcon } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BriefcaseBusiness, Save, ExternalLink, Star, Award, TrendingUp, CheckCircle, Tag, Link as LinkIcon, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useAssistantProfile, useUpdateAssistantProfile } from '../hooks/useProfile';
 
 export const AssistantProfileFeature = () => {
-  const [loading, setLoading] = useState(false);
-  const [portfolioUrl, setPortfolioUrl] = useState('https://behance.net/my-portfolio');
-  const [skills, setSkills] = useState<string[]>(['Lineart', 'Background', 'Screentone', 'Coloring']);
+  const [portfolioUrl, setPortfolioUrl] = useState('');
+  const [skills, setSkills] = useState<string[]>([]);
   const [newSkill, setNewSkill] = useState('');
 
-  // Mock stats
-  const stats = {
-    rating: 4.8,
-    tasksCompleted: 42,
-    completionRate: 98,
-    totalIncome: 155000000,
+  const { data: profile, isLoading } = useAssistantProfile();
+  const updateProfile = useUpdateAssistantProfile();
+
+  useEffect(() => {
+    if (profile) {
+      setPortfolioUrl(profile.portfolioUrl || '');
+      setSkills(profile.skills || []);
+    }
+  }, [profile]);
+
+  const stats = profile?.stats || {
+    rating: 0,
+    tasksCompleted: 0,
+    completionRate: 0,
+    totalIncome: 0,
   };
 
   const handleSave = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      toast.success('Đã cập nhật hồ sơ thành công');
-    }, 800);
+    updateProfile.mutate(
+      { portfolioUrl, skills },
+      {
+        onSuccess: () => toast.success('Đã cập nhật hồ sơ thành công'),
+        onError: () => toast.error('Có lỗi xảy ra khi cập nhật hồ sơ'),
+      }
+    );
   };
 
   const handleAddSkill = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -37,6 +48,14 @@ export const AssistantProfileFeature = () => {
   const handleRemoveSkill = (skillToRemove: string) => {
     setSkills(skills.filter(s => s !== skillToRemove));
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <Loader2 className="animate-spin text-brand" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl">
@@ -150,10 +169,10 @@ export const AssistantProfileFeature = () => {
               <div className="pt-6 border-t border-border-custom flex justify-end">
                 <button
                   onClick={handleSave}
-                  disabled={loading}
+                  disabled={updateProfile.isPending}
                   className="flex items-center gap-2 px-6 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg font-medium transition-colors cursor-pointer border-none"
                 >
-                  {loading ? (
+                  {updateProfile.isPending ? (
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                   ) : (
                     <>
