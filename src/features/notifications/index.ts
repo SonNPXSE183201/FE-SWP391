@@ -1,4 +1,3 @@
-// Notifications feature — barrel export
-// Components: NotificationDropdown, NotificationList
-// Hooks: useNotifications (SignalR-powered)
-// Will be built in Week 5
+export * from './api/notification.api';
+export * from './hooks/useNotifications';
+export * from './components/NotificationDropdown';

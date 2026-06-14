@@ -2,10 +2,14 @@ import { useState, useCallback } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { useSignalR } from '../hooks/useSignalR';
 
 export const MainLayout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Initialize SignalR connection for the whole app
+  useSignalR();
 
   const handleToggleCollapse = useCallback(() => {
     setSidebarCollapsed((prev) => !prev);
