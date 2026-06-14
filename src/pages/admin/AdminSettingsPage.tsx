@@ -1,6 +1,5 @@
-import { Settings } from 'lucide-react';
-import { PageScaffold } from '../../components/common/PageScaffold';
+import { SettingsFeature } from '../../features/settings';
 
-export const AdminSettingsPage = () => (
-  <PageScaffold title="Cài đặt" subtitle="Cấu hình hệ thống" icon={Settings} />
-);
+export const AdminSettingsPage = () => {
+  return <SettingsFeature />;
+};
