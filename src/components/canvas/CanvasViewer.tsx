@@ -36,6 +36,7 @@ export interface CanvasViewerProps {
   mode?: 'view' | 'region' | 'annotate' | 'freeform' | 'pan';
   onRegionCreated?: (region: Omit<Region, 'id' | 'createdAt' | 'updatedAt'>) => void;
   onRegionUpdated?: (region: Region) => void;
+  onRegionSelect?: (regionId: string) => void;
   onRegionDeleted?: (regionId: string) => void;
   onAnnotationCreated?: (annotation: { x: number; y: number; type: AnnotationType; comment: string }) => void;
   onAnnotationDeleted?: (annotationId: string) => void;
@@ -246,7 +247,7 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
       const canvas = fabricRef.current;
       if (!canvas) return;
 
-      const handleMouseDown = (opt: { e: MouseEvent; target?: import('fabric').FabricObject }) => {
+      const handleMouseDown = (opt: any) => {
         const evt = opt.e;
 
         // Alt+drag OR Middle-click OR pan mode -> panning
@@ -303,7 +304,7 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
         }
       };
 
-      const handleMouseMove = (opt: { e: MouseEvent }) => {
+      const handleMouseMove = (opt: any) => {
         const evt = opt.e;
 
         // Panning
@@ -516,7 +517,7 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
           selectable: false,
           evented: true,
           shadow: isSelected
-            ? { color: 'rgba(0,0,0,0.4)', blur: 8, offsetX: 0, offsetY: 2 }
+            ? { color: 'rgba(0,0,0,0.4)', blur: 8, offsetX: 0, offsetY: 2 } as any
             : undefined,
         });
 

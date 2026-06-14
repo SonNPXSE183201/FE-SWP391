@@ -11,7 +11,6 @@ import type { SeriesStatus } from '../../../types/entities';
 import {
   dashboardApi,
   type ActivityType,
-  type MangakaDashboardStatsDto,
   type RecentActivityDto,
   type SeriesOverviewDto,
 } from '../api/dashboard.api';

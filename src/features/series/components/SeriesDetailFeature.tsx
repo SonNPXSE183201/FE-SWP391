@@ -216,21 +216,19 @@ export const SeriesDetailFeature = () => {
                   <p className="text-sm font-medium text-text-primary truncate">
                     Ch.{ch.chapterNumber}: {ch.title}
                   </p>
-                  <p className="text-[11px] text-text-muted mt-0.5">
-                    {ch.totalPages} trang
-                  </p>
+                    {/* Chapter metadata could go here */}
                 </div>
 
                 {/* Status badge */}
                 <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-medium flex-shrink-0 ${
-                  ch.status === 'Approved' ? 'bg-success/10 text-success' :
-                  ch.status === 'InProgress' ? 'bg-info/10 text-info' :
-                  ch.status === 'PendingReview' ? 'bg-warning/10 text-warning' :
+                  ch.status === 'Published' ? 'bg-success/10 text-success' :
+                  ch.status === 'UnderReview' ? 'bg-info/10 text-info' :
+                  ch.status === 'Submitted' ? 'bg-warning/10 text-warning' :
                   'bg-bg-surface text-text-muted'
                 }`}>
-                  {ch.status === 'Approved' ? 'Đã duyệt' :
-                   ch.status === 'InProgress' ? 'Đang làm' :
-                   ch.status === 'PendingReview' ? 'Chờ duyệt' :
+                  {ch.status === 'Published' ? 'Đã duyệt' :
+                   ch.status === 'UnderReview' ? 'Đang làm' :
+                   ch.status === 'Submitted' ? 'Chờ duyệt' :
                    'Nháp'}
                 </span>
 

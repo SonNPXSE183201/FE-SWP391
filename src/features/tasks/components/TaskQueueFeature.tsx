@@ -17,10 +17,18 @@ export const TaskQueueFeature = () => {
       try {
         if (activeTab === 'Available') {
           const res = await taskApi.getAvailableTasks();
-          setTasks(res.data?.Data ?? []);
+          if (!res.data) throw new Error('No data');
+      
+          // Handle both mock format and real backend format
+          const items = (res.data as any).data || (res.data as any).Data || res.data;
+          setTasks(items ?? []);
         } else {
           const res = await taskApi.getMyTasks();
-          setTasks(res.data?.Data ?? []);
+          if (!res.data) throw new Error('No data');
+      
+          // Handle both mock format and real backend format
+          const items = (res.data as any).data || (res.data as any).Data || res.data;
+          setTasks(items ?? []);
         }
       } catch (error) {
         console.error('Failed to fetch tasks:', error);

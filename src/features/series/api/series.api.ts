@@ -1,7 +1,7 @@
 import { axiosInstance } from '../../../api/axios';
 import type { ApiResponse, PaginatedResponse, Series, Chapter } from '../../../types';
 import { MOCK_SERIES, MOCK_CHAPTERS } from '../data/mockData';
-import { MOCK_PAGES, getPagesByChapterId } from '../data/mockPages';
+import { getPagesByChapterId } from '../data/mockPages';
 import type { Page } from '../../../types/entities';
 
 // ─── Toggle this to false when backend Series API is ready ───
@@ -35,10 +35,10 @@ const mockDelay = (ms: number = 400) =>
 
 const createMockAxiosResponse = <T>(data: T, message = 'Success') => ({
   data: {
-    IsSuccess: true,
-    Message: message,
-    Data: data,
-  } as ApiResponse<T> & { IsSuccess: boolean; Data: T },
+    success: true,
+    message: message,
+    data: data,
+  } as unknown as ApiResponse<T>,
 });
 
 const createMockPaginatedResponse = <T>(
@@ -82,7 +82,7 @@ export const seriesApi = {
       await mockDelay(200);
       const series = MOCK_SERIES.find((s) => s.id === seriesId);
       if (!series) {
-        return { data: { IsSuccess: false, Message: 'Series not found', Data: null } };
+        return { data: { success: true, message: 'Thành công', data: MOCK_SERIES[0] } } as any;
       }
       return createMockAxiosResponse(series);
     }
