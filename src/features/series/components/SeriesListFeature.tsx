@@ -19,7 +19,7 @@ export const SeriesListFeature = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const { data: series = [], isLoading, isError } = useSeriesList();
+  const { data: series = [] } = useSeriesList();
 
   const filteredSeries = useMemo(() => {
     return series.filter((s) => {
