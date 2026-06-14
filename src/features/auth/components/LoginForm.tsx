@@ -15,7 +15,7 @@ export const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
-  const { setAuth, setLoading, isLoading, getRoleRedirectPath } = useAuthStore();
+  const { setAuth, setLoading, isLoading } = useAuthStore();
 
   useEffect(() => {
     // Load saved email if exists
@@ -62,13 +62,13 @@ export const LoginForm: React.FC = () => {
           email: response.Data.Email,
           fullName: response.Data.FullName,
           role: mappedRole as any
-        }, response.Data.Token);
+        }, response.Data.Token, '');
 
         toast.success(response.Message || 'Đăng nhập thành công');
 
         // Wait a tick for Zustand to update its persisted state before navigating
         setTimeout(() => {
-          const redirectPath = useAuthStore.getState().getRoleRedirectPath();
+          const redirectPath = useAuthStore.getState().getRoleRedirectPath?.() || '/';
           navigate(redirectPath, { replace: true });
         }, 50);
       }
