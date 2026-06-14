@@ -338,7 +338,7 @@ export const ContractManagementFeature = () => {
             </div>
 
             {/* Footer */}
-
+            <div className="p-5 border-t border-border-custom">
               {/* Actions */}
               <div className="pt-2">
                 <button
