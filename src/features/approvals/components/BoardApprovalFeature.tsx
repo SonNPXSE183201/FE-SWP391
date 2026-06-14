@@ -146,7 +146,7 @@ export const BoardApprovalFeature = () => {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {selectedProposal.genres.map((g) => (
+                      {selectedProposal.genres.slice(0, 3).map((g: string) => (
                       <span key={g} className="px-2 py-0.5 rounded-md bg-brand/10 text-brand text-[10px] font-medium">{g}</span>
                     ))}
                   </div>
@@ -297,7 +297,7 @@ export const BoardApprovalFeature = () => {
 
                 {/* Genres */}
                 <div className="flex flex-wrap gap-1.5 mt-2">
-                  {proposal.genres.map((g) => (
+                  {proposal.genres.map((g: string) => (
                     <span key={g} className="px-2 py-0.5 rounded-md bg-brand/10 text-brand text-[10px] font-medium">
                       {g}
                     </span>

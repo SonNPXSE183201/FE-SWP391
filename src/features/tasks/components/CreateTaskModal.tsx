@@ -36,10 +36,11 @@ interface CreateTaskFormErrors {
 
 interface CreateTaskModalProps {
   onClose: () => void;
+  onTaskCreated?: () => void;
 }
 
 // ─── Component ───────────────────────────────────────────────
-export const CreateTaskModal = ({ onClose }: CreateTaskModalProps) => {
+export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps) => {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState<CreateTaskFormData>({
     seriesId: '',
@@ -54,7 +55,7 @@ export const CreateTaskModal = ({ onClose }: CreateTaskModalProps) => {
   const [success, setSuccess] = useState(false);
 
   // ─── Data Hooks ────────────────────────────────────────────
-  const { data: walletData, isLoading: walletLoading } = useWallet();
+  const { data: walletData } = useWallet();
   const wallet = walletData?.wallet;
   
   const { data: seriesList = [] } = useMySeries({ pageSize: 100 });
@@ -155,15 +156,15 @@ export const CreateTaskModal = ({ onClose }: CreateTaskModalProps) => {
         amount: amountNum,
         deadline: new Date(formData.deadline + 'T23:59:59Z').toISOString(),
       });
-      if (!res.data?.IsSuccess) throw new Error(res.data?.Message || 'Lỗi tạo task');
-      return res.data.Data;
+      if (!res.data?.success) throw new Error(res.data?.message || 'Lỗi tạo task');
+      return res.data.data;
     },
     onSuccess: () => {
       setSuccess(true);
       toast.success(`Đã đăng Task "${formData.taskName}" lên Bảng việc làm & Lock ${formatVND(amountNum)}`, { duration: 4000 });
       queryClient.invalidateQueries({ queryKey: ['tasks', 'mangaka'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
-      setTimeout(() => { onClose(); }, 800);
+      setTimeout(() => { onTaskCreated?.(); onClose(); }, 800);
     },
     onError: (err: any) => {
       toast.error(err.message || 'Có lỗi xảy ra khi tạo task');
@@ -449,14 +450,14 @@ export const CreateTaskModal = ({ onClose }: CreateTaskModalProps) => {
             </button>
             <button
               onClick={handleCreate}
-              disabled={creating || lockBreakdown.insufficient}
+              disabled={createMutation.isPending || lockBreakdown.insufficient}
               className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium border-none cursor-pointer transition-all ${
-                creating || lockBreakdown.insufficient
+                createMutation.isPending || lockBreakdown.insufficient
                   ? 'bg-brand/40 text-white/60 cursor-not-allowed'
                   : 'bg-brand hover:bg-brand-hover text-white shadow-brand hover:shadow-brand-hover hover:-translate-y-0.5'
               }`}
             >
-              {creating ? (
+              {createMutation.isPending ? (
                 <>
                   <Loader2 size={14} className="animate-spin" />
                   Đang Lock & đăng...
