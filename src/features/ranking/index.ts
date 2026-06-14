@@ -1,3 +1,7 @@
 // Ranking feature — barrel export
-// Components: RankingTable, RankingChart
-// Will be built in Week 6 (Board module)
+export { RankingFeature } from './components/RankingFeature';
+export { RankingTable } from './components/RankingTable';
+export { BoardVotingFeature } from './components/BoardVotingFeature';
+export { useRankingList, useSubmitRankingVote } from './hooks/useRanking';
+export { rankingApi } from './api/rankingApi';
+export type { RankingItem } from './api/rankingApi';

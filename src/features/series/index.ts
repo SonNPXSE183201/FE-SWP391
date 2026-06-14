@@ -11,6 +11,7 @@ export { NameUploader } from './components/NameUploader';
 export { SubmitChecklist } from './components/SubmitChecklist';
 export { useNameUpload } from './hooks/useNameUpload';
 export { useSeriesSubmit } from './hooks/useSeriesSubmit';
+export * from './hooks/useSeries';
 export { UploadChapterModal } from './components/UploadChapterModal';
 export { PageCard } from './components/PageCard';
 export { PageLightbox } from './components/PageLightbox';

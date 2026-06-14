@@ -63,6 +63,63 @@ export interface AssistantDashboardResponse {
   recentTasks: AssistantRecentTaskDto[];
 }
 
+export interface AdminDashboardStatsDto {
+  users: number;
+  approvals: number;
+  series: number;
+  transactions: number;
+}
+
+export interface AdminRecentActivityDto {
+  id: string;
+  title: string;
+  date: string;
+  type: string;
+}
+
+export interface AdminDashboardResponse {
+  stats: AdminDashboardStatsDto;
+  recentActivities: AdminRecentActivityDto[];
+}
+
+export interface EditorDashboardStatsDto {
+  reviewing: number;
+  pending: number;
+  disputes: number;
+  completed: number;
+}
+
+export interface EditorRecentActivityDto {
+  id: string;
+  title: string;
+  date: string;
+  type: string;
+}
+
+export interface EditorDashboardResponse {
+  stats: EditorDashboardStatsDto;
+  recentActivities: EditorRecentActivityDto[];
+}
+
+export interface BoardDashboardStatsDto {
+  votes: number;
+  active: number;
+  cancelled: number;
+  budget: number;
+}
+
+export interface BoardRecentActivityDto {
+  id: string;
+  title: string;
+  date: string;
+  type: string;
+}
+
+export interface BoardDashboardResponse {
+  stats: BoardDashboardStatsDto;
+  recentActivities: BoardRecentActivityDto[];
+}
+
 // ─── Mock helpers ────────────────────────────────────────────
 const mockDelay = (ms: number = 400) =>
   new Promise((resolve) => setTimeout(resolve, ms));
@@ -141,6 +198,45 @@ const MOCK_ASSISTANT_RECENT_TASKS: AssistantRecentTaskDto[] = [
   { id: '1', title: 'One Piece - Ch. 1102 (Lineart)', status: 'Approved', amount: 500000, date: '2026-06-04' },
   { id: '2', title: 'Naruto - Ch. 500 (Background)', status: 'In_Progress', amount: 300000, date: '2026-06-05' },
   { id: '3', title: 'Bleach - Ch. 420 (Screentone)', status: 'Pending_Review', amount: 250000, date: '2026-06-05' },
+];
+
+const MOCK_ADMIN_STATS: AdminDashboardStatsDto = {
+  users: 154,
+  approvals: 12,
+  series: 48,
+  transactions: 89,
+};
+
+const MOCK_ADMIN_RECENT: AdminRecentActivityDto[] = [
+  { id: '1', title: 'Người dùng mới đăng ký: phucplh (Mangaka)', date: '2026-06-12 10:30', type: 'user' },
+  { id: '2', title: 'Hợp đồng mới đã được ký với Nguyễn Văn A', date: '2026-06-12 09:15', type: 'contract' },
+  { id: '3', title: 'Giao dịch VNPay đối soát thành công: #TX10928', date: '2026-06-11 18:45', type: 'transaction' },
+];
+
+const MOCK_EDITOR_STATS: EditorDashboardStatsDto = {
+  reviewing: 5,
+  pending: 3,
+  disputes: 2,
+  completed: 24,
+};
+
+const MOCK_EDITOR_RECENT: EditorRecentActivityDto[] = [
+  { id: '1', title: 'Chapter 5 "Huyền Thoại Samurai" đang chờ review', date: '2026-06-12 11:20', type: 'chapter' },
+  { id: '2', title: 'Tranh chấp phát sinh tại Task #42 (Mangaka khiếu nại)', date: '2026-06-12 08:30', type: 'dispute' },
+  { id: '3', title: 'Đã hoàn thành đánh giá Series "Vườn Hoa Mùa Đông"', date: '2026-06-11 15:10', type: 'review' },
+];
+
+const MOCK_BOARD_STATS: BoardDashboardStatsDto = {
+  votes: 18,
+  active: 14,
+  cancelled: 2,
+  budget: 450000000,
+};
+
+const MOCK_BOARD_RECENT: BoardRecentActivityDto[] = [
+  { id: '1', title: 'Bỏ phiếu xét duyệt thành công Series "Lạc Giữa Ngân Hà"', date: '2026-06-12 14:00', type: 'vote' },
+  { id: '2', title: 'Đề xuất tăng ngân sách sản xuất cho "Samurai" lên 50tr', date: '2026-06-12 10:00', type: 'budget' },
+  { id: '3', title: 'Lịch xuất bản mới được cập nhật cho tuần sau', date: '2026-06-11 16:30', type: 'schedule' },
 ];
 
 // ─── Dashboard API ───────────────────────────────────────────
@@ -296,5 +392,41 @@ export const dashboardApi = {
       stats,
       recentTasks,
     });
+  },
+
+  getAdminDashboard: async () => {
+    if (USE_MOCK) {
+      await mockDelay(300);
+      return createMockAxiosResponse<AdminDashboardResponse>({
+        stats: MOCK_ADMIN_STATS,
+        recentActivities: MOCK_ADMIN_RECENT,
+      });
+    }
+    const res = await axiosInstance.get('/api/dashboard/admin');
+    return res;
+  },
+
+  getEditorDashboard: async () => {
+    if (USE_MOCK) {
+      await mockDelay(300);
+      return createMockAxiosResponse<EditorDashboardResponse>({
+        stats: MOCK_EDITOR_STATS,
+        recentActivities: MOCK_EDITOR_RECENT,
+      });
+    }
+    const res = await axiosInstance.get('/api/dashboard/editor');
+    return res;
+  },
+
+  getBoardDashboard: async () => {
+    if (USE_MOCK) {
+      await mockDelay(300);
+      return createMockAxiosResponse<BoardDashboardResponse>({
+        stats: MOCK_BOARD_STATS,
+        recentActivities: MOCK_BOARD_RECENT,
+      });
+    }
+    const res = await axiosInstance.get('/api/dashboard/board');
+    return res;
   },
 };
