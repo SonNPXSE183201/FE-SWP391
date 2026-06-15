@@ -297,21 +297,26 @@ export const RoleGuard = ({ allowedRoles, children }: RoleGuardProps) => {
 /mangaka/series/:id/chapters   → Chapters of Series
 /mangaka/chapters/:id/pages    → Page Editor (Canvas)
 /mangaka/wallet                → Wallet Dashboard
+/mangaka/settings              → Settings
 /assistant/                    → Assistant Dashboard
 /assistant/tasks               → Task Queue
 /assistant/tasks/:id           → Task Detail + Upload
 /assistant/wallet              → Wallet
 /assistant/profile             → Profile + SpecialtyTags
+/assistant/settings            → Settings
 /editor/                       → Editor Dashboard
 /editor/series/:id/review      → Chapter Review + Annotation
 /editor/disputes               → Dispute Resolution
+/editor/settings               → Settings
 /board/                        → Board Dashboard
 /board/voting                  → Series Voting
 /board/ranking                 → Ranking Dashboard
+/board/settings                → Settings
 /admin/                        → Admin Dashboard
 /admin/users                   → User Management
-/admin/contracts               → Contract Management
+/admin/contracts               → Contract Management (Bao gồm Phụ lục - Addendum)
 /admin/reconciliation          → VNPay Reconciliation
+/admin/settings                → Settings
 ```
 
 ## 5. Canvas & Fabric.js

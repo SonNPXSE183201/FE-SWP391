@@ -115,9 +115,9 @@ export const RegisterForm = () => {
                   value={formData.password}
                   error={errors.password}
                   required
-                  minLength={6}
+                  minLength={8}
                   onChange={handleChange}
-                  hint="Tối thiểu 6 ký tự"
+                  hint="Tối thiểu 8 ký tự"
                 />
               </div>
               <div className="animate-blur-in" style={{ animationDelay: '0.8s' }}>
@@ -130,7 +130,7 @@ export const RegisterForm = () => {
                   value={formData.confirmPassword}
                   error={errors.confirmPassword}
                   required
-                  minLength={6}
+                  minLength={8}
                   onChange={handleChange}
                 />
               </div>
@@ -172,25 +172,23 @@ export const RegisterForm = () => {
             />
             <RegisterInput
               name="portfolioUrl"
-              label="Link Portfolio"
+              label="Link Portfolio (Tuỳ chọn)"
               type="url"
               placeholder="https://artstation.com/yourname"
               icon={Briefcase}
               value={formData.portfolioUrl}
               error={errors.portfolioUrl}
-              required
               onChange={handleChange}
               hint="ArtStation, DeviantArt, Google Drive..."
             />
             <RegisterInput
               name="specialtyTags"
-              label="Kỹ năng chuyên môn"
+              label="Kỹ năng chuyên môn (Tuỳ chọn)"
               type="text"
               placeholder="Vẽ nền, Đổ bóng, Tô màu, Vẽ hiệu ứng..."
               icon={Tags}
               value={formData.specialtyTags}
               error={errors.specialtyTags}
-              required
               onChange={handleChange}
               hint="Mangaka sẽ tìm kiếm bạn theo các kỹ năng này — cách nhau bằng dấu phẩy"
             />

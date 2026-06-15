@@ -49,7 +49,7 @@ export const ResetPasswordForm: React.FC = () => {
         try {
             const response = await resetPasswordApi({
                 email: email.trim(),
-                resetCode: resetCode.trim(),
+                verificationCode: resetCode.trim(),
                 newPassword,
                 confirmNewPassword,
             });
