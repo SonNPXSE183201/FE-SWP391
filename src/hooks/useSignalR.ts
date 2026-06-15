@@ -14,7 +14,14 @@ import type { NotificationItem } from '../stores/notificationStore';
  * Uses the same base URL from env, with the hub path appended.
  */
 const getHubUrl = () => {
+  if (import.meta.env.VITE_SIGNALR_URL) {
+    return import.meta.env.VITE_SIGNALR_URL;
+  }
   const base = import.meta.env.VITE_API_URL || 'http://localhost:5010';
+  // If routing through Gateway (port 5000), upstream expects /api/v1/ prefix
+  if (base.includes('5000') || base.includes('5001')) {
+    return `${base}/api/v1/hubs/notification`;
+  }
   return `${base}/hubs/notification`;
 };
 

@@ -8,6 +8,7 @@ import { RegisterPage } from './pages/auth/RegisterPage';
 import { LoginPage } from './pages/auth/LoginPage';
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
+import { DepositCallbackPage } from './pages/wallet/DepositCallbackPage';
 //import { UserManagementTable } from './features/user-management/UserManagementTable';
 
 // ─── Mangaka Pages ───
@@ -91,13 +92,39 @@ function App() {
   return (
     <BrowserRouter>
       <Toaster
-        position="top-right"
+        position="top-center"
         toastOptions={{
+          className: 'premium-toast',
           style: {
-            background: '#1A1A24',
-            color: '#F0F0F5',
-            border: '1px solid #2E2E3A',
-            borderRadius: '8px',
+            background: 'var(--bg-secondary, #1A1A24)',
+            color: 'var(--text-primary, #F0F0F5)',
+            border: '1px solid var(--border-custom, #2E2E3A)',
+            borderRadius: '12px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+            fontSize: '14px',
+            fontWeight: 500,
+            padding: '16px 20px',
+            letterSpacing: '0.2px',
+          },
+          success: {
+            iconTheme: {
+              primary: 'var(--success, #10B981)',
+              secondary: '#1A1A24',
+            },
+            style: {
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              background: 'linear-gradient(to right, rgba(16, 185, 129, 0.05), var(--bg-secondary, #1A1A24))',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: 'var(--danger, #EF4444)',
+              secondary: '#1A1A24',
+            },
+            style: {
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              background: 'linear-gradient(to right, rgba(239, 68, 68, 0.05), var(--bg-secondary, #1A1A24))',
+            },
           },
         }}
       />
@@ -115,6 +142,11 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+        </Route>
+
+        {/* ─── Shared Protected Routes ─── */}
+        <Route element={<RoleGuard allowedRoles={['Mangaka', 'Assistant']} />}>
+          <Route path="/wallet/deposit/callback" element={<DepositCallbackPage />} />
         </Route>
 
         {/* ─── Mangaka Routes ─── */}

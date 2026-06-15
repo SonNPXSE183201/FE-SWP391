@@ -18,6 +18,7 @@ import {
 import { useSeriesForm } from '../hooks/useSeriesForm';
 import { GENRE_OPTIONS } from '../types/series.types';
 import { SeriesPreviewModal } from './SeriesPreviewModal';
+import { seriesApi } from '../api/series.api';
 
 export const CreateSeriesForm = () => {
   const navigate = useNavigate();
@@ -41,13 +42,14 @@ export const CreateSeriesForm = () => {
 
     setIsSubmitting(true);
     try {
-      // TODO: Replace with real API call — response will contain the new seriesId
-      // const { data } = await seriesApi.create({ ...formData, status: 'Draft' });
-      // navigate(`/mangaka/series/${data.id}`);
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      toast.success('Tạo Series thành công! Trạng thái: Bản nháp (Draft)');
-      // Mock: navigate to series ID '4' (Bóng Ma Học Đường — Draft status)
-      navigate('/mangaka/series/4');
+      const response = await seriesApi.create({
+        title: formData.title,
+        synopsis: formData.synopsis,
+        genre: formData.genre,
+        coverImage: formData.coverImage || undefined,
+      });
+      toast.success(response.data.message || 'Tạo Series thành công! Trạng thái: Bản nháp (Draft)');
+      navigate(`/mangaka/series/${response.data.data.id}`);
     } catch {
       toast.error('Có lỗi xảy ra. Vui lòng thử lại.');
     } finally {
@@ -106,7 +108,7 @@ export const CreateSeriesForm = () => {
         <div>
           <p className="text-sm font-medium text-text-primary">Quy trình tạo Series</p>
           <p className="text-xs text-text-muted mt-0.5">
-            Series được lưu ở trạng thái <strong className="text-amber-500">Bản nháp (Draft)</strong>. 
+            Series được lưu ở trạng thái <strong className="text-amber-500">Bản nháp (Draft)</strong>.
             Sau khi tạo, bạn có thể upload bản phác thảo (Name) và submit xét duyệt trên trang chi tiết Series.
           </p>
         </div>
@@ -200,9 +202,8 @@ export const CreateSeriesForm = () => {
               onChange={(e) => updateField('title', e.target.value)}
               placeholder="VD: Huyền Thoại Samurai"
               maxLength={100}
-              className={`w-full px-4 py-3 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-all ${
-                errors.title ? 'border-danger/50 focus:border-danger focus:ring-1 focus:ring-danger/20' : 'border-border-custom focus:border-brand/50 focus:ring-1 focus:ring-brand/20'
-              }`}
+              className={`w-full px-4 py-3 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-all ${errors.title ? 'border-danger/50 focus:border-danger focus:ring-1 focus:ring-danger/20' : 'border-border-custom focus:border-brand/50 focus:ring-1 focus:ring-brand/20'
+                }`}
             />
             <div className="flex items-center justify-between mt-2">
               {errors.title
@@ -225,9 +226,8 @@ export const CreateSeriesForm = () => {
               placeholder="Mô tả ngắn gọn nội dung, bối cảnh và nhân vật chính của series..."
               rows={4}
               maxLength={500}
-              className={`w-full px-4 py-3 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-all resize-none ${
-                errors.synopsis ? 'border-danger/50 focus:border-danger focus:ring-1 focus:ring-danger/20' : 'border-border-custom focus:border-brand/50 focus:ring-1 focus:ring-brand/20'
-              }`}
+              className={`w-full px-4 py-3 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-all resize-none ${errors.synopsis ? 'border-danger/50 focus:border-danger focus:ring-1 focus:ring-danger/20' : 'border-border-custom focus:border-brand/50 focus:ring-1 focus:ring-brand/20'
+                }`}
             />
             <div className="flex items-center justify-between mt-2">
               {errors.synopsis
@@ -290,9 +290,8 @@ export const CreateSeriesForm = () => {
                 value={formatCurrency(formData.requestedBudget)}
                 onChange={handleBudgetChange}
                 placeholder="VD: 5,000,000"
-                className={`w-full px-4 py-3 pr-16 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-all ${
-                  errors.requestedBudget ? 'border-danger/50 focus:border-danger focus:ring-1 focus:ring-danger/20' : 'border-border-custom focus:border-brand/50 focus:ring-1 focus:ring-brand/20'
-                }`}
+                className={`w-full px-4 py-3 pr-16 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-all ${errors.requestedBudget ? 'border-danger/50 focus:border-danger focus:ring-1 focus:ring-danger/20' : 'border-border-custom focus:border-brand/50 focus:ring-1 focus:ring-brand/20'
+                  }`}
               />
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-text-muted font-medium">VND</span>
             </div>

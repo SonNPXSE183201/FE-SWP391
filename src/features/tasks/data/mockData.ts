@@ -18,8 +18,10 @@ export interface MockTask {
   assignedAssistantName: string | null; // null = chưa có ai nhận (đang trên Task Queue)
   status: TaskStatus;
   amount: number;
-  deadline: string;
+  deadline: string; // ISO
   extensionUsed: boolean;
+  feedbackComment?: string;
+  resultImageUrl?: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -13,13 +13,13 @@ import {
 import { usePagination } from '../../../hooks/usePagination';
 import { Pagination } from '../../../components/common/Pagination';
 import { CustomSelect } from '../../../components/common/CustomSelect';
-import { useSeriesList } from '../hooks/useSeries';
+import { useMySeries } from '../hooks/useSeries';
 export const SeriesListFeature = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const { data: series = [] } = useSeriesList();
+  const { data: series = [] } = useMySeries();
 
   const filteredSeries = useMemo(() => {
     return series.filter((s) => {
@@ -31,7 +31,7 @@ export const SeriesListFeature = () => {
       const matchesStatus = !statusFilter || s.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-  }, [searchQuery, statusFilter]);
+  }, [searchQuery, statusFilter, series]);
 
   const pagination = usePagination(filteredSeries, { pageSize: 8 });
 

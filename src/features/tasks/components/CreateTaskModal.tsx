@@ -12,6 +12,7 @@ import { useWallet } from '../../wallet/hooks/useWallet';
 import { useMySeries, useChapters, useChapterPages } from '../../series';
 import { taskApi } from '../api/task.api';
 import { CustomSelect } from '../../../components/common/CustomSelect';
+import { CustomDatePicker } from '../../../components/common/CustomDatePicker';
 import type { SelectOption } from '../../../components/common/CustomSelect';
 
 // ─── Types ───────────────────────────────────────────────────
@@ -34,19 +35,27 @@ interface CreateTaskFormErrors {
   deadline?: string;
 }
 
+export interface TaskContext {
+  seriesId: string;
+  chapterId: string;
+  pageId: string;
+  taskName: string;
+}
+
 interface CreateTaskModalProps {
   onClose: () => void;
   onTaskCreated?: () => void;
+  initialContext?: TaskContext;
 }
 
 // ─── Component ───────────────────────────────────────────────
-export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps) => {
+export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: CreateTaskModalProps) => {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState<CreateTaskFormData>({
-    seriesId: '',
-    chapterId: '',
-    pageId: '',
-    taskName: '',
+    seriesId: initialContext?.seriesId || '',
+    chapterId: initialContext?.chapterId || '',
+    pageId: initialContext?.pageId || '',
+    taskName: initialContext?.taskName || '',
     amount: '',
     deadline: '',
     note: '',
@@ -130,7 +139,11 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
     } else if (lockBreakdown.insufficient) {
       newErrors.amount = 'Số dư ví không đủ để Lock';
     }
-    if (!formData.deadline) newErrors.deadline = 'Vui lòng chọn deadline';
+    if (!formData.deadline) {
+      newErrors.deadline = 'Vui lòng chọn deadline';
+    } else if (formData.deadline < minDeadline) {
+      newErrors.deadline = 'Deadline phải từ ngày mai trở đi';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -152,6 +165,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
     mutationFn: async () => {
       const res = await taskApi.create({
         regionId: formData.pageId, // For now, passing pageId as regionId if canvas region not selected
+        taskName: formData.taskName,
         assignedAssistantId: '',
         amount: amountNum,
         deadline: new Date(formData.deadline + 'T23:59:59Z').toISOString(),
@@ -198,10 +212,10 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-lg shadow-lg-custom animate-scale-in max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-xl shadow-lg-custom animate-scale-in max-h-[95vh] overflow-y-auto">
 
         {/* ─── Header ─── */}
-        <div className="px-6 py-4 border-b border-border-custom flex items-center justify-between sticky top-0 bg-bg-secondary z-10 rounded-t-2xl">
+        <div className="px-5 py-3.5 border-b border-border-custom flex items-center justify-between sticky top-0 bg-bg-secondary z-10 rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-brand/10 flex items-center justify-center">
               <Plus size={18} className="text-brand" />
@@ -217,100 +231,135 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
         </div>
 
         {/* ─── Form ─── */}
-        <div className="p-6 space-y-5">
+        <div className="p-5 space-y-3">
 
           {/* Task Queue info banner */}
-          <div className="flex items-center gap-2 px-3 py-2.5 bg-info/5 border border-info/20 rounded-lg">
+          <div className="flex items-center gap-2 px-3 py-2 bg-info/5 border border-info/20 rounded-lg">
             <Globe size={14} className="text-info flex-shrink-0" />
             <p className="text-[11px] text-info">
               Task sẽ được đăng lên <strong>Bảng việc làm công khai</strong>. Bất kỳ Trợ lý nào đều có thể nhận việc.
             </p>
           </div>
 
-          {/* ─── Series + Chapter (Cascade Row 1) ─── */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
-                <BookOpen size={12} />
-                Series <span className="text-danger">*</span>
-              </label>
-              <CustomSelect
-                options={seriesOptions}
-                value={formData.seriesId}
-                onChange={(v) => updateField('seriesId', v)}
-                placeholder="Chọn series..."
-                error={!!errors.seriesId}
-                icon={<BookOpen size={14} />}
-              />
-              {errors.seriesId && <p className="text-[11px] text-danger mt-1">{errors.seriesId}</p>}
+          {/* ─── Context Info or Selects ─── */}
+          {initialContext ? (
+            <div className="flex flex-col gap-1.5 p-3 bg-bg-surface border border-border-custom rounded-xl">
+              <div className="flex items-center gap-2">
+                <BookOpen size={14} className="text-brand" />
+                <span className="text-sm font-medium text-text-primary">
+                  {seriesList.find((s) => s.id === formData.seriesId)?.title || 'Đang tải...'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <FileText size={14} className="text-text-secondary" />
+                <span className="text-xs text-text-secondary">
+                  {chaptersList.find((c) => c.id === formData.chapterId)?.title || 'Đang tải...'}
+                </span>
+                <span className="text-text-muted text-[10px]">•</span>
+                <Image size={14} className="text-text-secondary" />
+                <span className="text-xs text-text-secondary">
+                  Trang {availablePages.find((p) => p.id === formData.pageId)?.pageNumber || 'Đang tải...'}
+                </span>
+              </div>
+              {initialContext.taskName && (
+                <div className="mt-2 pt-2 border-t border-border-custom flex items-start gap-2">
+                  <Type size={14} className="text-brand mt-0.5" />
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-text-muted">Tên Task (từ Canvas)</span>
+                    <span className="text-sm font-medium text-text-primary">{initialContext.taskName}</span>
+                  </div>
+                </div>
+              )}
             </div>
+          ) : (
+            <>
+              {/* ─── Series + Chapter (Cascade Row 1) ─── */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
+                    <BookOpen size={12} />
+                    Series <span className="text-danger">*</span>
+                  </label>
+                  <CustomSelect
+                    options={seriesOptions}
+                    value={formData.seriesId}
+                    onChange={(v) => updateField('seriesId', v)}
+                    placeholder="Chọn series..."
+                    error={!!errors.seriesId}
+                    icon={<BookOpen size={14} />}
+                  />
+                  {errors.seriesId && <p className="text-[11px] text-danger mt-1">{errors.seriesId}</p>}
+                </div>
 
+                <div>
+                  <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
+                    <FileText size={12} />
+                    Chapter <span className="text-danger">*</span>
+                  </label>
+                  <CustomSelect
+                    options={chapterOptions}
+                    value={formData.chapterId}
+                    onChange={(v) => updateField('chapterId', v)}
+                    placeholder={formData.seriesId ? 'Chọn chapter...' : 'Chọn series trước'}
+                    disabled={!formData.seriesId}
+                    error={!!errors.chapterId}
+                    icon={<FileText size={14} />}
+                  />
+                  {errors.chapterId && <p className="text-[11px] text-danger mt-1">{errors.chapterId}</p>}
+                </div>
+              </div>
+
+              {/* ─── Page Selection ─── */}
+              <div>
+                <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
+                  <Image size={12} />
+                  Trang (Page) <span className="text-danger">*</span>
+                </label>
+                <CustomSelect
+                  options={pageOptions}
+                  value={formData.pageId}
+                  onChange={(v) => updateField('pageId', v)}
+                  placeholder={formData.chapterId ? 'Chọn trang...' : 'Chọn chapter trước'}
+                  disabled={!formData.chapterId}
+                  error={!!errors.pageId}
+                  icon={<Image size={14} />}
+                />
+                {errors.pageId && <p className="text-[11px] text-danger mt-1">{errors.pageId}</p>}
+                {selectedPage && formData.chapterId && (
+                  <p className="text-[10px] text-text-muted mt-1.5 flex items-center gap-1">
+                    <FileText size={10} />
+                    Trang {selectedPage.pageNumber} · {availableChapters.find((ch) => ch.id === formData.chapterId)?.title}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Task Name (Only show if not provided by context) */}
+          {(!initialContext || !initialContext.taskName) && (
             <div>
-              <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
-                <FileText size={12} />
-                Chapter <span className="text-danger">*</span>
+              <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1">
+                <Type size={12} />
+                Tên Task <span className="text-danger">*</span>
               </label>
-              <CustomSelect
-                options={chapterOptions}
-                value={formData.chapterId}
-                onChange={(v) => updateField('chapterId', v)}
-                placeholder={formData.seriesId ? 'Chọn chapter...' : 'Chọn series trước'}
-                disabled={!formData.seriesId}
-                error={!!errors.chapterId}
-                icon={<FileText size={14} />}
+              <input
+                type="text"
+                value={formData.taskName}
+                onChange={(e) => updateField('taskName', e.target.value)}
+                placeholder="VD: Vẽ nền trang 5, Tô bóng nhân vật chính..."
+                maxLength={100}
+                className={`w-full px-3 py-2 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all ${
+                  errors.taskName ? 'border-danger/50' : 'border-border-custom'
+                }`}
               />
-              {errors.chapterId && <p className="text-[11px] text-danger mt-1">{errors.chapterId}</p>}
+              {errors.taskName && <p className="text-[11px] text-danger mt-1">{errors.taskName}</p>}
             </div>
-          </div>
-
-          {/* ─── Page Selection ─── */}
-          <div>
-            <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
-              <Image size={12} />
-              Trang (Page) <span className="text-danger">*</span>
-            </label>
-            <CustomSelect
-              options={pageOptions}
-              value={formData.pageId}
-              onChange={(v) => updateField('pageId', v)}
-              placeholder={formData.chapterId ? 'Chọn trang...' : 'Chọn chapter trước'}
-              disabled={!formData.chapterId}
-              error={!!errors.pageId}
-              icon={<Image size={14} />}
-            />
-            {errors.pageId && <p className="text-[11px] text-danger mt-1">{errors.pageId}</p>}
-            {selectedPage && formData.chapterId && (
-              <p className="text-[10px] text-text-muted mt-1.5 flex items-center gap-1">
-                <FileText size={10} />
-                Trang {selectedPage.pageNumber} · {availableChapters.find((ch) => ch.id === formData.chapterId)?.title}
-              </p>
-            )}
-          </div>
-
-          {/* Task Name */}
-          <div>
-            <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
-              <Type size={12} />
-              Tên Task <span className="text-danger">*</span>
-            </label>
-            <input
-              type="text"
-              value={formData.taskName}
-              onChange={(e) => updateField('taskName', e.target.value)}
-              placeholder="VD: Vẽ nền trang 5, Tô bóng nhân vật chính..."
-              maxLength={100}
-              className={`w-full px-3 py-2.5 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all ${
-                errors.taskName ? 'border-danger/50' : 'border-border-custom'
-              }`}
-            />
-            {errors.taskName && <p className="text-[11px] text-danger mt-1">{errors.taskName}</p>}
-            <p className="text-[10px] text-text-muted mt-1 text-right">{formData.taskName.length}/100</p>
-          </div>
+          )}
 
           {/* Amount + Deadline */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
+              <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1">
                 <DollarSign size={12} />
                 Số tiền (VND) <span className="text-danger">*</span>
               </label>
@@ -318,28 +367,28 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
                 type="number"
                 value={formData.amount}
                 onChange={(e) => updateField('amount', e.target.value)}
-                placeholder="350,000"
-                min="50000"
-                step="10000"
-                className={`w-full px-3 py-2.5 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all ${
+                placeholder="350000"
+                className={`w-full px-3 py-2 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all ${
                   errors.amount ? 'border-danger/50' : 'border-border-custom'
                 }`}
               />
+              {!errors.amount && formData.amount && (
+                <p className="text-[11px] text-brand/80 mt-1 italic font-medium">
+                  Hiển thị: {Number(formData.amount).toLocaleString('vi-VN')} ₫
+                </p>
+              )}
               {errors.amount && <p className="text-[11px] text-danger mt-1">{errors.amount}</p>}
             </div>
             <div>
-              <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
+              <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1">
                 <Calendar size={12} />
                 Deadline <span className="text-danger">*</span>
               </label>
-              <input
-                type="date"
+              <CustomDatePicker
                 value={formData.deadline}
-                onChange={(e) => updateField('deadline', e.target.value)}
+                onChange={(v) => updateField('deadline', v)}
                 min={minDeadline}
-                className={`w-full px-3 py-2.5 bg-bg-surface border rounded-xl text-sm text-text-primary focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all ${
-                  errors.deadline ? 'border-danger/50' : 'border-border-custom'
-                }`}
+                error={!!errors.deadline}
               />
               {errors.deadline && <p className="text-[11px] text-danger mt-1">{errors.deadline}</p>}
             </div>
@@ -347,31 +396,31 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
 
           {/* Note */}
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
+            <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1">
               Ghi chú (không bắt buộc)
             </label>
             <textarea
               value={formData.note}
               onChange={(e) => updateField('note', e.target.value)}
               placeholder="Mô tả yêu cầu chi tiết cho Assistant..."
-              rows={2}
-              className="w-full px-3 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all resize-none"
+              rows={1}
+              className="w-full px-3 py-2 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all resize-none"
             />
           </div>
 
           {/* ─── Wallet Lock Preview (Rule F03) ─── */}
           {amountNum > 0 && (
-            <div className="bg-bg-surface border border-border-custom rounded-xl p-4 space-y-3">
+            <div className="bg-bg-surface border border-border-custom rounded-xl p-3 space-y-2">
               <p className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
                 <AlertCircle size={13} className="text-warning" />
                 Xem trước Lock tiền (T01)
               </p>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {lockBreakdown.sf > 0 && (
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] text-info flex items-center gap-1">
-                      <Shield size={11} /> Quỹ sản xuất (SF)
+                      <Shield size={11} /> Quỹ sản xuất
                     </span>
                     <span className="text-[11px] font-semibold text-info">-{formatVND(lockBreakdown.sf)}</span>
                   </div>
@@ -379,7 +428,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
                 {lockBreakdown.wb > 0 && (
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] text-success flex items-center gap-1">
-                      <Banknote size={11} /> Quỹ khả dụng (WB)
+                      <Banknote size={11} /> Quỹ khả dụng
                     </span>
                     <span className="text-[11px] font-semibold text-success">-{formatVND(lockBreakdown.wb)}</span>
                   </div>
@@ -396,13 +445,13 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
                 <div className="bg-bg-secondary rounded-lg p-2.5 space-y-1">
                   <p className="text-[10px] text-text-muted font-medium">Số dư sau Lock:</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-info flex items-center gap-1"><Shield size={9} /> SF</span>
+                    <span className="text-[10px] text-info flex items-center gap-1"><Shield size={9} /> Quỹ sản xuất</span>
                     <span className="text-[10px] font-semibold text-text-secondary">
                       {formatVND((wallet?.setupFundBalance || 0) - lockBreakdown.sf)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-success flex items-center gap-1"><Banknote size={9} /> WB</span>
+                    <span className="text-[10px] text-success flex items-center gap-1"><Banknote size={9} /> Quỹ khả dụng</span>
                     <span className="text-[10px] font-semibold text-text-secondary">
                       {formatVND((wallet?.withdrawableBalance || 0) - lockBreakdown.wb)}
                     </span>
@@ -413,7 +462,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
               {lockBreakdown.insufficient && (
                 <div className="bg-danger/5 border border-danger/20 rounded-lg p-2">
                   <p className="text-[10px] text-danger font-medium">
-                    ⚠ Số dư không đủ. SF còn: {formatVND(Math.max(0, (wallet?.setupFundBalance || 0) - (wallet?.lockedAmount || 0)))}, WB còn: {formatVND((wallet?.withdrawableBalance || 0))}
+                    ⚠ Số dư không đủ. Quỹ sản xuất còn: {formatVND(Math.max(0, (wallet?.setupFundBalance || 0) - (wallet?.lockedAmount || 0)))}, Quỹ khả dụng còn: {formatVND((wallet?.withdrawableBalance || 0))}
                   </p>
                 </div>
               )}
@@ -430,15 +479,15 @@ export const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps
         </div>
 
         {/* ─── Footer ─── */}
-        <div className="px-6 py-4 border-t border-border-custom flex items-center justify-between sticky bottom-0 bg-bg-secondary rounded-b-2xl">
+        <div className="px-5 py-3 border-t border-border-custom flex items-center justify-between sticky bottom-0 bg-bg-secondary rounded-b-2xl">
           <div className="text-[10px] text-text-muted space-y-0.5">
             <p className="flex items-center gap-1">
               <Shield size={9} className="text-info" />
-              SF: <span className="text-text-secondary font-medium">{formatVND(wallet?.setupFundBalance || 0)}</span>
+              Quỹ sản xuất: <span className="text-text-secondary font-medium">{formatVND(wallet?.setupFundBalance || 0)}</span>
             </p>
             <p className="flex items-center gap-1">
               <Banknote size={9} className="text-success" />
-              WB: <span className="text-text-secondary font-medium">{formatVND(wallet?.withdrawableBalance || 0)}</span>
+              Quỹ khả dụng: <span className="text-text-secondary font-medium">{formatVND(wallet?.withdrawableBalance || 0)}</span>
             </p>
           </div>
           <div className="flex items-center gap-3">
