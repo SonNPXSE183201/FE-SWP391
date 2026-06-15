@@ -74,13 +74,15 @@ export const taskApi = {
     return axiosInstance.get<PaginatedResponse<Task>>('/api/tasks/my', { params });
   },
 
-  getAvailableTasks: async (params?: { page?: number; pageSize?: number }) => {
-    if (USE_MOCK) {
-      await mockDelay(300);
-      const available = MOCK_TASKS.filter((t) => !t.assignedAssistantName && t.status === 'Pending');
-      return createMockPaginatedResponse(available, params?.page, params?.pageSize);
-    }
-    return axiosInstance.get<PaginatedResponse<Task>>('/api/tasks/available', { params });
+  // Backend API ready (feat/assistant-available-tasks) — always call real endpoint
+  getAvailableTasks: async (params?: { page?: number; pageSize?: number; skill?: string }) => {
+    return axiosInstance.get('/api/tasks/available', {
+      params: {
+        PageNumber: params?.page ?? 1,
+        PageSize: params?.pageSize ?? 10,
+        ...(params?.skill ? { Skill: params.skill } : {}),
+      },
+    });
   },
 
   getById: async (taskId: string) => {
