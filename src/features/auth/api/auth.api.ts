@@ -1,6 +1,5 @@
 import { axiosInstance } from '../../../api/axios';
 import type { ApiResponse } from '../../../api/axios';
-import type { User } from '../../../stores/authStore';
 
 // --- Register API ---
 export interface RegisterAssistantRequest {

@@ -1,5 +1,4 @@
 import { axiosInstance, type ApiResponse } from '../../../api/axios';
-import type { Transaction } from '../../../types/entities';
 import { MOCK_WALLET, MOCK_TRANSACTIONS, type MockTransaction } from '../data/mockData';
 
 // ─── Toggle this to false when backend wallet API is ready ───
@@ -109,7 +108,7 @@ export const walletApi = {
   confirmDeposit: async (referenceCode: string, status: string) => {
     if (USE_MOCK) {
       await mockDelay(500);
-      const amount = new URLSearchParams(window.location.search).get('amount');
+      // amount is available in the URL params if needed for real implementation
       const isSuccess = status === 'Success';
       return createMockAxiosResponse(
         isSuccess,

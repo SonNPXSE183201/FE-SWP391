@@ -1,9 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-  dashboardApi,
-  type AssistantDashboardStatsDto,
-  type AssistantRecentTaskDto,
-} from '../api/dashboard.api';
+import { dashboardApi } from '../api/dashboard.api';
+import type { AssistantRecentTaskDto } from '../api/dashboard.api';
 
 // ─── Hook return types ───────────────────────────────────────
 

@@ -1,10 +1,10 @@
 import { useLocation } from 'react-router-dom';
 import {
-  Bell,
   Search,
   Menu,
   ChevronRight,
 } from 'lucide-react';
+import { NotificationDropdown } from '../features/notifications';
 
 interface HeaderProps {
   onMobileMenuToggle: () => void;
@@ -96,15 +96,7 @@ export const Header = ({ onMobileMenuToggle }: HeaderProps) => {
         </button>
 
         {/* Notifications */}
-        <button
-          id="notification-bell"
-          className="relative flex items-center justify-center w-[38px] h-[38px] rounded-lg-custom bg-transparent text-text-secondary border-none cursor-pointer hover:bg-bg-surface hover:text-text-primary transition-all duration-200"
-          aria-label="Thông báo"
-        >
-          <Bell size={20} />
-          {/* Notification dot */}
-          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-danger border-2 border-bg-primary animate-pulse" />
-        </button>
+        <NotificationDropdown />
       </div>
     </header>
   );

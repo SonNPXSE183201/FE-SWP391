@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
 import {
-  MapPin, MessageCircle, Trash2, CheckCircle2,
-  ChevronLeft, ChevronRight, Circle, AlertCircle,
-  Loader2, ImageOff, RotateCcw,
+  MapPin, CheckCircle2,
+  ChevronLeft, ChevronRight, AlertCircle,
+  Loader2, ImageOff, Trash2, RotateCcw
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CanvasViewer } from '../../../components/canvas/CanvasViewer';
@@ -38,7 +38,7 @@ export const AnnotationReviewFeature = ({ chapterId = 'ch-1' }: AnnotationReview
   const currentPage = pages[currentPageIndex];
   const pageId = currentPage?.id ?? '';
 
-  const { data: annotations = [], isLoading: annotationsLoading } = useAnnotations(pageId);
+  const { data: annotations = [] } = useAnnotations(pageId);
   const { data: regions = [] } = useRegions(pageId);
 
   const createAnnotation = useCreateAnnotation(pageId);
