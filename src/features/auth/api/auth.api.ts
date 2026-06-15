@@ -87,12 +87,22 @@ export const forgotPasswordRequestApi = async (data: ForgotPasswordRequestDto): 
 // --- Reset Password API (Public) ---
 export interface ResetPasswordRequestDto {
   email: string;
-  resetCode: string;
+  verificationCode: string;
   newPassword: string;
   confirmNewPassword: string;
 }
 
 export const resetPasswordApi = async (data: ResetPasswordRequestDto): Promise<ApiResponse<null>> => {
   const response = await axiosInstance.post<ApiResponse<null>>('/api/auth/forgot-password/reset', data);
+  return response.data;
+};
+
+// --- Logout API ---
+export interface LogoutRequest {
+  refreshToken: string;
+}
+
+export const logoutApi = async (data: LogoutRequest): Promise<ApiResponse<null>> => {
+  const response = await axiosInstance.post<ApiResponse<null>>('/api/auth/logout', data);
   return response.data;
 };

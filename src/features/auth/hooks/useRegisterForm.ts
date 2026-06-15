@@ -65,23 +65,25 @@ export const useRegisterForm = () => {
       else if (formData.fullName.length > 100) newErrors.fullName = 'Họ tên không được vượt quá 100 ký tự';
       else if (!/^[\p{L}\p{M}\s]+$/u.test(formData.fullName)) newErrors.fullName = 'Họ tên chỉ được phép chứa chữ cái và khoảng trắng';
 
-      // Portfolio URL
-      if (!formData.portfolioUrl.trim()) newErrors.portfolioUrl = 'Vui lòng nhập link portfolio';
-      else if (formData.portfolioUrl.length > 500) newErrors.portfolioUrl = 'Link Portfolio không được vượt quá 500 ký tự';
-      else {
-        try {
-          const parsed = new URL(formData.portfolioUrl);
-          if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-            newErrors.portfolioUrl = 'Link portfolio phải bắt đầu bằng http:// hoặc https://';
+      // Portfolio URL (Tuỳ chọn)
+      if (formData.portfolioUrl.trim()) {
+        if (formData.portfolioUrl.length > 500) newErrors.portfolioUrl = 'Link Portfolio không được vượt quá 500 ký tự';
+        else {
+          try {
+            const parsed = new URL(formData.portfolioUrl);
+            if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+              newErrors.portfolioUrl = 'Link portfolio phải bắt đầu bằng http:// hoặc https://';
+            }
+          } catch {
+            newErrors.portfolioUrl = 'Link portfolio không hợp lệ';
           }
-        } catch {
-          newErrors.portfolioUrl = 'Link portfolio không hợp lệ';
         }
       }
 
-      // Kỹ năng chuyên môn
-      if (!formData.specialtyTags.trim()) newErrors.specialtyTags = 'Vui lòng nhập ít nhất 1 kỹ năng';
-      else if (formData.specialtyTags.length > 500) newErrors.specialtyTags = 'Thông tin kỹ năng không được vượt quá 500 ký tự';
+      // Kỹ năng chuyên môn (Tuỳ chọn)
+      if (formData.specialtyTags.trim()) {
+        if (formData.specialtyTags.length > 500) newErrors.specialtyTags = 'Thông tin kỹ năng không được vượt quá 500 ký tự';
+      }
     }
 
     if (step === 2) {
