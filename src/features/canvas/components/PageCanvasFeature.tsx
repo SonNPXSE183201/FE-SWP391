@@ -10,6 +10,7 @@ import { CanvasToolbar } from '../../../components/canvas/CanvasToolbar';
 import { MobileCanvasWarning } from '../../../components/canvas/MobileCanvasWarning';
 import { useCanvasStore } from '../../../stores/canvasStore';
 import { useRegions, useCreateRegion, useDeleteRegion, useUpdateRegion, useCanvasPages } from '../hooks/useCanvasData';
+import { useChapterDetail } from '../../series/hooks/useSeries';
 import { CreateTaskModal } from '../../tasks/components/CreateTaskModal';
 import type { Region } from '../../../types/entities';
 import type { CanvasViewerHandle } from '../../../components/canvas/CanvasViewer';
@@ -38,6 +39,7 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
   const { activeTool, zoomLevel, selectedRegionId, setActiveTool, setZoomLevel, setSelectedRegion } = useCanvasStore();
 
   // ─── Data ───
+  const { data: chapterDetail } = useChapterDetail(chapterId);
   const { data: pages = [], isLoading: pagesLoading } = useCanvasPages(chapterId);
   const currentPage = pages[currentPageIndex];
   const pageId = currentPage?.id ?? '';
@@ -401,6 +403,16 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
             setShowCreateTask(false);
             toast.success('Task đã được tạo từ Region!');
           }}
+          initialContext={
+            chapterDetail && currentPage
+              ? {
+                  seriesId: chapterDetail.seriesId,
+                  chapterId: chapterDetail.id,
+                  pageId: currentPage.id,
+                  taskName: regions.find((r) => r.id === selectedRegionId)?.label || '',
+                }
+              : undefined
+          }
         />
       )}
     </>
