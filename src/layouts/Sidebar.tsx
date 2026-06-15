@@ -165,8 +165,21 @@ const roleDisplayNames: Record<UserRole, string> = {
 };
 
 export const Sidebar = ({ collapsed, mobileOpen, onToggleCollapse, onCloseMobile }: SidebarProps) => {
-  const { user, logout } = useAuthStore();
+  const { user, logout, refreshToken } = useAuthStore();
   const location = useLocation();
+
+  const handleLogout = async () => {
+    try {
+      if (refreshToken) {
+        const { logoutApi } = await import('../features/auth/api/auth.api');
+        await logoutApi({ refreshToken });
+      }
+    } catch (error) {
+      console.error('Failed to logout from server:', error);
+    } finally {
+      logout();
+    }
+  };
 
   if (!user) return null;
 
@@ -298,7 +311,7 @@ export const Sidebar = ({ collapsed, mobileOpen, onToggleCollapse, onCloseMobile
 
           {/* Logout */}
           <button
-            onClick={() => logout()}
+            onClick={handleLogout}
             title={collapsed ? 'Đăng xuất' : undefined}
             className={`
               flex items-center gap-2 w-full rounded-lg-custom text-sm font-medium

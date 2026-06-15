@@ -1,19 +1,39 @@
 import { axiosInstance } from '../../../api/axios';
-import type { ApiResponse, PaginatedResponse } from '../../../types';
-import type { AssistantProfile } from '../../../types';
+import type { ApiResponse } from '../../../types';
 
 // ─── Request DTOs ────────────────────────────────────────────
 
-export interface ApproveAssistantRequest {
-  userId: string;
-  approved: boolean;
-  reason?: string;
+export interface CreateUserByAdminDto {
+  roleId: number;
+  userName: string;
+  email: string;
+  fullName: string;
+  penName?: string;
+  portfolioUrl?: string;
+  skills?: string;
 }
 
-export interface UpdateContractRequest {
-  contractId: string;
-  genkouryoPrice?: number;
-  endDate?: string;
+// ─── Response DTOs ───────────────────────────────────────────
+
+export interface AssistantResponseDto {
+  id: number;
+  userName: string;
+  email: string;
+  fullName: string;
+  status: string;
+  portfolioUrl?: string;
+  skills?: string;
+}
+
+export interface UserResponseDto {
+  id: number;
+  userName: string;
+  email: string;
+  fullName: string;
+  roleId: number;
+  status: string;
+  penName?: string;
+  message?: string;
 }
 
 export interface UserListItem {
@@ -28,18 +48,21 @@ export interface UserListItem {
 // ─── API Functions ───────────────────────────────────────────
 
 export const adminApi = {
-  // User management (F5.1, F5.2)
   getUsers: (params?: { page?: number; pageSize?: number; role?: string; status?: string }) =>
-    axiosInstance.get<PaginatedResponse<UserListItem>>('/api/admin/users', { params }),
+    axiosInstance.get<any>('/api/admin/users', { params }), // For mock UI compatibility
 
-  approveAssistant: (data: ApproveAssistantRequest) =>
-    axiosInstance.put<ApiResponse<AssistantProfile>>(`/api/admin/users/${data.userId}/approve`, data),
+  createUser: (data: CreateUserByAdminDto) =>
+    axiosInstance.post<ApiResponse<UserResponseDto>>('/api/admin/users', data),
 
-  // Contract management (F5.3, F5.5)
-  updateContract: (data: UpdateContractRequest) =>
-    axiosInstance.put<ApiResponse<null>>(`/api/admin/contracts/${data.contractId}`, data),
+  getPendingAssistants: () =>
+    axiosInstance.get<ApiResponse<AssistantResponseDto[]>>('/api/admin/users/pending'),
 
-  // Reconciliation (F5.6)
-  getReconciliation: (params?: { from?: string; to?: string }) =>
-    axiosInstance.get('/api/admin/reconciliation', { params }),
+  approveUser: (id: number | string) =>
+    axiosInstance.post<ApiResponse<UserResponseDto>>(`/api/admin/users/${id}/approve`),
+
+  rejectUser: (id: number | string) =>
+    axiosInstance.post<ApiResponse<UserResponseDto>>(`/api/admin/users/${id}/reject`),
+
+  lockUser: (id: number | string) =>
+    axiosInstance.post<ApiResponse<UserResponseDto>>(`/api/admin/users/${id}/lock`),
 };
