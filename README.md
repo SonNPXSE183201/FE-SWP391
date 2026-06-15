@@ -145,6 +145,7 @@ src/
 | `/mangaka/series/:id/chapters` | Chapters trong Series |
 | `/mangaka/chapters/:id/pages` | Canvas — Upload & Khoanh vùng |
 | `/mangaka/wallet` | Wallet Dashboard |
+| `/mangaka/settings` | Settings |
 
 ### Assistant
 | Route | Page |
@@ -154,6 +155,7 @@ src/
 | `/assistant/tasks/:id` | Chi tiết Task + Upload kết quả |
 | `/assistant/wallet` | Wallet + Thu nhập |
 | `/assistant/profile` | Profile + SpecialtyTags |
+| `/assistant/settings` | Settings |
 
 ### Editor
 | Route | Page |
@@ -161,6 +163,7 @@ src/
 | `/editor` | Dashboard + Progress |
 | `/editor/series/:id/review` | Review Chapter + Annotation Tool |
 | `/editor/disputes` | Phân xử tranh chấp |
+| `/editor/settings` | Settings |
 
 ### Board
 | Route | Page |
@@ -168,14 +171,16 @@ src/
 | `/board` | Dashboard |
 | `/board/voting` | Bỏ phiếu duyệt Series |
 | `/board/ranking` | Ranking Dashboard + Charts |
+| `/board/settings` | Settings |
 
 ### Admin
 | Route | Page |
 |-------|------|
 | `/admin` | Dashboard |
 | `/admin/users` | Quản lý Users + Approve |
-| `/admin/contracts` | Quản lý Hợp đồng |
+| `/admin/contracts` | Quản lý Hợp đồng (Bao gồm Phụ lục - Addendum) |
 | `/admin/reconciliation` | Đối soát VNPay |
+| `/admin/settings` | Settings |
 
 ## 🖌️ Canvas Components (Fabric.js)
 
@@ -299,6 +304,6 @@ npm run test
 
 | Thành viên | GitHub | Phụ trách |
 |-----------|--------|-----------|
-| Nguyễn Phạm Xuân Sơn | SonNPXSE183201 | Infra, Auth, User, Contract, Canvas |
-| Phạm Lê Hoàng Phúc | phucplhse183189 | Series, Chapter, Voting, Ranking, Dashboard |
-| Trần Duy Anh | anht876 | Wallet, Transaction, VNPay, Settings, Portfolio |
+| Nguyễn Phạm Xuân Sơn | SonNPXSE183201 | Backend, Infra, DevOps, API Design |
+| Phạm Lê Hoàng Phúc | phucplhse183189 | FE Core Logic, Canvas, SignalR, Tasks, Wallet, Admin, API Integration |
+| Trần Duy Anh | anht876 | FE Layout, Settings, Dashboards, Data Tables, UI Component Mapping |

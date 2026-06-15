@@ -57,7 +57,17 @@ const processQueue = (error: Error | null, token: string | null = null) => {
 
 // Intercept responses for global error handling (e.g., 401 Unauthorized)
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Map 'success' (lowercase from C# JSON serialization) to 'IsSuccess' for frontend compatibility
+    if (response.data && typeof response.data === 'object') {
+      const successVal = response.data.success ?? response.data.isSuccess ?? response.data.IsSuccess;
+      if (successVal !== undefined) {
+        response.data.IsSuccess = successVal;
+        response.data.success = successVal;
+      }
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
 
