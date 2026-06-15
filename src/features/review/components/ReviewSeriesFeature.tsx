@@ -148,7 +148,7 @@ export const ReviewSeriesFeature = () => {
                 </div>
 
                 <div className="flex flex-wrap gap-1.5">
-                  {series.genres.map((g) => (
+                  {series.genres.map((g: string) => (
                     <span key={g} className="px-2 py-0.5 rounded-md bg-brand/10 text-brand text-[10px] font-medium">
                       {g}
                     </span>

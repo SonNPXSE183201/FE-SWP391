@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import {
   Wallet, ArrowDownToLine, ArrowUpFromLine, TrendingUp,
   Clock, Lock, Search, Filter,
-  Shield, Banknote, Loader2, Eye
+  Shield, Banknote, Loader2
 } from 'lucide-react';
 
 import { TX_TYPE_CONFIG, TX_FILTER_OPTIONS, formatVND } from '../constants';
