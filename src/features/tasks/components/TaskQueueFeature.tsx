@@ -5,12 +5,13 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-import { TASK_STATUS_CONFIG, formatDeadline, useAvailableTasks, useAcceptTask } from '../index';
+import { TASK_STATUS_CONFIG, formatDeadline, useAvailableTasks, useAssistantMyTasks, useAcceptTask } from '../index';
 import { formatVND } from '../../wallet';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { Pagination } from '../../../components/common/Pagination';
 import type { AvailableTaskDto } from '../hooks/useTasks';
 import type { TaskStatus } from '../../../types/entities';
+import { useQueryClient } from '@tanstack/react-query';
 
 // ─── Server-side pagination state ────────────────────────────
 interface PaginationState {
@@ -50,18 +51,34 @@ export const TaskQueueFeature = () => {
   // ─── React Query: available tasks (server-side pagination) ───
   const {
     data: availableData,
-    isLoading,
-    isError,
-    error,
+    isLoading: isAvailableLoading,
+    isError: isAvailableError,
+    error: availableError,
   } = useAvailableTasks({
     page: currentPage,
     pageSize: PAGE_SIZE,
     skill: debouncedSkill || undefined,
   });
 
-  const tasks = availableData?.items ?? [];
-  const totalPages = availableData?.totalPages ?? 1;
-  const totalItems = availableData?.totalItems ?? 0;
+  const {
+    data: myData,
+    isLoading: isMyLoading,
+    isError: isMyError,
+    error: myError,
+  } = useAssistantMyTasks({
+    page: currentPage,
+    pageSize: PAGE_SIZE,
+  });
+
+  const isMyTasksTab = activeTab === 'MyTasks';
+  const isLoading = isMyTasksTab ? isMyLoading : isAvailableLoading;
+  const isError = isMyTasksTab ? isMyError : isAvailableError;
+  const error = isMyTasksTab ? myError : availableError;
+  const activeData = isMyTasksTab ? myData : availableData;
+
+  const tasks = activeData?.items ?? [];
+  const totalPages = activeData?.totalPages ?? 1;
+  const totalItems = activeData?.totalItems ?? 0;
 
   // ─── Mutation: nhận việc ───
   const acceptMutation = useAcceptTask();
@@ -72,6 +89,42 @@ export const TaskQueueFeature = () => {
       toast.success('Nhận việc thành công!');
     } catch {
       toast.error('Lỗi khi nhận việc');
+    }
+  };
+
+  // ─── Mutation: nộp bài ───
+  const [selectedFiles, setSelectedFiles] = useState<Record<number, File>>({});
+  const queryClient = useQueryClient();
+
+  const handleFileChange = (taskId: number, file: File | null) => {
+    if (file) {
+      setSelectedFiles((prev) => ({ ...prev, [taskId]: file }));
+    } else {
+      setSelectedFiles((prev) => {
+        const newFiles = { ...prev };
+        delete newFiles[taskId];
+        return newFiles;
+      });
+    }
+  };
+
+  const handleSubmitResult = async (taskId: number) => {
+    const file = selectedFiles[taskId];
+    if (!file) {
+      toast.error('Vui lòng chọn file kết quả trước khi nộp!');
+      return;
+    }
+
+    try {
+      const { taskApi } = await import('../api/task.api');
+      await taskApi.submitResult(String(taskId), { taskId: String(taskId), image: file, comment: '' });
+      toast.success('Nộp kết quả thành công!');
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'assistant-my'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'mangaka'] });
+      // clear file
+      handleFileChange(taskId, null);
+    } catch (e) {
+      toast.error('Lỗi khi nộp bài');
     }
   };
 
@@ -123,11 +176,10 @@ export const TaskQueueFeature = () => {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-all duration-200 ${
-              activeTab === tab
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-all duration-200 ${activeTab === tab
                 ? 'border-brand text-brand'
                 : 'border-transparent text-text-secondary hover:text-text-primary'
-            }`}
+              }`}
           >
             {tab === 'Available' ? '🔓 Việc có sẵn' : '📋 Việc của tôi'}
           </button>
@@ -231,6 +283,21 @@ export const TaskQueueFeature = () => {
                     )}
                   </div>
 
+                  {/* Feedback Comment (For Revision) */}
+                  {task.FeedbackComment && task.Status === 'Revision' && (
+                    <div className="mt-3 p-3 bg-danger/5 border border-danger/20 rounded-lg flex items-start gap-2">
+                      <div className="w-5 h-5 rounded-full bg-danger/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-[10px] text-danger font-bold">!</span>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[11px] font-semibold text-danger mb-0.5">Mangaka yêu cầu sửa đổi:</p>
+                        <p className="text-xs text-text-primary leading-relaxed whitespace-pre-wrap">
+                          {task.FeedbackComment}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Page image preview */}
                   {task.PageImageUrl && (
                     <div className="mt-3">
@@ -254,6 +321,29 @@ export const TaskQueueFeature = () => {
                     <Download size={14} />
                     Nhận việc
                   </button>
+                )}
+
+                {/* Right: Submit button */}
+                {activeTab === 'MyTasks' && ['In_Progress', 'Revision'].includes(task.Status) && (
+                  <div className="flex-shrink-0 flex flex-col gap-2 items-end">
+                    <label className="cursor-pointer px-3 py-1.5 border border-border-custom rounded-lg text-[11px] hover:bg-bg-secondary transition-colors text-text-primary">
+                      {selectedFiles[task.Id] ? selectedFiles[task.Id].name : '📁 Chọn File ảnh'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleFileChange(task.Id, e.target.files?.[0] || null)}
+                      />
+                    </label>
+                    <button
+                      onClick={() => handleSubmitResult(task.Id)}
+                      disabled={!selectedFiles[task.Id]}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-success hover:bg-green-600 text-white rounded-xl text-[11px] font-medium transition-all border-none cursor-pointer shadow-sm hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Download size={14} />
+                      Nộp kết quả
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

@@ -2,7 +2,7 @@ import { axiosInstance, type ApiResponse } from '../../../api/axios';
 import { MOCK_WALLET, MOCK_TRANSACTIONS, type MockTransaction } from '../data/mockData';
 
 // ─── Toggle this to false when backend wallet API is ready ───
-const USE_MOCK = false;
+const USE_MOCK = true;
 
 // ─── Request DTOs ────────────────────────────────────────────
 export interface DepositRequest {
@@ -108,8 +108,33 @@ export const walletApi = {
   confirmDeposit: async (referenceCode: string, status: string) => {
     if (USE_MOCK) {
       await mockDelay(500);
-      // amount is available in the URL params if needed for real implementation
       const isSuccess = status === 'Success';
+      
+      if (isSuccess) {
+        // Read amount from URL for mock mutation
+        const amountStr = new URLSearchParams(window.location.search).get('amount');
+        if (amountStr) {
+          const amount = Number(amountStr);
+          // Prevent double processing if user refreshes the page
+          const alreadyProcessed = MOCK_TRANSACTIONS.find(t => t.referenceCode === referenceCode);
+          if (!alreadyProcessed) {
+            MOCK_WALLET.withdrawableBalance += amount;
+            MOCK_WALLET.totalBalance += amount;
+            MOCK_TRANSACTIONS.unshift({
+              id: `tx-${Date.now()}`,
+              type: 'Deposit',
+              amount: amount,
+              setupFundAmount: 0,
+              withdrawableAmount: amount,
+              referenceId: `vnp-${Date.now()}`,
+              referenceCode: referenceCode,
+              description: 'Nạp tiền qua VNPay',
+              createdAt: new Date().toISOString(),
+            });
+          }
+        }
+      }
+
       return createMockAxiosResponse(
         isSuccess,
         isSuccess ? 'Nạp tiền thành công!' : 'Giao dịch thất bại hoặc bị hủy.'
@@ -132,8 +157,26 @@ export const walletApi = {
           `Số dư không đủ. Số dư khả dụng: ${MOCK_WALLET.withdrawableBalance.toLocaleString('vi-VN')}₫`
         );
       }
+
+      // Mutate mock wallet
+      MOCK_WALLET.withdrawableBalance -= data.amount;
+      MOCK_WALLET.totalBalance -= data.amount;
+      const refCode = `WD-${Date.now()}`;
+      
+      MOCK_TRANSACTIONS.unshift({
+        id: `tx-${Date.now()}`,
+        type: 'Withdraw',
+        amount: -data.amount,
+        setupFundAmount: 0,
+        withdrawableAmount: -data.amount,
+        referenceId: `wd-${Date.now()}`,
+        referenceCode: refCode,
+        description: `Rút tiền về ${data.bankName} **** ${data.bankAccountNumber.slice(-4)}`,
+        createdAt: new Date().toISOString(),
+      });
+
       return createMockAxiosResponse(
-        { amount: data.amount, referenceCode: `WD-${Date.now()}` },
+        { amount: data.amount, referenceCode: refCode },
         'Yêu cầu rút tiền đã được gửi thành công.'
       );
     }

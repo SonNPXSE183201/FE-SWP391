@@ -11,5 +11,5 @@ export { TaskQueueFeature } from './components/TaskQueueFeature';
 export { taskApi } from './api/task.api';
 
 // Hooks
-export { useMangakaTasks, useAvailableTasks, useAcceptTask, useTaskDetail } from './hooks/useTasks';
+export { useMangakaTasks, useAvailableTasks, useAssistantMyTasks, useAcceptTask, useApproveTask, useRequestRevisionTask, useTaskDetail } from './hooks/useTasks';
 export type { AvailableTaskDto } from './hooks/useTasks';

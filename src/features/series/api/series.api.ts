@@ -30,14 +30,14 @@ export interface SubmitChapterRequest {
 }
 
 // ─── Mock helpers ────────────────────────────────────────────
-const mockDelay = (ms: number = 400) =>
+const mockDelay = (ms: number = 50) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 const createMockAxiosResponse = <T>(data: T, message = 'Success') => ({
   data: {
-    success: true,
-    message: message,
-    data: data,
+    IsSuccess: true,
+    Message: message,
+    Data: data,
   } as unknown as ApiResponse<T>,
 });
 
@@ -74,7 +74,7 @@ export const seriesApi = {
       }
       return createMockPaginatedResponse(filtered, params?.page, params?.pageSize);
     }
-    return axiosInstance.get<PaginatedResponse<Series>>('/api/series', { params });
+    return axiosInstance.get<PaginatedResponse<Series>>('/api/series/my-list', { params });
   },
 
   getById: async (seriesId: string) => {
@@ -82,7 +82,7 @@ export const seriesApi = {
       await mockDelay(200);
       const series = MOCK_SERIES.find((s) => s.id === seriesId);
       if (!series) {
-        return { data: { success: true, message: 'Thành công', data: MOCK_SERIES[0] } } as any;
+        return { data: { IsSuccess: true, Message: 'Thành công', Data: MOCK_SERIES[0] } } as any;
       }
       return createMockAxiosResponse(series);
     }
@@ -94,10 +94,29 @@ export const seriesApi = {
       await mockDelay(300);
       return createMockPaginatedResponse(MOCK_SERIES, params?.page, params?.pageSize);
     }
-    return axiosInstance.get<PaginatedResponse<Series>>('/api/series/my', { params });
+    return axiosInstance.get<ApiResponse<Series[]>>('/api/series/my-list', { params });
   },
 
-  create: (data: CreateSeriesRequest) => {
+  create: async (data: CreateSeriesRequest) => {
+    if (USE_MOCK) {
+      await mockDelay(800);
+      const newSeries: Series = {
+        id: `s-${Date.now()}`,
+        mangakaId: 'user-1',
+        mangakaName: 'Mangaka Test',
+        title: data.title,
+        synopsis: data.synopsis,
+        genre: data.genre,
+        coverImageUrl: data.coverImage ? URL.createObjectURL(data.coverImage) : 'https://placehold.co/400x600/1A1A24/E2E8F0?text=New+Series',
+        status: 'Draft',
+        chapterCount: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      MOCK_SERIES.unshift(newSeries);
+      return createMockAxiosResponse(newSeries, 'Tạo Series thành công!');
+    }
+
     const formData = new FormData();
     formData.append('title', data.title);
     formData.append('synopsis', data.synopsis);
