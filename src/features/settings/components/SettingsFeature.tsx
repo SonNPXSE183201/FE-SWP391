@@ -69,6 +69,7 @@ const loadNotificationPrefs = (userId: string | number | undefined): Notificatio
     return DEFAULT_NOTIFICATION_PREFS.map((pref) => ({
       ...pref,
       enabled: saved[pref.id] ?? pref.enabled,
+
     }));
   } catch {
     return DEFAULT_NOTIFICATION_PREFS;
