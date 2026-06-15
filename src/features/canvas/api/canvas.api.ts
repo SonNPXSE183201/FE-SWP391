@@ -9,9 +9,9 @@ import {
 } from '../data/mockData';
 
 // ─── Toggle to false when backend canvas API is ready ────────
-const USE_MOCK = false;
+const USE_MOCK = true;
 
-const mockDelay = (ms = 300) => new Promise((r) => setTimeout(r, ms));
+const mockDelay = (ms = 50) => new Promise((r) => setTimeout(r, ms));
 
 const mockResponse = <T>(data: T, message = 'Success') => ({
   data: { IsSuccess: true, Message: message, Data: data },

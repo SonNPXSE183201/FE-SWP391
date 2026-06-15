@@ -67,6 +67,23 @@ export const useAvailableTasks = (params?: { page?: number; pageSize?: number; s
   });
 };
 
+export const useAssistantMyTasks = (params?: { page?: number; pageSize?: number }) => {
+  return useQuery<AvailableTasksResult, Error>({
+    queryKey: ['tasks', 'assistant-my', params],
+    queryFn: async () => {
+      const res = await taskApi.getAssistantMyTasks(params);
+      const apiData = (res.data as any)?.Data ?? (res.data as any)?.data;
+      const items: AvailableTaskDto[] = apiData?.Items ?? apiData?.items ?? (Array.isArray(apiData) ? apiData : []);
+      const totalPages = apiData?.TotalPages ?? apiData?.totalPages ?? 1;
+      const totalItems = apiData?.TotalItems ?? apiData?.totalItems ?? items.length;
+      const pageNumber = apiData?.PageNumber ?? apiData?.pageNumber ?? 1;
+      return { items, totalPages, totalItems, pageNumber };
+    },
+    staleTime: 1000 * 30,
+    retry: 1,
+  });
+};
+
 // ─── Accept Task (Assistant nhận việc) ───────────────────────
 export const useAcceptTask = () => {
   const queryClient = useQueryClient();
@@ -74,6 +91,33 @@ export const useAcceptTask = () => {
     mutationFn: (taskId: number) => taskApi.accept(String(taskId)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', 'available'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'assistant-my'] });
+    },
+  });
+};
+
+// ─── Approve Task (Mangaka duyệt bài) ──────────────────────────
+export const useApproveTask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (taskId: string) => taskApi.approve(taskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'mangaka'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'assistant-my'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet'] });
+    },
+  });
+};
+
+// ─── Request Revision Task (Mangaka yêu cầu sửa bài) ───────────
+export const useRequestRevisionTask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ taskId, comment, extensionHours }: { taskId: string; comment: string; extensionHours: 24 | 48 }) =>
+      taskApi.requestRevision(taskId, comment, extensionHours),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'mangaka'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'assistant-my'] });
     },
   });
 };

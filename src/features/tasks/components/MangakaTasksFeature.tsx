@@ -1,11 +1,21 @@
 import { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   ClipboardList, Plus, Search, Eye,
   UserCheck, Calendar, DollarSign, Filter, ArrowUpDown,
-  Clock, Loader2,
+  Clock, Loader2, AlertCircle, X
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
-import { TASK_STATUS_CONFIG, TASK_STATUS_FILTER_OPTIONS, formatDeadline, CreateTaskModal, useMangakaTasks } from '../index';
+import { 
+  TASK_STATUS_CONFIG, 
+  TASK_STATUS_FILTER_OPTIONS,
+  formatDeadline,
+  useMangakaTasks,
+  useApproveTask,
+  useRequestRevisionTask,
+  CreateTaskModal 
+} from '../index';
 import { formatVND } from '../../wallet';
 import { usePagination } from '../../../hooks/usePagination';
 import { Pagination } from '../../../components/common/Pagination';
@@ -15,9 +25,42 @@ export const MangakaTasksFeature = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'deadline' | 'amount'>('newest');
-  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const { data: tasks = [], isLoading, error } = useMangakaTasks();
+  const approveMutation = useApproveTask();
+  const revisionMutation = useRequestRevisionTask();
+
+  // ─── Revision Modal State ───
+  const [revisionTaskId, setRevisionTaskId] = useState<string | null>(null);
+  const [revisionComment, setRevisionComment] = useState('');
+  const [extensionHours, setExtensionHours] = useState<24 | 48>(24);
+
+  const handleApprove = async (taskId: string) => {
+    try {
+      await approveMutation.mutateAsync(taskId);
+      toast.success('Duyệt bài thành công!');
+    } catch {
+      toast.error('Lỗi khi duyệt bài');
+    }
+  };
+
+  const submitRevision = async () => {
+    if (!revisionTaskId) return;
+    if (!revisionComment.trim()) {
+      toast.error('Vui lòng nhập yêu cầu sửa đổi!');
+      return;
+    }
+
+    try {
+      await revisionMutation.mutateAsync({ taskId: revisionTaskId, comment: revisionComment, extensionHours });
+      toast.success('Yêu cầu sửa đổi thành công!');
+      setRevisionTaskId(null);
+      setRevisionComment('');
+      setExtensionHours(24);
+    } catch {
+      toast.error('Lỗi khi yêu cầu sửa đổi');
+    }
+  };
 
   const filtered = useMemo(() => {
     let result = tasks.filter((t) => {
@@ -86,13 +129,6 @@ export const MangakaTasksFeature = () => {
             <p className="text-xs text-text-muted mt-0.5">Phân công và theo dõi công việc trợ lý vẽ</p>
           </div>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition-all border-none cursor-pointer shadow-brand hover:shadow-brand-hover hover:-translate-y-0.5"
-        >
-          <Plus size={16} />
-          Tạo Task mới
-        </button>
       </div>
 
       {/* Stat Cards */}
@@ -208,16 +244,42 @@ export const MangakaTasksFeature = () => {
                       {dl.text}
                     </span>
                   </div>
+
+                  {/* Result Image Preview */}
+                  {task.resultImageUrl && (
+                    <div className="mt-3">
+                      <p className="text-[11px] font-medium text-text-secondary mb-1.5">Kết quả Trợ lý nộp:</p>
+                      <a href={task.resultImageUrl} target="_blank" rel="noreferrer">
+                        <img 
+                          src={task.resultImageUrl} 
+                          alt="Kết quả" 
+                          className="h-24 md:h-32 rounded-lg border border-border-custom object-cover cursor-zoom-in hover:opacity-90 transition-opacity" 
+                        />
+                      </a>
+                    </div>
+                  )}
                 </div>
 
                 {/* Action hints */}
                 {task.status === 'Pending_Review' && (
                   <div className="flex gap-1.5 flex-shrink-0">
-                    <button className="px-3 py-1.5 rounded-lg bg-success/10 text-success text-[11px] font-medium hover:bg-success/20 transition-colors border-none cursor-pointer">
+                    <button 
+                      onClick={() => handleApprove(task.id)}
+                      disabled={approveMutation.isPending}
+                      className="px-3 py-1.5 rounded-lg bg-success/10 text-success text-[11px] font-medium hover:bg-success/20 transition-colors border-none cursor-pointer disabled:opacity-50"
+                    >
                       Duyệt
                     </button>
-                    <button className="px-3 py-1.5 rounded-lg bg-danger/10 text-danger text-[11px] font-medium hover:bg-danger/20 transition-colors border-none cursor-pointer">
-                      Revision
+                    <button 
+                      onClick={() => {
+                        setRevisionTaskId(task.id);
+                        setRevisionComment('');
+                        setExtensionHours(24);
+                      }}
+                      disabled={revisionMutation.isPending}
+                      className="px-3 py-1.5 rounded-lg bg-danger/10 text-danger text-[11px] font-medium hover:bg-danger/20 transition-colors border-none cursor-pointer disabled:opacity-50"
+                    >
+                      Sửa đổi
                     </button>
                   </div>
                 )}
@@ -250,7 +312,96 @@ export const MangakaTasksFeature = () => {
         itemLabel="tasks"
       />
 
-      {showCreateModal && <CreateTaskModal onClose={() => setShowCreateModal(false)} />}
+      {/* ─── Revision Modal ─── */}
+      {revisionTaskId && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setRevisionTaskId(null)}></div>
+          <div className="relative bg-bg-secondary w-full max-w-md rounded-2xl border border-border-custom shadow-2xl overflow-hidden flex flex-col animate-scale-in z-10">
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 border-b border-border-custom">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-danger/10 flex items-center justify-center text-danger">
+                  <AlertCircle size={20} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-text-primary">Yêu cầu sửa đổi</h2>
+                  <p className="text-xs text-text-muted mt-0.5">Task: {tasks.find(t => t.id === revisionTaskId)?.taskName}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setRevisionTaskId(null)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-bg-surface text-text-muted transition-colors border-none cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 flex flex-col gap-5">
+              <div>
+                <label className="block text-sm font-medium text-text-primary mb-2">
+                  Nhận xét / Yêu cầu sửa đổi <span className="text-danger">*</span>
+                </label>
+                <textarea
+                  value={revisionComment}
+                  onChange={(e) => setRevisionComment(e.target.value)}
+                  placeholder="Vd: Đổ bóng bị lố quá, bôi bớt đi em..."
+                  className="w-full px-4 py-3 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all resize-none h-28"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text-primary mb-2">
+                  Gia hạn Deadline (Quy định bắt buộc)
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setExtensionHours(24)}
+                    className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-all ${
+                      extensionHours === 24
+                        ? 'border-brand bg-brand/10 text-brand'
+                        : 'border-border-custom bg-bg-surface text-text-secondary hover:border-text-muted'
+                    } cursor-pointer`}
+                  >
+                    <Clock size={16} />
+                    +24 giờ
+                  </button>
+                  <button
+                    onClick={() => setExtensionHours(48)}
+                    className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-all ${
+                      extensionHours === 48
+                        ? 'border-brand bg-brand/10 text-brand'
+                        : 'border-border-custom bg-bg-surface text-text-secondary hover:border-text-muted'
+                    } cursor-pointer`}
+                  >
+                    <Clock size={16} />
+                    +48 giờ
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 p-5 border-t border-border-custom bg-bg-surface/50">
+              <button
+                onClick={() => setRevisionTaskId(null)}
+                className="px-5 py-2.5 rounded-xl text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-bg-secondary transition-colors border-none cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={submitRevision}
+                disabled={revisionMutation.isPending || !revisionComment.trim()}
+                className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-danger hover:bg-red-600 transition-colors border-none shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {revisionMutation.isPending ? 'Đang gửi...' : 'Gửi yêu cầu'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
     </div>
   );
 };
