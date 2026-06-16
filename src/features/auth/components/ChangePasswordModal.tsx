@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { KeyRound, Loader2, Eye, EyeOff, X, ShieldCheck } from 'lucide-react';
-import { changePasswordApi } from '../api/auth.api';
+import { authApi } from '../api/auth.api';
 interface ChangePasswordModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -61,7 +61,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
         }
         setIsLoading(true);
         try {
-            const response = await changePasswordApi({
+            const response = await authApi.changePassword({
                 currentPassword,
                 newPassword,
                 confirmNewPassword,

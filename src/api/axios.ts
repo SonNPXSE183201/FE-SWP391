@@ -10,7 +10,7 @@ export interface ApiResponse<T> {
 }
 
 export const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5010',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -73,7 +73,7 @@ axiosInstance.interceptors.response.use(
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });
         }).then(token => {
           originalRequest.headers['Authorization'] = 'Bearer ' + token;
@@ -93,15 +93,15 @@ axiosInstance.interceptors.response.use(
       if (token && refreshToken) {
         try {
           // Dynamic import to avoid potential circular dependencies
-          const { refreshTokenApi } = await import('../features/auth/api/auth.api');
-          const response = await refreshTokenApi({ token, refreshToken });
-          
+          const { authApi } = await import('../features/auth/api/auth.api');
+          const response = await authApi.refreshToken({ token, refreshToken });
+
           if (response.IsSuccess && response.Data) {
             const newToken = response.Data.Token;
             const newRefreshToken = response.Data.RefreshToken;
-            
+
             // Update auth store
-            if (authState.user) {
+            if (authState.user && newToken && newRefreshToken) {
               authState.setAuth(authState.user, newToken, newRefreshToken);
             }
 
