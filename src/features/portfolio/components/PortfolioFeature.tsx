@@ -16,7 +16,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { usePortfolioStats, usePortfolioSamples, useUploadPortfolioSample } from '../hooks/usePortfolio';
-import { taskApi } from '../../tasks/api/task.api';
+import { taskApi } from '../../tasks';
 import { formatVND } from '../../wallet';
 
 const CATEGORIES = ['All', 'Lineart', 'Background', 'Screentone', 'Coloring'];

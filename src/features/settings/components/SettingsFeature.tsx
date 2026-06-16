@@ -13,7 +13,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useAuthStore, type UserRole } from '../../../stores/authStore';
-import { ChangePasswordModal } from '../../auth/components/ChangePasswordModal';
+import { ChangePasswordModal } from '../../auth';
 
 // ─── Types ───────────────────────────────────────────────────
 type TabId = 'profile' | 'password' | 'notifications';

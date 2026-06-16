@@ -1,7 +1,6 @@
 import { axiosInstance } from '../../../api/axios';
 import type { ApiResponse, PaginatedResponse, Task, TaskVersion } from '../../../types/entities';
 import { MOCK_TASKS } from '../data/mockData';
-import { MOCK_WALLET, MOCK_TRANSACTIONS } from '../../wallet/data/mockData';
 
 import { components } from '../../../api/generated/schema';
 import type { TaskStatus } from '../../../types/entities';
