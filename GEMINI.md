@@ -233,33 +233,27 @@ export const useApproveTask = () => {
 };
 ```
 
-### 3.5 API Data Mapping (PascalCase vs camelCase)
+### 3.5 API Data Casing & OpenAPI Generation (PascalCase)
 
-**RẤT QUAN TRỌNG:** Backend C# (ASP.NET) thường trả về JSON với các thuộc tính dạng **PascalCase** (Ví dụ: `IsSuccess`, `Data`, `SetupFundBalance`). Trong khi Frontend (TypeScript) quy ước sử dụng **camelCase** (Ví dụ: `isSuccess`, `data`, `setupFundBalance`).
-- **KHÔNG** sử dụng trực tiếp dữ liệu PascalCase từ API truyền xuống Components.
-- **BẮT BUỘC** phải thực hiện **Data Mapping** từ `PascalCase` sang `camelCase` ngay tại tầng API hook (trong `queryFn` của React Query) trước khi return dữ liệu cho component.
-- Phải định nghĩa interface `ApiResponse` khớp với response format của backend (Sử dụng PascalCase cho các key root nếu backend cấu hình như vậy).
+**CẬP NHẬT MỚI (Từ 15/06/2026):** Backend C# (ASP.NET) trả về JSON với các thuộc tính dạng **PascalCase** (Ví dụ: `StatusCode`, `Data`, `SetupFundBalance`). 
+Để tăng tốc phát triển (Vibe Coding) và tận dụng sức mạnh của `openapi-typescript`:
+- **CHO PHÉP** và **KHUYẾN KHÍCH** sử dụng trực tiếp các Type DTO dạng PascalCase được sinh ra từ `src/api/generated/schema.ts` làm Props cho các UI Components. 
+- **BÃI BỎ** quy định bắt buộc phải Data Mapping từ `PascalCase` sang `camelCase`. Bạn không cần (và không nên) viết tay thêm Interface phụ nào nữa để map dữ liệu. Dùng thẳng Type của OpenAPI.
+- Vẫn cần khai báo kiểu `ApiResponse<T>` chung để bóc tách root object `{ success, StatusCode, Message, Data }`, sau đó truyền thẳng `Data` xuống dưới.
 
 **Ví dụ:**
 ```tsx
+// Sử dụng trực tiếp type từ schema.ts, không cần map!
+import { components } from "@/api/generated/schema";
+type WalletDto = components["schemas"]["WalletResponse"];
+
 export const useWallet = () => {
   return useQuery({
     queryKey: ['wallet'],
     queryFn: async () => {
       const response = await walletApi.getMyWallet();
-      
-      // 1. Nhận dữ liệu PascalCase từ backend
-      const backendData = response.data.Data; 
-      
-      // 2. Map sang camelCase theo Entity của Frontend
-      const wallet: Wallet = {
-        id: String(backendData.Id),
-        setupFundBalance: Number(backendData.SetupFundBalance),
-        withdrawableBalance: Number(backendData.WithdrawableBalance),
-        // ...
-      };
-
-      return wallet;
+      // Trả thẳng DTO có chứa PascalCase keys (SetupFundBalance, etc.)
+      return response.data.Data as WalletDto;
     }
   });
 };

@@ -124,7 +124,7 @@ export const useRegisterForm = () => {
           verificationCode: formData.verificationCode
         });
 
-        if (response.data.IsSuccess) {
+        if (response.IsSuccess) {
           toast.success('Xác thực thành công! Vui lòng chờ Admin duyệt tài khoản.');
           navigate('/login');
         }
@@ -152,12 +152,14 @@ export const useRegisterForm = () => {
 
       setShowConfirmModal(false);
       
-      if (response.data.IsSuccess && response.data.Data?.RequiresVerification) {
-        setCurrentStep(2);
-        toast.success('Mã OTP đã được gửi đến email của bạn');
-      } else {
-        toast.success('Đăng ký thành công! Vui lòng chờ Admin duyệt tài khoản.');
-        navigate('/login');
+      if (response.IsSuccess) {
+        if (response.Data?.RequiresVerification) {
+          setCurrentStep(2);
+          toast.success(response.Data?.Message || 'Mã OTP đã được gửi đến email của bạn');
+        } else {
+          toast.success('Đăng ký thành công! Vui lòng chờ Admin duyệt tài khoản.');
+          navigate('/login');
+        }
       }
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { Message?: string } } };

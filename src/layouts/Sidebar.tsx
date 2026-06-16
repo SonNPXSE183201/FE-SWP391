@@ -171,8 +171,8 @@ export const Sidebar = ({ collapsed, mobileOpen, onToggleCollapse, onCloseMobile
   const handleLogout = async () => {
     try {
       if (refreshToken) {
-        const { logoutApi } = await import('../features/auth/api/auth.api');
-        await logoutApi({ refreshToken });
+        const { authApi } = await import('../features/auth/api/auth.api');
+        await authApi.logout({ refreshToken });
       }
     } catch (error) {
       console.error('Failed to logout from server:', error);
