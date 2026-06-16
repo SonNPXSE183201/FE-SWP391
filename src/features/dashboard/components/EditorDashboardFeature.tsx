@@ -83,7 +83,7 @@ export const EditorDashboardFeature = () => {
           <h2 className="text-sm font-semibold text-text-primary">Lịch sử công việc gần đây</h2>
         </div>
         <div className="divide-y divide-border-custom">
-          {recentActivities.map((act) => (
+          {recentActivities.map((act: any) => (
             <div key={act.id} className="p-4 flex items-center justify-between hover:bg-bg-surface/30 transition-colors">
               <div className="flex items-center gap-3">
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${

@@ -7,7 +7,7 @@ import { CoverPlaceholder } from './CoverPlaceholder';
 // ─── Grid Card ───────────────────────────────────────────────
 export const SeriesCard = ({ series, index }: { series: Series; index: number }) => {
   const navigate = useNavigate();
-  const status = SERIES_STATUS_CONFIG[series.status];
+  const status = SERIES_STATUS_CONFIG[series.status] || { label: String(series.status), color: 'text-text-muted', bg: 'bg-bg-surface' };
   const updatedDate = new Date(series.updatedAt).toLocaleDateString('vi-VN', {
     day: '2-digit', month: '2-digit', year: 'numeric',
   });
@@ -75,7 +75,7 @@ export const SeriesCard = ({ series, index }: { series: Series; index: number })
 // ─── List Row ────────────────────────────────────────────────
 export const SeriesRow = ({ series, index }: { series: Series; index: number }) => {
   const navigate = useNavigate();
-  const status = SERIES_STATUS_CONFIG[series.status];
+  const status = SERIES_STATUS_CONFIG[series.status] || { label: String(series.status), color: 'text-text-muted', bg: 'bg-bg-surface' };
   const updatedDate = new Date(series.updatedAt).toLocaleDateString('vi-VN', {
     day: '2-digit', month: '2-digit', year: 'numeric',
   });

@@ -164,12 +164,13 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
   const createMutation = useMutation({
     mutationFn: async () => {
       const res = await taskApi.create({
-        regionId: formData.pageId, // For now, passing pageId as regionId if canvas region not selected
-        taskName: formData.taskName,
-        assignedAssistantId: '',
-        amount: amountNum,
-        deadline: new Date(formData.deadline + 'T23:59:59Z').toISOString(),
-      });
+        RegionId: 1, // TODO: Replace with actual RegionId when Region API is implemented
+        AssistantId: undefined,
+        Description: formData.taskName,
+        PaymentAmount: amountNum,
+        Deadline: new Date(formData.deadline + 'T23:59:59Z').toISOString(),
+        ZIndex_Order: 1,
+      } as any);
       if (!res.data?.success) throw new Error(res.data?.message || 'Lỗi tạo task');
       return res.data.data;
     },

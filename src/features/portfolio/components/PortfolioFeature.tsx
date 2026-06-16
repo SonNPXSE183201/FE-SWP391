@@ -41,7 +41,9 @@ export const PortfolioFeature = () => {
     queryKey: ['portfolio', 'tasks'],
     queryFn: () => taskApi.getMyTasks({ pageSize: 100 }),
   });
-  const tasks = tasksRes?.data?.Data || tasksRes?.data?.data || [];
+
+  const rawData = (tasksRes?.data as any)?.Data ?? (tasksRes?.data as any)?.data;
+  const tasks: any[] = rawData?.Items ?? rawData?.items ?? (Array.isArray(rawData) ? rawData : []);
 
   const handleOpenUpload = () => {
     setTitle('');

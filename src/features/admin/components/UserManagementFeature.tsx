@@ -131,7 +131,7 @@ export const UserManagementFeature = () => {
                     <td colSpan={6} className="p-8 text-center text-text-muted">Không tìm thấy người dùng nào</td>
                   </tr>
                 ) : (
-                  users.map((user) => (
+                  users.map((user: UserListItem) => (
                     <tr key={user.id} className="border-b border-border-custom/50 hover:bg-bg-primary/30 transition-colors">
                       <td className="p-4 font-medium text-text-primary">{user.fullName}</td>
                       <td className="p-4 text-text-secondary">{user.email}</td>
