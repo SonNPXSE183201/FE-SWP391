@@ -1,11 +1,14 @@
 import { axiosInstance } from '../../../api/axios';
 import type { ApiResponse } from '../../../api/axios';
+import { components } from '../../../api/generated/schema';
 
-// --- Register API ---
-export interface RegisterAssistantRequest {
+export type RegisterResponseDto = components["schemas"]["RegisterResponseDto"];
+export type AuthResponseDto = components["schemas"]["AuthResponseDto"];
+
+// We define custom parameter types for our frontend functions to keep them camelCase
+export interface RegisterAssistantParams {
   userName: string;
   email: string;
-  passwordHash?: string; // We map this to password for backend
   password?: string;
   fullName: string;
   portfolioUrl?: string;
@@ -13,96 +16,99 @@ export interface RegisterAssistantRequest {
   verificationCode?: string;
 }
 
-export interface RegisterResponseDto {
-  RequiresVerification: boolean;
-  Message: string;
-}
-
-export const authApi = {
-  registerAssistant: (data: RegisterAssistantRequest) => {
-    // Map passwordHash to password if needed, and send as is
-    const payload = { ...data, password: data.passwordHash || data.password };
-    delete payload.passwordHash;
-    return axiosInstance.post<ApiResponse<RegisterResponseDto>>('/api/auth/register', payload);
-  }
-};
-
-// --- Login API ---
-export interface LoginRequest {
-  identifier: string;
-  password: string;
-}
-
-export interface AuthResponseDto {
-  UserId: number;
-  UserName: string;
-  Email: string;
-  FullName: string;
-  RoleName: string;
-  Token: string;
-  RefreshToken: string;
-}
-
-export interface RefreshTokenRequest {
+export interface RefreshTokenParams {
   token: string;
   refreshToken: string;
 }
 
-export const loginApi = async (credentials: { email: string; password: string }): Promise<ApiResponse<AuthResponseDto>> => {
-  const payload: LoginRequest = {
-    identifier: credentials.email,
-    password: credentials.password
-  };
-  const response = await axiosInstance.post<ApiResponse<AuthResponseDto>>('/api/auth/login', payload);
-  return response.data;
-};
-
-export const refreshTokenApi = async (payload: RefreshTokenRequest): Promise<ApiResponse<AuthResponseDto>> => {
-  const response = await axiosInstance.post<ApiResponse<AuthResponseDto>>('/api/auth/refresh-token', payload);
-  return response.data;
-};
-
-// --- Change Password API (Requires Auth) ---
-export interface ChangePasswordRequest {
-  currentPassword: string;
-  newPassword: string;
-  confirmNewPassword: string;
+export interface ChangePasswordParams {
+  currentPassword?: string;
+  newPassword?: string;
+  confirmNewPassword?: string;
 }
 
-export const changePasswordApi = async (data: ChangePasswordRequest): Promise<ApiResponse<null>> => {
-  const response = await axiosInstance.post<ApiResponse<null>>('/api/auth/change-password', data);
-  return response.data;
-};
-
-// --- Forgot Password Request API (Public) ---
-export interface ForgotPasswordRequestDto {
+export interface ForgotPasswordRequestParams {
   email: string;
 }
 
-export const forgotPasswordRequestApi = async (data: ForgotPasswordRequestDto): Promise<ApiResponse<null>> => {
-  const response = await axiosInstance.post<ApiResponse<null>>('/api/auth/forgot-password/request', data);
-  return response.data;
-};
-
-// --- Reset Password API (Public) ---
-export interface ResetPasswordRequestDto {
-  email: string;
-  verificationCode: string;
-  newPassword: string;
-  confirmNewPassword: string;
+export interface ResetPasswordParams {
+  email?: string;
+  verificationCode?: string;
+  newPassword?: string;
+  confirmNewPassword?: string;
 }
 
-export const resetPasswordApi = async (data: ResetPasswordRequestDto): Promise<ApiResponse<null>> => {
-  const response = await axiosInstance.post<ApiResponse<null>>('/api/auth/forgot-password/reset', data);
-  return response.data;
-};
-
-// --- Logout API ---
-export interface LogoutRequest {
+export interface LogoutParams {
   refreshToken: string;
 }
 
-export const logoutApi = async (data: LogoutRequest): Promise<ApiResponse<null>> => {
-  const response = await axiosInstance.post<ApiResponse<null>>('/api/auth/logout', data);
-  return response.data;
+export const authApi = {
+  registerAssistant: async (data: RegisterAssistantParams): Promise<ApiResponse<RegisterResponseDto>> => {
+    const payload: components["schemas"]["RegisterDto"] = {
+      UserName: data.userName,
+      Email: data.email,
+      Password: data.password,
+      FullName: data.fullName,
+      PortfolioUrl: data.portfolioUrl,
+      Skills: data.skills,
+      VerificationCode: data.verificationCode
+    };
+    const response = await axiosInstance.post<ApiResponse<RegisterResponseDto>>('/api/auth/register', payload);
+    return response.data;
+  },
+  
+  login: async (credentials: { email: string; password: string }): Promise<ApiResponse<AuthResponseDto>> => {
+    const payload: components["schemas"]["LoginDto"] = {
+      Identifier: credentials.email,
+      Password: credentials.password
+    };
+    const response = await axiosInstance.post<ApiResponse<AuthResponseDto>>('/api/auth/login', payload);
+    return response.data;
+  },
+
+  refreshToken: async (data: RefreshTokenParams): Promise<ApiResponse<AuthResponseDto>> => {
+    const payload: components["schemas"]["RefreshTokenDto"] = {
+      AccessToken: data.token,
+      RefreshToken: data.refreshToken
+    };
+    const response = await axiosInstance.post<ApiResponse<AuthResponseDto>>('/api/auth/refresh-token', payload);
+    return response.data;
+  },
+
+  changePassword: async (data: ChangePasswordParams): Promise<ApiResponse<null>> => {
+    const payload: components["schemas"]["ChangePasswordDto"] = {
+      CurrentPassword: data.currentPassword,
+      NewPassword: data.newPassword,
+      ConfirmNewPassword: data.confirmNewPassword
+    };
+    const response = await axiosInstance.post<ApiResponse<null>>('/api/auth/change-password', payload);
+    return response.data;
+  },
+
+  forgotPasswordRequest: async (data: ForgotPasswordRequestParams): Promise<ApiResponse<null>> => {
+    const payload: components["schemas"]["ForgotPasswordRequestDto"] = {
+      Email: data.email
+    };
+    const response = await axiosInstance.post<ApiResponse<null>>('/api/auth/forgot-password/request', payload);
+    return response.data;
+  },
+
+  resetPassword: async (data: ResetPasswordParams): Promise<ApiResponse<null>> => {
+    const payload: components["schemas"]["ForgotPasswordResetDto"] = {
+      Email: data.email,
+      VerificationCode: data.verificationCode,
+      NewPassword: data.newPassword,
+      ConfirmNewPassword: data.confirmNewPassword
+    };
+    const response = await axiosInstance.post<ApiResponse<null>>('/api/auth/forgot-password/reset', payload);
+    return response.data;
+  },
+
+  logout: async (data: LogoutParams): Promise<ApiResponse<null>> => {
+    const payload: components["schemas"]["LogoutDto"] = {
+      RefreshToken: data.refreshToken
+    };
+    const response = await axiosInstance.post<ApiResponse<null>>('/api/auth/logout', payload);
+    return response.data;
+  }
 };

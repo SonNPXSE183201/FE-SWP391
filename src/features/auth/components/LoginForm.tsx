@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { Mail, Lock, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '../../../stores/authStore';
-import { loginApi } from '../api/auth.api';
+import { authApi } from '../api/auth.api';
 
 export const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -39,9 +39,9 @@ export const LoginForm: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await loginApi({ email, password });
+      const response = await authApi.login({ email, password });
 
-      if (response.IsSuccess && response.Data) {
+      if (response.IsSuccess && response.Data && response.Data.Token) {
         // Handle remember me
         if (rememberMe) {
           localStorage.setItem('inku-remembered-email', email);
@@ -57,12 +57,11 @@ export const LoginForm: React.FC = () => {
 
         // Save to store
         setAuth({
-          id: response.Data.UserId.toString(),
-          userName: response.Data.UserName,
-          email: response.Data.Email,
-          fullName: response.Data.FullName,
+          id: response.Data.UserId?.toString() || '0',
+          fullName: response.Data.FullName || response.Data.UserName || 'User',
+          email: response.Data.Email || email,
           role: mappedRole as any
-        }, response.Data.Token, '');
+        }, response.Data.Token, response.Data.RefreshToken || '');
 
         toast.success(response.Message || 'Đăng nhập thành công');
 

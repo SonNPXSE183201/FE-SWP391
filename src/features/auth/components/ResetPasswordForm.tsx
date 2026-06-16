@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { KeyRound, Loader2, ArrowRight, ArrowLeft, Eye, EyeOff, ShieldCheck } from 'lucide-react';
-import { resetPasswordApi } from '../api/auth.api';
+import { authApi } from '../api/auth.api';
 export const ResetPasswordForm: React.FC = () => {
     const [searchParams] = useSearchParams();
     const emailFromQuery = searchParams.get('email') || '';
@@ -47,7 +47,7 @@ export const ResetPasswordForm: React.FC = () => {
         }
         setIsLoading(true);
         try {
-            const response = await resetPasswordApi({
+            const response = await authApi.resetPassword({
                 email: email.trim(),
                 verificationCode: resetCode.trim(),
                 newPassword,
