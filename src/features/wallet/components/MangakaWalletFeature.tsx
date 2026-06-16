@@ -113,7 +113,7 @@ export const MangakaWalletFeature = () => {
             <div className="flex items-center gap-2 mt-3">
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-warning/10 text-warning text-[10px] font-medium">
                 <Lock size={10} />
-                Đang lock: {formatVND(wallet.lockedAmount)}
+                Đang khóa: {formatVND(wallet.lockedAmount)}
               </span>
             </div>
           </div>
@@ -148,16 +148,7 @@ export const MangakaWalletFeature = () => {
           <span className="text-sm text-text-secondary">Tổng số dư:</span>
           <span className="text-sm font-bold text-text-primary">{formatVND(wallet.totalBalance)}</span>
         </div>
-        <div className="flex items-center gap-4">
-          <span className="text-[11px] text-info flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-info inline-block" />
-            SF: {formatVND(wallet.setupFundBalance)}
-          </span>
-          <span className="text-[11px] text-success flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-success inline-block" />
-            WB: {formatVND(wallet.withdrawableBalance)}
-          </span>
-        </div>
+
       </div>
 
       {/* ─── Transaction History ─── */}
