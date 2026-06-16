@@ -5,9 +5,22 @@ import {
   LogLevel,
   HubConnectionState,
 } from '@microsoft/signalr';
+import { useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { useAuthStore } from '../stores/authStore';
 import { useNotificationStore } from '../stores/notificationStore';
 import type { NotificationItem } from '../stores/notificationStore';
+
+// Emoji icon per notification type for realtime toasts.
+const TYPE_ICON: Record<NotificationItem['type'], string> = {
+  TaskUpdate: '📋',
+  WalletUpdate: '💰',
+  Review: '✅',
+  SystemAlert: '🔔',
+};
+
+const notifyToast = (item: NotificationItem) =>
+  toast(item.title, { icon: TYPE_ICON[item.type] ?? '🔔', duration: 5000 });
 
 /**
  * SignalR hub URL — connects to ASP.NET Core Notification Hub.
@@ -53,6 +66,7 @@ export const useSignalR = () => {
   const connectionRef = useRef<HubConnection | null>(null);
   const { token } = useAuthStore();
   const { addNotification, setUnreadCount } = useNotificationStore();
+  const queryClient = useQueryClient();
 
   // ─── Build & Connect ────────────────────────────────────────
   useEffect(() => {
@@ -75,9 +89,10 @@ export const useSignalR = () => {
       console.log('[SignalR] NewNotification received:', payload);
       const item = mapSignalRPayload(payload);
       addNotification(item);
+      notifyToast(item);
     });
 
-    // TaskStatusChanged: task status update → show as notification
+    // TaskStatusChanged: task status update → notify + refresh task data (F1.6)
     connection.on('TaskStatusChanged', (payload: any) => {
       console.log('[SignalR] TaskStatusChanged received:', payload);
       const item: NotificationItem = {
@@ -90,9 +105,12 @@ export const useSignalR = () => {
         createdAt: new Date().toISOString(),
       };
       addNotification(item);
+      notifyToast(item);
+      // Refresh any task list/detail so the new status shows immediately.
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     });
 
-    // WalletUpdated: wallet balance change → show as notification
+    // WalletUpdated: wallet balance change → notify + refresh wallet data (F1.6)
     connection.on('WalletUpdated', (payload: any) => {
       console.log('[SignalR] WalletUpdated received:', payload);
       const item: NotificationItem = {
@@ -105,6 +123,8 @@ export const useSignalR = () => {
         createdAt: new Date().toISOString(),
       };
       addNotification(item);
+      notifyToast(item);
+      queryClient.invalidateQueries({ queryKey: ['wallet'] });
     });
 
     // UnreadCountUpdated: server pushes fresh unread count
@@ -145,7 +165,7 @@ export const useSignalR = () => {
       }
       connectionRef.current = null;
     };
-  }, [token, addNotification, setUnreadCount]);
+  }, [token, addNotification, setUnreadCount, queryClient]);
 
   // ─── Public API ─────────────────────────────────────────────
   const isConnected = connectionRef.current?.state === HubConnectionState.Connected;
