@@ -58,6 +58,7 @@ import {
 // ─── Admin Pages ───
 import {
   AdminDashboardPage,
+  AdminUsersPage,
   AdminRolesPage,
   AdminContractsPage,
   AdminReconciliationPage,
@@ -208,8 +209,7 @@ function App() {
           <Route element={<MainLayout />}>
             <Route path="/admin" element={<AdminDashboardPage />} />
 
-            {/* Đưa thẳng bảng User mới của bạn vào đây để nó ăn theo khung MainLayout */}
-            {/* <Route path="/admin/users" element={<UserManagementTable />} /> */}
+            <Route path="/admin/users" element={<AdminUsersPage />} />
 
             <Route path="/admin/roles" element={<AdminRolesPage />} />
             <Route path="/admin/contracts" element={<AdminContractsPage />} />
