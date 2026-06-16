@@ -190,7 +190,7 @@ export const ContractManagementFeature = () => {
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-text-primary truncate">{series.title}</p>
                     <div className="flex flex-wrap gap-1 mt-0.5">
-                      {series.genres.slice(0, 2).map((g) => (
+                      {series.genres.slice(0, 2).map((g: any) => (
                         <span key={g} className="px-1.5 py-0 rounded bg-brand/8 text-brand text-[9px] font-medium">{g}</span>
                       ))}
                       {series.genres.length > 2 && (

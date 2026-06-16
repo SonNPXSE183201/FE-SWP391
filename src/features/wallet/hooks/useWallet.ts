@@ -31,19 +31,35 @@ export const useWallet = () => {
         updatedAt: bWallet.UpdateAt,
       } as Wallet;
 
-      const transactions: Transaction[] = (backendData.Transactions || []).map((tx: any) => ({
-        id: String(tx.Id),
-        walletId: String(tx.WalletId),
-        type: tx.Type as TransactionType,
-        amount: Number(tx.Amount || 0),
-        setupFundAmount: Number(tx.SetupFundAmount || 0),
-        withdrawableAmount: Number(tx.WithdrawableAmount || 0),
-        referenceId: tx.ReferenceId ? String(tx.ReferenceId) : undefined,
-        referenceCode: tx.ReferenceCode || '',
-        description: tx.Description || `Giao dịch ${tx.Type} (${tx.Status})`,
-        createdAt: tx.CreateAt,
-        updatedAt: tx.UpdateAt,
-      }));
+      const transactions: Transaction[] = (backendData.Transactions || []).map((tx: any) => {
+        const typeVi = {
+          'Deposit': 'Nạp tiền',
+          'Withdraw': 'Rút tiền',
+          'Lock': 'Khóa tiền',
+          'Unlock': 'Mở khóa',
+          'Escrow_Lock': 'Tạm giữ tiền',
+          'Escrow_Unlock': 'Hoàn trả quỹ',
+          'Transfer': 'Thanh toán',
+          'Funding': 'Cấp vốn',
+          'Genkouryo': 'Nhuận bút',
+        }[tx.Type] || tx.Type;
+
+        const statusVi = tx.Status === 'Success' ? 'Thành công' : tx.Status === 'Pending' ? 'Đang xử lý' : tx.Status === 'Failed' ? 'Thất bại' : tx.Status;
+
+        return {
+          id: String(tx.Id),
+          walletId: String(tx.WalletId),
+          type: tx.Type as TransactionType,
+          amount: Number(tx.Amount || 0),
+          setupFundAmount: Number(tx.SetupFundAmount || 0),
+          withdrawableAmount: Number(tx.WithdrawableAmount || 0),
+          referenceId: tx.ReferenceId ? String(tx.ReferenceId) : undefined,
+          referenceCode: tx.ReferenceCode || '',
+          description: tx.Description || `Giao dịch ${typeVi} (${statusVi})`,
+          createdAt: tx.CreateAt,
+          updatedAt: tx.UpdateAt,
+        };
+      });
 
       return { wallet, transactions };
     },
