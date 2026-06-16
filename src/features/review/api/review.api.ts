@@ -1,4 +1,6 @@
-import { axiosInstance } from '../../../api/axios';
+import { axiosInstance, type ApiResponse } from '../../../api/axios';
+import type { ApproveChapterPayload, ChapterReviewDetail, ReviewQueueItem } from '../types';
+import { MOCK_REVIEW_QUEUE, buildChapterReviewDetail } from '../data/mockData';
 
 const USE_MOCK = true;
 
@@ -64,6 +66,46 @@ export const reviewApi = {
       await mockDelay(600);
       return mockResponse(true, 'Đã yêu cầu tác giả chỉnh sửa lại Bản thảo');
     }
-    return axiosInstance.post<any>(`/api/reviews/series/${seriesId}/require-revision`, { reason });
-  }
+    return axiosInstance.post<ApiResponse<boolean>>(`/api/reviews/series/${seriesId}/require-revision`, { reason });
+  },
+
+  // ─── Chapter QC Review (F3.1, F3.2, F3.6) ──────────────────
+  getReviewQueue: async () => {
+    if (USE_MOCK) {
+      await mockDelay();
+      return mockResponse<ReviewQueueItem[]>(MOCK_REVIEW_QUEUE);
+    }
+    return axiosInstance.get<ApiResponse<ReviewQueueItem[]>>('/api/reviews/chapters');
+  },
+
+  getChapterReview: async (chapterId: string) => {
+    if (USE_MOCK) {
+      await mockDelay();
+      return mockResponse<ChapterReviewDetail | null>(buildChapterReviewDetail(chapterId));
+    }
+    return axiosInstance.get<ApiResponse<ChapterReviewDetail>>(`/api/reviews/chapters/${chapterId}`);
+  },
+
+  // F3.6 — Approve Chapter → triggers Genkoūryō disbursement (G02, G03).
+  approveChapter: async (payload: ApproveChapterPayload) => {
+    if (USE_MOCK) {
+      await mockDelay(700);
+      return mockResponse(true, 'Đã duyệt Chapter & giải ngân nhuận bút');
+    }
+    return axiosInstance.post<ApiResponse<boolean>>(
+      `/api/reviews/chapters/${payload.chapterId}/approve`,
+      { validPageCount: payload.validPageCount },
+    );
+  },
+
+  requireChapterRevision: async (chapterId: string, reason: string) => {
+    if (USE_MOCK) {
+      await mockDelay(600);
+      return mockResponse(true, 'Đã trả Chapter về cho Mangaka chỉnh sửa');
+    }
+    return axiosInstance.post<ApiResponse<boolean>>(
+      `/api/reviews/chapters/${chapterId}/require-revision`,
+      { reason },
+    );
+  },
 };
