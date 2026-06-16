@@ -1,6 +1,6 @@
-import { BarChart3 } from 'lucide-react';
-import { PageScaffold } from '../../components/common/PageScaffold';
+import { RankingFeature } from '../../features/ranking';
 
-export const RankingPage = () => (
-  <PageScaffold title="Xếp hạng Series" subtitle="Bảng xếp hạng theo lượt đánh giá" icon={BarChart3} />
-);
+export const RankingPage = () => {
+  return <RankingFeature />;
+};
+

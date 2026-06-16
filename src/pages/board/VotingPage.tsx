@@ -1,6 +1,5 @@
-import { Vote } from 'lucide-react';
-import { PageScaffold } from '../../components/common/PageScaffold';
+import { VotingFeature } from '../../features/voting';
 
-export const VotingPage = () => (
-  <PageScaffold title="Bỏ phiếu xét duyệt" subtitle="Duyệt hoặc từ chối Series đề xuất" icon={Vote} />
-);
+export const VotingPage = () => {
+  return <VotingFeature />;
+};
