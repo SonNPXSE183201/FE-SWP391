@@ -1,41 +1,14 @@
 import { axiosInstance } from '../../../api/axios';
 import type { ApiResponse } from '../../../types';
+import type { components } from '../../../api/generated/schema';
 
-// ─── Request DTOs ────────────────────────────────────────────
+// ─── DTOs from OpenAPI Schema ────────────────────────────────
+export type CreateUserByAdminDto = components["schemas"]["CreateUserByAdminDto"];
+export type AssistantResponseDto = components["schemas"]["AssistantResponseDto"];
+export type UserResponseDto = components["schemas"]["UserResponseDto"];
+export type UserResponseDtoApiResponse = components["schemas"]["UserResponseDtoApiResponse"];
 
-export interface CreateUserByAdminDto {
-  roleId: number;
-  userName: string;
-  email: string;
-  fullName: string;
-  penName?: string;
-  portfolioUrl?: string;
-  skills?: string;
-}
-
-// ─── Response DTOs ───────────────────────────────────────────
-
-export interface AssistantResponseDto {
-  id: number;
-  userName: string;
-  email: string;
-  fullName: string;
-  status: string;
-  portfolioUrl?: string;
-  skills?: string;
-}
-
-export interface UserResponseDto {
-  id: number;
-  userName: string;
-  email: string;
-  fullName: string;
-  roleId: number;
-  status: string;
-  penName?: string;
-  message?: string;
-}
-
+// Fallback interface for UI listing since backend lacks a full GET users API
 export interface UserListItem {
   id: string;
   email: string;
@@ -48,8 +21,9 @@ export interface UserListItem {
 // ─── API Functions ───────────────────────────────────────────
 
 export const adminApi = {
+  // NOTE: Backend lacks an API to fetch all users. This mock function is kept temporarily to not break UI completely.
   getUsers: (params?: { page?: number; pageSize?: number; role?: string; status?: string }) =>
-    axiosInstance.get<any>('/api/admin/users', { params }), // For mock UI compatibility
+    axiosInstance.get<any>('/api/admin/users', { params }), 
 
   createUser: (data: CreateUserByAdminDto) =>
     axiosInstance.post<ApiResponse<UserResponseDto>>('/api/admin/users', data),
