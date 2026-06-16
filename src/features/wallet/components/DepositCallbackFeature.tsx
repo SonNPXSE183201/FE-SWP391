@@ -13,8 +13,10 @@ export const DepositCallbackFeature = () => {
   const walletPath = user?.role === 'Assistant' ? '/assistant/wallet' : '/mangaka/wallet';
 
   // Parse amount from URL for display
-  const amount = new URLSearchParams(window.location.search).get('amount');
-  const referenceCode = new URLSearchParams(window.location.search).get('referenceCode');
+  const search = new URLSearchParams(window.location.search);
+  const amountStr = search.get('amount') || search.get('vnp_Amount');
+  const amount = amountStr ? (search.has('vnp_Amount') ? Number(amountStr) / 100 : Number(amountStr)) : null;
+  const referenceCode = search.get('referenceCode') || search.get('vnp_TxnRef');
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center animate-fade-in">
