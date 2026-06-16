@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Users, Search, MoreVertical, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminApi, type UserListItem } from '../../admin/api/admin.api';
+import { adminApi, type UserListItem } from '../../admin';
 
 // Mock Data as fallback since backend is not ready
 const mockUsers: UserListItem[] = [

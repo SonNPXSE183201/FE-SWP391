@@ -10,8 +10,8 @@ import { CanvasToolbar } from '../../../components/canvas/CanvasToolbar';
 import { MobileCanvasWarning } from '../../../components/canvas/MobileCanvasWarning';
 import { useCanvasStore } from '../../../stores/canvasStore';
 import { useRegions, useCreateRegion, useDeleteRegion, useUpdateRegion, useCanvasPages } from '../hooks/useCanvasData';
-import { useChapterDetail } from '../../series/hooks/useSeries';
-import { CreateTaskModal } from '../../tasks/components/CreateTaskModal';
+import { useChapterDetail } from '../../series';
+import { CreateTaskModal } from '../../tasks';
 import type { Region } from '../../../types/entities';
 import type { CanvasViewerHandle } from '../../../components/canvas/CanvasViewer';
 

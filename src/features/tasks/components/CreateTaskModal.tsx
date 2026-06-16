@@ -7,8 +7,7 @@ import {
   BookOpen, FileText, Shield, Banknote, Loader2,
   CheckCircle2, Type, Image, Globe,
 } from 'lucide-react';
-import { formatVND } from '../../wallet';
-import { useWallet } from '../../wallet/hooks/useWallet';
+import { useWallet, formatVND } from '../../wallet';
 import { useMySeries, useChapters, useChapterPages } from '../../series';
 import { taskApi } from '../api/task.api';
 import { CustomSelect } from '../../../components/common/CustomSelect';
