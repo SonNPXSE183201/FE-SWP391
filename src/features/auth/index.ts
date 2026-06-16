@@ -1,4 +1,4 @@
-export { authApi, changePasswordApi, forgotPasswordRequestApi, resetPasswordApi } from './api/auth.api';
+export { authApi } from './api/auth.api';
 export { LoginForm } from './components/LoginForm';
 export { LoginBackground } from './components/LoginBackground';
 export { RegisterForm } from './components/RegisterForm';
