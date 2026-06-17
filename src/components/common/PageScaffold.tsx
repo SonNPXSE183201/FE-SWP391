@@ -1,12 +1,14 @@
 import type { LucideIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 interface PageScaffoldProps {
   title: string;
   subtitle: string;
   icon: LucideIcon;
+  children?: ReactNode;
 }
 
-export const PageScaffold = ({ title, subtitle, icon: Icon }: PageScaffoldProps) => (
+export const PageScaffold = ({ title, subtitle, icon: Icon, children }: PageScaffoldProps) => (
   <div>
     <div className="page-header">
       <div className="flex items-center gap-3">
@@ -19,9 +21,11 @@ export const PageScaffold = ({ title, subtitle, icon: Icon }: PageScaffoldProps)
         </div>
       </div>
     </div>
-    <div className="mt-6 bg-bg-secondary border border-border-custom rounded-xl p-8 flex flex-col items-center justify-center gap-4 min-h-[300px]">
-      <Icon size={48} className="text-text-muted" />
-      <p className="text-text-secondary text-sm">Nội dung sẽ hiển thị ở đây</p>
-    </div>
+    {children ?? (
+      <div className="mt-6 bg-bg-secondary border border-border-custom rounded-xl p-8 flex flex-col items-center justify-center gap-4 min-h-[300px]">
+        <Icon size={48} className="text-text-muted" />
+        <p className="text-text-secondary text-sm">Nội dung sẽ hiển thị ở đây</p>
+      </div>
+    )}
   </div>
 );
