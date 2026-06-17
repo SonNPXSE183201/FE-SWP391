@@ -11,7 +11,34 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: {
+            parameters: {
+                query?: {
+                    role?: string;
+                    status?: string;
+                    search?: string;
+                    page?: number;
+                    pageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UserResponseDtoPagedResultApiResponse"];
+                        "application/json": components["schemas"]["UserResponseDtoPagedResultApiResponse"];
+                        "text/json": components["schemas"]["UserResponseDtoPagedResultApiResponse"];
+                    };
+                };
+            };
+        };
         put?: never;
         post: {
             parameters: {
@@ -502,6 +529,1040 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/chapters/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ChapterDtoApiResponse"];
+                        "application/json": components["schemas"]["ChapterDtoApiResponse"];
+                        "text/json": components["schemas"]["ChapterDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/chapters/{id}/pages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PageDtoIEnumerableApiResponse"];
+                        "application/json": components["schemas"]["PageDtoIEnumerableApiResponse"];
+                        "text/json": components["schemas"]["PageDtoIEnumerableApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/contracts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ContractDtoIEnumerableApiResponse"];
+                        "application/json": components["schemas"]["ContractDtoIEnumerableApiResponse"];
+                        "text/json": components["schemas"]["ContractDtoIEnumerableApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateContractDto"];
+                    "text/json": components["schemas"]["CreateContractDto"];
+                    "application/*+json": components["schemas"]["CreateContractDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ContractDtoApiResponse"];
+                        "application/json": components["schemas"]["ContractDtoApiResponse"];
+                        "text/json": components["schemas"]["ContractDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/contracts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ContractDtoApiResponse"];
+                        "application/json": components["schemas"]["ContractDtoApiResponse"];
+                        "text/json": components["schemas"]["ContractDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateContractDto"];
+                    "text/json": components["schemas"]["UpdateContractDto"];
+                    "application/*+json": components["schemas"]["UpdateContractDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ContractDtoApiResponse"];
+                        "application/json": components["schemas"]["ContractDtoApiResponse"];
+                        "text/json": components["schemas"]["ContractDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/disputes/{taskId}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    taskId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ResolveDisputeDto"];
+                    "text/json": components["schemas"]["ResolveDisputeDto"];
+                    "application/*+json": components["schemas"]["ResolveDisputeDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["NotificationDtoIEnumerableApiResponse"];
+                        "application/json": components["schemas"]["NotificationDtoIEnumerableApiResponse"];
+                        "text/json": components["schemas"]["NotificationDtoIEnumerableApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/unread-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Int32ApiResponse"];
+                        "application/json": components["schemas"]["Int32ApiResponse"];
+                        "text/json": components["schemas"]["Int32ApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/notifications/mark-all-read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/pages/{id}/layers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["LayerDtoIEnumerableApiResponse"];
+                        "application/json": components["schemas"]["LayerDtoIEnumerableApiResponse"];
+                        "text/json": components["schemas"]["LayerDtoIEnumerableApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/publishing/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    month?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ChapterIEnumerableApiResponse"];
+                        "application/json": components["schemas"]["ChapterIEnumerableApiResponse"];
+                        "text/json": components["schemas"]["ChapterIEnumerableApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/publishing/schedule/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateDeadlineDto"];
+                    "text/json": components["schemas"]["UpdateDeadlineDto"];
+                    "application/*+json": components["schemas"]["UpdateDeadlineDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/publishing/schedule/{id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/rankings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    period?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RankingRecordIEnumerableApiResponse"];
+                        "application/json": components["schemas"]["RankingRecordIEnumerableApiResponse"];
+                        "text/json": components["schemas"]["RankingRecordIEnumerableApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateRankingsDto"];
+                    "text/json": components["schemas"]["CreateRankingsDto"];
+                    "application/*+json": components["schemas"]["CreateRankingsDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/reconciliation/import-csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        file?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ReconciliationReportDtoApiResponse"];
+                        "application/json": components["schemas"]["ReconciliationReportDtoApiResponse"];
+                        "text/json": components["schemas"]["ReconciliationReportDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/regions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateRegionDto"];
+                    "text/json": components["schemas"]["CreateRegionDto"];
+                    "application/*+json": components["schemas"]["CreateRegionDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RegionDtoApiResponse"];
+                        "application/json": components["schemas"]["RegionDtoApiResponse"];
+                        "text/json": components["schemas"]["RegionDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reviews/chapters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    status?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ChapterIEnumerableApiResponse"];
+                        "application/json": components["schemas"]["ChapterIEnumerableApiResponse"];
+                        "text/json": components["schemas"]["ChapterIEnumerableApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reviews/chapters/{chapterId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    chapterId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ChapterApiResponse"];
+                        "application/json": components["schemas"]["ChapterApiResponse"];
+                        "text/json": components["schemas"]["ChapterApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reviews/chapters/{chapterId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    chapterId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ApproveChapterDto"];
+                    "text/json": components["schemas"]["ApproveChapterDto"];
+                    "application/*+json": components["schemas"]["ApproveChapterDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reviews/chapters/{chapterId}/revision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    chapterId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RejectChapterDto"];
+                    "text/json": components["schemas"]["RejectChapterDto"];
+                    "application/*+json": components["schemas"]["RejectChapterDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reviews/chapters/{chapterId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    chapterId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RejectChapterDto"];
+                    "text/json": components["schemas"]["RejectChapterDto"];
+                    "application/*+json": components["schemas"]["RejectChapterDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/series/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SeriesDtoApiResponse"];
+                        "application/json": components["schemas"]["SeriesDtoApiResponse"];
+                        "text/json": components["schemas"]["SeriesDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/series/{id}/chapters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ChapterDtoIEnumerableApiResponse"];
+                        "application/json": components["schemas"]["ChapterDtoIEnumerableApiResponse"];
+                        "text/json": components["schemas"]["ChapterDtoIEnumerableApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/series": {
         parameters: {
             query?: never;
@@ -660,6 +1721,90 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/series/{id}/accept-fund": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/series/{id}/vote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["VoteSeriesRequestDto"];
+                    "text/json": components["schemas"]["VoteSeriesRequestDto"];
+                    "application/*+json": components["schemas"]["VoteSeriesRequestDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -996,6 +2141,176 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tasks/my-tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Status?: string;
+                    PageNumber?: number;
+                    PageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TasksDtoPagedResultApiResponse"];
+                        "application/json": components["schemas"]["TasksDtoPagedResultApiResponse"];
+                        "text/json": components["schemas"]["TasksDtoPagedResultApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tasks/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tasks/{id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SubmitTaskDto"];
+                    "text/json": components["schemas"]["SubmitTaskDto"];
+                    "application/*+json": components["schemas"]["SubmitTaskDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tasks/{id}/request-extension": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RequestExtensionDto"];
+                    "text/json": components["schemas"]["RequestExtensionDto"];
+                    "application/*+json": components["schemas"]["RequestExtensionDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tasks/pages/{pageId}/composite": {
         parameters: {
             query?: never;
@@ -1025,6 +2340,50 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        file?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["StringApiResponse"];
+                        "application/json": components["schemas"]["StringApiResponse"];
+                        "text/json": components["schemas"]["StringApiResponse"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -1336,6 +2695,31 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        Annotation: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+            /** Format: int32 */
+            CreatedByUserId?: number;
+            /** Format: int32 */
+            PageId?: number | null;
+            /** Format: int32 */
+            TaskVersionId?: number | null;
+            CoordinatesJson?: string | null;
+            Comment?: string | null;
+            Type?: string | null;
+            CreatedByUser?: components["schemas"]["User"];
+            Page?: components["schemas"]["Page"];
+            TaskVersion?: components["schemas"]["TaskVersion"];
+        };
+        ApproveChapterDto: {
+            /** Format: int32 */
+            ValidPageCount?: number;
+            QcChecklistData?: string | null;
+        };
         ApproveTaskDto: {
             /** Format: int32 */
             Rating?: number | null;
@@ -1344,6 +2728,28 @@ export interface components {
         ApproveWithdrawRequestDto: {
             IsApproved?: boolean;
             AdminNote?: string | null;
+        };
+        AssistantProfile: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+            /** Format: int32 */
+            AssistantId?: number;
+            SpecialtyTags?: string | null;
+            /** Format: int32 */
+            TotalCompletedTasks?: number;
+            /** Format: double */
+            OnTimeRate?: number;
+            /** Format: double */
+            DisputeRate?: number;
+            /** Format: int32 */
+            CurrentActiveTasks?: number;
+            /** Format: double */
+            AverageRating?: number;
+            Assistant?: components["schemas"]["User"];
         };
         AssistantResponseDto: {
             /** Format: int32 */
@@ -1385,10 +2791,207 @@ export interface components {
                 [key: string]: string[] | null;
             } | null;
         };
+        BoardVote: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+            /** Format: int32 */
+            SeriesId?: number;
+            /** Format: int32 */
+            BoardMemberId?: number;
+            VoteType?: string | null;
+            /** Format: double */
+            RecommendedBudget?: number;
+            Comment?: string | null;
+            /** Format: date-time */
+            VoteAt?: string;
+            Series?: components["schemas"]["Series"];
+            BoardMember?: components["schemas"]["User"];
+        };
         ChangePasswordDto: {
             CurrentPassword?: string | null;
             NewPassword?: string | null;
             ConfirmNewPassword?: string | null;
+        };
+        Chapter: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+            /** Format: int32 */
+            SeriesId?: number;
+            /** Format: int32 */
+            ChapterNumber?: number;
+            Title?: string | null;
+            /** Format: int32 */
+            ValidPageCount?: number;
+            /** Format: double */
+            AppliedGenkouryoPrice?: number;
+            /** Format: date-time */
+            SubmissionDeadline?: string | null;
+            QcChecklistData?: string | null;
+            Status?: string | null;
+            Series?: components["schemas"]["Series"];
+            Pages?: components["schemas"]["Page"][] | null;
+        };
+        ChapterApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            StatusCode?: number;
+            Message?: string | null;
+            Data?: components["schemas"]["Chapter"];
+            Errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
+        ChapterDto: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: int32 */
+            SeriesId?: number;
+            /** Format: int32 */
+            ChapterNumber?: number;
+            Title?: string | null;
+            /** Format: int32 */
+            ValidPageCount?: number;
+            /** Format: double */
+            AppliedGenkouryoPrice?: number;
+            /** Format: date-time */
+            SubmissionDeadline?: string | null;
+            QcChecklistData?: string | null;
+            Status?: string | null;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+        };
+        ChapterDtoApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            StatusCode?: number;
+            Message?: string | null;
+            Data?: components["schemas"]["ChapterDto"];
+            Errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
+        ChapterDtoIEnumerableApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            StatusCode?: number;
+            Message?: string | null;
+            Data?: components["schemas"]["ChapterDto"][] | null;
+            Errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
+        ChapterIEnumerableApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            StatusCode?: number;
+            Message?: string | null;
+            Data?: components["schemas"]["Chapter"][] | null;
+            Errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
+        Contract: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+            /** Format: int32 */
+            UserId?: number;
+            /** Format: int32 */
+            SeriesId?: number;
+            /** Format: double */
+            BaseGenkouryoPrice?: number;
+            /** Format: date-time */
+            SignedDate?: string | null;
+            Status?: string | null;
+            User?: components["schemas"]["User"];
+            Series?: components["schemas"]["Series"];
+            ContractAddendums?: components["schemas"]["ContractAddendum"][] | null;
+        };
+        ContractAddendum: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+            /** Format: int32 */
+            ContractId?: number;
+            /** Format: double */
+            NewGenkouryoPrice?: number;
+            /** Format: date-time */
+            EffectiveDate?: string;
+            /** Format: date-time */
+            SignedDate?: string | null;
+            Contract?: components["schemas"]["Contract"];
+        };
+        ContractDto: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: int32 */
+            UserId?: number;
+            MangakaName?: string | null;
+            /** Format: int32 */
+            SeriesId?: number;
+            SeriesTitle?: string | null;
+            /** Format: double */
+            BaseGenkouryoPrice?: number;
+            /** Format: date-time */
+            SignedDate?: string | null;
+            Status?: string | null;
+            /** Format: date-time */
+            CreateAt?: string;
+        };
+        ContractDtoApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            StatusCode?: number;
+            Message?: string | null;
+            Data?: components["schemas"]["ContractDto"];
+            Errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
+        ContractDtoIEnumerableApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            StatusCode?: number;
+            Message?: string | null;
+            Data?: components["schemas"]["ContractDto"][] | null;
+            Errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
+        CreateContractDto: {
+            /** Format: int32 */
+            UserId?: number;
+            /** Format: int32 */
+            SeriesId?: number;
+            /** Format: double */
+            BaseGenkouryoPrice?: number;
+        };
+        CreateRankingsDto: {
+            Records?: components["schemas"]["RankingInputDto"][] | null;
+            /** Format: date-time */
+            RecordedDate?: string;
+        };
+        CreateRegionDto: {
+            /** Format: int32 */
+            PageId?: number;
+            Name?: string | null;
+            CoordinatesJson?: string | null;
         };
         CreateSeriesDto: {
             Title?: string | null;
@@ -1425,6 +3028,28 @@ export interface components {
             /** Format: double */
             Amount?: number;
         };
+        DisputeLog: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+            /** Format: int32 */
+            EditorId?: number;
+            /** Format: int32 */
+            TaskId?: number;
+            EditorComment?: string | null;
+            ResolutionType?: string | null;
+            /** Format: double */
+            AssistantPercentage?: number | null;
+            /** Format: double */
+            MangakaPercentage?: number | null;
+            /** Format: date-time */
+            ResolvedAt?: string;
+            Editor?: components["schemas"]["User"];
+            Task?: components["schemas"]["Tasks"];
+        };
         ForgotPasswordRequestDto: {
             Email?: string | null;
         };
@@ -1434,12 +3059,78 @@ export interface components {
             NewPassword?: string | null;
             ConfirmNewPassword?: string | null;
         };
+        Int32ApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            StatusCode?: number;
+            Message?: string | null;
+            /** Format: int32 */
+            Data?: number;
+            Errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
+        LayerDto: {
+            /** Format: int32 */
+            RegionId?: number;
+            RegionName?: string | null;
+            CoordinatesJson?: string | null;
+            /** Format: int32 */
+            ZIndex_Order?: number;
+            ImageUrl?: string | null;
+            TaskStatus?: string | null;
+        };
+        LayerDtoIEnumerableApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            StatusCode?: number;
+            Message?: string | null;
+            Data?: components["schemas"]["LayerDto"][] | null;
+            Errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
         LoginDto: {
             Identifier?: string | null;
             Password?: string | null;
         };
         LogoutDto: {
             RefreshToken?: string | null;
+        };
+        Notification: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+            /** Format: int32 */
+            UserId?: number;
+            Content?: string | null;
+            Type?: string | null;
+            IsRead?: boolean;
+            User?: components["schemas"]["User"];
+        };
+        NotificationDto: {
+            /** Format: int32 */
+            Id?: number;
+            Content?: string | null;
+            Type?: string | null;
+            IsRead?: boolean;
+            /** Format: date-time */
+            CreateAt?: string;
+            readonly Title?: string | null;
+            readonly Link?: string | null;
+        };
+        NotificationDtoIEnumerableApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            StatusCode?: number;
+            Message?: string | null;
+            Data?: components["schemas"]["NotificationDto"][] | null;
+            Errors?: {
+                [key: string]: string[] | null;
+            } | null;
         };
         ObjectApiResponse: {
             success?: boolean;
@@ -1451,9 +3142,161 @@ export interface components {
                 [key: string]: string[] | null;
             } | null;
         };
+        Page: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+            /** Format: int32 */
+            ChapterId?: number;
+            /** Format: int32 */
+            PageNumber?: number;
+            RawImageUrl?: string | null;
+            CompositeImageUrl?: string | null;
+            BaseLayerUrl?: string | null;
+            Status?: string | null;
+            IsApproved?: boolean;
+            Chapter?: components["schemas"]["Chapter"];
+            Regions?: components["schemas"]["Region"][] | null;
+            Annotations?: components["schemas"]["Annotation"][] | null;
+        };
+        PageDto: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: int32 */
+            ChapterId?: number;
+            /** Format: int32 */
+            PageNumber?: number;
+            RawImageUrl?: string | null;
+            CompositeImageUrl?: string | null;
+            BaseLayerUrl?: string | null;
+            Status?: string | null;
+            IsApproved?: boolean;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+        };
+        PageDtoIEnumerableApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            StatusCode?: number;
+            Message?: string | null;
+            Data?: components["schemas"]["PageDto"][] | null;
+            Errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
+        RankingInputDto: {
+            /** Format: int32 */
+            SeriesId?: number;
+            /** Format: int32 */
+            VoteCount?: number;
+        };
+        RankingRecord: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+            /** Format: int32 */
+            SeriesId?: number;
+            /** Format: int32 */
+            VoteCount?: number;
+            /** Format: int32 */
+            RankPosition?: number;
+            /** Format: date-time */
+            RecordedDate?: string;
+            Series?: components["schemas"]["Series"];
+        };
+        RankingRecordIEnumerableApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            StatusCode?: number;
+            Message?: string | null;
+            Data?: components["schemas"]["RankingRecord"][] | null;
+            Errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
+        ReconciliationReportDto: {
+            /** Format: int32 */
+            TotalRows?: number;
+            /** Format: int32 */
+            MatchedCount?: number;
+            /** Format: int32 */
+            ResolvedCount?: number;
+            /** Format: int32 */
+            UnresolvedCount?: number;
+            Details?: string[] | null;
+        };
+        ReconciliationReportDtoApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            StatusCode?: number;
+            Message?: string | null;
+            Data?: components["schemas"]["ReconciliationReportDto"];
+            Errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
+        RefreshToken: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+            /** Format: int32 */
+            UserId?: number;
+            Token?: string | null;
+            /** Format: date-time */
+            ExpiresAt?: string;
+            IsRevoked?: boolean;
+            User?: components["schemas"]["User"];
+        };
         RefreshTokenDto: {
             AccessToken?: string | null;
             RefreshToken?: string | null;
+        };
+        Region: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+            /** Format: int32 */
+            PageId?: number;
+            CoordinatesJson?: string | null;
+            Name?: string | null;
+            Page?: components["schemas"]["Page"];
+            Tasks?: components["schemas"]["Tasks"][] | null;
+        };
+        RegionDto: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: int32 */
+            PageId?: number;
+            Name?: string | null;
+            CoordinatesJson?: string | null;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+        };
+        RegionDtoApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            StatusCode?: number;
+            Message?: string | null;
+            Data?: components["schemas"]["RegionDto"];
+            Errors?: {
+                [key: string]: string[] | null;
+            } | null;
         };
         RegisterDto: {
             UserName?: string | null;
@@ -1478,11 +3321,78 @@ export interface components {
                 [key: string]: string[] | null;
             } | null;
         };
+        RejectChapterDto: {
+            FeedbackComment?: string | null;
+        };
         RejectTaskDto: {
             FeedbackComment?: string | null;
             /** Format: int32 */
             RevisionExtensionHours?: number;
             CoordinatesJson?: string | null;
+        };
+        Report: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+            /** Format: int32 */
+            ReporterId?: number;
+            /** Format: int32 */
+            ReportedUserId?: number;
+            Reason?: string | null;
+            Status?: string | null;
+            Reporter?: components["schemas"]["User"];
+            ReportedUser?: components["schemas"]["User"];
+        };
+        RequestExtensionDto: {
+            /** Format: int32 */
+            Days?: number;
+            Reason?: string | null;
+        };
+        ResolveDisputeDto: {
+            /** Format: double */
+            AssistantRate?: number;
+        };
+        Role: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+            RoleName?: string | null;
+            Users?: components["schemas"]["User"][] | null;
+        };
+        Series: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+            /** Format: int32 */
+            MangakaId?: number;
+            /** Format: int32 */
+            EditorId?: number | null;
+            Title?: string | null;
+            Genre?: string | null;
+            Synopsis?: string | null;
+            CoverArtworkUrl?: string | null;
+            /** Format: double */
+            EstimatedProductionBudget?: number;
+            /** Format: double */
+            ApprovedProductionBudget?: number;
+            PublicationSchedule?: string | null;
+            Status?: string | null;
+            ResourceFolderUrl?: string | null;
+            Mangaka?: components["schemas"]["User"];
+            Editor?: components["schemas"]["User"];
+            RankingRecords?: components["schemas"]["RankingRecord"][] | null;
+            BoardVotes?: components["schemas"]["BoardVote"][] | null;
+            Contracts?: components["schemas"]["Contract"][] | null;
+            Chapters?: components["schemas"]["Chapter"][] | null;
         };
         SeriesDto: {
             /** Format: int32 */
@@ -1542,6 +3452,27 @@ export interface components {
         SubmitSeriesReviewDto: {
             SubmissionNotes?: string | null;
         };
+        SubmitTaskDto: {
+            SubmittedFileUrl?: string | null;
+        };
+        TaskVersion: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+            /** Format: int32 */
+            TaskId?: number;
+            /** Format: int32 */
+            VersionNumber?: number;
+            SubmittedFileUrl?: string | null;
+            Status?: string | null;
+            /** Format: date-time */
+            SubmittedAt?: string;
+            Task?: components["schemas"]["Tasks"];
+            Annotations?: components["schemas"]["Annotation"][] | null;
+        };
         TaskVersionDto: {
             /** Format: int32 */
             Id?: number;
@@ -1563,6 +3494,40 @@ export interface components {
             Errors?: {
                 [key: string]: string[] | null;
             } | null;
+        };
+        Tasks: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+            /** Format: int32 */
+            MangakaId?: number;
+            /** Format: int32 */
+            RegionId?: number;
+            /** Format: int32 */
+            AssistantId?: number | null;
+            Description?: string | null;
+            /** Format: double */
+            PaymentAmount?: number;
+            /** Format: date-time */
+            Deadline?: string;
+            /** Format: int32 */
+            ExtensionRequestDays?: number | null;
+            ExtensionReason?: string | null;
+            ExtensionStatus?: string | null;
+            /** Format: int32 */
+            ZIndex_Order?: number;
+            Status?: string | null;
+            /** Format: int32 */
+            Rating?: number | null;
+            FeedbackComment?: string | null;
+            Mangaka?: components["schemas"]["User"];
+            Region?: components["schemas"]["Region"];
+            Assistant?: components["schemas"]["User"];
+            TaskVersions?: components["schemas"]["TaskVersion"][] | null;
+            DisputeLogs?: components["schemas"]["DisputeLog"][] | null;
         };
         TasksDto: {
             /** Format: int32 */
@@ -1641,6 +3606,38 @@ export interface components {
                 [key: string]: string[] | null;
             } | null;
         };
+        Transaction: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+            /** Format: int32 */
+            WalletId?: number;
+            Type?: string | null;
+            /** Format: int32 */
+            ReferenceId?: number | null;
+            /** Format: double */
+            SetupFundAmount?: number;
+            /** Format: double */
+            WithdrawableAmount?: number;
+            /** Format: double */
+            Amount?: number;
+            Status?: string | null;
+            ReferenceCode?: string | null;
+            /** Format: int32 */
+            FromUserId?: number | null;
+            /** Format: int32 */
+            ToUserId?: number | null;
+            BankName?: string | null;
+            BankAccountNumber?: string | null;
+            BankAccountName?: string | null;
+            AdminNote?: string | null;
+            Wallet?: components["schemas"]["Wallet"];
+            FromUser?: components["schemas"]["User"];
+            ToUser?: components["schemas"]["User"];
+        };
         TransactionDto: {
             /** Format: int32 */
             Id?: number;
@@ -1694,6 +3691,50 @@ export interface components {
                 [key: string]: string[] | null;
             } | null;
         };
+        UpdateContractDto: {
+            /** Format: double */
+            BaseGenkouryoPrice?: number;
+            Status?: string | null;
+        };
+        UpdateDeadlineDto: {
+            /** Format: date-time */
+            Deadline?: string;
+        };
+        User: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+            /** Format: int32 */
+            RoleId?: number;
+            UserName?: string | null;
+            PasswordHash?: string | null;
+            Email?: string | null;
+            FullName?: string | null;
+            Status?: components["schemas"]["UserStatus"];
+            PenName?: string | null;
+            PortfolioUrl?: string | null;
+            Skills?: string | null;
+            Role?: components["schemas"]["Role"];
+            Wallet?: components["schemas"]["Wallet"];
+            AssistantProfile?: components["schemas"]["AssistantProfile"];
+            Notifications?: components["schemas"]["Notification"][] | null;
+            MangakaSeries?: components["schemas"]["Series"][] | null;
+            EditorSeries?: components["schemas"]["Series"][] | null;
+            BoardVotes?: components["schemas"]["BoardVote"][] | null;
+            Contracts?: components["schemas"]["Contract"][] | null;
+            MangakaTasks?: components["schemas"]["Tasks"][] | null;
+            AssistantTasks?: components["schemas"]["Tasks"][] | null;
+            EditorDisputes?: components["schemas"]["DisputeLog"][] | null;
+            Annotations?: components["schemas"]["Annotation"][] | null;
+            FiledReports?: components["schemas"]["Report"][] | null;
+            ReceivedReports?: components["schemas"]["Report"][] | null;
+            FromTransactions?: components["schemas"]["Transaction"][] | null;
+            ToTransactions?: components["schemas"]["Transaction"][] | null;
+            RefreshTokens?: components["schemas"]["RefreshToken"][] | null;
+        };
         UserResponseDto: {
             /** Format: int32 */
             Id?: number;
@@ -1716,6 +3757,34 @@ export interface components {
                 [key: string]: string[] | null;
             } | null;
         };
+        UserResponseDtoPagedResult: {
+            Items?: components["schemas"]["UserResponseDto"][] | null;
+            /** Format: int32 */
+            PageNumber?: number;
+            /** Format: int32 */
+            PageSize?: number;
+            /** Format: int32 */
+            TotalItems?: number;
+            /** Format: int32 */
+            TotalPages?: number;
+            readonly HasPreviousPage?: boolean;
+            readonly HasNextPage?: boolean;
+        };
+        UserResponseDtoPagedResultApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            StatusCode?: number;
+            Message?: string | null;
+            Data?: components["schemas"]["UserResponseDtoPagedResult"];
+            Errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
+        /**
+         * Format: int32
+         * @enum {integer}
+         */
+        UserStatus: 0 | 1 | 2 | 3;
         VnpayPaymentResultDto: {
             Success?: boolean;
             ReferenceCode?: string | null;
@@ -1739,6 +3808,32 @@ export interface components {
             Errors?: {
                 [key: string]: string[] | null;
             } | null;
+        };
+        VoteSeriesRequestDto: {
+            Approved?: boolean;
+            Comment?: string | null;
+            /** Format: double */
+            RecommendedBudget?: number;
+        };
+        Wallet: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+            /** Format: int32 */
+            UserId?: number;
+            /** Format: double */
+            SetupFundBalance?: number;
+            /** Format: double */
+            WithdrawableBalance?: number;
+            /** Format: double */
+            LockedFund?: number;
+            /** Format: double */
+            LockedWithdrawable?: number;
+            User?: components["schemas"]["User"];
+            Transactions?: components["schemas"]["Transaction"][] | null;
         };
         WalletDetailsDto: {
             Wallet?: components["schemas"]["WalletDto"];
