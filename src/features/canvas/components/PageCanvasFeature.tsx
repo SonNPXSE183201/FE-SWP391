@@ -410,6 +410,7 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
                   chapterId: chapterDetail.id,
                   pageId: currentPage.id,
                   taskName: regions.find((r) => r.id === selectedRegionId)?.label || '',
+                  regionId: selectedRegionId || undefined,
                 }
               : undefined
           }
