@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  ClipboardList, Plus, Search, Eye,
+  ClipboardList, Search, Eye,
   UserCheck, Calendar, DollarSign, Filter, ArrowUpDown,
   Clock, Loader2, AlertCircle, X
 } from 'lucide-react';
@@ -14,7 +14,6 @@ import {
   useMangakaTasks,
   useApproveTask,
   useRequestRevisionTask,
-  CreateTaskModal 
 } from '../index';
 import { formatVND } from '../../wallet';
 import { usePagination } from '../../../hooks/usePagination';
@@ -63,7 +62,7 @@ export const MangakaTasksFeature = () => {
   };
 
   const filtered = useMemo(() => {
-    let result = tasks.filter((t) => {
+    const result = tasks.filter((t) => {
       const matchesSearch = !searchQuery ||
         t.regionLabel.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.seriesTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
