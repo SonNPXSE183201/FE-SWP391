@@ -8,22 +8,13 @@ export type AssistantResponseDto = components["schemas"]["AssistantResponseDto"]
 export type UserResponseDto = components["schemas"]["UserResponseDto"];
 export type UserResponseDtoApiResponse = components["schemas"]["UserResponseDtoApiResponse"];
 
-// Fallback interface for UI listing since backend lacks a full GET users API
-export interface UserListItem {
-  id: string;
-  email: string;
-  fullName: string;
-  role: string;
-  status: string;
-  createdAt: string;
-}
+export type UserResponseDtoPagedResultApiResponse = components["schemas"]["UserResponseDtoPagedResultApiResponse"];
 
 // ─── API Functions ───────────────────────────────────────────
 
 export const adminApi = {
-  // NOTE: Backend lacks an API to fetch all users. This mock function is kept temporarily to not break UI completely.
-  getUsers: (params?: { page?: number; pageSize?: number; role?: string; status?: string }) =>
-    axiosInstance.get<any>('/api/admin/users', { params }), 
+  getUsers: (params?: { page?: number; pageSize?: number; role?: string; status?: string; search?: string }) =>
+    axiosInstance.get<UserResponseDtoPagedResultApiResponse>('/api/admin/users', { params }), 
 
   createUser: (data: CreateUserByAdminDto) =>
     axiosInstance.post<ApiResponse<UserResponseDto>>('/api/admin/users', data),
