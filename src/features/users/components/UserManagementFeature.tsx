@@ -17,7 +17,7 @@ export const UserManagementFeature = () => {
   const [filterRole, setFilterRole] = useState('All');
   const [filterStatus, setFilterStatus] = useState('All');
 
-  const { data: users = [], isLoading: loading } = useQuery({
+  const { data: users = [], isLoading: loading } = useQuery<UserListItem[]>({
     queryKey: ['admin-users', filterRole, filterStatus],
     queryFn: async () => {
       try {
@@ -27,7 +27,7 @@ export const UserManagementFeature = () => {
           status: filterStatus !== 'All' ? filterStatus : undefined
         });
         return response.data.data;
-      } catch (error) {
+      } catch {
         // Fallback to mock
         await new Promise(resolve => setTimeout(resolve, 800));
         let filtered = [...mockUsers];
@@ -131,7 +131,7 @@ export const UserManagementFeature = () => {
                     <td colSpan={6} className="p-8 text-center text-text-muted">Không tìm thấy người dùng nào</td>
                   </tr>
                 ) : (
-                  users.map((user: any) => (
+                  users.map((user: UserListItem) => (
                     <tr key={user.id} className="border-b border-border-custom/50 hover:bg-bg-primary/30 transition-colors">
                       <td className="p-4 font-medium text-text-primary">{user.fullName}</td>
                       <td className="p-4 text-text-secondary">{user.email}</td>

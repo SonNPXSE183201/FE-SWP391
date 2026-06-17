@@ -9,15 +9,19 @@ import {
   DollarSign,
   Plus,
   X,
-  UploadCloud,
-  FileImage,
   ExternalLink,
-  ChevronRight,
-  TrendingUp,
 } from 'lucide-react';
 import { usePortfolioStats, usePortfolioSamples, useUploadPortfolioSample } from '../hooks/usePortfolio';
-import { taskApi } from '../../tasks';
+import type { PortfolioSample } from '../api/portfolio.api';
+import { taskApi } from '../../tasks/api/task.api';
 import { formatVND } from '../../wallet';
+import type { Task } from '../../../types';
+
+interface PortfolioHistoryTask extends Pick<Task, 'id' | 'amount' | 'deadline' | 'status'> {
+  title?: string;
+  taskName?: string;
+  seriesTitle?: string;
+}
 
 const CATEGORIES = ['All', 'Lineart', 'Background', 'Screentone', 'Coloring'];
 
@@ -41,9 +45,7 @@ export const PortfolioFeature = () => {
     queryKey: ['portfolio', 'tasks'],
     queryFn: () => taskApi.getMyTasks({ pageSize: 100 }),
   });
-
-  const rawData = (tasksRes?.data as any)?.Data ?? (tasksRes?.data as any)?.data;
-  const tasks: any[] = rawData?.Items ?? rawData?.items ?? (Array.isArray(rawData) ? rawData : []);
+  const tasks = (tasksRes?.data?.data ?? []) as PortfolioHistoryTask[];
 
   const handleOpenUpload = () => {
     setTitle('');
@@ -74,7 +76,7 @@ export const PortfolioFeature = () => {
 
   const filteredSamples = selectedCategory === 'All'
     ? samples
-    : samples.filter((s: any) => s.category === selectedCategory);
+    : samples.filter((s: PortfolioSample) => s.category === selectedCategory);
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -200,7 +202,7 @@ export const PortfolioFeature = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredSamples.map((sample: any) => (
+                {filteredSamples.map((sample: PortfolioSample) => (
                   <div
                     key={sample.id}
                     className="group relative bg-bg-secondary border border-border-custom rounded-xl overflow-hidden shadow-sm hover:border-brand/35 transition-all duration-300"
@@ -262,11 +264,11 @@ export const PortfolioFeature = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-custom">
-                    {tasks.map((task: any) => (
+                    {tasks.map((task) => (
                       <tr key={task.id} className="hover:bg-bg-surface/30 transition-colors">
                         <td className="px-6 py-4 font-mono text-xs text-text-primary">#{task.id}</td>
                         <td className="px-6 py-4 font-medium text-text-primary">
-                          {task.title || `${task.seriesTitle || 'Series'} - Task`}
+                          {task.title ?? task.taskName ?? `${task.seriesTitle ?? 'Series'} - Task`}
                         </td>
                         <td className="px-6 py-4 font-semibold text-text-primary">
                           {formatVND(task.amount)}

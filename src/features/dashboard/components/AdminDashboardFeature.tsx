@@ -1,18 +1,16 @@
-import { useNavigate } from 'react-router-dom';
 import {
   Users,
   CheckCircle,
   BookOpen,
   ArrowUpDown,
   Loader2,
-  Calendar,
   LayoutDashboard,
 } from 'lucide-react';
 import { StatCard } from './StatCard';
 import { useAdminDashboard } from '../hooks/useAdminDashboard';
+import type { AdminRecentActivityDto } from '../api/dashboard.api';
 
 export const AdminDashboardFeature = () => {
-  const navigate = useNavigate();
   const { stats, recentActivities, isLoading, error } = useAdminDashboard();
 
   if (isLoading) {
@@ -84,7 +82,7 @@ export const AdminDashboardFeature = () => {
           <h2 className="text-sm font-semibold text-text-primary">Hoạt động hệ thống gần đây</h2>
         </div>
         <div className="divide-y divide-border-custom">
-          {recentActivities.map((act: any) => (
+          {recentActivities.map((act: AdminRecentActivityDto) => (
             <div key={act.id} className="p-4 flex items-center justify-between hover:bg-bg-surface/30 transition-colors">
               <div className="flex items-center gap-3">
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
