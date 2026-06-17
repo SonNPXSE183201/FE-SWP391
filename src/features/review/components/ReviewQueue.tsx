@@ -11,9 +11,11 @@ interface ReviewQueueProps {
   onSelect: (chapterId: string) => void;
 }
 
-const STATUS_CONFIG: Record<ChapterReviewStatus, { label: string; cls: string }> = {
+const STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
   Pending_Review: { label: 'Chờ Review', cls: 'bg-amber-500/10 text-amber-400' },
   Revision: { label: 'Đang sửa lại', cls: 'bg-orange-500/10 text-orange-400' },
+  Approved: { label: 'Đã duyệt', cls: 'bg-success/10 text-success' },
+  Draft: { label: 'Bản nháp', cls: 'bg-bg-surface text-text-muted' },
 };
 
 const FILTERS: { value: 'All' | ChapterReviewStatus; label: string }[] = [
@@ -27,7 +29,7 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
   const [filter, setFilter] = useState<'All' | ChapterReviewStatus>('All');
 
   const filtered = useMemo(
-    () => (filter === 'All' ? queue : queue.filter((c) => c.status === filter)),
+    () => (filter === 'All' ? queue : queue.filter((c) => c.Status === filter)),
     [queue, filter],
   );
 
@@ -75,18 +77,24 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((c) => {
-            const status = STATUS_CONFIG[c.status];
-            const deadline = getDeadlineStatus(c.deadline);
+            const status = STATUS_CONFIG[c.Status || ''] || { label: c.Status, cls: 'bg-bg-surface text-text-muted' };
+            const deadline = getDeadlineStatus(c.SubmissionDeadline || new Date().toISOString());
+            const seriesTitle = c.Series?.Title || `Series #${c.SeriesId}`;
+            const coverUrl = (c.Series as Record<string, unknown> | undefined)?.CoverImageUrl as string || '';
+            const mangakaName = c.Series?.Mangaka?.FullName || 'Unknown Mangaka';
+            const pageCount = c.Pages?.length || c.ValidPageCount || 0;
+            const genkouryoPrice = c.AppliedGenkouryoPrice || 0;
+
             return (
               <button
-                key={c.chapterId}
-                onClick={() => onSelect(c.chapterId)}
+                key={c.Id}
+                onClick={() => onSelect(String(c.Id))}
                 className="group text-left bg-bg-secondary border border-border-custom rounded-xl p-4 hover:border-brand/40 hover:-translate-y-0.5 transition-all cursor-pointer"
               >
                 <div className="flex gap-3">
                   <div className="w-16 h-[88px] rounded-lg overflow-hidden bg-bg-surface flex-shrink-0 border border-border-custom">
-                    {c.coverUrl ? (
-                      <img src={c.coverUrl} alt={c.seriesTitle} className="w-full h-full object-cover" />
+                    {coverUrl ? (
+                      <img src={coverUrl} alt={seriesTitle} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-text-muted">
                         <FileText size={20} />
@@ -105,14 +113,14 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
                       />
                     </div>
                     <h3 className="text-sm font-semibold text-text-primary mt-1.5 truncate">
-                      {c.seriesTitle}
+                      {seriesTitle}
                     </h3>
                     <p className="text-xs text-text-secondary truncate">
-                      Ch.{c.chapterNumber} · {c.title}
+                      Ch.{c.ChapterNumber} · {c.Title}
                     </p>
                     <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-text-muted">
                       <User size={11} />
-                      <span className="truncate">{c.mangakaName}</span>
+                      <span className="truncate">{mangakaName}</span>
                     </div>
                   </div>
                 </div>
@@ -120,15 +128,15 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
                 <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-border-custom/60">
                   <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
                     <Layers size={12} className="text-brand/70" />
-                    {c.pageCount} trang
+                    {pageCount} trang
                   </div>
                   <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
                     <Banknote size={12} className="text-success/70" />
-                    {formatVND(c.genkouryoPrice)}/trang
+                    {formatVND(genkouryoPrice)}/trang
                   </div>
                   <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
                     <Calendar size={12} />
-                    {new Date(c.submittedAt).toLocaleDateString('vi-VN')}
+                    {new Date(c.CreateAt || '2026-01-01').toLocaleDateString('vi-VN')}
                   </div>
                   <div
                     className={`flex items-center gap-1.5 text-[11px] font-medium ${

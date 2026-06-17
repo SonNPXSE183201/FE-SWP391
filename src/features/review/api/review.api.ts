@@ -2,7 +2,7 @@ import { axiosInstance, type ApiResponse } from '../../../api/axios';
 import type { ApproveChapterPayload, ChapterReviewDetail, ReviewQueueItem } from '../types';
 import { MOCK_REVIEW_QUEUE, buildChapterReviewDetail } from '../data/mockData';
 
-const USE_MOCK = false;
+const USE_MOCK = true;
 
 const mockDelay = (ms = 400) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -51,7 +51,7 @@ export const reviewApi = {
     }
     // When backend is ready, this will return SeriesDto with PascalCase
     // and the component must be updated to use PascalCase fields.
-    return axiosInstance.get<any>(`/api/reviews/series/${seriesId}`);
+    return axiosInstance.get<ApiResponse<unknown>>(`/api/reviews/series/${seriesId}`);
   },
 
   submitToBoard: async (seriesId: string, notes: string) => {

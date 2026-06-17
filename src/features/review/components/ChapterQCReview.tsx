@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ArrowLeft, MapPin, ChevronLeft, ChevronRight, Loader2, ImageOff,
@@ -10,10 +10,12 @@ import { CanvasViewer } from '../../../components/canvas/CanvasViewer';
 import { CanvasToolbar } from '../../../components/canvas/CanvasToolbar';
 import { MobileCanvasWarning } from '../../../components/canvas/MobileCanvasWarning';
 import { useCanvasStore } from '../../../stores/canvasStore';
+import type { CanvasViewerHandle } from '../../../components/canvas/CanvasViewer';
 import { useAuthStore } from '../../../stores/authStore';
 import type { Annotation, AnnotationType } from '../../../types/entities';
 import { useChapterReview, useApproveChapter, useRequireChapterRevision } from '../hooks/useReview';
 import { ANNOTATION_TYPE_CONFIG, QC_CHECKLIST_ITEMS, formatVND } from '../constants';
+import { Point } from 'fabric';
 
 interface ChapterQCReviewProps {
   chapterId: string;
@@ -39,18 +41,40 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
   const [showRevision, setShowRevision] = useState(false);
   const [revisionReason, setRevisionReason] = useState('');
   const [checklist, setChecklist] = useState<boolean[]>(QC_CHECKLIST_ITEMS.map(() => false));
+  const canvasRef = useRef<CanvasViewerHandle>(null);
 
-  // Seed annotations from the loaded chapter (mock) once.
+  // Seed annotations from the loaded chapter data once.
+  const seededRef = useRef<string | null>(null);
+
+
   useEffect(() => {
-    if (chapter) setAnnotations(chapter.annotations);
-  }, [chapter]);
+    if (seededRef.current === chapterId) return;
+    const raw = chapter as Record<string, unknown> | undefined;
+    const annos = (raw?.Annotations ?? raw?.annotations) as Record<string, unknown>[] | undefined;
+    if (!chapter || !annos) return;
+    seededRef.current = chapterId;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional one-time seed from server data
+    setAnnotations(annos.map((a) => ({
+      id: String(a.Id),
+      pageId: String(a.PageId),
+      editorId: String(a.EditorId),
+      editorName: (a.Editor as Record<string, string>)?.FullName || 'Editor',
+      type: a.Type as AnnotationType,
+      x: a.X as number,
+      y: a.Y as number,
+      comment: a.Comment as string,
+      resolved: a.Resolved as boolean,
+      createdAt: (a.CreateAt as string) || new Date().toISOString(),
+      updatedAt: (a.UpdateAt as string) || new Date().toISOString(),
+    })));
+  }, [chapter, chapterId]);
 
   // Reset canvas tool state when leaving.
   useEffect(() => () => resetCanvas(), [resetCanvas]);
 
-  const pages = chapter?.pages ?? [];
+  const pages = useMemo(() => chapter?.Pages ?? [], [chapter?.Pages]);
   const currentPage = pages[currentPageIndex];
-  const pageId = currentPage?.id ?? '';
+  const pageId = String(currentPage?.Id ?? '');
 
   const pageAnnotations = useMemo(
     () => annotations.filter((a) => a.pageId === pageId),
@@ -64,11 +88,11 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
   );
 
   const validPageCount = useMemo(
-    () => pages.filter((p) => !pageHasError(p.id)).length,
+    () => pages.filter((p) => !pageHasError(String(p.Id))).length,
     [pages, pageHasError],
   );
 
-  const genkouryo = validPageCount * (chapter?.genkouryoPrice ?? 0);
+  const genkouryo = validPageCount * (chapter?.AppliedGenkouryoPrice ?? 0);
   const totalUnresolved = annotations.filter((a) => !a.resolved).length;
 
   // ─── Handlers ───
@@ -144,9 +168,36 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
     );
   };
 
-  const handleZoomIn = useCallback(() => setZoomLevel(zoomLevel * 1.2), [zoomLevel, setZoomLevel]);
-  const handleZoomOut = useCallback(() => setZoomLevel(zoomLevel / 1.2), [zoomLevel, setZoomLevel]);
-  const handleZoomReset = useCallback(() => setZoomLevel(1), [setZoomLevel]);
+  const handleZoomIn = useCallback(() => {
+    const canvas = canvasRef.current?.getCanvas();
+    if (canvas) {
+      let zoom = canvas.getZoom();
+      zoom = Math.min(zoom * 1.1, 5);
+      // Zoom center
+      canvas.zoomToPoint(new Point(canvas.getWidth() / 2, canvas.getHeight() / 2), zoom);
+      setZoomLevel(zoom);
+      canvas.renderAll();
+    }
+  }, [setZoomLevel]);
+
+  const handleZoomOut = useCallback(() => {
+    const canvas = canvasRef.current?.getCanvas();
+    if (canvas) {
+      let zoom = canvas.getZoom();
+      zoom = Math.max(zoom * 0.9, 0.1);
+      canvas.zoomToPoint(new Point(canvas.getWidth() / 2, canvas.getHeight() / 2), zoom);
+      setZoomLevel(zoom);
+      canvas.renderAll();
+    }
+  }, [setZoomLevel]);
+
+  const handleZoomReset = useCallback(() => {
+    canvasRef.current?.resetView();
+  }, []);
+
+  const handleZoomFit = useCallback(() => {
+    canvasRef.current?.resetView();
+  }, []);
 
   const allChecked = checklist.every(Boolean);
 
@@ -173,7 +224,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
   return (
     <>
       <MobileCanvasWarning />
-      <div className="hidden md:flex flex-col gap-4 animate-fade-in h-[calc(100vh-110px)]">
+      <div className="hidden md:flex flex-col gap-4 animate-fade-in h-[calc(100vh-120px)]">
         {/* ─── Header ─── */}
         <div className="flex items-center justify-between flex-shrink-0 gap-4">
           <div className="flex items-center gap-3 min-w-0">
@@ -185,10 +236,10 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
             </button>
             <div className="min-w-0">
               <h1 className="text-lg font-bold text-text-primary truncate">
-                {chapter.seriesTitle} · Ch.{chapter.chapterNumber}
+                {chapter.Series?.Title || `Series #${chapter.SeriesId}`} · Ch.{chapter.ChapterNumber}
               </h1>
               <p className="text-xs text-text-muted truncate">
-                {chapter.title} — {chapter.mangakaName}
+                {chapter.Title} — {chapter.Series?.Mangaka?.FullName || 'Unknown Mangaka'}
               </p>
             </div>
           </div>
@@ -216,103 +267,111 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
         </div>
 
         {/* ─── Body ─── */}
-        <div className="flex gap-4 flex-1 min-h-0">
-          {/* Canvas */}
-          <div className="flex-1 flex flex-col min-w-0 gap-2">
-            {/* Page nav */}
-            <div className="flex items-center justify-between flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                    pageHasError(pageId)
-                      ? 'bg-danger/10 text-danger'
-                      : 'bg-success/10 text-success'
+        <div className="flex-1 flex flex-col min-h-0 gap-4">
+          {/* ═══ Header: Top Toolbar ═══ */}
+          <div className="flex items-center justify-between flex-shrink-0 bg-bg-secondary p-2 rounded-xl border border-border-custom">
+            <div className="flex items-center gap-2">
+              <span
+                className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${pageHasError(pageId)
+                    ? 'bg-danger/10 text-danger'
+                    : 'bg-success/10 text-success'
                   }`}
-                >
-                  {pageHasError(pageId) ? 'Invalid' : 'Hợp lệ'}
-                </span>
-                <span className="text-xs text-text-secondary">
-                  Trang {currentPage?.pageNumber} · {pageAnnotations.length} ghim lỗi
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPageIndex(Math.max(0, currentPageIndex - 1))}
-                  disabled={currentPageIndex === 0}
-                  className="w-8 h-8 rounded-lg bg-bg-secondary border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <span className="text-xs font-mono text-text-secondary min-w-[56px] text-center">
-                  {currentPageIndex + 1} / {pages.length}
-                </span>
-                <button
-                  onClick={() => setCurrentPageIndex(Math.min(pages.length - 1, currentPageIndex + 1))}
-                  disabled={currentPageIndex === pages.length - 1}
-                  className="w-8 h-8 rounded-lg bg-bg-secondary border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
+              >
+                {pageHasError(pageId) ? 'Invalid' : 'Hợp lệ'}
+              </span>
+              <span className="text-xs text-text-secondary">
+                Trang {currentPage?.PageNumber} · {pageAnnotations.length} ghim lỗi
+              </span>
             </div>
 
-            <div className="flex-1 relative bg-bg-secondary border border-border-custom rounded-xl overflow-hidden min-h-0">
-              {currentPage && (
-                <CanvasViewer
-                  key={currentPage.id}
-                  imageUrl={currentPage.imageUrl}
-                  annotations={pageAnnotations}
-                  mode={activeTool === 'annotate' ? 'annotate' : 'view'}
-                  onAnnotationCreated={(data) =>
-                    handleCreate({ ...data, type: annotationType, comment: annoComment })
-                  }
-                  selectedAnnotationId={selectedAnnotationId}
-                  onAnnotationSelect={setSelectedAnnotation}
-                  className="w-full h-full"
-                />
-              )}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
-                <CanvasToolbar
-                  activeTool={activeTool}
-                  zoomLevel={zoomLevel}
-                  onToolChange={setActiveTool}
-                  onZoomIn={handleZoomIn}
-                  onZoomOut={handleZoomOut}
-                  onZoomReset={handleZoomReset}
-                  onZoomFit={handleZoomReset}
-                  showRegionTool={false}
-                  showAnnotateTool
-                />
-              </div>
-            </div>
+            <CanvasToolbar
+              activeTool={activeTool}
+              zoomLevel={zoomLevel}
+              onToolChange={setActiveTool}
+              onZoomIn={handleZoomIn}
+              onZoomOut={handleZoomOut}
+              onZoomReset={handleZoomReset}
+              onZoomFit={handleZoomFit}
+              showRegionTool={false}
+              showAnnotateTool
+              canDelete={!!selectedAnnotationId}
+              onDelete={() => {
+                if (selectedAnnotationId) {
+                  setAnnotations((prev) => prev.filter((a) => a.id !== selectedAnnotationId));
+                  setSelectedAnnotation(null);
+                }
+              }}
+            />
 
-            {/* Page filmstrip with valid/invalid badges */}
-            <div className="flex items-center gap-2 flex-shrink-0 overflow-x-auto pb-1">
-              {pages.map((p, idx) => {
-                const invalid = pageHasError(p.id);
-                return (
-                  <button
-                    key={p.id}
-                    onClick={() => setCurrentPageIndex(idx)}
-                    className={`relative flex-shrink-0 w-12 h-16 rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
-                      idx === currentPageIndex ? 'border-brand' : 'border-border-custom/50 hover:border-border-custom'
-                    }`}
-                    title={`Trang ${p.pageNumber} — ${invalid ? 'Invalid' : 'Hợp lệ'}`}
-                  >
-                    <img src={p.imageUrl} alt={`p${p.pageNumber}`} className="w-full h-full object-cover" />
-                    <span
-                      className={`absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full border border-bg-secondary ${
-                        invalid ? 'bg-danger' : 'bg-success'
-                      }`}
-                    />
-                    <span className="absolute bottom-0 inset-x-0 text-[9px] text-center text-white bg-black/50">
-                      {p.pageNumber}
-                    </span>
-                  </button>
-                );
-              })}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPageIndex(Math.max(0, currentPageIndex - 1))}
+                disabled={currentPageIndex === 0}
+                className="w-8 h-8 rounded-lg bg-bg-primary border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <span className="text-xs font-mono text-text-secondary min-w-[56px] text-center">
+                {currentPageIndex + 1} / {pages.length}
+              </span>
+              <button
+                onClick={() => setCurrentPageIndex(Math.min(pages.length - 1, currentPageIndex + 1))}
+                disabled={currentPageIndex === pages.length - 1}
+                className="w-8 h-8 rounded-lg bg-bg-primary border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <ChevronRight size={16} />
+              </button>
             </div>
           </div>
+
+          {/* ═══ Main Content: Canvas & Sidebar ═══ */}
+          <div className="flex gap-4 flex-1 min-h-0">
+            {/* Canvas Area */}
+            <div className="flex flex-col flex-1 min-w-0 gap-2">
+              <div className="flex-1 relative bg-bg-secondary border border-border-custom rounded-xl overflow-hidden min-h-0">
+                {currentPage && (
+                  <CanvasViewer
+                    ref={canvasRef}
+                    key={currentPage.Id}
+                    imageUrl={currentPage.CompositeImageUrl || currentPage.RawImageUrl || ''}
+                    annotations={pageAnnotations}
+                    mode={activeTool === 'annotate' ? 'annotate' : 'view'}
+                    onAnnotationCreated={(data) =>
+                      handleCreate({ ...data, type: annotationType, comment: annoComment })
+                    }
+                    selectedAnnotationId={selectedAnnotationId}
+                    onAnnotationSelect={setSelectedAnnotation}
+                    onZoomChange={setZoomLevel}
+                    className="w-full h-full"
+                  />
+                )}
+              </div>
+
+              {/* Page filmstrip with valid/invalid badges */}
+              <div className="flex items-center gap-2 flex-shrink-0 overflow-x-auto pb-1">
+                {pages.map((p, idx) => {
+                  const invalid = pageHasError(String(p.Id));
+                  return (
+                    <button
+                      key={p.Id}
+                      onClick={() => setCurrentPageIndex(idx)}
+                      className={`relative flex-shrink-0 w-12 h-16 rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${idx === currentPageIndex ? 'border-brand' : 'border-border-custom/50 hover:border-border-custom'
+                        }`}
+                      title={`Trang ${p.PageNumber} — ${invalid ? 'Invalid' : 'Hợp lệ'}`}
+                    >
+                      <img src={p.CompositeImageUrl || p.RawImageUrl || ''} alt={`p${p.PageNumber}`} className="w-full h-full object-cover" />
+                      <span
+                        className={`absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full border border-bg-secondary ${invalid ? 'bg-danger' : 'bg-success'
+                          }`}
+                      />
+                      <span className="absolute bottom-0 inset-x-0 text-[9px] text-center text-white bg-black/50">
+                        {p.PageNumber}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
           {/* Sidebar */}
           <div className="w-[340px] flex-shrink-0 flex flex-col gap-4 min-h-0">
@@ -342,7 +401,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                 <span className="text-sm font-bold text-success">{formatVND(genkouryo)}</span>
               </div>
               <p className="text-[9px] text-text-muted mt-1.5 text-center">
-                {validPageCount} trang × {formatVND(chapter.genkouryoPrice)} (G02)
+                {validPageCount} trang × {formatVND(chapter.AppliedGenkouryoPrice || 0)} (G02)
               </p>
             </div>
 
@@ -350,7 +409,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
             <div className="bg-bg-secondary border border-border-custom rounded-xl flex flex-col flex-1 min-h-0">
               <div className="p-4 border-b border-border-custom flex-shrink-0">
                 <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
-                  <MapPin size={14} className="text-red-400" /> Ghim lỗi — Trang {currentPage?.pageNumber}
+                  <MapPin size={14} className="text-red-400" /> Ghim lỗi — Trang {currentPage?.PageNumber}
                 </h3>
 
                 {activeTool === 'annotate' && (
@@ -362,11 +421,10 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                           <button
                             key={type}
                             onClick={() => setAnnotationType(type)}
-                            className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-medium border transition-all cursor-pointer ${
-                              annotationType === type
+                            className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-medium border transition-all cursor-pointer ${annotationType === type
                                 ? `${cfg.bg} ${cfg.color} ${cfg.border}`
                                 : 'bg-bg-primary border-border-custom/50 text-text-muted hover:border-border-custom'
-                            }`}
+                              }`}
                           >
                             <span>{cfg.icon}</span>
                             <span className="hidden lg:inline">{cfg.short}</span>
@@ -399,13 +457,12 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                       <div
                         key={a.id}
                         onClick={() => setSelectedAnnotation(a.id === selectedAnnotationId ? null : a.id)}
-                        className={`group p-3 rounded-lg border transition-all cursor-pointer ${
-                          a.id === selectedAnnotationId
+                        className={`group p-3 rounded-lg border transition-all cursor-pointer ${a.id === selectedAnnotationId
                             ? 'border-brand/40 bg-brand/5'
                             : a.resolved
                               ? 'border-border-custom/30 bg-bg-primary/50 opacity-60'
                               : 'border-border-custom/50 bg-bg-primary hover:border-brand/20'
-                        }`}
+                          }`}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <span className={`text-[10px] font-medium flex items-center gap-1 ${cfg.color}`}>
@@ -444,6 +501,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       {/* ─── Approve Modal (F3.6) ─── */}
@@ -500,7 +558,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-text-secondary">Đơn giá nhuận bút</span>
-                  <span className="font-semibold text-text-primary">{formatVND(chapter.genkouryoPrice)}/trang</span>
+                  <span className="font-semibold text-text-primary">{formatVND(chapter.AppliedGenkouryoPrice || 0)}/trang</span>
                 </div>
                 <div className="flex items-center justify-between pt-2 border-t border-border-custom">
                   <span className="text-xs text-text-secondary font-medium">Tổng giải ngân</span>
@@ -515,11 +573,10 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
               <button
                 onClick={handleApprove}
                 disabled={!allChecked || approveChapter.isPending}
-                className={`inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium border-none transition-all ${
-                  !allChecked || approveChapter.isPending
+                className={`inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium border-none transition-all ${!allChecked || approveChapter.isPending
                     ? 'bg-success/40 text-white/60 cursor-not-allowed'
                     : 'bg-success hover:brightness-110 text-white cursor-pointer'
-                }`}
+                  }`}
                 title={!allChecked ? 'Cần tick hết QC Checklist' : undefined}
               >
                 {approveChapter.isPending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
@@ -549,7 +606,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
             </div>
             <div className="p-5 space-y-4">
               <p className="text-sm text-text-secondary">
-                Chapter sẽ được trả về cho <span className="text-text-primary font-medium">{chapter.mangakaName}</span> kèm {totalUnresolved} lỗi đã ghim để chỉnh sửa.
+                Chapter sẽ được trả về cho <span className="text-text-primary font-medium">{chapter.Series?.Mangaka?.FullName || 'Unknown Mangaka'}</span> kèm {totalUnresolved} lỗi đã ghim để chỉnh sửa.
               </p>
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">
@@ -573,11 +630,10 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
               <button
                 onClick={handleRevision}
                 disabled={requireRevision.isPending}
-                className={`inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium border-none transition-all ${
-                  requireRevision.isPending
+                className={`inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium border-none transition-all ${requireRevision.isPending
                     ? 'bg-amber-500/50 text-white/70 cursor-not-allowed'
                     : 'bg-amber-500 hover:bg-amber-600 text-white cursor-pointer'
-                }`}
+                  }`}
               >
                 {requireRevision.isPending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                 Gửi yêu cầu
