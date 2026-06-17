@@ -2,7 +2,7 @@ import { axiosInstance, type ApiResponse } from '../../../api/axios';
 import type { ApproveChapterPayload, ChapterReviewDetail, ReviewQueueItem } from '../types';
 import { MOCK_REVIEW_QUEUE, buildChapterReviewDetail } from '../data/mockData';
 
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 const mockDelay = (ms = 400) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -32,7 +32,8 @@ export interface ReviewSeriesDetail {
 
 export const reviewApi = {
   getReviewSeriesDetail: async (seriesId: string) => {
-    if (USE_MOCK) {
+    const FORCE_MOCK_SERIES = true; // Backend chưa có API duyệt Series
+    if (USE_MOCK || FORCE_MOCK_SERIES) {
       await mockDelay();
       return mockResponse<ReviewSeriesDetail>({
         id: seriesId,
@@ -54,7 +55,8 @@ export const reviewApi = {
   },
 
   submitToBoard: async (seriesId: string, notes: string) => {
-    if (USE_MOCK) {
+    const FORCE_MOCK_SERIES = true;
+    if (USE_MOCK || FORCE_MOCK_SERIES) {
       await mockDelay(600);
       return mockResponse(true, 'Đã trình Hội đồng thành công');
     }
@@ -62,7 +64,8 @@ export const reviewApi = {
   },
 
   requireRevision: async (seriesId: string, reason: string) => {
-    if (USE_MOCK) {
+    const FORCE_MOCK_SERIES = true;
+    if (USE_MOCK || FORCE_MOCK_SERIES) {
       await mockDelay(600);
       return mockResponse(true, 'Đã yêu cầu tác giả chỉnh sửa lại Bản thảo');
     }
@@ -94,7 +97,7 @@ export const reviewApi = {
     }
     return axiosInstance.post<ApiResponse<boolean>>(
       `/api/reviews/chapters/${payload.chapterId}/approve`,
-      { validPageCount: payload.validPageCount },
+      { ValidPageCount: payload.validPageCount, QcChecklistData: "{}" },
     );
   },
 
@@ -104,8 +107,8 @@ export const reviewApi = {
       return mockResponse(true, 'Đã trả Chapter về cho Mangaka chỉnh sửa');
     }
     return axiosInstance.post<ApiResponse<boolean>>(
-      `/api/reviews/chapters/${chapterId}/require-revision`,
-      { reason },
+      `/api/reviews/chapters/${chapterId}/revision`,
+      { FeedbackComment: reason },
     );
   },
 };
