@@ -4,17 +4,13 @@ import toast from 'react-hot-toast';
 import {
   BarChart3,
   Search,
-  Calendar,
-  Layers,
   ThumbsUp,
   ThumbsDown,
-  ChevronRight,
-  Eye,
-  MessageSquare,
   X,
   Loader2,
 } from 'lucide-react';
 import { useRankingList, useSubmitRankingVote } from '../hooks/useRanking';
+import type { RankingItem } from '../api/rankingApi';
 
 const GENRES = ['All', 'Action', 'Adventure', 'Sci-Fi', 'Mystery', 'Romance', 'Drama', 'Thriller'];
 const PERIODS = [
@@ -30,14 +26,14 @@ export const RankingFeature = () => {
 
   // Vote Modal States
   const [showVoteModal, setShowVoteModal] = useState(false);
-  const [selectedSeries, setSelectedSeries] = useState<any | null>(null);
+  const [selectedSeries, setSelectedSeries] = useState<RankingItem | null>(null);
   const [voteAction, setVoteAction] = useState<'maintain' | 'cancel'>('maintain');
   const [comment, setComment] = useState('');
 
   const { data: rankingList = [], isLoading } = useRankingList({ period, genre });
   const submitVoteMutation = useSubmitRankingVote();
 
-  const handleOpenVote = (series: any, action: 'maintain' | 'cancel') => {
+  const handleOpenVote = (series: RankingItem, action: 'maintain' | 'cancel') => {
     setSelectedSeries(series);
     setVoteAction(action);
     setComment('');
@@ -61,7 +57,7 @@ export const RankingFeature = () => {
     }
   };
 
-  const filteredRanking = rankingList.filter((item: any) =>
+  const filteredRanking = rankingList.filter((item: RankingItem) =>
     item.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -150,7 +146,7 @@ export const RankingFeature = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-custom">
-                {filteredRanking.map((item: any) => (
+                {filteredRanking.map((item: RankingItem) => (
                   <tr key={item.id} className="hover:bg-bg-surface/30 transition-colors">
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg font-bold text-xs ${

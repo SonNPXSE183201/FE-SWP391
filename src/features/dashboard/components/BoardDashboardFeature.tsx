@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom';
 import {
   Vote,
   BookOpen,
@@ -10,9 +9,9 @@ import {
 import { StatCard } from './StatCard';
 import { useBoardDashboard } from '../hooks/useBoardDashboard';
 import { formatVND } from '../../wallet';
+import type { BoardRecentActivityDto } from '../api/dashboard.api';
 
 export const BoardDashboardFeature = () => {
-  const navigate = useNavigate();
   const { stats, recentActivities, isLoading, error } = useBoardDashboard();
 
   if (isLoading) {
@@ -84,7 +83,7 @@ export const BoardDashboardFeature = () => {
           <h2 className="text-sm font-semibold text-text-primary">Hoạt động xét duyệt gần đây</h2>
         </div>
         <div className="divide-y divide-border-custom">
-          {recentActivities.map((act) => (
+          {recentActivities.map((act: BoardRecentActivityDto) => (
             <div key={act.id} className="p-4 flex items-center justify-between hover:bg-bg-surface/30 transition-colors">
               <div className="flex items-center gap-3">
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
