@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import {
   HubConnectionBuilder,
   HubConnection,
@@ -20,7 +20,13 @@ const TYPE_ICON: Record<NotificationItem['type'], string> = {
 };
 
 const notifyToast = (item: NotificationItem) =>
-  toast(item.title, { icon: TYPE_ICON[item.type] ?? '🔔', duration: 5000 });
+  toast(
+    (t) => React.createElement('div', { className: 'flex flex-col gap-1' },
+      React.createElement('span', { className: 'font-semibold text-sm text-text-primary leading-tight' }, item.title),
+      item.message ? React.createElement('span', { className: 'text-xs text-text-secondary leading-snug break-words' }, item.message) : null
+    ),
+    { icon: TYPE_ICON[item.type] ?? '🔔', duration: 5000 }
+  );
 
 /**
  * SignalR hub URL — connects to ASP.NET Core Notification Hub.
