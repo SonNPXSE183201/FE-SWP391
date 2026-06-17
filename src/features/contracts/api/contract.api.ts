@@ -12,6 +12,17 @@ const mockResponse = <T>(data: T, message = 'Success') => ({
   },
 });
 
+export interface ApprovedSeries {
+  id: string;
+  title: string;
+  mangakaName: string;
+  approvedAt: string;
+  approvedBudget: number;
+  publishSchedule: string;
+  hasContract: boolean;
+  genres: string[];
+}
+
 export const contractApi = {
   getApprovedSeries: async () => {
     if (USE_MOCK) {
@@ -59,7 +70,7 @@ export const contractApi = {
         },
       ]);
     }
-    return axiosInstance.get<ApiResponse<any[]>>('/api/admin/contracts/series');
+    return axiosInstance.get<ApiResponse<ApprovedSeries[]>>('/api/admin/contracts/series');
   },
 
   createContract: async (seriesId: string, baseGenkouryoPrice: number) => {

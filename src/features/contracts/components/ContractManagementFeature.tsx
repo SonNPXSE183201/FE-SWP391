@@ -15,11 +15,13 @@ import {
 
 // ─── Mock Data ───
 import { useApprovedSeries, useCreateContract } from '../hooks/useContract';
+import type { ApprovedSeries } from '../api/contract.api';
+
 export const ContractManagementFeature = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'contracted'>('pending');
   const [showContractModal, setShowContractModal] = useState(false);
-  const [selectedSeries, setSelectedSeries] = useState<any | null>(null);
+  const [selectedSeries, setSelectedSeries] = useState<ApprovedSeries | null>(null);
   const [baseGenkouryoPrice, setBaseGenkouryoPrice] = useState('');
   
   const { data: seriesList = [], isLoading } = useApprovedSeries();
@@ -40,7 +42,7 @@ export const ContractManagementFeature = () => {
     setBaseGenkouryoPrice(raw);
   };
 
-  const handleOpenContractModal = (series: any) => {
+  const handleOpenContractModal = (series: ApprovedSeries) => {
     setSelectedSeries(series);
     setBaseGenkouryoPrice('');
     setShowContractModal(true);
@@ -67,7 +69,7 @@ export const ContractManagementFeature = () => {
   };
 
   // Filter data
-  const filteredData = seriesList.filter((s: any) => {
+  const filteredData = seriesList.filter((s: ApprovedSeries) => {
     const matchesSearch =
       s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.mangakaName.toLowerCase().includes(searchQuery.toLowerCase());
@@ -78,7 +80,7 @@ export const ContractManagementFeature = () => {
     return matchesSearch && matchesFilter;
   });
 
-  const pendingCount = seriesList.filter((s: any) => !s.hasContract).length;
+  const pendingCount = seriesList.filter((s: ApprovedSeries) => !s.hasContract).length;
 
   return (
     <div className="animate-fade-in">
@@ -190,7 +192,7 @@ export const ContractManagementFeature = () => {
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-text-primary truncate">{series.title}</p>
                     <div className="flex flex-wrap gap-1 mt-0.5">
-                      {series.genres.slice(0, 2).map((g: any) => (
+                      {series.genres.slice(0, 2).map((g: string) => (
                         <span key={g} className="px-1.5 py-0 rounded bg-brand/8 text-brand text-[9px] font-medium">{g}</span>
                       ))}
                       {series.genres.length > 2 && (

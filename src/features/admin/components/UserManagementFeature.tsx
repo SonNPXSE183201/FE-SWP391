@@ -17,7 +17,7 @@ export const UserManagementFeature = () => {
   const [filterRole, setFilterRole] = useState('All');
   const [filterStatus, setFilterStatus] = useState('All');
 
-  const { data: users = [], isLoading: loading } = useQuery({
+  const { data: users = [], isLoading: loading } = useQuery<UserListItem[]>({
     queryKey: ['admin-users', filterRole, filterStatus],
     queryFn: async () => {
       try {
@@ -27,7 +27,7 @@ export const UserManagementFeature = () => {
           status: filterStatus !== 'All' ? filterStatus : undefined
         });
         return response.data.data;
-      } catch (error) {
+      } catch {
         // Fallback to mock
         await new Promise(resolve => setTimeout(resolve, 800));
         let filtered = [...mockUsers];

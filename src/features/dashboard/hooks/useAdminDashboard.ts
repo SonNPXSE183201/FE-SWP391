@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { dashboardApi, type AdminDashboardStatsDto, type AdminRecentActivityDto } from '../api/dashboard.api';
+import { dashboardApi } from '../api/dashboard.api';
 
 export const useAdminDashboard = () => {
   const query = useQuery({
