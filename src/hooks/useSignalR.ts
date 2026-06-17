@@ -92,6 +92,21 @@ export const useSignalR = () => {
       notifyToast(item);
     });
 
+    // ReceiveNotification: older generic notification format (content, type)
+    connection.on('ReceiveNotification', (content: string, type: string) => {
+      console.log('[SignalR] ReceiveNotification received:', { content, type });
+      const item: NotificationItem = {
+        id: crypto.randomUUID(),
+        title: 'Thông báo',
+        message: content || '',
+        isRead: false,
+        type: (type as NotificationItem['type']) || 'SystemAlert',
+        createdAt: new Date().toISOString(),
+      };
+      addNotification(item);
+      notifyToast(item);
+    });
+
     // TaskStatusChanged: task status update → notify + refresh task data (F1.6)
     connection.on('TaskStatusChanged', (payload: any) => {
       console.log('[SignalR] TaskStatusChanged received:', payload);
