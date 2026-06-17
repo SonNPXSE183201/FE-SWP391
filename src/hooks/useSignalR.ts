@@ -98,9 +98,9 @@ export const useSignalR = () => {
       const item: NotificationItem = {
         id: crypto.randomUUID(),
         title: 'Cập nhật Task',
-        message: payload.Message || `Task "${payload.TaskName || ''}" đã chuyển sang ${payload.NewStatus || 'trạng thái mới'}`,
+        message: payload.Message || payload.message || `Task "${payload.TaskName || payload.taskName || ''}" đã chuyển sang ${payload.NewStatus || payload.newStatus || 'trạng thái mới'}`,
         isRead: false,
-        link: payload.Link || '/mangaka/tasks',
+        link: payload.Link || payload.link || '/mangaka/tasks',
         type: 'TaskUpdate',
         createdAt: new Date().toISOString(),
       };
@@ -116,9 +116,9 @@ export const useSignalR = () => {
       const item: NotificationItem = {
         id: crypto.randomUUID(),
         title: 'Cập nhật ví',
-        message: payload.Message || 'Số dư ví của bạn đã thay đổi',
+        message: payload.Message || payload.message || 'Số dư ví của bạn đã thay đổi',
         isRead: false,
-        link: payload.Link || '/mangaka/wallet',
+        link: payload.Link || payload.link || '/mangaka/wallet',
         type: 'WalletUpdate',
         createdAt: new Date().toISOString(),
       };
@@ -128,9 +128,10 @@ export const useSignalR = () => {
     });
 
     // UnreadCountUpdated: server pushes fresh unread count
-    connection.on('UnreadCountUpdated', (payload: { count: number }) => {
+    connection.on('UnreadCountUpdated', (payload: any) => {
       console.log('[SignalR] UnreadCountUpdated received:', payload);
-      setUnreadCount(payload.count);
+      const newCount = payload.Count ?? payload.count ?? 0;
+      setUnreadCount(newCount);
     });
 
     // ─── Lifecycle logging ────────────────────────────────────
