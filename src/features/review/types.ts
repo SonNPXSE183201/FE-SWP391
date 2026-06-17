@@ -1,35 +1,15 @@
-import type { Annotation } from '../../types/entities';
+import { components } from '../../api/generated/schema';
 
 // ─── Chapter Review (QC) Types ───────────────────────────────
 
 export type ChapterReviewStatus = 'Pending_Review' | 'Revision';
 
-export interface ReviewQueueItem {
-  chapterId: string;
-  seriesId: string;
-  seriesTitle: string;
-  chapterNumber: number;
-  title: string;
-  mangakaName: string;
-  coverUrl?: string;
-  submittedAt: string;
-  deadline: string;
-  pageCount: number;
-  /** Genkoūryō unit price (VND per valid page) — from Contract/Addendum (G02). */
-  genkouryoPrice: number;
-  status: ChapterReviewStatus;
-}
-
-export interface ReviewPageItem {
-  id: string;
-  pageNumber: number;
-  imageUrl: string;
-}
-
-export interface ChapterReviewDetail extends ReviewQueueItem {
-  pages: ReviewPageItem[];
-  annotations: Annotation[];
-}
+export type ReviewQueueItem = components["schemas"]["Chapter"];
+export type ChapterReviewDetail = components["schemas"]["Chapter"] & {
+  Annotations?: Record<string, unknown>[];
+  annotations?: Record<string, unknown>[];
+};
+export type ReviewPageItem = components["schemas"]["PageDto"];
 
 export interface ApproveChapterPayload {
   chapterId: string;
