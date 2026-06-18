@@ -12,6 +12,40 @@ import { MOCK_WALLET, MOCK_TRANSACTIONS } from '../../wallet/data/mockData';
 // ─── Toggle this to false when backend Tasks API is ready ────
 const USE_MOCK = true;
 
+import { components } from '../../../api/generated/schema';
+import type { TaskStatus, Task } from '../../../types/entities';
+
+// ─── Mapper ──────────────────────────────────────────────────
+const mapTaskStatus = (status: any): TaskStatus => {
+  if (status === 0 || status === '0') return 'Pending';
+  if (status === 1 || status === '1') return 'In_Progress';
+  if (status === 2 || status === '2') return 'Pending_Review';
+  if (status === 3 || status === '3') return 'Approved';
+  if (status === 4 || status === '4') return 'Revision';
+  if (status === 5 || status === '5') return 'Disputed';
+  if (status === 6 || status === '6') return 'Cancelled';
+  if (status === 7 || status === '7') return 'Closed';
+  return (status as TaskStatus) || 'Pending';
+};
+
+export const mapTaskDtoToEntity = (dto: components['schemas']['TasksDto']): Task => ({
+  id: dto.Id?.toString() || '',
+  regionId: dto.RegionId?.toString() || '',
+  pageId: dto.PageNumber?.toString() || '',
+  chapterId: '',
+  seriesId: dto.MangakaId?.toString() || '',
+  mangakaId: dto.MangakaId?.toString() || '',
+  assignedAssistantId: dto.AssistantId?.toString() || '',
+  assignedAssistantName: dto.AssistantName || '',
+  status: mapTaskStatus(dto.Status),
+  amount: dto.PaymentAmount || 0,
+  deadline: dto.Deadline || new Date().toISOString(),
+  extensionUsed: !!dto.ExtensionRequestDays,
+  onLeave: false,
+  createdAt: dto.CreateAt || new Date().toISOString(),
+  updatedAt: dto.UpdateAt || new Date().toISOString(),
+});
+
 // ─── Request DTOs ────────────────────────────────────────────
 
 export interface CreateTaskRequest {
