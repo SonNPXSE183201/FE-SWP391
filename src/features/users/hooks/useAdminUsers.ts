@@ -61,9 +61,21 @@ export const useLockUser = () => {
   return useMutation({
     mutationFn: (userId: number) => adminApi.lockUser(userId),
     onSuccess: () => {
-      toast.success("Đã khóa/mở khóa tài khoản thành công");
+      toast.success("Đã khóa tài khoản thành công");
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     },
-    onError: () => toast.error("Có lỗi xảy ra khi xử lý"),
+    onError: () => toast.error("Có lỗi xảy ra khi khóa tài khoản"),
+  });
+};
+
+export const useUnlockUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: number) => adminApi.unlockUser(userId),
+    onSuccess: () => {
+      toast.success("Đã mở khóa tài khoản thành công");
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: () => toast.error("Có lỗi xảy ra khi mở khóa tài khoản"),
   });
 };

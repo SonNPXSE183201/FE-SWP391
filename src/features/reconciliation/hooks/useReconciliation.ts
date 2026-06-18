@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { axiosInstance, type ApiResponse } from '../../../api/axios';
 
-const USE_MOCK = true;
+const USE_MOCK = false;
 const mockDelay = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // ─── Types ───────────────────────────────────────────────────
@@ -200,7 +200,7 @@ export const reconciliationApi = {
       '/api/admin/reconciliation',
       { params }
     );
-    return res.data?.Data ?? { records: [], summary: calculateSummary([]) };
+    return res.data?.data ?? { records: [], summary: calculateSummary([]) };
   },
 };
 
