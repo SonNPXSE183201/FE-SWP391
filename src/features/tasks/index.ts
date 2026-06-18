@@ -20,5 +20,6 @@ export {
   useRequestRevisionTask,
   useTaskDetail,
   useRequestExtension,
+  useApproveExtension,
 } from './hooks/useTasks';
 export type { AvailableTaskDto } from './hooks/useTasks';
