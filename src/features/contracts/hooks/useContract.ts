@@ -20,3 +20,16 @@ export const useCreateContract = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.approvedSeries }),
   });
 };
+
+export const useUpdateContract = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { contractId: string; genkouryoPrice?: number; endDate?: string }) =>
+      contractApi.updateContract({
+        contractId: payload.contractId,
+        genkouryoPrice: payload.genkouryoPrice,
+        endDate: payload.endDate,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.approvedSeries }),
+  });
+};
