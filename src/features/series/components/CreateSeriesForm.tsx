@@ -43,9 +43,10 @@ export const CreateSeriesForm = () => {
     setIsSubmitting(true);
     try {
       const response = await seriesApi.create({
-        title: formData.title,
-        synopsis: formData.synopsis,
-        genre: formData.genre,
+        Title: formData.title,
+        Synopsis: formData.synopsis,
+        Genre: formData.genre.join(','),
+        EstimatedProductionBudget: Number(formData.requestedBudget.replace(/[^0-9]/g, '')) || 0,
         coverImage: formData.coverImage || undefined,
       });
       toast.success((response.data as any).Message || (response.data as any).message || 'Tạo Series thành công! Trạng thái: Bản nháp (Draft)');

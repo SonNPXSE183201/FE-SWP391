@@ -1,6 +1,8 @@
-import { axiosInstance } from '../../../api/axios';
+import { axiosInstance, type ApiResponse } from '../../../api/axios';
+import type { ApproveChapterPayload, ChapterReviewDetail, ReviewQueueItem } from '../types';
+import { MOCK_REVIEW_QUEUE, buildChapterReviewDetail } from '../data/mockData';
 
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 const mockDelay = (ms = 400) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -30,7 +32,8 @@ export interface ReviewSeriesDetail {
 
 export const reviewApi = {
   getReviewSeriesDetail: async (seriesId: string) => {
-    if (USE_MOCK) {
+    const FORCE_MOCK_SERIES = true; // Backend chưa có API duyệt Series
+    if (USE_MOCK || FORCE_MOCK_SERIES) {
       await mockDelay();
       return mockResponse<ReviewSeriesDetail>({
         id: seriesId,
@@ -48,11 +51,12 @@ export const reviewApi = {
     }
     // When backend is ready, this will return SeriesDto with PascalCase
     // and the component must be updated to use PascalCase fields.
-    return axiosInstance.get<any>(`/api/reviews/series/${seriesId}`);
+    return axiosInstance.get<ApiResponse<unknown>>(`/api/reviews/series/${seriesId}`);
   },
 
   submitToBoard: async (seriesId: string, notes: string) => {
-    if (USE_MOCK) {
+    const FORCE_MOCK_SERIES = true;
+    if (USE_MOCK || FORCE_MOCK_SERIES) {
       await mockDelay(600);
       return mockResponse(true, 'Đã trình Hội đồng thành công');
     }
@@ -60,10 +64,55 @@ export const reviewApi = {
   },
 
   requireRevision: async (seriesId: string, reason: string) => {
-    if (USE_MOCK) {
+    const FORCE_MOCK_SERIES = true;
+    if (USE_MOCK || FORCE_MOCK_SERIES) {
       await mockDelay(600);
       return mockResponse(true, 'Đã yêu cầu tác giả chỉnh sửa lại Bản thảo');
     }
-    return axiosInstance.post<any>(`/api/reviews/series/${seriesId}/require-revision`, { reason });
-  }
+    return axiosInstance.post<ApiResponse<boolean>>(`/api/reviews/series/${seriesId}/require-revision`, { reason });
+  },
+
+  // ─── Chapter QC Review (F3.1, F3.2, F3.6) ──────────────────
+  getReviewQueue: async () => {
+    if (USE_MOCK) {
+      await mockDelay();
+      return mockResponse<ReviewQueueItem[]>(MOCK_REVIEW_QUEUE);
+    }
+    const res = await axiosInstance.get<ApiResponse<ReviewQueueItem[]>>('/api/reviews/chapters');
+    return res;
+  },
+
+  getChapterReview: async (chapterId: string) => {
+    if (USE_MOCK) {
+      await mockDelay();
+      return mockResponse<ChapterReviewDetail | null>(buildChapterReviewDetail(chapterId));
+    }
+    const res = await axiosInstance.get<ApiResponse<ChapterReviewDetail>>(`/api/reviews/chapters/${chapterId}`);
+    return res;
+  },
+
+  // F3.6 — Approve Chapter → triggers Genkoūryō disbursement (G02, G03).
+  approveChapter: async (payload: ApproveChapterPayload) => {
+    if (USE_MOCK) {
+      await mockDelay(700);
+      return mockResponse(true, 'Đã duyệt Chapter & giải ngân nhuận bút');
+    }
+    const res = await axiosInstance.post<ApiResponse<boolean>>(
+      `/api/reviews/chapters/${payload.chapterId}/approve`,
+      { ValidPageCount: payload.validPageCount, QcChecklistData: "{}" },
+    );
+    return res;
+  },
+
+  requireChapterRevision: async (chapterId: string, reason: string) => {
+    if (USE_MOCK) {
+      await mockDelay(600);
+      return mockResponse(true, 'Đã trả Chapter về cho Mangaka chỉnh sửa');
+    }
+    const res = await axiosInstance.post<ApiResponse<boolean>>(
+      `/api/reviews/chapters/${chapterId}/revision`,
+      { FeedbackComment: reason },
+    );
+    return res;
+  },
 };

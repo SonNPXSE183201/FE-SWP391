@@ -45,6 +45,8 @@ export type TransactionType =
   | 'Funding'
   | 'Lock'
   | 'Unlock'
+  | 'Escrow_Lock'
+  | 'Escrow_Unlock'
   | 'Transfer'
   | 'Deposit'
   | 'Withdraw'

@@ -220,7 +220,7 @@ export const TaskQueueFeature = () => {
       <div className="space-y-3 mt-3">
         {tasks.map((task: AvailableTaskDto) => {
           const statusKey = task.Status as TaskStatus;
-          const statusCfg = TASK_STATUS_CONFIG[statusKey] ?? {
+          const statusCfg = TASK_STATUS_CONFIG[statusKey] || {
             label: task.Status,
             color: 'text-text-muted',
             bg: 'bg-bg-surface',
@@ -262,7 +262,7 @@ export const TaskQueueFeature = () => {
                     )}
 
                     {/* Page number */}
-                    {task.PageNumber > 0 && (
+                    {(task.PageNumber ?? 0) > 0 && (
                       <span className="inline-flex items-center gap-1 text-[11px] text-text-secondary">
                         <ImageIcon size={12} />
                         Trang {task.PageNumber}
@@ -271,7 +271,7 @@ export const TaskQueueFeature = () => {
 
                     {/* Payment */}
                     <span className="inline-flex items-center gap-1 text-[11px] font-medium text-text-primary">
-                      {formatVND(task.PaymentAmount)}
+                      {formatVND(task.PaymentAmount ?? 0)}
                     </span>
 
                     {/* Deadline */}
@@ -314,7 +314,7 @@ export const TaskQueueFeature = () => {
                 {/* Right: Accept button */}
                 {activeTab === 'Available' && task.Status === 'Pending' && (
                   <button
-                    onClick={() => handleAcceptTask(task.Id)}
+                    onClick={() => handleAcceptTask(task.Id!)}
                     disabled={acceptMutation.isPending}
                     className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-xl text-[11px] font-medium transition-all border-none cursor-pointer shadow-brand hover:shadow-brand-hover hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -324,20 +324,20 @@ export const TaskQueueFeature = () => {
                 )}
 
                 {/* Right: Submit button */}
-                {activeTab === 'MyTasks' && ['In_Progress', 'Revision'].includes(task.Status) && (
+                {activeTab === 'MyTasks' && ['In_Progress', 'Revision'].includes(task.Status || '') && (
                   <div className="flex-shrink-0 flex flex-col gap-2 items-end">
                     <label className="cursor-pointer px-3 py-1.5 border border-border-custom rounded-lg text-[11px] hover:bg-bg-secondary transition-colors text-text-primary">
-                      {selectedFiles[task.Id] ? selectedFiles[task.Id].name : '📁 Chọn File ảnh'}
+                      {selectedFiles[task.Id!] ? selectedFiles[task.Id!].name : '📁 Chọn File ảnh'}
                       <input
                         type="file"
                         accept="image/*"
                         className="hidden"
-                        onChange={(e) => handleFileChange(task.Id, e.target.files?.[0] || null)}
+                        onChange={(e) => handleFileChange(task.Id!, e.target.files?.[0] || null)}
                       />
                     </label>
                     <button
-                      onClick={() => handleSubmitResult(task.Id)}
-                      disabled={!selectedFiles[task.Id]}
+                      onClick={() => handleSubmitResult(task.Id!)}
+                      disabled={!task.Id || !selectedFiles[task.Id]}
                       className="inline-flex items-center gap-2 px-4 py-2 bg-success hover:bg-green-600 text-white rounded-xl text-[11px] font-medium transition-all border-none cursor-pointer shadow-sm hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Download size={14} />
