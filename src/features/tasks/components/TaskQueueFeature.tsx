@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-import { TASK_STATUS_CONFIG, formatDeadline, useAvailableTasks, useAssistantMyTasks, useAcceptTask } from '../index';
+import { TASK_STATUS_CONFIG, formatDeadline, useAvailableTasks, useAssistantMyTasks, useAcceptTask, useRequestExtension } from '../index';
 import { formatVND } from '../../wallet';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { Pagination } from '../../../components/common/Pagination';
@@ -92,9 +92,11 @@ export const TaskQueueFeature = () => {
     }
   };
 
-  // ─── Mutation: nộp bài ───
+  // ─── Mutation: nộp bài & gia hạn ───
   const [selectedFiles, setSelectedFiles] = useState<Record<number, File>>({});
+  const [extendingTaskId, setExtendingTaskId] = useState<number | null>(null);
   const queryClient = useQueryClient();
+  const extensionMutation = useRequestExtension();
 
   const handleFileChange = (taskId: number, file: File | null) => {
     if (file) {
@@ -125,6 +127,16 @@ export const TaskQueueFeature = () => {
       handleFileChange(taskId, null);
     } catch (e) {
       toast.error('Lỗi khi nộp bài');
+    }
+  };
+
+  const handleRequestExtension = async (taskId: number, hours: 24 | 48) => {
+    try {
+      await extensionMutation.mutateAsync({ taskId: String(taskId), extensionHours: hours });
+      toast.success(`Đã xin gia hạn thêm ${hours}h thành công!`);
+      setExtendingTaskId(null);
+    } catch {
+      toast.error('Lỗi khi xin gia hạn');
     }
   };
 
@@ -323,7 +335,7 @@ export const TaskQueueFeature = () => {
                   </button>
                 )}
 
-                {/* Right: Submit button */}
+                {/* Right: Submit button & Extension */}
                 {activeTab === 'MyTasks' && ['In_Progress', 'Revision'].includes(task.Status || '') && (
                   <div className="flex-shrink-0 flex flex-col gap-2 items-end">
                     <label className="cursor-pointer px-3 py-1.5 border border-border-custom rounded-lg text-[11px] hover:bg-bg-secondary transition-colors text-text-primary">
@@ -335,14 +347,47 @@ export const TaskQueueFeature = () => {
                         onChange={(e) => handleFileChange(task.Id!, e.target.files?.[0] || null)}
                       />
                     </label>
-                    <button
-                      onClick={() => handleSubmitResult(task.Id!)}
-                      disabled={!task.Id || !selectedFiles[task.Id]}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-success hover:bg-green-600 text-white rounded-xl text-[11px] font-medium transition-all border-none cursor-pointer shadow-sm hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Download size={14} />
-                      Nộp kết quả
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {extendingTaskId === task.Id ? (
+                        <div className="flex items-center gap-1 animate-fade-in">
+                          <button
+                            onClick={() => handleRequestExtension(task.Id!, 24)}
+                            disabled={extensionMutation.isPending}
+                            className="px-2 py-1 bg-brand hover:bg-brand-hover text-white rounded text-[10px] font-medium border-none cursor-pointer"
+                          >
+                            +24h
+                          </button>
+                          <button
+                            onClick={() => handleRequestExtension(task.Id!, 48)}
+                            disabled={extensionMutation.isPending}
+                            className="px-2 py-1 bg-brand hover:bg-brand-hover text-white rounded text-[10px] font-medium border-none cursor-pointer"
+                          >
+                            +48h
+                          </button>
+                          <button
+                            onClick={() => setExtendingTaskId(null)}
+                            className="px-2 py-1 bg-bg-surface hover:bg-border-custom text-text-secondary rounded text-[10px] font-medium border-none cursor-pointer ml-1"
+                          >
+                            Hủy
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setExtendingTaskId(task.Id!)}
+                          className="px-3 py-1.5 bg-bg-surface hover:bg-border-custom text-text-secondary rounded-lg text-[11px] font-medium transition-all border-none cursor-pointer"
+                        >
+                          Gia hạn
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleSubmitResult(task.Id!)}
+                        disabled={!task.Id || !selectedFiles[task.Id]}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-success hover:bg-green-600 text-white rounded-xl text-[11px] font-medium transition-all border-none cursor-pointer shadow-sm hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Download size={14} />
+                        Nộp
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

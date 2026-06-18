@@ -102,6 +102,18 @@ export const useRequestRevisionTask = () => {
   });
 };
 
+// ─── Request Extension (Assistant xin gia hạn) ─────────────────
+export const useRequestExtension = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ taskId, extensionHours }: { taskId: string; extensionHours: 24 | 48 }) =>
+      taskApi.requestExtension({ taskId, extensionHours }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'assistant-my'] });
+    },
+  });
+};
+
 // ─── Task Detail ─────────────────────────────────────────────
 export const useTaskDetail = (taskId?: string) => {
   return useQuery<Task | null, Error>({
