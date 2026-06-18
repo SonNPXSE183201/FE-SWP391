@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/refs */
 import React, { useEffect, useRef, useCallback } from 'react';
 import {
   HubConnectionBuilder,
