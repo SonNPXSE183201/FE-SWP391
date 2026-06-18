@@ -1,9 +1,11 @@
 // Reconciliation feature — barrel export
 export { ReconciliationFeature } from './components/ReconciliationFeature';
-export { useReconciliation, reconciliationApi } from './hooks/useReconciliation';
+export { useReconciliation } from './hooks/useReconciliation';
+export { reconciliationApi } from './api/reconciliation.api';
 export type {
   ReconciliationRecord,
   ReconciliationSummary,
   ReconciliationStatus,
   ReconciliationParams,
-} from './hooks/useReconciliation';
+  ReconciliationResponse,
+} from './types/reconciliation.types';
