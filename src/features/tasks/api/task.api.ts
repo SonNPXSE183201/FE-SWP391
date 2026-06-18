@@ -281,21 +281,21 @@ export const taskApi = {
     return axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/approve`);
   },
 
-  requestRevision: async (taskId: string, comment: string, extensionHours: 24 | 48) => {
+  requestRevision: async (taskId: string, payload: { FeedbackComment: string; RevisionExtensionHours: number; CoordinatesJson: string }) => {
     if (USE_MOCK) {
       await mockDelay(500);
       const task = MOCK_TASKS.find((t) => t.id === taskId || t.id === `task-${taskId}`);
       if (task) {
         task.status = 'Revision';
-        task.feedbackComment = comment;
+        task.feedbackComment = payload.FeedbackComment;
         // Mock extending deadline by extensionHours
         const oldDeadline = new Date(task.deadline);
-        oldDeadline.setHours(oldDeadline.getHours() + extensionHours);
+        oldDeadline.setHours(oldDeadline.getHours() + payload.RevisionExtensionHours);
         task.deadline = oldDeadline.toISOString();
       }
       return createMockAxiosResponse(task as unknown as TasksDto, 'Yêu cầu sửa bài thành công');
     }
-    return axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/revision`, { comment, extensionHours });
+    return axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/revision`, payload);
   },
 
   // Extension (T08)
