@@ -1,55 +1,20 @@
 import { axiosInstance } from '../../../api/axios';
 import type { ApiResponse } from '../../../types';
+import type { components } from '../../../api/generated/schema';
 
-// ─── Request DTOs ────────────────────────────────────────────
+// ─── DTOs from OpenAPI Schema ────────────────────────────────
+export type CreateUserByAdminDto = components["schemas"]["CreateUserByAdminDto"];
+export type AssistantResponseDto = components["schemas"]["AssistantResponseDto"];
+export type UserResponseDto = components["schemas"]["UserResponseDto"];
+export type UserResponseDtoApiResponse = components["schemas"]["UserResponseDtoApiResponse"];
 
-export interface CreateUserByAdminDto {
-  roleId: number;
-  userName: string;
-  email: string;
-  fullName: string;
-  penName?: string;
-  portfolioUrl?: string;
-  skills?: string;
-}
-
-// ─── Response DTOs ───────────────────────────────────────────
-
-export interface AssistantResponseDto {
-  id: number;
-  userName: string;
-  email: string;
-  fullName: string;
-  status: string;
-  portfolioUrl?: string;
-  skills?: string;
-}
-
-export interface UserResponseDto {
-  id: number;
-  userName: string;
-  email: string;
-  fullName: string;
-  roleId: number;
-  status: string;
-  penName?: string;
-  message?: string;
-}
-
-export interface UserListItem {
-  id: string;
-  email: string;
-  fullName: string;
-  role: string;
-  status: string;
-  createdAt: string;
-}
+export type UserResponseDtoPagedResultApiResponse = components["schemas"]["UserResponseDtoPagedResultApiResponse"];
 
 // ─── API Functions ───────────────────────────────────────────
 
 export const adminApi = {
-  getUsers: (params?: { page?: number; pageSize?: number; role?: string; status?: string }) =>
-    axiosInstance.get<any>('/api/admin/users', { params }), // For mock UI compatibility
+  getUsers: (params?: { page?: number; pageSize?: number; role?: string; status?: string; search?: string }) =>
+    axiosInstance.get<UserResponseDtoPagedResultApiResponse>('/api/admin/users', { params }), 
 
   createUser: (data: CreateUserByAdminDto) =>
     axiosInstance.post<ApiResponse<UserResponseDto>>('/api/admin/users', data),
@@ -65,4 +30,7 @@ export const adminApi = {
 
   lockUser: (id: number | string) =>
     axiosInstance.post<ApiResponse<UserResponseDto>>(`/api/admin/users/${id}/lock`),
+
+  unlockUser: (id: number | string) =>
+    axiosInstance.post<ApiResponse<UserResponseDto>>(`/api/admin/users/${id}/unlock`),
 };
