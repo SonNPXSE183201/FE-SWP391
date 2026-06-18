@@ -15,11 +15,12 @@ const USE_MOCK = true;
 // ─── Request DTOs ────────────────────────────────────────────
 
 export interface CreateTaskRequest {
-  regionId: string;
-  taskName?: string;
-  assignedAssistantId: string;
-  amount: number;
-  deadline: string;
+  RegionId: number;
+  Description?: string;
+  AssistantId?: string;
+  PaymentAmount: number;
+  Deadline: string;
+  ZIndex_Order?: number;
 }
 
 export interface SubmitTaskResultRequest {
@@ -167,8 +168,8 @@ export const taskApi = {
       await mockDelay(600);
       const newTask: MockTask = {
         id: `task-${Date.now()}`,
-        taskName: data.taskName || 'Task mới',
-        regionId: data.regionId,
+        taskName: data.Description || 'Task mới',
+        regionId: String(data.RegionId),
         regionLabel: 'Vùng mới',
         pageId: 'page-1',
         pageName: 'Trang 1',
@@ -178,8 +179,8 @@ export const taskApi = {
         seriesTitle: 'Huyền Thoại Samurai',
         assignedAssistantName: null,
         status: 'Pending',
-        amount: data.amount,
-        deadline: data.deadline,
+        amount: data.PaymentAmount,
+        deadline: data.Deadline,
         extensionUsed: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -187,7 +188,7 @@ export const taskApi = {
       MOCK_TASKS.unshift(newTask);
 
       // Simulate Wallet Lock (Rule F03 & T01)
-      const amountToLock = data.amount;
+      const amountToLock = data.PaymentAmount;
       const availableSF = MOCK_WALLET.setupFundBalance; 
       const sfPortion = Math.min(amountToLock, availableSF);
       const wbPortion = amountToLock - sfPortion;
