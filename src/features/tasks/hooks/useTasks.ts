@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { taskApi, mapTaskDtoToEntity } from '../api/task.api';
+import { taskApi } from '../api/task.api';
 import type { Task } from '../../../types/entities';
 import { components } from '../../../api/generated/schema';
 
@@ -11,6 +11,26 @@ export interface AvailableTasksResult {
   totalItems: number;
   pageNumber: number;
 }
+
+export const mapTaskDtoToEntity = (dto: components['schemas']['TasksDto']): Task => {
+  return {
+    id: String(dto.Id || ''),
+    createdAt: new Date().toISOString(), // Mock fallback if missing
+    updatedAt: new Date().toISOString(),
+    regionId: String(dto.RegionId || ''),
+    pageId: '', // Mock fallback
+    chapterId: '', // Mock fallback
+    seriesId: '', // Mock fallback
+    mangakaId: String(dto.MangakaId || ''),
+    assignedAssistantId: dto.AssistantId ? String(dto.AssistantId) : undefined,
+    assignedAssistantName: dto.AssistantName || undefined,
+    status: (dto.Status as any) || 'Pending',
+    amount: dto.PaymentAmount || 0,
+    deadline: dto.Deadline || '',
+    extensionUsed: !!dto.ExtensionRequestDays,
+    onLeave: false,
+  };
+};
 
 // ─── Mangaka Tasks ───────────────────────────────────────────
 export const useMangakaTasks = (params?: { page?: number; pageSize?: number; status?: string }) => {
