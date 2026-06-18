@@ -49,11 +49,12 @@ export const mapTaskDtoToEntity = (dto: components['schemas']['TasksDto']): Task
 // ─── Request DTOs ────────────────────────────────────────────
 
 export interface CreateTaskRequest {
-  regionId: string;
-  taskName?: string;
-  assignedAssistantId: string;
-  amount: number;
-  deadline: string;
+  RegionId: number;
+  Description?: string;
+  AssistantId?: string;
+  PaymentAmount: number;
+  Deadline: string;
+  ZIndex_Order?: number;
 }
 
 export interface SubmitTaskResultRequest {
@@ -201,8 +202,8 @@ export const taskApi = {
       await mockDelay(600);
       const newTask: MockTask = {
         id: `task-${Date.now()}`,
-        taskName: data.taskName || 'Task mới',
-        regionId: data.regionId,
+        taskName: data.Description || 'Task mới',
+        regionId: String(data.RegionId),
         regionLabel: 'Vùng mới',
         pageId: 'page-1',
         pageName: 'Trang 1',
@@ -212,8 +213,8 @@ export const taskApi = {
         seriesTitle: 'Huyền Thoại Samurai',
         assignedAssistantName: null,
         status: 'Pending',
-        amount: data.amount,
-        deadline: data.deadline,
+        amount: data.PaymentAmount,
+        deadline: data.Deadline,
         extensionUsed: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -221,7 +222,7 @@ export const taskApi = {
       MOCK_TASKS.unshift(newTask);
 
       // Simulate Wallet Lock (Rule F03 & T01)
-      const amountToLock = data.amount;
+      const amountToLock = data.PaymentAmount;
       const availableSF = MOCK_WALLET.setupFundBalance; 
       const sfPortion = Math.min(amountToLock, availableSF);
       const wbPortion = amountToLock - sfPortion;
@@ -314,21 +315,21 @@ export const taskApi = {
     return axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/approve`);
   },
 
-  requestRevision: async (taskId: string, comment: string, extensionHours: 24 | 48) => {
+  requestRevision: async (taskId: string, payload: { FeedbackComment: string; RevisionExtensionHours: number; CoordinatesJson: string }) => {
     if (USE_MOCK) {
       await mockDelay(500);
       const task = MOCK_TASKS.find((t) => t.id === taskId || t.id === `task-${taskId}`);
       if (task) {
         task.status = 'Revision';
-        task.feedbackComment = comment;
+        task.feedbackComment = payload.FeedbackComment;
         // Mock extending deadline by extensionHours
         const oldDeadline = new Date(task.deadline);
-        oldDeadline.setHours(oldDeadline.getHours() + extensionHours);
+        oldDeadline.setHours(oldDeadline.getHours() + payload.RevisionExtensionHours);
         task.deadline = oldDeadline.toISOString();
       }
       return createMockAxiosResponse(task as unknown as TasksDto, 'Yêu cầu sửa bài thành công');
     }
-    return axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/revision`, { comment, extensionHours });
+    return axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/revision`, payload);
   },
 
   // Extension (T08)
