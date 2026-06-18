@@ -1,8 +1,9 @@
 import { axiosInstance } from '../../../api/axios';
-import type { ApiResponse, SeriesDto } from '../../../api/generated/types';
+import type { ApiResponse } from '../../../api/generated/types';
 import type { components } from '../../../api/generated/schema';
 
-const USE_MOCK = true;
+/** Mock chỉ cho luồng Board vote maintain/cancel — chưa có endpoint BE riêng */
+const USE_MOCK_BOARD_VOTE = true;
 const mockDelay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export interface RankingItem {
@@ -13,9 +14,11 @@ export interface RankingItem {
   views: number;
   votes: number;
   genre: string[];
-  period: string; // "week" | "month" | "quarter"
+  period: string;
   status: 'Active' | 'UnderReview' | 'ProposedCancel';
 }
+
+type RankingRecord = components['schemas']['RankingRecord'];
 
 const MOCK_RANKING: RankingItem[] = [
   { id: '1', rank: 1, title: 'Huyền Thoại Samurai', coverImageUrl: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=150&auto=format&fit=crop&q=60', views: 125000, votes: 94, genre: ['Action', 'Adventure'], period: 'month', status: 'Active' },
@@ -24,28 +27,56 @@ const MOCK_RANKING: RankingItem[] = [
   { id: '4', rank: 4, title: 'Bóng Đêm Đô Thị', coverImageUrl: 'https://images.unsplash.com/photo-1560942485-b2a11cc13456?w=150&auto=format&fit=crop&q=60', views: 32000, votes: 35, genre: ['Action', 'Thriller'], period: 'month', status: 'ProposedCancel' },
 ];
 
+const mapSeriesStatus = (status?: string | null): RankingItem['status'] => {
+  if (status === 'ProposedCancel' || status === 'Cancelled') return 'ProposedCancel';
+  if (status === 'UnderReview' || status === 'Pending_Approval') return 'UnderReview';
+  return 'Active';
+};
+
+const mapRankingRecordToItem = (
+  record: RankingRecord,
+  index: number,
+  period: string,
+): RankingItem => {
+  const series = record.Series;
+  const genres = series?.Genre
+    ? series.Genre.split(/[,;]/).map((g) => g.trim()).filter(Boolean)
+    : [];
+
+  return {
+    id: String(record.SeriesId ?? record.Id ?? index),
+    rank: record.RankPosition ?? index + 1,
+    title: series?.Title ?? `Series #${record.SeriesId ?? '—'}`,
+    coverImageUrl: series?.CoverArtworkUrl ?? '',
+    views: 0,
+    votes: record.VoteCount ?? 0,
+    genre: genres,
+    period,
+    status: mapSeriesStatus(series?.Status),
+  };
+};
+
 export const rankingApi = {
   fetchRanking: async (params?: { period?: string; genre?: string }): Promise<RankingItem[]> => {
-    if (USE_MOCK) {
-      await mockDelay();
-      let filtered = [...MOCK_RANKING];
-      if (params?.period) {
-        filtered = filtered.filter(item => item.period === params.period || params.period === 'all');
-      }
-      if (params?.genre && params.genre !== 'All') {
-        filtered = filtered.filter(item => item.genre.includes(params.genre!));
-      }
-      // Re-calculate ranks
-      return filtered.map((item, index) => ({ ...item, rank: index + 1 }));
+    const period = params?.period ?? 'month';
+    const res = await axiosInstance.get<ApiResponse<RankingRecord[]>>('/api/rankings', {
+      params: { period },
+    });
+    let items = (res.data?.Data ?? []).map((record, index) =>
+      mapRankingRecordToItem(record, index, period),
+    );
+
+    if (params?.genre && params.genre !== 'All') {
+      items = items.filter((item) => item.genre.includes(params.genre!));
     }
-    const res = await axiosInstance.get<ApiResponse<RankingItem[]>>('/api/ranking', { params });
-    return res.data?.Data ?? [];
+
+    return items.map((item, index) => ({ ...item, rank: index + 1 }));
   },
 
   submitRankingVote: async (seriesId: string, action: 'maintain' | 'cancel', comment?: string) => {
-    if (USE_MOCK) {
+    if (USE_MOCK_BOARD_VOTE) {
       await mockDelay(400);
-      const item = MOCK_RANKING.find(s => s.id === seriesId);
+      const item = MOCK_RANKING.find((s) => s.id === seriesId);
       if (item) {
         if (action === 'cancel') {
           item.status = 'ProposedCancel';
@@ -61,25 +92,11 @@ export const rankingApi = {
     return res.data;
   },
 
-  /** F4.4 — Board nhập liệu vote count thủ công */
+  /** F4.4 — Board nhập liệu vote count thủ công (luôn gọi API thật) */
   submitRankingData: async (payload: components['schemas']['CreateRankingsDto']) => {
-    if (USE_MOCK) {
-      await mockDelay(500);
-      return { IsSuccess: true, Message: `Đã nhập ${payload.Records?.length ?? 0} bản ghi ranking` };
-    }
     const res = await axiosInstance.post<ApiResponse<unknown>>('/api/rankings', payload);
     return res.data;
   },
-
-  // Retain legacy exports for compatibility
-  fetchPendingProposals: async (): Promise<SeriesDto[]> => {
-    const res = await axiosInstance.get<ApiResponse<SeriesDto[]>>('/api/board/pending');
-    return res.data?.Data ?? [];
-  },
-
-  submitVote: async (seriesId: string, vote: number) => {
-    const res = await axiosInstance.post<ApiResponse<unknown>>('/api/board/votes', { seriesId, vote });
-    return res.data;
-  },
 };
+
 export { rankingApi as default };
