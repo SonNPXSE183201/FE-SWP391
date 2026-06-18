@@ -22,8 +22,9 @@ export const useWalletActions = (
     mutationFn: (amountValue: number) => walletApi.deposit({ amount: amountValue }),
     onSuccess: (response) => {
       if (response.data.IsSuccess && response.data.Data) {
-        // Redirect to VNPay or mock url
-        window.location.href = response.data.Data;
+        // Redirect to VNPay or mock url in a new tab
+        window.open(response.data.Data, '_blank');
+        onClose();
       } else {
         setError(response.data.Message || 'Có lỗi xảy ra khi tạo giao dịch nạp tiền.');
       }
