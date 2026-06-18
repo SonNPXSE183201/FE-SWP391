@@ -9,18 +9,18 @@ import { CustomDatePicker } from '../../../components/common/CustomDatePicker';
 import { useSchedule, useReschedule, useMarkPublished } from '../hooks/useSchedule';
 import {
   PUBLISH_STATUS_CONFIG, WEEKDAYS, addMonths, buildCalendarGrid,
-  formatMonthTitle, isSameDay, isSameMonth, toDateKey,
+  formatMonthTitle, isSameDay, isSameMonth, toDateKey, toMonthKey,
 } from '../constants';
 import type { ScheduleItem } from '../types';
 
 const MAX_VISIBLE_PER_DAY = 3;
 
 export const PublishScheduleFeature = () => {
-  const { data: items = [], isLoading } = useSchedule();
+  const [viewMonth, setViewMonth] = useState(() => new Date());
+  const { data: items = [], isLoading } = useSchedule(toMonthKey(viewMonth));
   const reschedule = useReschedule();
   const markPublished = useMarkPublished();
 
-  const [viewMonth, setViewMonth] = useState(() => new Date());
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [selected, setSelected] = useState<ScheduleItem | null>(null);

@@ -5,10 +5,10 @@ const KEYS = {
   schedule: ['publishing', 'schedule'] as const,
 };
 
-export const useSchedule = () =>
+export const useSchedule = (month: string) =>
   useQuery({
-    queryKey: KEYS.schedule,
-    queryFn: () => scheduleApi.getSchedule(),
+    queryKey: [...KEYS.schedule, month],
+    queryFn: () => scheduleApi.getSchedule(month),
     select: (res) => res.data?.Data ?? [],
   });
 

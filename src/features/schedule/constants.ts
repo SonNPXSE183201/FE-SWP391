@@ -64,3 +64,10 @@ export const toDateKey = (d: Date) => {
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 };
+
+/** Local YYYY-MM key for API requests. */
+export const toMonthKey = (d: Date) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`;
+};

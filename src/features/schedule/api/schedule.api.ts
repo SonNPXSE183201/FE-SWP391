@@ -2,7 +2,7 @@ import { axiosInstance, type ApiResponse } from '../../../api/axios';
 import type { ScheduleItem } from '../types';
 import { MOCK_SCHEDULE } from '../data/mockData';
 
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 const mockDelay = (ms = 350) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -15,15 +15,26 @@ const mockResponse = <T>(data: T, message = 'Success') => ({
 });
 
 export const scheduleApi = {
-  getSchedule: async () => {
+  getSchedule: async (month: string) => {
     if (USE_MOCK) {
       await mockDelay();
       return mockResponse<ScheduleItem[]>(MOCK_SCHEDULE.map((s) => ({ ...s })));
     }
-    return axiosInstance.get<ApiResponse<ScheduleItem[]>>('/api/publishing/schedule');
+    const res = await axiosInstance.get<ApiResponse<any[]>>('/api/publishing/schedule', { params: { month } });
+    const items: ScheduleItem[] = (res.data?.Data || []).map((ch: any) => ({
+      id: ch.id?.toString() || '',
+      seriesId: ch.seriesId?.toString() || '',
+      seriesTitle: ch.series?.title || ch.title || 'Unknown Series',
+      chapterLabel: `Chapter ${ch.chapterNumber}`,
+      mangakaName: ch.series?.mangaka?.fullName || 'Unknown Mangaka',
+      coverUrl: ch.series?.coverUrl || undefined,
+      publishDate: ch.submissionDeadline || new Date().toISOString(),
+      status: ch.status === 'Published' ? 'Published' : (new Date(ch.submissionDeadline) < new Date() ? 'Delayed' : 'Scheduled'),
+      genres: [],
+    }));
+    return { data: { IsSuccess: true, Message: 'Success', Data: items } };
   },
 
-  // Drag-drop / picker reschedule.
   reschedule: async (id: string, publishDate: string) => {
     if (USE_MOCK) {
       await mockDelay(250);
@@ -34,7 +45,7 @@ export const scheduleApi = {
       }
       return mockResponse(true, 'Đã dời lịch xuất bản');
     }
-    return axiosInstance.put<ApiResponse<boolean>>(`/api/publishing/schedule/${id}`, { publishDate });
+    return axiosInstance.put<ApiResponse<boolean>>(`/api/publishing/schedule/${id}`, { deadline: publishDate });
   },
 
   markPublished: async (id: string) => {
