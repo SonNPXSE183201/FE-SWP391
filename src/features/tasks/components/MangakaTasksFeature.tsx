@@ -64,9 +64,8 @@ export const MangakaTasksFeature = () => {
   const filtered = useMemo(() => {
     const result = tasks.filter((t) => {
       const matchesSearch = !searchQuery ||
-        t.regionLabel.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.seriesTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.chapterTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.regionId.toString().includes(searchQuery.toLowerCase()) ||
+        t.mangakaId.toString().includes(searchQuery.toLowerCase()) ||
         (t.assignedAssistantName || '').toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = !statusFilter || t.status === statusFilter;
       return matchesSearch && matchesStatus;
@@ -193,7 +192,7 @@ export const MangakaTasksFeature = () => {
       {/* Task List */}
       <div className="space-y-3 mt-3">
         {pagination.paginatedData.map((task) => {
-          const statusCfg = TASK_STATUS_CONFIG[task.status];
+          const statusCfg = TASK_STATUS_CONFIG[task.status] || { label: String(task.status), bg: 'bg-bg-surface', color: 'text-text-muted', icon: Eye };
           const StatusIcon = statusCfg.icon;
           const dl = formatDeadline(task.deadline);
 
@@ -208,7 +207,7 @@ export const MangakaTasksFeature = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-sm font-semibold text-text-primary group-hover:text-brand transition-colors">
-                      {task.taskName}
+                      Task {task.id} - Region {task.regionId}
                     </h3>
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusCfg.bg} ${statusCfg.color}`}>
                       {statusCfg.label}
@@ -220,7 +219,7 @@ export const MangakaTasksFeature = () => {
                     )}
                   </div>
                   <p className="text-xs text-text-muted mt-1">
-                    {[task.regionLabel, task.pageName, task.chapterTitle, task.seriesTitle].filter(Boolean).join(' · ')}
+                    {[`Vùng ${task.regionId}`, `Trang ${task.pageId}`, task.mangakaId ? 'Mangaka ' + task.mangakaId : ''].filter(Boolean).join(' · ')}
                   </p>
 
                   {/* Bottom row */}
@@ -244,19 +243,7 @@ export const MangakaTasksFeature = () => {
                     </span>
                   </div>
 
-                  {/* Result Image Preview */}
-                  {task.resultImageUrl && (
-                    <div className="mt-3">
-                      <p className="text-[11px] font-medium text-text-secondary mb-1.5">Kết quả Trợ lý nộp:</p>
-                      <a href={task.resultImageUrl} target="_blank" rel="noreferrer">
-                        <img 
-                          src={task.resultImageUrl} 
-                          alt="Kết quả" 
-                          className="h-24 md:h-32 rounded-lg border border-border-custom object-cover cursor-zoom-in hover:opacity-90 transition-opacity" 
-                        />
-                      </a>
-                    </div>
-                  )}
+                  {/* Removed Result Image Preview as not present in TasksDto */}
                 </div>
 
                 {/* Action hints */}
@@ -324,7 +311,7 @@ export const MangakaTasksFeature = () => {
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-text-primary">Yêu cầu sửa đổi</h2>
-                  <p className="text-xs text-text-muted mt-0.5">Task: {tasks.find(t => t.id === revisionTaskId)?.taskName}</p>
+                  <p className="text-xs text-text-muted mt-0.5">Task ID: {revisionTaskId}</p>
                 </div>
               </div>
               <button

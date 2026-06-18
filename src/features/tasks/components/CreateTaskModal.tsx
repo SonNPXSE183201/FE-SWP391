@@ -7,13 +7,10 @@ import {
   BookOpen, FileText, Shield, Banknote, Loader2,
   CheckCircle2, Type, Image, Globe,
 } from 'lucide-react';
-import { formatVND } from '../../wallet';
-import { useWallet } from '../../wallet/hooks/useWallet';
+import { useWallet, formatVND } from '../../wallet';
 import { useMySeries, useChapters, useChapterPages } from '../../series';
 import { taskApi } from '../api/task.api';
-import { CustomSelect } from '../../../components/common/CustomSelect';
 import { CustomDatePicker } from '../../../components/common/CustomDatePicker';
-import type { SelectOption } from '../../../components/common/CustomSelect';
 
 // ─── Types ───────────────────────────────────────────────────
 interface CreateTaskFormData {
@@ -40,22 +37,23 @@ export interface TaskContext {
   chapterId: string;
   pageId: string;
   taskName: string;
+  regionId?: string;
 }
 
 interface CreateTaskModalProps {
   onClose: () => void;
   onTaskCreated?: () => void;
-  initialContext?: TaskContext;
+  initialContext: TaskContext; // Bắt buộc phải có
 }
 
 // ─── Component ───────────────────────────────────────────────
 export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: CreateTaskModalProps) => {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState<CreateTaskFormData>({
-    seriesId: initialContext?.seriesId || '',
-    chapterId: initialContext?.chapterId || '',
-    pageId: initialContext?.pageId || '',
-    taskName: initialContext?.taskName || '',
+    seriesId: initialContext.seriesId,
+    chapterId: initialContext.chapterId,
+    pageId: initialContext.pageId,
+    taskName: initialContext.taskName || '',
     amount: '',
     deadline: '',
     note: '',
@@ -66,40 +64,15 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
   // ─── Data Hooks ────────────────────────────────────────────
   const { data: walletData } = useWallet();
   const wallet = walletData?.wallet;
-  
+
   const { data: seriesList = [] } = useMySeries({ pageSize: 100 });
   const { data: chaptersList = [] } = useChapters(formData.seriesId, { pageSize: 100 });
   const { data: pagesList = [] } = useChapterPages(formData.chapterId);
 
-  // ─── Derived Data ──────────────────────────────────────────
-  const availableChapters = chaptersList;
+
   const availablePages = pagesList;
 
-  const selectedPage = useMemo(
-    () => availablePages.find((p) => p.id === formData.pageId),
-    [formData.pageId, availablePages],
-  );
 
-  // ─── SelectOption arrays for CustomSelect ──────────────────
-  const seriesOptions: SelectOption[] = useMemo(
-    () => seriesList
-      .filter((s) => s.status !== 'Cancelled' && s.status !== 'Draft')
-      .map((s) => ({ value: s.id, label: s.title })),
-    [seriesList],
-  );
-
-  const chapterOptions: SelectOption[] = useMemo(
-    () => availableChapters.map((ch) => ({
-      value: ch.id,
-      label: `Ch.${ch.chapterNumber}: ${ch.title}`,
-    })),
-    [availableChapters],
-  );
-
-  const pageOptions: SelectOption[] = useMemo(
-    () => availablePages.map((p) => ({ value: p.id, label: `Trang ${p.pageNumber}` })),
-    [availablePages],
-  );
 
   const amountNum = Number(formData.amount) || 0;
 
@@ -126,9 +99,6 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
   const validate = (): boolean => {
     const newErrors: CreateTaskFormErrors = {};
 
-    if (!formData.seriesId) newErrors.seriesId = 'Vui lòng chọn Series';
-    if (!formData.chapterId) newErrors.chapterId = 'Vui lòng chọn Chapter';
-    if (!formData.pageId) newErrors.pageId = 'Vui lòng chọn trang';
     if (!formData.taskName || formData.taskName.trim().length < 3) {
       newErrors.taskName = 'Tên task phải có ít nhất 3 ký tự';
     }
@@ -151,25 +121,31 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
 
   // ─── Update field helper ───────────────────────────────────
   const updateField = <K extends keyof CreateTaskFormData>(field: K, value: CreateTaskFormData[K]) => {
-    setFormData((prev) => {
-      const next = { ...prev, [field]: value };
-      if (field === 'seriesId') { next.chapterId = ''; next.pageId = ''; }
-      if (field === 'chapterId') { next.pageId = ''; }
-      return next;
-    });
+    setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
   // ─── Submit Mutation ────────────────────────────────────────
   const createMutation = useMutation({
     mutationFn: async () => {
+      let finalRegionId: number;
+
+      if (initialContext.regionId) {
+        // Handle mock string ID vs real numeric ID
+        const parsed = Number(initialContext.regionId);
+        finalRegionId = isNaN(parsed) ? 1 : parsed;
+      } else {
+        throw new Error('Không tìm thấy Region hợp lệ. Bạn phải khoanh vùng trên Canvas trước khi tạo Task.');
+      }
+
       const res = await taskApi.create({
-        regionId: formData.pageId, // For now, passing pageId as regionId if canvas region not selected
-        taskName: formData.taskName,
-        assignedAssistantId: '',
-        amount: amountNum,
-        deadline: new Date(formData.deadline + 'T23:59:59Z').toISOString(),
-      });
+        RegionId: finalRegionId,
+        AssistantId: undefined,
+        Description: formData.taskName,
+        PaymentAmount: amountNum,
+        Deadline: new Date(formData.deadline + 'T23:59:59Z').toISOString(),
+        ZIndex_Order: 1,
+      } as Parameters<typeof taskApi.create>[0]);
       const resData = res.data as any;
       if (!resData?.success && !resData?.IsSuccess) throw new Error(resData?.Message || resData?.message || 'Lỗi tạo task');
       return resData?.Data || resData?.data;
@@ -181,7 +157,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
       setTimeout(() => { onTaskCreated?.(); onClose(); }, 800);
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast.error(err.message || 'Có lỗi xảy ra khi tạo task');
     }
   });
@@ -242,102 +218,38 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
             </p>
           </div>
 
-          {/* ─── Context Info or Selects ─── */}
-          {initialContext ? (
-            <div className="flex flex-col gap-1.5 p-3 bg-bg-surface border border-border-custom rounded-xl">
-              <div className="flex items-center gap-2">
-                <BookOpen size={14} className="text-brand" />
-                <span className="text-sm font-medium text-text-primary">
-                  {seriesList.find((s) => s.id === formData.seriesId)?.title || 'Đang tải...'}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <FileText size={14} className="text-text-secondary" />
-                <span className="text-xs text-text-secondary">
-                  {chaptersList.find((c) => c.id === formData.chapterId)?.title || 'Đang tải...'}
-                </span>
-                <span className="text-text-muted text-[10px]">•</span>
-                <Image size={14} className="text-text-secondary" />
-                <span className="text-xs text-text-secondary">
-                  Trang {availablePages.find((p) => p.id === formData.pageId)?.pageNumber || 'Đang tải...'}
-                </span>
-              </div>
-              {initialContext.taskName && (
-                <div className="mt-2 pt-2 border-t border-border-custom flex items-start gap-2">
-                  <Type size={14} className="text-brand mt-0.5" />
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-text-muted">Tên Task (từ Canvas)</span>
-                    <span className="text-sm font-medium text-text-primary">{initialContext.taskName}</span>
-                  </div>
-                </div>
-              )}
+          {/* ─── Context Info (Required) ─── */}
+          <div className="flex flex-col gap-1.5 p-3 bg-bg-surface border border-border-custom rounded-xl">
+            <div className="flex items-center gap-2">
+              <BookOpen size={14} className="text-brand" />
+              <span className="text-sm font-medium text-text-primary">
+                {seriesList.find((s) => s.id === formData.seriesId)?.title || 'Đang tải...'}
+              </span>
             </div>
-          ) : (
-            <>
-              {/* ─── Series + Chapter (Cascade Row 1) ─── */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
-                    <BookOpen size={12} />
-                    Series <span className="text-danger">*</span>
-                  </label>
-                  <CustomSelect
-                    options={seriesOptions}
-                    value={formData.seriesId}
-                    onChange={(v) => updateField('seriesId', v)}
-                    placeholder="Chọn series..."
-                    error={!!errors.seriesId}
-                    icon={<BookOpen size={14} />}
-                  />
-                  {errors.seriesId && <p className="text-[11px] text-danger mt-1">{errors.seriesId}</p>}
-                </div>
-
-                <div>
-                  <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
-                    <FileText size={12} />
-                    Chapter <span className="text-danger">*</span>
-                  </label>
-                  <CustomSelect
-                    options={chapterOptions}
-                    value={formData.chapterId}
-                    onChange={(v) => updateField('chapterId', v)}
-                    placeholder={formData.seriesId ? 'Chọn chapter...' : 'Chọn series trước'}
-                    disabled={!formData.seriesId}
-                    error={!!errors.chapterId}
-                    icon={<FileText size={14} />}
-                  />
-                  {errors.chapterId && <p className="text-[11px] text-danger mt-1">{errors.chapterId}</p>}
+            <div className="flex items-center gap-2">
+              <FileText size={14} className="text-text-secondary" />
+              <span className="text-xs text-text-secondary">
+                {chaptersList.find((c) => c.id === formData.chapterId)?.title || 'Đang tải...'}
+              </span>
+              <span className="text-text-muted text-[10px]">•</span>
+              <Image size={14} className="text-text-secondary" />
+              <span className="text-xs text-text-secondary">
+                Trang {availablePages.find((p) => p.id === formData.pageId)?.pageNumber || 'Đang tải...'}
+              </span>
+            </div>
+            {initialContext.taskName && (
+              <div className="mt-2 pt-2 border-t border-border-custom flex items-start gap-2">
+                <Type size={14} className="text-brand mt-0.5" />
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-text-muted">Tên Task (từ Canvas)</span>
+                  <span className="text-sm font-medium text-text-primary">{initialContext.taskName}</span>
                 </div>
               </div>
-
-              {/* ─── Page Selection ─── */}
-              <div>
-                <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
-                  <Image size={12} />
-                  Trang (Page) <span className="text-danger">*</span>
-                </label>
-                <CustomSelect
-                  options={pageOptions}
-                  value={formData.pageId}
-                  onChange={(v) => updateField('pageId', v)}
-                  placeholder={formData.chapterId ? 'Chọn trang...' : 'Chọn chapter trước'}
-                  disabled={!formData.chapterId}
-                  error={!!errors.pageId}
-                  icon={<Image size={14} />}
-                />
-                {errors.pageId && <p className="text-[11px] text-danger mt-1">{errors.pageId}</p>}
-                {selectedPage && formData.chapterId && (
-                  <p className="text-[10px] text-text-muted mt-1.5 flex items-center gap-1">
-                    <FileText size={10} />
-                    Trang {selectedPage.pageNumber} · {availableChapters.find((ch) => ch.id === formData.chapterId)?.title}
-                  </p>
-                )}
-              </div>
-            </>
-          )}
+            )}
+          </div>
 
           {/* Task Name (Only show if not provided by context) */}
-          {(!initialContext || !initialContext.taskName) && (
+          {!initialContext.taskName && (
             <div>
               <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1">
                 <Type size={12} />
@@ -349,9 +261,8 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
                 onChange={(e) => updateField('taskName', e.target.value)}
                 placeholder="VD: Vẽ nền trang 5, Tô bóng nhân vật chính..."
                 maxLength={100}
-                className={`w-full px-3 py-2 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all ${
-                  errors.taskName ? 'border-danger/50' : 'border-border-custom'
-                }`}
+                className={`w-full px-3 py-2 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all ${errors.taskName ? 'border-danger/50' : 'border-border-custom'
+                  }`}
               />
               {errors.taskName && <p className="text-[11px] text-danger mt-1">{errors.taskName}</p>}
             </div>
@@ -369,9 +280,8 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
                 value={formData.amount}
                 onChange={(e) => updateField('amount', e.target.value)}
                 placeholder="350000"
-                className={`w-full px-3 py-2 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all ${
-                  errors.amount ? 'border-danger/50' : 'border-border-custom'
-                }`}
+                className={`w-full px-3 py-2 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all ${errors.amount ? 'border-danger/50' : 'border-border-custom'
+                  }`}
               />
               {!errors.amount && formData.amount && (
                 <p className="text-[11px] text-brand/80 mt-1 italic font-medium">
@@ -501,11 +411,10 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
             <button
               onClick={handleCreate}
               disabled={createMutation.isPending || lockBreakdown.insufficient}
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium border-none cursor-pointer transition-all ${
-                createMutation.isPending || lockBreakdown.insufficient
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium border-none cursor-pointer transition-all ${createMutation.isPending || lockBreakdown.insufficient
                   ? 'bg-brand/40 text-white/60 cursor-not-allowed'
                   : 'bg-brand hover:bg-brand-hover text-white shadow-brand hover:shadow-brand-hover hover:-translate-y-0.5'
-              }`}
+                }`}
             >
               {createMutation.isPending ? (
                 <>

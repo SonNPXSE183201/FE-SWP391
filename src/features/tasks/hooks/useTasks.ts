@@ -1,31 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { taskApi } from '../api/task.api';
-import type { MockTask } from '../data/mockData';
-import type { TaskStatus } from '../../../types/entities';
+import { taskApi, mapTaskDtoToEntity } from '../api/task.api';
+import type { Task } from '../../../types/entities';
+import { components } from '../../../api/generated/schema';
 
-// ─── Backend TasksDto (from GET /api/tasks/available) ────────
-export interface AvailableTaskDto {
-  Id: number;
-  MangakaId: number;
-  RegionId: number;
-  AssistantId: number | null;
-  Description: string | null;
-  PaymentAmount: number;
-  Deadline: string;
-  ExtensionRequestDays: number | null;
-  ExtensionReason: string | null;
-  ExtensionStatus: string | null;
-  ZIndex_Order: number;
-  Status: TaskStatus;
-  Rating: number | null;
-  FeedbackComment: string | null;
-  MangakaName: string | null;
-  AssistantName: string | null;
-  PageNumber: number;
-  PageImageUrl: string | null;
-  CreateAt: string;
-  UpdateAt: string | null;
-}
+export type AvailableTaskDto = components['schemas']['TasksDto'];
 
 export interface AvailableTasksResult {
   items: AvailableTaskDto[];
@@ -36,12 +14,14 @@ export interface AvailableTasksResult {
 
 // ─── Mangaka Tasks ───────────────────────────────────────────
 export const useMangakaTasks = (params?: { page?: number; pageSize?: number; status?: string }) => {
-  return useQuery<MockTask[], Error>({
+  return useQuery<Task[], Error>({
     queryKey: ['tasks', 'mangaka', params],
     queryFn: async () => {
       const res = await taskApi.getMyTasks(params);
       const apiData = res.data as any;
-      return apiData.Data ?? apiData.data ?? [];
+      const rawData = apiData.Data ?? apiData.data;
+      const items: components['schemas']['TasksDto'][] = rawData?.Items ?? rawData?.items ?? (Array.isArray(rawData) ? rawData : []);
+      return items.map(mapTaskDtoToEntity);
     },
     staleTime: 1000 * 60,
     retry: 1,
@@ -114,7 +94,11 @@ export const useRequestRevisionTask = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ taskId, comment, extensionHours }: { taskId: string; comment: string; extensionHours: 24 | 48 }) =>
-      taskApi.requestRevision(taskId, comment, extensionHours),
+      taskApi.requestRevision(taskId, {
+        FeedbackComment: comment,
+        RevisionExtensionHours: extensionHours,
+        CoordinatesJson: '',
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', 'mangaka'] });
       queryClient.invalidateQueries({ queryKey: ['tasks', 'assistant-my'] });
@@ -124,13 +108,13 @@ export const useRequestRevisionTask = () => {
 
 // ─── Task Detail ─────────────────────────────────────────────
 export const useTaskDetail = (taskId?: string) => {
-  return useQuery<MockTask | null, Error>({
+  return useQuery<Task | null, Error>({
     queryKey: ['task', taskId],
     queryFn: async () => {
       const res = await taskApi.getById(taskId as string);
       const apiData = res.data as any;
-      if (!apiData.IsSuccess) return null;
-      return apiData.Data ?? null;
+      if (!apiData.IsSuccess || !apiData.Data) return null;
+      return mapTaskDtoToEntity(apiData.Data);
     },
     enabled: !!taskId,
     retry: 1,

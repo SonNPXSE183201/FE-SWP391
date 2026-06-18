@@ -209,8 +209,8 @@ export const MangakaWalletFeature = () => {
                   </div>
 
                   <div className="text-right flex-shrink-0">
-                    <div className={`text-sm font-bold ${tx.amount >= 0 ? 'text-success' : 'text-danger'}`}>
-                      {tx.amount >= 0 ? '+' : ''}{formatVND(Math.abs(tx.amount))}
+                    <div className={`text-sm font-bold ${(tx.type === 'Escrow_Lock' || tx.type === 'Withdraw') ? 'text-danger' : 'text-success'}`}>
+                      {(tx.type === 'Escrow_Lock' || tx.type === 'Withdraw') ? '-' : '+'}{formatVND(Math.abs(tx.amount))}
                     </div>
                     <div className="text-[10px] text-text-muted mt-0.5">{date}</div>
                   </div>
@@ -221,12 +221,12 @@ export const MangakaWalletFeature = () => {
                   <div className="flex items-center gap-3 mt-2 ml-12 text-[10px]">
                     {tx.setupFundAmount !== 0 && (
                       <span className="text-info">
-                        SF: {tx.setupFundAmount >= 0 ? '+' : ''}{formatVND(Math.abs(tx.setupFundAmount))}
+                        Quỹ sản xuất: {tx.setupFundAmount > 0 ? '+' : '-'}{formatVND(Math.abs(tx.setupFundAmount))}
                       </span>
                     )}
                     {tx.withdrawableAmount !== 0 && (
                       <span className="text-success">
-                        WB: {tx.withdrawableAmount >= 0 ? '+' : ''}{formatVND(Math.abs(tx.withdrawableAmount))}
+                        Quỹ khả dụng: {tx.withdrawableAmount > 0 ? '+' : '-'}{formatVND(Math.abs(tx.withdrawableAmount))}
                       </span>
                     )}
                   </div>
