@@ -94,11 +94,7 @@ export const useRequestRevisionTask = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ taskId, comment, extensionHours }: { taskId: string; comment: string; extensionHours: 24 | 48 }) =>
-      taskApi.requestRevision(taskId, {
-        FeedbackComment: comment,
-        RevisionExtensionHours: extensionHours,
-        CoordinatesJson: '',
-      }),
+      taskApi.requestRevision(taskId, comment, extensionHours),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', 'mangaka'] });
       queryClient.invalidateQueries({ queryKey: ['tasks', 'assistant-my'] });
