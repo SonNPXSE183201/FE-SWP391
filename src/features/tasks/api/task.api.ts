@@ -190,17 +190,33 @@ export const taskApi = {
   downloadResource: (taskId: string) =>
     axiosInstance.get(`/api/tasks/${taskId}/resource`, { responseType: 'blob' }),
 
-  // Assistant submits result (F2.8) - KEEP MOCK for now
+  // Assistant submits result (F2.8) - with Upload Validation
   submitResult: async (taskId: string, data: SubmitTaskResultRequest) => {
-    await mockDelay(600);
-    const task = MOCK_TASKS.find((t) => t.id === taskId || t.id === `task-${taskId}`);
-    if (task) {
-      task.status = 'Pending_Review';
-      if (data.image) {
-        task.resultImageUrl = URL.createObjectURL(data.image);
-      }
+    // Validation: PNG only
+    if (data.image.type !== 'image/png') {
+      return createMockAxiosResponse({ taskId } as unknown as TaskVersion, 'Lỗi: Vui lòng nộp tệp định dạng PNG nền trong suốt.');
     }
-    return createMockAxiosResponse({ taskId } as unknown as TaskVersion, 'Nộp bài thành công');
+    
+    // Upload the file first
+    const formData = new FormData();
+    formData.append('file', data.image);
+    
+    const uploadRes = await axiosInstance.post<ApiResponse<string>>('/api/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    
+    if (!uploadRes.data.IsSuccess) {
+      return createMockAxiosResponse({ taskId } as unknown as TaskVersion, uploadRes.data.Message);
+    }
+    
+    const fileUrl = uploadRes.data.Data;
+    
+    // Submit task with the uploaded file URL
+    const res = await axiosInstance.post<ApiResponse<object>>(`/api/tasks/${taskId}/submit`, {
+      SubmittedFileUrl: fileUrl,
+    });
+    
+    return createMockAxiosResponse({ taskId } as unknown as TaskVersion, res.data.Message);
   },
 
   // Mangaka reviews (F1.10)
@@ -220,7 +236,13 @@ export const taskApi = {
 
   // Extension (T08)
   requestExtension: (taskId: string, data: RequestExtensionRequest) =>
-    axiosInstance.post<ApiResponse<null>>(`/api/tasks/${taskId}/extension-approval`, data),
+    axiosInstance.post<ApiResponse<null>>(`/api/tasks/${taskId}/request-extension`, {
+      Days: data.extensionHours === 48 ? 2 : 1,
+      Reason: "Xin gia hạn thời gian thực hiện task",
+    }),
+    
+  approveExtension: (taskId: string, approve: boolean) =>
+    axiosInstance.post<ApiResponse<null>>(`/api/tasks/${taskId}/extension-approval`, null, { params: { approve } }),
 
   // Cancel (T03b, T05)
   cancel: (taskId: string, reason?: string) =>
