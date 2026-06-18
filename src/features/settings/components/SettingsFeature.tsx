@@ -69,7 +69,6 @@ const loadNotificationPrefs = (userId: string | number | undefined): Notificatio
     return DEFAULT_NOTIFICATION_PREFS.map((pref) => ({
       ...pref,
       enabled: saved[pref.id] ?? pref.enabled,
-
     }));
   } catch {
     return DEFAULT_NOTIFICATION_PREFS;
@@ -146,7 +145,6 @@ const ToggleSwitch = ({ enabled, onChange }: ToggleSwitchProps) => (
 // ─── Main Component ──────────────────────────────────────────
 export const SettingsFeature = () => {
   const user = useAuthStore((state) => state.user);
-  console.log("USER =", user);
   const [activeTab, setActiveTab] = useState<TabId>('profile');
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [notificationPrefs, setNotificationPrefs] = useState<NotificationPref[]>(() =>
