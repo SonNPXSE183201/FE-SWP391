@@ -42,7 +42,7 @@ export const useWallet = () => {
           'Transfer': 'Thanh toán',
           'Funding': 'Cấp vốn',
           'Genkouryo': 'Nhuận bút',
-        }[tx.Type] || tx.Type;
+        }[tx.Type as string] || tx.Type;
 
         const statusVi = tx.Status === 'Success' ? 'Thành công' : tx.Status === 'Pending' ? 'Đang xử lý' : tx.Status === 'Failed' ? 'Thất bại' : tx.Status;
 

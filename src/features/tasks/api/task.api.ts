@@ -1,5 +1,5 @@
 import { axiosInstance } from '../../../api/axios';
-import type { ApiResponse, PaginatedResponse, Task, TaskVersion } from '../../../types/entities';
+import type { ApiResponse, Task, TaskVersion } from '../../../types/entities';
 import { MOCK_TASKS } from '../data/mockData';
 
 import { components } from '../../../api/generated/schema';
@@ -205,18 +205,18 @@ export const taskApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     
-    if (!uploadRes.data.IsSuccess) {
-      return createMockAxiosResponse({ taskId } as unknown as TaskVersion, uploadRes.data.Message);
+    if (!uploadRes.data.success) {
+      return createMockAxiosResponse({ taskId } as unknown as TaskVersion, uploadRes.data.message);
     }
     
-    const fileUrl = uploadRes.data.Data;
+    const fileUrl = uploadRes.data.data;
     
     // Submit task with the uploaded file URL
     const res = await axiosInstance.post<ApiResponse<object>>(`/api/tasks/${taskId}/submit`, {
       SubmittedFileUrl: fileUrl,
     });
     
-    return createMockAxiosResponse({ taskId } as unknown as TaskVersion, res.data.Message);
+    return createMockAxiosResponse({ taskId } as unknown as TaskVersion, res.data.message);
   },
 
   // Mangaka reviews (F1.10)
