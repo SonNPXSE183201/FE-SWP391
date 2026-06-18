@@ -30,4 +30,7 @@ export const adminApi = {
 
   lockUser: (id: number | string) =>
     axiosInstance.post<ApiResponse<UserResponseDto>>(`/api/admin/users/${id}/lock`),
+
+  unlockUser: (id: number | string) =>
+    axiosInstance.post<ApiResponse<UserResponseDto>>(`/api/admin/users/${id}/unlock`),
 };

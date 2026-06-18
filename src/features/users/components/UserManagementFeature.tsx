@@ -17,6 +17,7 @@ import {
   useApproveUser,
   useRejectUser,
   useLockUser,
+  useUnlockUser,
 } from "../hooks/useAdminUsers";
 
 export const UserManagementFeature = () => {
@@ -61,6 +62,7 @@ export const UserManagementFeature = () => {
   const approveMutation = useApproveUser();
   const rejectMutation = useRejectUser();
   const lockMutation = useLockUser();
+  const unlockMutation = useUnlockUser();
 
   return (
     <div className="flex flex-col h-full">
@@ -228,8 +230,8 @@ export const UserManagementFeature = () => {
                                 )}
                                 {user.Status === "Locked" && (
                                   <button
-                                    onClick={() => approveMutation.mutate(user.Id!)}
-                                    disabled={approveMutation.isPending}
+                                    onClick={() => unlockMutation.mutate(user.Id!)}
+                                    disabled={unlockMutation.isPending}
                                     className="px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 rounded-lg transition-colors text-xs font-medium flex items-center gap-1"
                                   >
                                     <Unlock size={14} /> Mở khóa
