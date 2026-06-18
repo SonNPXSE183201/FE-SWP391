@@ -21,7 +21,7 @@ const TYPE_ICON: Record<NotificationItem['type'], string> = {
 
 const notifyToast = (item: NotificationItem) =>
   toast(
-    (t) => React.createElement('div', { className: 'flex flex-col gap-1' },
+    () => React.createElement('div', { className: 'flex flex-col gap-1' },
       React.createElement('span', { className: 'font-semibold text-sm text-text-primary leading-tight' }, item.title),
       item.message ? React.createElement('span', { className: 'text-xs text-text-secondary leading-snug break-words' }, item.message) : null
     ),
