@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { KeyRound, Loader2, Eye, EyeOff, X, ShieldCheck } from 'lucide-react';
 import { authApi } from '../api/auth.api';
+import { useAuthStore } from '../../../stores/authStore';
 interface ChangePasswordModalProps {
     isOpen: boolean;
     onClose: () => void;
 }
+
 export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClose }) => {
+    const navigate = useNavigate();
+    const logout = useAuthStore((state) => state.logout);
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -67,12 +72,23 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
                 confirmNewPassword,
             });
             if (response.IsSuccess) {
-                toast.success(response.Message || 'Đổi mật khẩu thành công!');
-                handleClose();
+                logout();
+                resetForm();
+                onClose();
+                toast.success('Đổi mật khẩu thành công! Vui lòng đăng nhập lại bằng mật khẩu mới.');
+                navigate('/login', { replace: true });
+                return;
             }
+
+            const errorMsg = response.Message || 'Mật khẩu hiện tại không đúng. Vui lòng thử lại.';
+            setLocalError(errorMsg);
+            toast.error(errorMsg);
         } catch (error: unknown) {
-            const axiosError = error as { response?: { data?: { Message?: string } } };
-            const errorMsg = axiosError.response?.data?.Message || 'Có lỗi xảy ra. Vui lòng thử lại.';
+            const axiosError = error as { response?: { data?: { Message?: string; message?: string } } };
+            const errorMsg =
+                axiosError.response?.data?.Message ||
+                axiosError.response?.data?.message ||
+                'Mật khẩu hiện tại không đúng. Vui lòng thử lại.';
             setLocalError(errorMsg);
             toast.error(errorMsg);
         } finally {

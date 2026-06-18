@@ -21,6 +21,21 @@ import {
 } from 'lucide-react';
 import { useReviewSeriesDetail, useSubmitToBoard, useRequireRevision } from '../hooks/useReview';
 
+// Mock series detail shape (100% mock, BE chưa có API)
+interface SeriesReviewDetail {
+  id: string;
+  title: string;
+  synopsis: string;
+  genres: string[];
+  coverUrl: string;
+  mangakaName: string;
+  submittedAt: string;
+  requestedBudget: number;
+  nameFileUrl: string;
+  nameFileName: string;
+  status: string;
+}
+
 export const ReviewSeriesFeature = () => {
   const { seriesId } = useParams();
   const navigate = useNavigate();
@@ -29,7 +44,8 @@ export const ReviewSeriesFeature = () => {
   const [showRevisionModal, setShowRevisionModal] = useState(false);
   const [revisionReason, setRevisionReason] = useState('');
 
-  const { data: series, isLoading } = useReviewSeriesDetail(seriesId ?? '');
+  const { data: rawSeries, isLoading } = useReviewSeriesDetail(seriesId ?? '');
+  const series = rawSeries as SeriesReviewDetail | undefined;
   const submitToBoard = useSubmitToBoard();
   const requireRevision = useRequireRevision();
 

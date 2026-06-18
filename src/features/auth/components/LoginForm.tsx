@@ -55,7 +55,7 @@ export const LoginForm: React.FC = () => {
         else if (mappedRole === 'Tantou Editor') mappedRole = 'Editor';
         else if (mappedRole === 'Editorial Board') mappedRole = 'Board';
 
-        // Save to store
+        // Save to store (include RefreshToken)
         setAuth({
           id: response.Data.UserId?.toString() || '0',
           fullName: response.Data.FullName || response.Data.UserName || 'User',
@@ -70,9 +70,18 @@ export const LoginForm: React.FC = () => {
           const redirectPath = useAuthStore.getState().getRoleRedirectPath?.() || '/';
           navigate(redirectPath, { replace: true });
         }, 50);
+        return;
       }
-    } catch (error: any) {
-      const errorMsg = error.response?.data?.message || 'Có lỗi xảy ra khi đăng nhập';
+
+      const errorMsg = response.Message || 'Tên đăng nhập hoặc mật khẩu không chính xác.';
+      setLocalError(errorMsg);
+      toast.error(errorMsg);
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { data?: Record<string, unknown> } };
+      const data = axiosError.response?.data;
+      const errorMsg = String(
+        data?.Message ?? data?.message ?? 'Có lỗi xảy ra khi đăng nhập'
+      );
       setLocalError(errorMsg);
       toast.error(errorMsg);
     } finally {

@@ -1,6 +1,32 @@
 import { useQuery } from '@tanstack/react-query';
 import { seriesApi } from '../api/series.api';
-import type { Series, Chapter, Page } from '../../../types/entities';
+import type { Series, Chapter, Page, SeriesStatus } from '../../../types/entities';
+import { components } from '../../../api/generated/schema';
+
+// ─── Mapper ──────────────────────────────────────────────────
+const mapSeriesStatus = (status: any): SeriesStatus => {
+  if (status === 0 || status === '0') return 'Draft';
+  if (status === 1 || status === '1') return 'PendingApproval';
+  if (status === 2 || status === '2') return 'Approved';
+  if (status === 3 || status === '3') return 'Published';
+  if (status === 4 || status === '4') return 'OnHold';
+  if (status === 5 || status === '5') return 'Cancelled';
+  return (status as SeriesStatus) || 'Draft';
+};
+
+export const mapSeriesDtoToEntity = (dto: components['schemas']['SeriesDto']): Series => ({
+  id: dto.Id?.toString() || '',
+  title: dto.Title || '',
+  synopsis: dto.Synopsis || '',
+  genre: dto.Genre ? dto.Genre.split(',') : [],
+  coverImageUrl: dto.CoverArtworkUrl || '',
+  mangakaId: dto.MangakaId?.toString() || '',
+  mangakaName: dto.MangakaName || '',
+  status: mapSeriesStatus(dto.Status),
+  chapterCount: 0,
+  createdAt: dto.CreateAt || new Date().toISOString(),
+  updatedAt: dto.UpdateAt || new Date().toISOString(),
+});
 
 // ─── Series List ─────────────────────────────────────────────
 export const useSeriesList = (params?: { page?: number; pageSize?: number; status?: string }) => {
@@ -9,7 +35,8 @@ export const useSeriesList = (params?: { page?: number; pageSize?: number; statu
     queryFn: async () => {
       const res = await seriesApi.getAll(params);
       const apiData = res.data as any;
-      return apiData.Data ?? apiData.data ?? [];
+      const dtoArray: components['schemas']['SeriesDto'][] = apiData.Data ?? apiData.data ?? [];
+      return dtoArray.map(mapSeriesDtoToEntity);
     },
     staleTime: 1000 * 60,
     retry: 1,
@@ -23,8 +50,8 @@ export const useSeriesDetail = (id?: string) => {
     queryFn: async () => {
       const res = await seriesApi.getById(id as string);
       const apiData = res.data as any;
-      if (!apiData.IsSuccess) return null;
-      return apiData.Data ?? null;
+      if (!apiData.IsSuccess || !apiData.Data) return null;
+      return mapSeriesDtoToEntity(apiData.Data as components['schemas']['SeriesDto']);
     },
     enabled: !!id,
     retry: 1,
@@ -38,7 +65,8 @@ export const useMySeries = (params?: { page?: number; pageSize?: number }) => {
     queryFn: async () => {
       const res = await seriesApi.getMySeries(params);
       const apiData = res.data as any;
-      return apiData.Data ?? apiData.data ?? [];
+      const dtoArray: components['schemas']['SeriesDto'][] = apiData.Data ?? apiData.data ?? [];
+      return dtoArray.map(mapSeriesDtoToEntity);
     },
     staleTime: 1000 * 60,
     retry: 1,
