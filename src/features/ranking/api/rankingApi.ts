@@ -1,5 +1,6 @@
 import { axiosInstance } from '../../../api/axios';
 import type { ApiResponse, SeriesDto } from '../../../api/generated/types';
+import type { components } from '../../../api/generated/schema';
 
 const USE_MOCK = true;
 const mockDelay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -57,6 +58,16 @@ export const rankingApi = {
       return { IsSuccess: true, Message: 'Bỏ phiếu thành công' };
     }
     const res = await axiosInstance.post<ApiResponse<unknown>>('/api/ranking/votes', { seriesId, action, comment });
+    return res.data;
+  },
+
+  /** F4.4 — Board nhập liệu vote count thủ công */
+  submitRankingData: async (payload: components['schemas']['CreateRankingsDto']) => {
+    if (USE_MOCK) {
+      await mockDelay(500);
+      return { IsSuccess: true, Message: `Đã nhập ${payload.Records?.length ?? 0} bản ghi ranking` };
+    }
+    const res = await axiosInstance.post<ApiResponse<unknown>>('/api/rankings', payload);
     return res.data;
   },
 
