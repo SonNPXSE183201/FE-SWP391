@@ -1,5 +1,10 @@
 import { axiosInstance } from '../../../api/axios';
-import type { ApiResponse, PaginatedResponse, Task, TaskVersion } from '../../../types';
+import type {
+  ApiResponse,
+  TasksDto,
+  TaskVersionDto,
+  PagedApiResponse,
+} from '../../../api/generated/types';
 import { MOCK_TASKS } from '../data/mockData';
 import type { MockTask } from '../data/mockData';
 import { MOCK_WALLET, MOCK_TRANSACTIONS } from '../../wallet/data/mockData';
@@ -35,8 +40,11 @@ const mockDelay = (ms: number = 50) =>
 const createMockAxiosResponse = <T>(data: T, message = 'Success') => ({
   data: {
     success: true,
+    IsSuccess: true,
     message: message,
+    Message: message,
     data: data,
+    Data: data,
   },
 });
 
@@ -50,12 +58,19 @@ const createMockPaginatedResponse = <T>(
   return {
     data: {
       success: true,
+      IsSuccess: true,
       message: 'Success',
+      Message: 'Success',
       data: paginatedItems,
+      Data: paginatedItems,
       totalCount: items.length,
+      TotalCount: items.length,
       pageNumber: page,
+      PageNumber: page,
       pageSize: pageSize,
+      PageSize: pageSize,
       totalPages: Math.ceil(items.length / pageSize),
+      TotalPages: Math.ceil(items.length / pageSize),
     },
   };
 };
@@ -73,7 +88,7 @@ export const taskApi = {
       }
       return createMockPaginatedResponse(filtered, params?.page, params?.pageSize);
     }
-    return axiosInstance.get<PaginatedResponse<Task>>('/api/tasks/my', { params });
+    return axiosInstance.get<PagedApiResponse<TasksDto>>('/api/tasks/my', { params });
   },
 
   // Backend API ready (feat/assistant-available-tasks) — always call real endpoint
@@ -139,11 +154,11 @@ export const taskApi = {
       await mockDelay(200);
       const task = MOCK_TASKS.find((t) => t.id === taskId);
       if (!task) {
-        return { data: { IsSuccess: false, Message: 'Task not found', Data: null } };
+        return { data: { IsSuccess: false, success: false, Message: 'Task not found', Data: null } };
       }
       return createMockAxiosResponse(task);
     }
-    return axiosInstance.get<ApiResponse<Task>>(`/api/tasks/${taskId}`);
+    return axiosInstance.get<ApiResponse<TasksDto>>(`/api/tasks/${taskId}`);
   },
 
   // Mangaka creates task (F2.3) — triggers Lock (T01)
@@ -193,9 +208,9 @@ export const taskApi = {
         createdAt: new Date().toISOString(),
       });
 
-      return createMockAxiosResponse(newTask as unknown as Task);
+      return createMockAxiosResponse(newTask as unknown as TasksDto);
     }
-    return axiosInstance.post<ApiResponse<Task>>('/api/tasks', data);
+    return axiosInstance.post<ApiResponse<TasksDto>>('/api/tasks', data);
   },
 
   // Assistant accepts task (F2.6)
@@ -207,9 +222,9 @@ export const taskApi = {
         task.status = 'In_Progress';
         task.assignedAssistantName = 'Nguyễn Sơn';
       }
-      return createMockAxiosResponse(task as unknown as Task, 'Nhận việc thành công');
+      return createMockAxiosResponse(task as unknown as TasksDto, 'Nhận việc thành công');
     }
-    return axiosInstance.put<ApiResponse<Task>>(`/api/tasks/${taskId}/accept`);
+    return axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/accept`);
   },
 
   // Assistant downloads resource (F2.7)
@@ -227,12 +242,12 @@ export const taskApi = {
           task.resultImageUrl = URL.createObjectURL(data.image);
         }
       }
-      return createMockAxiosResponse({ taskId } as unknown as TaskVersion, 'Nộp bài thành công');
+      return createMockAxiosResponse({ taskId } as unknown as TaskVersionDto, 'Nộp bài thành công');
     }
     const formData = new FormData();
     formData.append('image', data.image);
     if (data.comment) formData.append('comment', data.comment);
-    return axiosInstance.post<ApiResponse<TaskVersion>>(`/api/tasks/${taskId}/submit`, formData, {
+    return axiosInstance.post<ApiResponse<TaskVersionDto>>(`/api/tasks/${taskId}/submit`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
@@ -260,9 +275,9 @@ export const taskApi = {
           createdAt: new Date().toISOString(),
         });
       }
-      return createMockAxiosResponse(task as unknown as Task, 'Duyệt thành công');
+      return createMockAxiosResponse(task as unknown as TasksDto, 'Duyệt thành công');
     }
-    return axiosInstance.put<ApiResponse<Task>>(`/api/tasks/${taskId}/approve`);
+    return axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/approve`);
   },
 
   requestRevision: async (taskId: string, comment: string, extensionHours: 24 | 48) => {
@@ -277,18 +292,18 @@ export const taskApi = {
         oldDeadline.setHours(oldDeadline.getHours() + extensionHours);
         task.deadline = oldDeadline.toISOString();
       }
-      return createMockAxiosResponse(task as unknown as Task, 'Yêu cầu sửa bài thành công');
+      return createMockAxiosResponse(task as unknown as TasksDto, 'Yêu cầu sửa bài thành công');
     }
-    return axiosInstance.put<ApiResponse<Task>>(`/api/tasks/${taskId}/revision`, { comment, extensionHours });
+    return axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/revision`, { comment, extensionHours });
   },
 
   // Extension (T08)
   requestExtension: (data: RequestExtensionRequest) =>
-    axiosInstance.put<ApiResponse<Task>>(`/api/tasks/${data.taskId}/extend`, data),
+    axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${data.taskId}/extend`, data),
 
   // Cancel (T03b, T05)
   cancel: (taskId: string, reason?: string) =>
-    axiosInstance.put<ApiResponse<Task>>(`/api/tasks/${taskId}/cancel`, { reason }),
+    axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/cancel`, { reason }),
 
   // On_Leave toggle (F2.14)
   toggleOnLeave: (onLeave: boolean) =>
@@ -296,5 +311,5 @@ export const taskApi = {
 
   // Task versions (T07)
   getVersions: (taskId: string) =>
-    axiosInstance.get<ApiResponse<TaskVersion[]>>(`/api/tasks/${taskId}/versions`),
+    axiosInstance.get<ApiResponse<TaskVersionDto[]>>(`/api/tasks/${taskId}/versions`),
 };

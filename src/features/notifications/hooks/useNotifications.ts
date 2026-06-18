@@ -2,18 +2,18 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationApi } from '../api/notification.api';
 import { useNotificationStore } from '../../../stores/notificationStore';
 import type { NotificationItem } from '../../../stores/notificationStore';
-import type { NotificationDto } from '../api/notification.api';
+import type { NotificationDto } from '../../../api/generated/types';
 
 // ─── Mapper ──────────────────────────────────────────────────
 
 const mapDtoToItem = (dto: NotificationDto): NotificationItem => ({
-  id: dto.Id,
-  title: dto.Title,
-  message: dto.Message,
-  isRead: dto.IsRead,
-  link: dto.Link,
-  type: dto.Type,
-  createdAt: dto.CreateAt,
+  id: String(dto.Id ?? 0),
+  title: dto.Title ?? '',
+  message: dto.Content ?? '',
+  isRead: dto.IsRead ?? false,
+  link: dto.Link ?? undefined,
+  type: (dto.Type as NotificationItem['type']) ?? 'SystemAlert',
+  createdAt: dto.CreateAt ?? new Date().toISOString(),
 });
 
 // ─── Query Keys ──────────────────────────────────────────────

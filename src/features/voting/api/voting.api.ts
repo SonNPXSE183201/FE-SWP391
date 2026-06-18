@@ -1,9 +1,10 @@
-import { axiosInstance, type ApiResponse } from '../../../api/axios';
+import { axiosInstance } from '../../../api/axios';
+import type { ApiResponse } from '../../../api/generated/types';
 
 const USE_MOCK = true;
 const mockDelay = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// ─── Types ───────────────────────────────────────────────────
+// ─── Types (UI-specific — backend uses BoardVote + VoteSeriesRequestDto) ─
 
 export type VoteDecision = 'Approve' | 'Reject' | 'Abstain';
 export type VotingStatus = 'Pending' | 'Voted' | 'Closed';

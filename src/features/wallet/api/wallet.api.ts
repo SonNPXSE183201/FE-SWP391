@@ -1,10 +1,10 @@
 import { axiosInstance } from '../../../api/axios';
-import type { ApiResponse } from '../../../api/axios';
-import { components } from '../../../api/generated/schema';
-
-export type WalletDetailsDto = components["schemas"]["WalletDetailsDto"];
-export type DepositRequestDto = components["schemas"]["DepositRequestDto"];
-export type WithdrawRequestDto = components["schemas"]["WithdrawRequestDto"];
+import type {
+  ApiResponse,
+  WalletDetailsDto,
+  DepositRequestDto,
+  WithdrawRequestDto,
+} from '../../../api/generated/types';
 
 export interface DepositRequest {
   amount: number;
@@ -42,6 +42,6 @@ export const walletApi = {
       BankAccountNumber: data.bankAccountNumber,
       BankAccountName: data.bankAccountName,
     };
-    return axiosInstance.post<ApiResponse<any>>('/api/wallets/withdraw', payload);
+    return axiosInstance.post<ApiResponse<unknown>>('/api/wallets/withdraw', payload);
   },
 };

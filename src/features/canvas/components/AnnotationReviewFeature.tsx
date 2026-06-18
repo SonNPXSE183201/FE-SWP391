@@ -13,7 +13,7 @@ import {
   useCanvasPages, useAnnotations, useRegions,
   useCreateAnnotation, useDeleteAnnotation, useToggleAnnotationResolved
 } from '../hooks/useCanvasData';
-import type { AnnotationType } from '../../../types/entities';
+import type { AnnotationType, Annotation } from '../../../types/entities';
 
 interface AnnotationReviewFeatureProps {
   chapterId?: string;
@@ -45,8 +45,8 @@ export const AnnotationReviewFeature = ({ chapterId = 'ch-1' }: AnnotationReview
   const deleteAnnotation = useDeleteAnnotation(pageId);
   const toggleResolved = useToggleAnnotationResolved(pageId);
 
-  const unresolvedCount = annotations.filter((a) => !a.resolved).length;
-  const resolvedCount = annotations.filter((a) => a.resolved).length;
+  const unresolvedCount = annotations.filter((a: Annotation) => !a.resolved).length;
+  const resolvedCount = annotations.filter((a: Annotation) => a.resolved).length;
 
   // ─── Handlers ───
   const handleAnnotationCreated = useCallback(
@@ -236,8 +236,8 @@ export const AnnotationReviewFeature = ({ chapterId = 'ch-1' }: AnnotationReview
                   <p className="text-xs text-center">Chưa có annotation nào.<br />Chọn công cụ Annotate để bắt đầu.</p>
                 </div>
               ) : (
-                annotations.map((anno) => {
-                  const cfg = ANNOTATION_TYPE_CONFIG[anno.type];
+                annotations.map((anno: Annotation) => {
+                  const cfg = ANNOTATION_TYPE_CONFIG[anno.type as AnnotationType];
                   return (
                     <div
                       key={anno.id}

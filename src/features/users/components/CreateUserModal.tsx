@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { X, UserPlus, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminApi, type CreateUserByAdminDto } from '../../admin/api/admin.api';
+import { adminApi } from '../../admin/api/admin.api';
+import type { CreateUserByAdminDto } from '../../../api/generated/types';
 import { CustomSelect } from '../../../components/common/CustomSelect';
 
 interface CreateUserModalProps {
@@ -141,7 +142,7 @@ export const CreateUserModal = ({ onClose }: CreateUserModalProps) => {
               value={formData.Email || ''}
               onChange={(e) => {
                 const email = e.target.value;
-                setFormData((prev) => {
+                setFormData((prev: CreateUserByAdminDto) => {
                   const updated = { ...prev, Email: email };
                   if (!prev.UserName || prev.UserName === (prev.Email?.split('@')[0] || '')) {
                     updated.UserName = email.split('@')[0] || '';

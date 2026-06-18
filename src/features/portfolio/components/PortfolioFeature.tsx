@@ -45,7 +45,7 @@ export const PortfolioFeature = () => {
     queryKey: ['portfolio', 'tasks'],
     queryFn: () => taskApi.getMyTasks({ pageSize: 100 }),
   });
-  const tasks = (tasksRes?.data?.data ?? []) as PortfolioHistoryTask[];
+  const tasks = ((tasksRes?.data as any)?.Data ?? (tasksRes?.data as any)?.data ?? []) as PortfolioHistoryTask[];
 
   const handleOpenUpload = () => {
     setTitle('');

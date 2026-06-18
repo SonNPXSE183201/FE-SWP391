@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "generate-api": "npx openapi-typescript http://localhost:5010/swagger/v1/swagger.json -o src/api/generated/schema.ts",
+    "generate-api": "npx openapi-typescript http://localhost:5010/swagger/v1/swagger.json -o src/api/generated/schema.ts && node scripts/generate-bridge-types.mjs",
     "prepare": "husky"
   },
   "lint-staged": {

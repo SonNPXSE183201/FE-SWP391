@@ -1,13 +1,13 @@
 import { axiosInstance } from '../../../api/axios';
-import type { ApiResponse } from '../../../types';
+import type {
+  ApiResponse,
+  CreateUserByAdminDto,
+  AssistantResponseDto,
+  UserResponseDto,
+} from '../../../api/generated/types';
 import type { components } from '../../../api/generated/schema';
 
-// ─── DTOs from OpenAPI Schema ────────────────────────────────
-export type CreateUserByAdminDto = components["schemas"]["CreateUserByAdminDto"];
-export type AssistantResponseDto = components["schemas"]["AssistantResponseDto"];
-export type UserResponseDto = components["schemas"]["UserResponseDto"];
-export type UserResponseDtoApiResponse = components["schemas"]["UserResponseDtoApiResponse"];
-
+// ─── Typed API Response wrappers from schema ─────────────────
 export type UserResponseDtoPagedResultApiResponse = components["schemas"]["UserResponseDtoPagedResultApiResponse"];
 
 // ─── API Functions ───────────────────────────────────────────

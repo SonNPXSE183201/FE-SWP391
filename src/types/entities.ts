@@ -1,5 +1,10 @@
 // ============================================================
 // Domain Entity Types — Based on Manga.md & GEMINI.md
+//
+// @deprecated — These hand-crafted types are being phased out.
+// For new code, import from '../api/generated/types' instead.
+// These types remain for backward compatibility with mock data
+// and will be removed once all features use real API endpoints.
 // ============================================================
 
 // ─── Enums ───────────────────────────────────────────────────

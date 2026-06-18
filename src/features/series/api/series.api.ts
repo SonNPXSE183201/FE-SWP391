@@ -1,8 +1,13 @@
 import { axiosInstance } from '../../../api/axios';
-import type { ApiResponse, PaginatedResponse, Series, Chapter } from '../../../types';
+import type {
+  ApiResponse,
+  SeriesDto,
+  ChapterDto,
+  PageDto,
+  PagedApiResponse,
+} from '../../../api/generated/types';
 import { MOCK_SERIES, MOCK_CHAPTERS } from '../data/mockData';
 import { getPagesByChapterId } from '../data/mockPages';
-import type { Page } from '../../../types/entities';
 
 // ─── Toggle this to false when backend Series API is ready ───
 const USE_MOCK = true;
@@ -36,6 +41,7 @@ const mockDelay = (ms: number = 50) =>
 const createMockAxiosResponse = <T>(data: T, message = 'Success') => ({
   data: {
     IsSuccess: true,
+    success: true,
     Message: message,
     Data: data,
   } as unknown as ApiResponse<T>,
@@ -51,6 +57,7 @@ const createMockPaginatedResponse = <T>(
   return {
     data: {
       IsSuccess: true,
+      success: true,
       Message: 'Success',
       Data: paginatedItems,
       TotalCount: items.length,
@@ -74,7 +81,7 @@ export const seriesApi = {
       }
       return createMockPaginatedResponse(filtered, params?.page, params?.pageSize);
     }
-    return axiosInstance.get<PaginatedResponse<Series>>('/api/series/my-list', { params });
+    return axiosInstance.get<PagedApiResponse<SeriesDto>>('/api/series/my-list', { params });
   },
 
   getById: async (seriesId: string) => {
@@ -82,11 +89,11 @@ export const seriesApi = {
       await mockDelay(200);
       const series = MOCK_SERIES.find((s) => s.id === seriesId);
       if (!series) {
-        return { data: { IsSuccess: true, Message: 'Thành công', Data: MOCK_SERIES[0] } } as any;
+        return { data: { IsSuccess: true, success: true, Message: 'Thành công', Data: MOCK_SERIES[0] } } as any;
       }
       return createMockAxiosResponse(series);
     }
-    return axiosInstance.get<ApiResponse<Series>>(`/api/series/${seriesId}`);
+    return axiosInstance.get<ApiResponse<SeriesDto>>(`/api/series/${seriesId}`);
   },
 
   getMySeries: async (params?: { page?: number; pageSize?: number }) => {
@@ -94,13 +101,13 @@ export const seriesApi = {
       await mockDelay(300);
       return createMockPaginatedResponse(MOCK_SERIES, params?.page, params?.pageSize);
     }
-    return axiosInstance.get<ApiResponse<Series[]>>('/api/series/my-list', { params });
+    return axiosInstance.get<ApiResponse<SeriesDto[]>>('/api/series/my-list', { params });
   },
 
   create: async (data: CreateSeriesRequest) => {
     if (USE_MOCK) {
       await mockDelay(800);
-      const newSeries: Series = {
+      const newSeries = {
         id: `s-${Date.now()}`,
         mangakaId: 'user-1',
         mangakaName: 'Mangaka Test',
@@ -113,7 +120,7 @@ export const seriesApi = {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      MOCK_SERIES.unshift(newSeries);
+      MOCK_SERIES.unshift(newSeries as any);
       return createMockAxiosResponse(newSeries, 'Tạo Series thành công!');
     }
 
@@ -122,7 +129,7 @@ export const seriesApi = {
     formData.append('synopsis', data.synopsis);
     data.genre.forEach((g) => formData.append('genre', g));
     if (data.coverImage) formData.append('coverImage', data.coverImage);
-    return axiosInstance.post<ApiResponse<Series>>('/api/series', formData, {
+    return axiosInstance.post<ApiResponse<SeriesDto>>('/api/series', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
@@ -133,7 +140,7 @@ export const seriesApi = {
     if (data.synopsis) formData.append('synopsis', data.synopsis);
     if (data.genre) data.genre.forEach((g) => formData.append('genre', g));
     if (data.coverImage) formData.append('coverImage', data.coverImage);
-    return axiosInstance.put<ApiResponse<Series>>(`/api/series/${seriesId}`, formData, {
+    return axiosInstance.put<ApiResponse<SeriesDto>>(`/api/series/${seriesId}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
@@ -146,7 +153,7 @@ export const seriesApi = {
         .sort((a, b) => a.chapterNumber - b.chapterNumber);
       return createMockPaginatedResponse(chapters, params?.page, params?.pageSize);
     }
-    return axiosInstance.get<PaginatedResponse<Chapter>>(`/api/series/${seriesId}/chapters`, { params });
+    return axiosInstance.get<ApiResponse<ChapterDto[]>>(`/api/series/${seriesId}/chapters`, { params });
   },
 
   getChapterById: async (chapterId: string) => {
@@ -154,11 +161,11 @@ export const seriesApi = {
       await mockDelay(200);
       const chapter = MOCK_CHAPTERS.find((ch) => ch.id === chapterId);
       if (!chapter) {
-        return { data: { IsSuccess: false, Message: 'Chapter not found', Data: null } };
+        return { data: { IsSuccess: false, success: false, Message: 'Chapter not found', Data: null } };
       }
       return createMockAxiosResponse(chapter);
     }
-    return axiosInstance.get<ApiResponse<Chapter>>(`/api/chapters/${chapterId}`);
+    return axiosInstance.get<ApiResponse<ChapterDto>>(`/api/chapters/${chapterId}`);
   },
 
   // Pages for a chapter
@@ -168,7 +175,7 @@ export const seriesApi = {
       const pages = getPagesByChapterId(chapterId);
       return createMockAxiosResponse(pages);
     }
-    return axiosInstance.get<ApiResponse<Page[]>>(`/api/chapters/${chapterId}/pages`);
+    return axiosInstance.get<ApiResponse<PageDto[]>>(`/api/chapters/${chapterId}/pages`);
   },
 
   submitChapter: (seriesId: string, data: SubmitChapterRequest) => {
@@ -176,15 +183,15 @@ export const seriesApi = {
     formData.append('chapterNumber', data.chapterNumber.toString());
     formData.append('title', data.title);
     data.pages.forEach((p) => formData.append('pages', p));
-    return axiosInstance.post<ApiResponse<Chapter>>(`/api/series/${seriesId}/chapters`, formData, {
+    return axiosInstance.post<ApiResponse<ChapterDto>>(`/api/series/${seriesId}/chapters`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
 
   // Editor approve/reject chapter (F3.6)
   approveChapter: (seriesId: string, chapterId: string) =>
-    axiosInstance.put<ApiResponse<Chapter>>(`/api/series/${seriesId}/chapters/${chapterId}/approve`),
+    axiosInstance.put<ApiResponse<ChapterDto>>(`/api/series/${seriesId}/chapters/${chapterId}/approve`),
 
   requestRevision: (seriesId: string, chapterId: string, comment: string) =>
-    axiosInstance.put<ApiResponse<Chapter>>(`/api/series/${seriesId}/chapters/${chapterId}/revision`, { comment }),
+    axiosInstance.put<ApiResponse<ChapterDto>>(`/api/series/${seriesId}/chapters/${chapterId}/revision`, { comment }),
 };
