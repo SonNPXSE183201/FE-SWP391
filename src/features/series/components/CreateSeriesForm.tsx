@@ -48,8 +48,9 @@ export const CreateSeriesForm = () => {
         genre: formData.genre,
         coverImage: formData.coverImage || undefined,
       });
-      toast.success(response.data.message || 'Tạo Series thành công! Trạng thái: Bản nháp (Draft)');
-      navigate(`/mangaka/series/${response.data.data.id}`);
+      toast.success((response.data as any).Message || (response.data as any).message || 'Tạo Series thành công! Trạng thái: Bản nháp (Draft)');
+      const createdData = (response.data as any).Data || (response.data as any).data;
+      navigate(`/mangaka/series/${createdData?.id || createdData?.Id || 'new'}`);
     } catch {
       toast.error('Có lỗi xảy ra. Vui lòng thử lại.');
     } finally {

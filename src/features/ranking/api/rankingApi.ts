@@ -1,5 +1,5 @@
-import { axiosInstance, type ApiResponse } from '../../../api/axios';
-import type { Series } from '../../../types/entities';
+import { axiosInstance } from '../../../api/axios';
+import type { ApiResponse, SeriesDto } from '../../../api/generated/types';
 
 const USE_MOCK = true;
 const mockDelay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -56,18 +56,18 @@ export const rankingApi = {
       }
       return { IsSuccess: true, Message: 'Bỏ phiếu thành công' };
     }
-    const res = await axiosInstance.post<ApiResponse<any>>('/api/ranking/votes', { seriesId, action, comment });
+    const res = await axiosInstance.post<ApiResponse<unknown>>('/api/ranking/votes', { seriesId, action, comment });
     return res.data;
   },
 
   // Retain legacy exports for compatibility
-  fetchPendingProposals: async (): Promise<Series[]> => {
-    const res = await axiosInstance.get<ApiResponse<Series[]>>('/api/board/pending');
+  fetchPendingProposals: async (): Promise<SeriesDto[]> => {
+    const res = await axiosInstance.get<ApiResponse<SeriesDto[]>>('/api/board/pending');
     return res.data?.Data ?? [];
   },
 
   submitVote: async (seriesId: string, vote: number) => {
-    const res = await axiosInstance.post<ApiResponse<any>>('/api/board/votes', { seriesId, vote });
+    const res = await axiosInstance.post<ApiResponse<unknown>>('/api/board/votes', { seriesId, vote });
     return res.data;
   },
 };

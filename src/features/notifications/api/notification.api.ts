@@ -1,4 +1,5 @@
-import { axiosInstance, type ApiResponse } from '../../../api/axios';
+import { axiosInstance } from '../../../api/axios';
+import type { ApiResponse, NotificationDto as SchemaNotificationDto } from '../../../api/generated/types';
 import type { Notification } from '../../../types/entities';
 
 // ─── Toggle this to false when backend notification API is ready ───
@@ -80,6 +81,7 @@ const mockDelay = (ms: number = 300) => new Promise(resolve => setTimeout(resolv
 const createMockAxiosResponse = <T>(data: T, message = 'Success') => ({
   data: {
     IsSuccess: true,
+    success: true,
     Message: message,
     Data: data,
   },
@@ -87,34 +89,20 @@ const createMockAxiosResponse = <T>(data: T, message = 'Success') => ({
 
 // ─── Response DTOs ───────────────────────────────────────────
 export interface NotificationListResponse {
-  Items: NotificationDto[];
+  Items: SchemaNotificationDto[];
   TotalCount: number;
   UnreadCount: number;
 }
 
-export interface NotificationDto {
-  Id: string;
-  UserId: string;
-  Title: string;
-  Message: string;
-  IsRead: boolean;
-  Link?: string;
-  Type: 'TaskUpdate' | 'WalletUpdate' | 'SystemAlert' | 'Review';
-  CreateAt: string;
-  UpdateAt: string;
-}
-
-// ─── Mappers ─────────────────────────────────────────────────
-const toNotificationDto = (n: Notification): NotificationDto => ({
-  Id: n.id,
-  UserId: n.userId,
-  Title: n.title,
-  Message: n.message,
-  IsRead: n.isRead,
-  Link: n.link,
+// ─── Mappers (mock camelCase → schema PascalCase) ────────────
+const toSchemaNotificationDto = (n: Notification): SchemaNotificationDto => ({
+  Id: Number(n.id.replace(/\D/g, '') || 0),
+  Content: n.message,
   Type: n.type,
+  IsRead: n.isRead,
   CreateAt: n.createdAt,
-  UpdateAt: n.updatedAt,
+  Title: n.title,
+  Link: n.link,
 });
 
 // Keep a mutable copy for mock state
@@ -129,7 +117,7 @@ export const notificationApi = {
   getAll: async (page: number = 1, pageSize: number = 20) => {
     if (USE_MOCK) {
       await mockDelay(250);
-      const items = mockState.map(toNotificationDto);
+      const items = mockState.map(toSchemaNotificationDto);
       return createMockAxiosResponse({
         Items: items.slice((page - 1) * pageSize, page * pageSize),
         TotalCount: items.length,

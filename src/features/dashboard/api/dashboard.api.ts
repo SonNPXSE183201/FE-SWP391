@@ -1,5 +1,7 @@
 import { axiosInstance } from '../../../api/axios';
-import type { SeriesStatus } from '../../../types/entities';
+
+// SeriesStatus from entities.ts — kept as string literal since dashboard uses it for UI display
+type SeriesStatus = 'Draft' | 'PendingApproval' | 'Approved' | 'Published' | 'OnHold' | 'Cancelled';
 
 // ─── Toggle this to false when backend APIs are ready ────────
 const USE_MOCK = true;

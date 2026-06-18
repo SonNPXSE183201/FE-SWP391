@@ -1,9 +1,6 @@
 import { axiosInstance } from '../../../api/axios';
-import type { ApiResponse } from '../../../api/axios';
-import { components } from '../../../api/generated/schema';
-
-export type RegisterResponseDto = components["schemas"]["RegisterResponseDto"];
-export type AuthResponseDto = components["schemas"]["AuthResponseDto"];
+import type { ApiResponse, AuthResponseDto, RegisterResponseDto } from '../../../api/generated/types';
+import type { components } from '../../../api/generated/schema';
 
 // We define custom parameter types for our frontend functions to keep them camelCase
 export interface RegisterAssistantParams {
