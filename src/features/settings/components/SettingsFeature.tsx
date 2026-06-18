@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Settings,
   User,
@@ -53,6 +53,32 @@ const AVATAR_GRADIENTS: Record<UserRole, string> = {
   Mangaka: 'from-brand to-secondary',
   Assistant: 'from-emerald-500 to-emerald-700',
   Board: 'from-amber-500 to-amber-700',
+};
+
+const NOTIFICATION_PREFS_STORAGE_PREFIX = 'inku-notification-prefs';
+
+const getNotificationPrefsStorageKey = (userId: string | number | undefined) =>
+  `${NOTIFICATION_PREFS_STORAGE_PREFIX}-${userId ?? 'guest'}`;
+
+const loadNotificationPrefs = (userId: string | number | undefined): NotificationPref[] => {
+  try {
+    const raw = localStorage.getItem(getNotificationPrefsStorageKey(userId));
+    if (!raw) return DEFAULT_NOTIFICATION_PREFS;
+
+    const saved = JSON.parse(raw) as Record<string, boolean>;
+    return DEFAULT_NOTIFICATION_PREFS.map((pref) => ({
+      ...pref,
+      enabled: saved[pref.id] ?? pref.enabled,
+
+    }));
+  } catch {
+    return DEFAULT_NOTIFICATION_PREFS;
+  }
+};
+
+const saveNotificationPrefs = (userId: string | number | undefined, prefs: NotificationPref[]) => {
+  const saved = Object.fromEntries(prefs.map((pref) => [pref.id, pref.enabled]));
+  localStorage.setItem(getNotificationPrefsStorageKey(userId), JSON.stringify(saved));
 };
 
 const DEFAULT_NOTIFICATION_PREFS: NotificationPref[] = [
@@ -120,11 +146,16 @@ const ToggleSwitch = ({ enabled, onChange }: ToggleSwitchProps) => (
 // ─── Main Component ──────────────────────────────────────────
 export const SettingsFeature = () => {
   const user = useAuthStore((state) => state.user);
+  console.log("USER =", user);
   const [activeTab, setActiveTab] = useState<TabId>('profile');
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [notificationPrefs, setNotificationPrefs] = useState<NotificationPref[]>(
-    DEFAULT_NOTIFICATION_PREFS
+  const [notificationPrefs, setNotificationPrefs] = useState<NotificationPref[]>(() =>
+    loadNotificationPrefs(user?.id)
   );
+
+  useEffect(() => {
+    setNotificationPrefs(loadNotificationPrefs(user?.id));
+  }, [user?.id]);
 
   const role = user?.role ?? 'Mangaka';
   const roleBadge = ROLE_BADGE_STYLES[role];
@@ -132,11 +163,13 @@ export const SettingsFeature = () => {
   const initial = user?.fullName?.charAt(0)?.toUpperCase() || 'U';
 
   const handleToggleNotification = (id: string) => {
-    setNotificationPrefs((prev) =>
-      prev.map((pref) =>
+    setNotificationPrefs((prev) => {
+      const next = prev.map((pref) =>
         pref.id === id ? { ...pref, enabled: !pref.enabled } : pref
-      )
-    );
+      );
+      saveNotificationPrefs(user?.id, next);
+      return next;
+    });
   };
 
   // ─── Profile Tab ─────────────────────────────────────────
@@ -321,9 +354,8 @@ export const SettingsFeature = () => {
                 className="flex items-center justify-between px-6 py-4 hover:bg-bg-surface/30 transition-colors duration-200"
               >
                 <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                    pref.enabled ? 'bg-brand/10' : 'bg-bg-surface'
-                  } transition-colors duration-200`}>
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${pref.enabled ? 'bg-brand/10' : 'bg-bg-surface'
+                    } transition-colors duration-200`}>
                     <Icon
                       size={18}
                       className={`${pref.enabled ? 'text-brand' : 'text-text-muted'} transition-colors duration-200`}
@@ -348,7 +380,7 @@ export const SettingsFeature = () => {
       <div className="flex items-start gap-3 p-4 bg-brand/5 border border-brand/10 rounded-xl">
         <Bell size={16} className="text-brand mt-0.5 flex-shrink-0" />
         <p className="text-xs text-text-secondary leading-relaxed">
-          Các cài đặt thông báo sẽ được áp dụng cho cả thông báo trong ứng dụng và email. 
+          Các cài đặt thông báo sẽ được áp dụng cho cả thông báo trong ứng dụng và email.
           Bạn vẫn sẽ nhận được các thông báo bảo mật quan trọng ngay cả khi tắt thông báo.
         </p>
       </div>
