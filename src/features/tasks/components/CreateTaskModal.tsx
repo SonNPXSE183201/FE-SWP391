@@ -170,8 +170,9 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
         amount: amountNum,
         deadline: new Date(formData.deadline + 'T23:59:59Z').toISOString(),
       });
-      if (!res.data?.success) throw new Error(res.data?.message || 'Lỗi tạo task');
-      return res.data.data;
+      const resData = res.data as any;
+      if (!resData?.success && !resData?.IsSuccess) throw new Error(resData?.Message || resData?.message || 'Lỗi tạo task');
+      return resData?.Data || resData?.data;
     },
     onSuccess: () => {
       setSuccess(true);

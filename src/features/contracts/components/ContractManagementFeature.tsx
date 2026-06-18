@@ -176,7 +176,7 @@ export const ContractManagementFeature = () => {
             <p className="text-sm text-text-secondary">Không có dữ liệu phù hợp</p>
           </div>
         ) : (
-          filteredData.map((series, idx) => (
+          filteredData.map((series: ApprovedSeries, idx: number) => (
             <div
               key={series.id}
               className={`grid grid-cols-12 gap-4 px-5 py-4 items-center hover:bg-bg-surface/50 transition-colors ${

@@ -1,4 +1,5 @@
-import { axiosInstance, type ApiResponse } from '../../../api/axios';
+import { axiosInstance } from '../../../api/axios';
+import type { ApiResponse } from '../../../api/generated/types';
 
 const USE_MOCK = true;
 

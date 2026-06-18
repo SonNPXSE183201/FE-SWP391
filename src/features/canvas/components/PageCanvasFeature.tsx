@@ -293,7 +293,7 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
                   <p className="text-xs text-center">Chưa có region nào.<br />Chọn công cụ Region để bắt đầu vẽ.</p>
                 </div>
               ) : (
-                regions.map((region, idx) => (
+                regions.map((region: Region, idx: number) => (
                   <div
                     key={region.id}
                     onClick={() => setSelectedRegion(region.id === selectedRegionId ? null : region.id)}
@@ -409,7 +409,7 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
                   seriesId: chapterDetail.seriesId,
                   chapterId: chapterDetail.id,
                   pageId: currentPage.id,
-                  taskName: regions.find((r) => r.id === selectedRegionId)?.label || '',
+                  taskName: regions.find((r: Region) => r.id === selectedRegionId)?.label || '',
                 }
               : undefined
           }
