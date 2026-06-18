@@ -9,7 +9,6 @@ export const useApprovedSeries = () =>
   useQuery({
     queryKey: KEYS.approvedSeries,
     queryFn: () => contractApi.getApprovedSeries(),
-    select: (res) => res.data?.Data ?? [],
   });
 
 export const useCreateContract = () => {
