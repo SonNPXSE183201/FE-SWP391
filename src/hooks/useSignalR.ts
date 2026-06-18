@@ -1,13 +1,32 @@
-import { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import {
   HubConnectionBuilder,
   HubConnection,
   LogLevel,
   HubConnectionState,
 } from '@microsoft/signalr';
+import { useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { useAuthStore } from '../stores/authStore';
 import { useNotificationStore } from '../stores/notificationStore';
 import type { NotificationItem } from '../stores/notificationStore';
+
+// Emoji icon per notification type for realtime toasts.
+const TYPE_ICON: Record<NotificationItem['type'], string> = {
+  TaskUpdate: '📋',
+  WalletUpdate: '💰',
+  Review: '✅',
+  SystemAlert: '🔔',
+};
+
+const notifyToast = (item: NotificationItem) =>
+  toast(
+    (t) => React.createElement('div', { className: 'flex flex-col gap-1' },
+      React.createElement('span', { className: 'font-semibold text-sm text-text-primary leading-tight' }, item.title),
+      item.message ? React.createElement('span', { className: 'text-xs text-text-secondary leading-snug break-words' }, item.message) : null
+    ),
+    { icon: TYPE_ICON[item.type] ?? '🔔', duration: 5000 }
+  );
 
 /**
  * SignalR hub URL — connects to ASP.NET Core Notification Hub.
@@ -53,6 +72,7 @@ export const useSignalR = () => {
   const connectionRef = useRef<HubConnection | null>(null);
   const { token } = useAuthStore();
   const { addNotification, setUnreadCount } = useNotificationStore();
+  const queryClient = useQueryClient();
 
   // ─── Build & Connect ────────────────────────────────────────
   useEffect(() => {
@@ -75,42 +95,64 @@ export const useSignalR = () => {
       console.log('[SignalR] NewNotification received:', payload);
       const item = mapSignalRPayload(payload);
       addNotification(item);
+      notifyToast(item);
     });
 
-    // TaskStatusChanged: task status update → show as notification
+    // ReceiveNotification: older generic notification format (content, type)
+    connection.on('ReceiveNotification', (content: string, type: string) => {
+      console.log('[SignalR] ReceiveNotification received:', { content, type });
+      const item: NotificationItem = {
+        id: crypto.randomUUID(),
+        title: 'Thông báo',
+        message: content || '',
+        isRead: false,
+        type: (type as NotificationItem['type']) || 'SystemAlert',
+        createdAt: new Date().toISOString(),
+      };
+      addNotification(item);
+      notifyToast(item);
+    });
+
+    // TaskStatusChanged: task status update → notify + refresh task data (F1.6)
     connection.on('TaskStatusChanged', (payload: any) => {
       console.log('[SignalR] TaskStatusChanged received:', payload);
       const item: NotificationItem = {
         id: crypto.randomUUID(),
         title: 'Cập nhật Task',
-        message: payload.Message || `Task "${payload.TaskName || ''}" đã chuyển sang ${payload.NewStatus || 'trạng thái mới'}`,
+        message: payload.Message || payload.message || `Task "${payload.TaskName || payload.taskName || ''}" đã chuyển sang ${payload.NewStatus || payload.newStatus || 'trạng thái mới'}`,
         isRead: false,
-        link: payload.Link || '/mangaka/tasks',
+        link: payload.Link || payload.link || '/mangaka/tasks',
         type: 'TaskUpdate',
         createdAt: new Date().toISOString(),
       };
       addNotification(item);
+      notifyToast(item);
+      // Refresh any task list/detail so the new status shows immediately.
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     });
 
-    // WalletUpdated: wallet balance change → show as notification
+    // WalletUpdated: wallet balance change → notify + refresh wallet data (F1.6)
     connection.on('WalletUpdated', (payload: any) => {
       console.log('[SignalR] WalletUpdated received:', payload);
       const item: NotificationItem = {
         id: crypto.randomUUID(),
         title: 'Cập nhật ví',
-        message: payload.Message || 'Số dư ví của bạn đã thay đổi',
+        message: payload.Message || payload.message || 'Số dư ví của bạn đã thay đổi',
         isRead: false,
-        link: payload.Link || '/mangaka/wallet',
+        link: payload.Link || payload.link || '/mangaka/wallet',
         type: 'WalletUpdate',
         createdAt: new Date().toISOString(),
       };
       addNotification(item);
+      notifyToast(item);
+      queryClient.invalidateQueries({ queryKey: ['wallet'] });
     });
 
     // UnreadCountUpdated: server pushes fresh unread count
-    connection.on('UnreadCountUpdated', (payload: { count: number }) => {
+    connection.on('UnreadCountUpdated', (payload: any) => {
       console.log('[SignalR] UnreadCountUpdated received:', payload);
-      setUnreadCount(payload.count);
+      const newCount = payload.Count ?? payload.count ?? 0;
+      setUnreadCount(newCount);
     });
 
     // ─── Lifecycle logging ────────────────────────────────────
@@ -145,7 +187,7 @@ export const useSignalR = () => {
       }
       connectionRef.current = null;
     };
-  }, [token, addNotification, setUnreadCount]);
+  }, [token, addNotification, setUnreadCount, queryClient]);
 
   // ─── Public API ─────────────────────────────────────────────
   const isConnected = connectionRef.current?.state === HubConnectionState.Connected;
