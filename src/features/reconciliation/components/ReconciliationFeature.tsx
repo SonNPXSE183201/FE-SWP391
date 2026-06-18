@@ -16,7 +16,8 @@ import {
   TrendingDown,
   Equal,
 } from 'lucide-react';
-import { useReconciliation, type ReconciliationRecord, type ReconciliationStatus, type ReconciliationParams } from '../hooks/useReconciliation';
+import { useReconciliation } from '../hooks/useReconciliation';
+import type { ReconciliationRecord, ReconciliationStatus, ReconciliationParams } from '../types/reconciliation.types';
 
 const STATUS_FILTERS: { value: ReconciliationStatus | 'All'; label: string }[] = [
   { value: 'All', label: 'Tất cả' },
