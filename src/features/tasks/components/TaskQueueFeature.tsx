@@ -12,6 +12,7 @@ import { Pagination } from '../../../components/common/Pagination';
 import type { AvailableTaskDto } from '../hooks/useTasks';
 import type { TaskStatus } from '../../../types/entities';
 import { useQueryClient } from '@tanstack/react-query';
+import { validatePngTransparent } from '../../../utils/validatePngTransparent';
 
 // ─── Server-side pagination state ────────────────────────────
 interface PaginationState {
@@ -95,6 +96,7 @@ export const TaskQueueFeature = () => {
   // ─── Mutation: nộp bài & gia hạn ───
   const [selectedFiles, setSelectedFiles] = useState<Record<number, File>>({});
   const [extendingTaskId, setExtendingTaskId] = useState<number | null>(null);
+  const [extensionReason, setExtensionReason] = useState('');
   const queryClient = useQueryClient();
   const extensionMutation = useRequestExtension();
 
@@ -117,6 +119,12 @@ export const TaskQueueFeature = () => {
       return;
     }
 
+    const validation = await validatePngTransparent(file);
+    if (!validation.valid) {
+      toast.error(validation.message || 'File PNG không hợp lệ');
+      return;
+    }
+
     try {
       const { taskApi } = await import('../api/task.api');
       await taskApi.submitResult(String(taskId), { taskId: String(taskId), image: file, comment: '' });
@@ -130,11 +138,16 @@ export const TaskQueueFeature = () => {
     }
   };
 
-  const handleRequestExtension = async (taskId: number, hours: 24 | 48) => {
+  const handleRequestExtension = async (taskId: number, days: 1 | 2) => {
+    if (!extensionReason.trim()) {
+      toast.error('Vui lòng nhập lý do xin gia hạn');
+      return;
+    }
     try {
-      await extensionMutation.mutateAsync({ taskId: String(taskId), extensionHours: hours });
-      toast.success(`Đã xin gia hạn thêm ${hours}h thành công!`);
+      await extensionMutation.mutateAsync({ taskId: String(taskId), days, reason: extensionReason.trim() });
+      toast.success(`Đã xin gia hạn thêm ${days * 24}h thành công!`);
       setExtendingTaskId(null);
+      setExtensionReason('');
     } catch {
       toast.error('Lỗi khi xin gia hạn');
     }
@@ -339,44 +352,54 @@ export const TaskQueueFeature = () => {
                 {activeTab === 'MyTasks' && ['In_Progress', 'Revision'].includes(task.Status || '') && (
                   <div className="flex-shrink-0 flex flex-col gap-2 items-end">
                     <label className="cursor-pointer px-3 py-1.5 border border-border-custom rounded-lg text-[11px] hover:bg-bg-secondary transition-colors text-text-primary">
-                      {selectedFiles[task.Id!] ? selectedFiles[task.Id!].name : '📁 Chọn File ảnh'}
+                      {selectedFiles[task.Id!] ? selectedFiles[task.Id!].name : '📁 Chọn PNG'}
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/png,.png"
                         className="hidden"
                         onChange={(e) => handleFileChange(task.Id!, e.target.files?.[0] || null)}
                       />
                     </label>
                     <div className="flex items-center gap-2">
                       {extendingTaskId === task.Id ? (
-                        <div className="flex items-center gap-1 animate-fade-in">
-                          <button
-                            onClick={() => handleRequestExtension(task.Id!, 24)}
-                            disabled={extensionMutation.isPending}
-                            className="px-2 py-1 bg-brand hover:bg-brand-hover text-white rounded text-[10px] font-medium border-none cursor-pointer"
-                          >
-                            +24h
-                          </button>
-                          <button
-                            onClick={() => handleRequestExtension(task.Id!, 48)}
-                            disabled={extensionMutation.isPending}
-                            className="px-2 py-1 bg-brand hover:bg-brand-hover text-white rounded text-[10px] font-medium border-none cursor-pointer"
-                          >
-                            +48h
-                          </button>
-                          <button
-                            onClick={() => setExtendingTaskId(null)}
-                            className="px-2 py-1 bg-bg-surface hover:bg-border-custom text-text-secondary rounded text-[10px] font-medium border-none cursor-pointer ml-1"
-                          >
-                            Hủy
-                          </button>
+                        <div className="flex flex-col items-end gap-2 animate-fade-in min-w-[200px]">
+                          <textarea
+                            value={extensionReason}
+                            onChange={(e) => setExtensionReason(e.target.value)}
+                            placeholder="Lý do xin gia hạn..."
+                            className="w-full px-2 py-1.5 bg-bg-surface border border-border-custom rounded text-[10px] text-text-primary resize-none h-14"
+                          />
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handleRequestExtension(task.Id!, 1)}
+                              disabled={extensionMutation.isPending || !!task.ExtensionRequestDays}
+                              className="px-2 py-1 bg-brand hover:bg-brand-hover text-white rounded text-[10px] font-medium border-none cursor-pointer disabled:opacity-50"
+                            >
+                              +24h
+                            </button>
+                            <button
+                              onClick={() => handleRequestExtension(task.Id!, 2)}
+                              disabled={extensionMutation.isPending || !!task.ExtensionRequestDays}
+                              className="px-2 py-1 bg-brand hover:bg-brand-hover text-white rounded text-[10px] font-medium border-none cursor-pointer disabled:opacity-50"
+                            >
+                              +48h
+                            </button>
+                            <button
+                              onClick={() => { setExtendingTaskId(null); setExtensionReason(''); }}
+                              className="px-2 py-1 bg-bg-surface hover:bg-border-custom text-text-secondary rounded text-[10px] font-medium border-none cursor-pointer ml-1"
+                            >
+                              Hủy
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <button
                           onClick={() => setExtendingTaskId(task.Id!)}
-                          className="px-3 py-1.5 bg-bg-surface hover:bg-border-custom text-text-secondary rounded-lg text-[11px] font-medium transition-all border-none cursor-pointer"
+                          disabled={!!task.ExtensionRequestDays}
+                          className="px-3 py-1.5 bg-bg-surface hover:bg-border-custom text-text-secondary rounded-lg text-[11px] font-medium transition-all border-none cursor-pointer disabled:opacity-50"
+                          title={task.ExtensionRequestDays ? 'Task đã xin gia hạn' : undefined}
                         >
-                          Gia hạn
+                          {task.ExtensionRequestDays ? 'Đã gia hạn' : 'Gia hạn'}
                         </button>
                       )}
                       <button

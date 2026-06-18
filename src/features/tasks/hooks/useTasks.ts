@@ -29,6 +29,9 @@ export const mapTaskDtoToEntity = (dto: components['schemas']['TasksDto']): Task
     deadline: dto.Deadline || '',
     extensionUsed: !!dto.ExtensionRequestDays,
     onLeave: false,
+    extensionReason: dto.ExtensionReason ?? undefined,
+    extensionStatus: dto.ExtensionStatus ?? undefined,
+    extensionRequestDays: dto.ExtensionRequestDays ?? undefined,
   };
 };
 
@@ -114,7 +117,11 @@ export const useRequestRevisionTask = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ taskId, comment, extensionHours }: { taskId: string; comment: string; extensionHours: 24 | 48 }) =>
-      taskApi.requestRevision(taskId, comment, extensionHours),
+      taskApi.requestRevision(taskId, {
+        FeedbackComment: comment,
+        RevisionExtensionHours: extensionHours,
+        CoordinatesJson: '[]',
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', 'mangaka'] });
       queryClient.invalidateQueries({ queryKey: ['tasks', 'assistant-my'] });
@@ -126,9 +133,22 @@ export const useRequestRevisionTask = () => {
 export const useRequestExtension = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ taskId, extensionHours }: { taskId: string; extensionHours: 24 | 48 }) =>
-      taskApi.requestExtension({ taskId, extensionHours }),
+    mutationFn: ({ taskId, days, reason }: { taskId: string; days: 1 | 2; reason: string }) =>
+      taskApi.requestExtension({ taskId, days, reason }),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'assistant-my'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'mangaka'] });
+    },
+  });
+};
+
+export const useApproveExtension = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ taskId, approve }: { taskId: string; approve: boolean }) =>
+      taskApi.approveExtension(taskId, approve),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'mangaka'] });
       queryClient.invalidateQueries({ queryKey: ['tasks', 'assistant-my'] });
     },
   });
