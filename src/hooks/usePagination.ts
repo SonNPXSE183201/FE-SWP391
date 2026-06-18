@@ -40,7 +40,7 @@ interface UsePaginationReturn<T> {
  * Generate an array of page numbers with ellipsis markers.
  * Example: [1, 'ellipsis', 4, 5, 6, 'ellipsis', 10]
  */
-function generatePageRange(
+export function generatePageRange(
   currentPage: number,
   totalPages: number,
   siblingCount: number,
