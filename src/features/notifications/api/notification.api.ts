@@ -3,7 +3,7 @@ import type { ApiResponse, NotificationDto as SchemaNotificationDto } from '../.
 import type { Notification } from '../../../types/entities';
 
 // ─── Toggle this to false when backend notification API is ready ───
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 // ─── Mock Data ───────────────────────────────────────────────
 const MOCK_NOTIFICATIONS: Notification[] = [
@@ -106,7 +106,7 @@ const toSchemaNotificationDto = (n: Notification): SchemaNotificationDto => ({
 });
 
 // Keep a mutable copy for mock state
-let mockState = MOCK_NOTIFICATIONS.map(n => ({ ...n }));
+const mockState = MOCK_NOTIFICATIONS.map(n => ({ ...n }));
 
 // ─── Notification API ────────────────────────────────────────
 export const notificationApi = {
