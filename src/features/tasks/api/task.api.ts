@@ -65,7 +65,8 @@ export interface SubmitTaskResultRequest {
 
 export interface RequestExtensionRequest {
   taskId: string;
-  extensionHours: 24 | 48;   // T08: only +24h or +48h
+  days: 1 | 2;
+  reason: string;
 }
 
 // ─── Mock helpers ────────────────────────────────────────────
@@ -332,17 +333,41 @@ export const taskApi = {
     return axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/revision`, payload);
   },
 
-  // Extension (T08)
-  requestExtension: (data: RequestExtensionRequest) =>
-    axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${data.taskId}/extend`, data),
+  // Extension (F2.12 / T08)
+  requestExtension: async (data: RequestExtensionRequest) => {
+    if (USE_MOCK) {
+      await mockDelay(400);
+      const task = MOCK_TASKS.find((t) => t.id === data.taskId);
+      if (task) {
+        task.extensionUsed = true;
+        const extraHours = data.days * 24;
+        const oldDeadline = new Date(task.deadline);
+        oldDeadline.setHours(oldDeadline.getHours() + extraHours);
+        task.deadline = oldDeadline.toISOString();
+      }
+      return createMockAxiosResponse(task as unknown as TasksDto, 'Xin gia hạn thành công');
+    }
+    return axiosInstance.post<ApiResponse<TasksDto>>(
+      `/api/tasks/${data.taskId}/request-extension`,
+      { Days: data.days, Reason: data.reason }
+    );
+  },
+
+  approveExtension: async (taskId: string, approve: boolean) => {
+    if (USE_MOCK) {
+      await mockDelay(300);
+      return createMockAxiosResponse({ taskId, approve } as unknown as TasksDto, approve ? 'Đã duyệt gia hạn' : 'Đã từ chối gia hạn');
+    }
+    return axiosInstance.post<ApiResponse<unknown>>(
+      `/api/tasks/${taskId}/extension-approval`,
+      null,
+      { params: { approve } }
+    );
+  },
 
   // Cancel (T03b, T05)
   cancel: (taskId: string, reason?: string) =>
     axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/cancel`, { reason }),
-
-  // On_Leave toggle (F2.14)
-  toggleOnLeave: (onLeave: boolean) =>
-    axiosInstance.put<ApiResponse<null>>('/api/tasks/on-leave', { onLeave }),
 
   // Task versions (T07)
   getVersions: (taskId: string) =>

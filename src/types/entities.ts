@@ -183,6 +183,9 @@ export interface Task extends BaseEntity {
   deadline: string;
   extensionUsed: boolean;       // T08: max 1 extension
   onLeave: boolean;             // T04: pause auto-approve
+  extensionReason?: string;
+  extensionStatus?: string;
+  extensionRequestDays?: number;
 }
 
 export interface TaskVersion extends BaseEntity {
