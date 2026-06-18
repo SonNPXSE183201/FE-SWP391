@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { KeyRound, Loader2, Eye, EyeOff, X, ShieldCheck } from 'lucide-react';
 import { authApi } from '../api/auth.api';
+import { useAuthStore } from '../../../stores/authStore';
 interface ChangePasswordModalProps {
     isOpen: boolean;
     onClose: () => void;
