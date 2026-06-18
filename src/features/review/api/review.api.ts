@@ -2,7 +2,7 @@ import { axiosInstance, type ApiResponse } from '../../../api/axios';
 import type { ApproveChapterPayload, ChapterReviewDetail, ReviewQueueItem } from '../types';
 import { MOCK_REVIEW_QUEUE, buildChapterReviewDetail } from '../data/mockData';
 
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 const mockDelay = (ms = 400) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -78,7 +78,8 @@ export const reviewApi = {
       await mockDelay();
       return mockResponse<ReviewQueueItem[]>(MOCK_REVIEW_QUEUE);
     }
-    return axiosInstance.get<ApiResponse<ReviewQueueItem[]>>('/api/reviews/chapters');
+    const res = await axiosInstance.get<ApiResponse<ReviewQueueItem[]>>('/api/reviews/chapters');
+    return res;
   },
 
   getChapterReview: async (chapterId: string) => {
@@ -86,7 +87,8 @@ export const reviewApi = {
       await mockDelay();
       return mockResponse<ChapterReviewDetail | null>(buildChapterReviewDetail(chapterId));
     }
-    return axiosInstance.get<ApiResponse<ChapterReviewDetail>>(`/api/reviews/chapters/${chapterId}`);
+    const res = await axiosInstance.get<ApiResponse<ChapterReviewDetail>>(`/api/reviews/chapters/${chapterId}`);
+    return res;
   },
 
   // F3.6 — Approve Chapter → triggers Genkoūryō disbursement (G02, G03).
@@ -95,10 +97,11 @@ export const reviewApi = {
       await mockDelay(700);
       return mockResponse(true, 'Đã duyệt Chapter & giải ngân nhuận bút');
     }
-    return axiosInstance.post<ApiResponse<boolean>>(
+    const res = await axiosInstance.post<ApiResponse<boolean>>(
       `/api/reviews/chapters/${payload.chapterId}/approve`,
       { ValidPageCount: payload.validPageCount, QcChecklistData: "{}" },
     );
+    return res;
   },
 
   requireChapterRevision: async (chapterId: string, reason: string) => {
@@ -106,9 +109,10 @@ export const reviewApi = {
       await mockDelay(600);
       return mockResponse(true, 'Đã trả Chapter về cho Mangaka chỉnh sửa');
     }
-    return axiosInstance.post<ApiResponse<boolean>>(
+    const res = await axiosInstance.post<ApiResponse<boolean>>(
       `/api/reviews/chapters/${chapterId}/revision`,
       { FeedbackComment: reason },
     );
+    return res;
   },
 };
