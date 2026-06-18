@@ -8,13 +8,13 @@ import type {
 import type { components } from '../../../api/generated/schema';
 
 // ─── Typed API Response wrappers from schema ─────────────────
-export type UserResponseDtoPagedResultApiResponse = components["schemas"]["UserResponseDtoPagedResultApiResponse"];
+export type AdminUserResponse = components['schemas']['UserListItemDtoPagedResultApiResponse'];
 
 // ─── API Functions ───────────────────────────────────────────
 
 export const adminApi = {
   getUsers: (params?: { page?: number; pageSize?: number; role?: string; status?: string; search?: string }) =>
-    axiosInstance.get<UserResponseDtoPagedResultApiResponse>('/api/admin/users', { params }), 
+    axiosInstance.get<AdminUserResponse>('/api/admin/users', { params }), 
 
   createUser: (data: CreateUserByAdminDto) =>
     axiosInstance.post<ApiResponse<UserResponseDto>>('/api/admin/users', data),

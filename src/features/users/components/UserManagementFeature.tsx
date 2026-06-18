@@ -9,6 +9,7 @@ import {
   Unlock,
 } from "lucide-react";
 import { CreateUserModal } from "./CreateUserModal";
+import type { components } from "../../../api/generated/schema";
 import { CustomSelect } from "../../../components/common/CustomSelect";
 import { Pagination } from "../../../components/common/Pagination";
 import { generatePageRange } from "../../../hooks/usePagination";
@@ -49,7 +50,7 @@ export const UserManagementFeature = () => {
     pageSize,
   });
 
-  const users = usersData?.Items || [];
+  const users: components["schemas"]["UserListItemDto"][] = usersData?.Items || [];
   const totalItems = usersData?.TotalItems || 0;
   const totalPages = usersData?.TotalPages || 1;
   const currentPage = usersData?.PageNumber || page;
@@ -149,68 +150,71 @@ export const UserManagementFeature = () => {
                   <tbody className="text-sm">
                     {users.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="p-8 text-center text-text-muted">
+                        <td colSpan={6} className="p-8 text-center text-text-muted">
                           Không tìm thấy người dùng nào phù hợp
                         </td>
                       </tr>
                     ) : (
                       users.map((user) => (
                         <tr
-                          key={user.Id}
+                          key={user.id}
                           className="border-b border-border-custom/50 hover:bg-bg-primary/30 transition-colors"
                         >
                           <td className="p-4 font-medium text-text-primary">
-                            {user.FullName || user.UserName}
+                            {user.fullName || user.email}
                           </td>
-                          <td className="p-4 text-text-secondary">{user.Email}</td>
+                          <td className="p-4 text-text-secondary">{user.email}</td>
                           <td className="p-4">
                             <span
-                              className={`px-2.5 py-1 rounded-md text-xs font-medium ${
-                                user.RoleId === 5
-                                  ? "bg-purple-500/10 text-purple-400" // Assistant
-                                  : user.RoleId === 4
-                                    ? "bg-blue-500/10 text-blue-400" // Mangaka
-                                    : user.RoleId === 3
-                                      ? "bg-indigo-500/10 text-indigo-400" // Board
-                                      : user.RoleId === 2
-                                        ? "bg-orange-500/10 text-orange-400" // Editor
-                                        : "bg-gray-500/10 text-gray-400" // Admin
+                              className={`px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1.5 w-fit ${
+                                user.role === "Assistant"
+                                  ? "bg-purple-500/10 text-purple-400"
+                                  : user.role === "Mangaka"
+                                  ? "bg-brand/10 text-brand"
+                                  : user.role === "Editor"
+                                  ? "bg-blue-500/10 text-blue-400"
+                                  : user.role === "Admin"
+                                  ? "bg-rose-500/10 text-rose-400"
+                                  : "bg-bg-surface text-text-secondary"
                               }`}
                             >
-                              {user.RoleId === 5 ? "Assistant" : user.RoleId === 4 ? "Mangaka" : user.RoleId === 3 ? "Board" : user.RoleId === 2 ? "Editor" : "Admin"}
+                              {user.role}
                             </span>
                           </td>
                           <td className="p-4">
                             <span
                               className={`px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 w-fit ${
-                                user.Status === "Active"
+                                user.status === "Active"
                                   ? "bg-green-500/10 text-green-400"
-                                  : user.Status === "Pending"
+                                  : user.status === "Pending"
                                     ? "bg-yellow-500/10 text-yellow-400"
                                     : "bg-red-500/10 text-red-400"
                               }`}
                             >
-                              {user.Status === "Active" && <CheckCircle size={12} />}
-                              {user.Status === "Pending" && (
+                              {user.status === "Active" && <CheckCircle size={12} />}
+                              {user.status === "Pending" && (
                                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
                               )}
-                              {user.Status === "Locked" && <Lock size={12} />}
-                              {user.Status === "Rejected" && <XCircle size={12} />}
-                              {user.Status}
+                              {user.status === "Locked" && <Lock size={12} />}
+                              {user.status === "Rejected" && <XCircle size={12} />}
+                              {user.status}
                             </span>
                           </td>
+                          <td className="p-4 text-text-secondary">
+                            {user.createdAt ? new Date(user.createdAt).toLocaleDateString("vi-VN") : "—"}
+                          </td>
                           <td className="p-4 text-right">
-                            {user.Status === "Pending" ? (
+                            {user.status === "Pending" ? (
                               <div className="flex justify-end gap-2">
                                 <button
-                                  onClick={() => approveMutation.mutate(user.Id!)}
+                                  onClick={() => approveMutation.mutate(Number(user.id))}
                                   disabled={approveMutation.isPending}
                                   className="px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 rounded-lg transition-colors text-xs font-medium flex items-center gap-1"
                                 >
                                   <CheckCircle size={14} /> Duyệt
                                 </button>
                                 <button
-                                  onClick={() => rejectMutation.mutate(user.Id!)}
+                                  onClick={() => rejectMutation.mutate(Number(user.id))}
                                   disabled={rejectMutation.isPending}
                                   className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors text-xs font-medium flex items-center gap-1"
                                 >
@@ -219,18 +223,18 @@ export const UserManagementFeature = () => {
                               </div>
                             ) : (
                               <div className="flex justify-end gap-2">
-                                {user.Status === "Active" && (
+                                {user.status === "Active" && (
                                   <button
-                                    onClick={() => lockMutation.mutate(user.Id!)}
+                                    onClick={() => lockMutation.mutate(Number(user.id))}
                                     disabled={lockMutation.isPending}
                                     className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors text-xs font-medium flex items-center gap-1"
                                   >
                                     <Lock size={14} /> Khóa
                                   </button>
                                 )}
-                                {user.Status === "Locked" && (
+                                {user.status === "Locked" && (
                                   <button
-                                    onClick={() => unlockMutation.mutate(user.Id!)}
+                                    onClick={() => unlockMutation.mutate(Number(user.id))}
                                     disabled={unlockMutation.isPending}
                                     className="px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 rounded-lg transition-colors text-xs font-medium flex items-center gap-1"
                                   >
