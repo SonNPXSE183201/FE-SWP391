@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { taskApi, mapTaskDtoToEntity } from '../api/task.api';
-import type { Task, TaskStatus } from '../../../types/entities';
+import type { Task } from '../../../types/entities';
 import { components } from '../../../api/generated/schema';
 
 export type AvailableTaskDto = components['schemas']['TasksDto'];
