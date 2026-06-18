@@ -1,4 +1,6 @@
 import { axiosInstance } from '../../../api/axios';
+import type { ApiResponse } from '../../../api/generated/types';
+import type { components } from '../../../api/generated/schema';
 
 const USE_MOCK = true;
 
@@ -22,6 +24,9 @@ export interface ApprovedSeries {
   approvedBudget: number;
   publishSchedule: string;
   hasContract: boolean;
+  contractId?: string;
+  genkouryoPrice?: number;
+  endDate?: string;
   genres: string[];
 }
 
@@ -58,6 +63,9 @@ export const contractApi = {
           approvedBudget: 2800000,
           publishSchedule: 'Hàng tuần (Weekly)',
           hasContract: true,
+          contractId: 'contract-003',
+          genkouryoPrice: 55000,
+          endDate: '2027-06-01',
           genres: ['Seinen', 'Sci-Fi', 'Action'],
         },
         {
@@ -83,5 +91,14 @@ export const contractApi = {
       return mockResponse(true, 'Đã tạo Hợp đồng và thiết lập Nhuận bút thành công');
     }
     return axiosInstance.post<any>(`/api/admin/contracts`, { seriesId, baseGenkouryoPrice });
-  }
+  },
+
+  updateContract: async (payload: components['schemas']['UpdateContractRequestDto']) => {
+    if (USE_MOCK) {
+      await mockDelay(500);
+      return mockResponse(true, 'Đã cập nhật phụ lục hợp đồng thành công');
+    }
+    const contractId = payload.contractId;
+    return axiosInstance.put<ApiResponse<unknown>>(`/api/admin/contracts/${contractId}`, payload);
+  },
 };
