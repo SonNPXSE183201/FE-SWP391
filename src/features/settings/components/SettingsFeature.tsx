@@ -147,6 +147,7 @@ export const SettingsFeature = () => {
   const user = useAuthStore((state) => state.user);
   const [activeTab, setActiveTab] = useState<TabId>('profile');
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isOnLeave, setIsOnLeave] = useState(false);
   const [notificationPrefs, setNotificationPrefs] = useState<NotificationPref[]>(() =>
     loadNotificationPrefs(user?.id)
   );
@@ -265,6 +266,29 @@ export const SettingsFeature = () => {
           </div>
         </div>
       </div>
+
+      {/* On Leave Status (Only for Mangaka) */}
+      {role === 'Mangaka' && (
+        <div className="bg-bg-secondary border border-border-custom rounded-xl p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${isOnLeave ? 'bg-amber-500/10' : 'bg-bg-surface'} transition-colors`}>
+                <Monitor size={20} className={`${isOnLeave ? 'text-amber-500' : 'text-text-muted'}`} />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-text-primary">Trạng thái Tạm nghỉ (On Leave)</h3>
+                <p className="text-xs text-text-muted mt-1">
+                  Khi bật, hệ thống sẽ tạm dừng tính thời gian tự động duyệt Task (Auto-Approve). Hãy sử dụng khi bạn cần nghỉ phép dài ngày.
+                </p>
+              </div>
+            </div>
+            <ToggleSwitch
+              enabled={isOnLeave}
+              onChange={() => setIsOnLeave(!isOnLeave)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 
