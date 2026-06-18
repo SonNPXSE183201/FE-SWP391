@@ -200,7 +200,7 @@ export const reconciliationApi = {
       '/api/admin/reconciliation',
       { params }
     );
-    return res.data?.data ?? { records: [], summary: calculateSummary([]) };
+    return res.data?.Data ?? { records: [], summary: calculateSummary([]) };
   },
 };
 
