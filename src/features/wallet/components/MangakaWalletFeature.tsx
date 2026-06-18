@@ -9,7 +9,7 @@ import { TX_TYPE_CONFIG, TX_FILTER_OPTIONS, formatVND } from '../constants';
 import { WalletActionModal } from './WalletActionModal';
 import { TransactionDetailModal } from './TransactionDetailModal';
 import { useWallet } from '../hooks/useWallet';
-import { useWalletSignalR } from '../hooks/useWalletSignalR';
+
 import { calculateMonthlyStats } from '../utils';
 import { usePagination } from '../../../hooks/usePagination';
 import { Pagination } from '../../../components/common/Pagination';
@@ -23,7 +23,7 @@ export const MangakaWalletFeature = () => {
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
 
   // Real-time wallet updates via SignalR
-  useWalletSignalR();
+
 
   const { data: response, isLoading, isError, error } = useWallet();
 
