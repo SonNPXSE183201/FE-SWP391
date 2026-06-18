@@ -1,4 +1,5 @@
-import { axiosInstance, type ApiResponse } from '../../../api/axios';
+import { axiosInstance } from '../../../api/axios';
+import type { ApiResponse } from '../../../api/generated/types';
 
 const USE_MOCK = true;
 
@@ -7,12 +8,13 @@ const mockDelay = (ms = 400) => new Promise(resolve => setTimeout(resolve, ms));
 const mockResponse = <T>(data: T, message = 'Success') => ({
   data: {
     IsSuccess: true,
+    success: true,
     Message: message,
     Data: data,
   },
 });
 
-// ─── Types ───
+// ─── Types (UI-specific — no matching backend DTO yet) ───────
 export interface DisputeListItem {
   id: string;
   taskId: string;

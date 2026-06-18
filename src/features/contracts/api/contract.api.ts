@@ -1,4 +1,4 @@
-import { axiosInstance, type ApiResponse } from '../../../api/axios';
+import { axiosInstance } from '../../../api/axios';
 
 const USE_MOCK = true;
 
@@ -7,11 +7,13 @@ const mockDelay = (ms = 400) => new Promise(resolve => setTimeout(resolve, ms));
 const mockResponse = <T>(data: T, message = 'Success') => ({
   data: {
     IsSuccess: true,
+    success: true,
     Message: message,
     Data: data,
   },
 });
 
+// UI-specific type for the approved series list view (aggregated from SeriesDto)
 export interface ApprovedSeries {
   id: string;
   title: string;
@@ -27,7 +29,7 @@ export const contractApi = {
   getApprovedSeries: async () => {
     if (USE_MOCK) {
       await mockDelay();
-      return mockResponse([
+      return mockResponse<ApprovedSeries[]>([
         {
           id: 'series-001',
           title: 'Huyền Thoại Samurai',
@@ -70,7 +72,9 @@ export const contractApi = {
         },
       ]);
     }
-    return axiosInstance.get<ApiResponse<ApprovedSeries[]>>('/api/admin/contracts/series');
+    // When backend is ready, this will return SeriesDto[] with PascalCase.
+    // The component must be updated to map SeriesDto → ApprovedSeries.
+    return axiosInstance.get<any>('/api/admin/contracts/series');
   },
 
   createContract: async (seriesId: string, baseGenkouryoPrice: number) => {
@@ -78,6 +82,6 @@ export const contractApi = {
       await mockDelay(600);
       return mockResponse(true, 'Đã tạo Hợp đồng và thiết lập Nhuận bút thành công');
     }
-    return axiosInstance.post<ApiResponse<boolean>>(`/api/admin/contracts`, { seriesId, baseGenkouryoPrice });
+    return axiosInstance.post<any>(`/api/admin/contracts`, { seriesId, baseGenkouryoPrice });
   }
 };
