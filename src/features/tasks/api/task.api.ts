@@ -9,14 +9,16 @@ import { MOCK_TASKS } from '../data/mockData';
 import type { MockTask } from '../data/mockData';
 import { MOCK_WALLET, MOCK_TRANSACTIONS } from '../../wallet/data/mockData';
 
-// ─── Toggle this to false when backend Tasks API is ready ────
-const USE_MOCK = true;
+// ─── Mock chỉ cho flow chưa có BE (getById, submit cần Firebase URL) ───
+const USE_MOCK = false;
+const FORCE_MOCK_GET_BY_ID = true; // BE chưa có GET /api/tasks/{id}
+const FORCE_MOCK_SUBMIT = true; // BE cần SubmittedFileUrl — chờ Firebase upload
 
 import { components } from '../../../api/generated/schema';
 import type { TaskStatus, Task } from '../../../types/entities';
 
 // ─── Mapper ──────────────────────────────────────────────────
-const mapTaskStatus = (status: any): TaskStatus => {
+const mapTaskStatus = (status: unknown): TaskStatus => {
   if (status === 0 || status === '0') return 'Pending';
   if (status === 1 || status === '1') return 'In_Progress';
   if (status === 2 || status === '2') return 'Pending_Review';
@@ -65,7 +67,8 @@ export interface SubmitTaskResultRequest {
 
 export interface RequestExtensionRequest {
   taskId: string;
-  extensionHours: 24 | 48;   // T08: only +24h or +48h
+  days: 1 | 2;
+  reason: string;
 }
 
 // ─── Mock helpers ────────────────────────────────────────────
@@ -123,7 +126,7 @@ export const taskApi = {
       }
       return createMockPaginatedResponse(filtered, params?.page, params?.pageSize);
     }
-    return axiosInstance.get<PagedApiResponse<TasksDto>>('/api/tasks/my', { params });
+    return axiosInstance.get<PagedApiResponse<TasksDto>>('/api/tasks/mangaka-list', { params });
   },
 
   // Backend API ready (feat/assistant-available-tasks) — always call real endpoint
@@ -159,7 +162,7 @@ export const taskApi = {
   getAssistantMyTasks: async (params?: { page?: number; pageSize?: number }) => {
     if (USE_MOCK) {
       await mockDelay(300);
-      let filtered = MOCK_TASKS.filter((t) => 
+      const filtered = MOCK_TASKS.filter((t) => 
         ['In_Progress', 'Pending_Review', 'Approved', 'Disputed', 'Revision'].includes(t.status) &&
         (t.assignedAssistantName === 'Nguyễn Sơn' || t.assignedAssistantName === 'Minh Anh')
       );
@@ -176,7 +179,7 @@ export const taskApi = {
       }));
       return createMockPaginatedResponse(mappedDtos, params?.page, params?.pageSize);
     }
-    return axiosInstance.get('/api/tasks/assistant-my', {
+    return axiosInstance.get('/api/tasks/my-tasks', {
       params: {
         PageNumber: params?.page ?? 1,
         PageSize: params?.pageSize ?? 10,
@@ -185,7 +188,7 @@ export const taskApi = {
   },
 
   getById: async (taskId: string) => {
-    if (USE_MOCK) {
+    if (USE_MOCK || FORCE_MOCK_GET_BY_ID) {
       await mockDelay(200);
       const task = MOCK_TASKS.find((t) => t.id === taskId);
       if (!task) {
@@ -259,7 +262,7 @@ export const taskApi = {
       }
       return createMockAxiosResponse(task as unknown as TasksDto, 'Nhận việc thành công');
     }
-    return axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/accept`);
+    return axiosInstance.post<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/accept`);
   },
 
   // Assistant downloads resource (F2.7)
@@ -268,7 +271,7 @@ export const taskApi = {
 
   // Assistant submits result (F2.8)
   submitResult: async (taskId: string, data: SubmitTaskResultRequest) => {
-    if (USE_MOCK) {
+    if (USE_MOCK || FORCE_MOCK_SUBMIT) {
       await mockDelay(600);
       const task = MOCK_TASKS.find((t) => t.id === taskId || t.id === `task-${taskId}`);
       if (task) {
@@ -279,11 +282,8 @@ export const taskApi = {
       }
       return createMockAxiosResponse({ taskId } as unknown as TaskVersionDto, 'Nộp bài thành công');
     }
-    const formData = new FormData();
-    formData.append('image', data.image);
-    if (data.comment) formData.append('comment', data.comment);
-    return axiosInstance.post<ApiResponse<TaskVersionDto>>(`/api/tasks/${taskId}/submit`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+    return axiosInstance.post<ApiResponse<unknown>>(`/api/tasks/${taskId}/submit`, {
+      SubmittedFileUrl: data.image.name, // TODO: upload Firebase → public URL
     });
   },
 
@@ -312,7 +312,7 @@ export const taskApi = {
       }
       return createMockAxiosResponse(task as unknown as TasksDto, 'Duyệt thành công');
     }
-    return axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/approve`);
+    return axiosInstance.post<ApiResponse<unknown>>(`/api/tasks/${taskId}/approve`, {});
   },
 
   requestRevision: async (taskId: string, payload: { FeedbackComment: string; RevisionExtensionHours: number; CoordinatesJson: string }) => {
@@ -329,12 +329,29 @@ export const taskApi = {
       }
       return createMockAxiosResponse(task as unknown as TasksDto, 'Yêu cầu sửa bài thành công');
     }
-    return axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/revision`, payload);
+    return axiosInstance.post<ApiResponse<unknown>>(`/api/tasks/${taskId}/reject`, payload);
   },
 
-  // Extension (T08)
-  requestExtension: (data: RequestExtensionRequest) =>
-    axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${data.taskId}/extend`, data),
+  // Extension (F2.12) — BE: POST /api/tasks/{id}/request-extension { Days, Reason }
+  requestExtension: async (data: RequestExtensionRequest) => {
+    if (USE_MOCK) {
+      await mockDelay(400);
+      const task = MOCK_TASKS.find((t) => t.id === data.taskId);
+      if (task) {
+        task.extensionRequestDays = data.days;
+      }
+      return createMockAxiosResponse(task as unknown as TasksDto, 'Xin gia hạn thành công');
+    }
+    return axiosInstance.post<ApiResponse<unknown>>(
+      `/api/tasks/${data.taskId}/request-extension`,
+      { Days: data.days, Reason: data.reason },
+    );
+  },
+
+  approveExtension: async (taskId: string, approve: boolean) =>
+    axiosInstance.post<ApiResponse<unknown>>(
+      `/api/tasks/${taskId}/extension-approval?approve=${approve}`,
+    ),
 
   // Cancel (T03b, T05)
   cancel: (taskId: string, reason?: string) =>
