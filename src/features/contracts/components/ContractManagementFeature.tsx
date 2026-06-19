@@ -28,7 +28,7 @@ export const ContractManagementFeature = () => {
   const [updateGenkouryoPrice, setUpdateGenkouryoPrice] = useState('');
   const [updateEndDate, setUpdateEndDate] = useState('');
   
-  const { data: seriesList = [], isLoading } = useApprovedSeries();
+  const { data: seriesList = [], isLoading, isError } = useApprovedSeries();
   const createContract = useCreateContract();
   const updateContract = useUpdateContract();
 
@@ -77,7 +77,11 @@ export const ContractManagementFeature = () => {
           toast.success(`Đã cập nhật phụ lục HĐ cho "${selectedSeries.title}"`);
           setShowUpdateModal(false);
         },
-        onError: () => toast.error('Cập nhật thất bại'),
+        onError: (err: unknown) => {
+          const msg =
+            (err as { response?: { data?: { Message?: string } } })?.response?.data?.Message;
+          toast.error(msg || 'Cập nhật thất bại. Kiểm tra BE đang chạy hoặc contractId có tồn tại.');
+        },
       }
     );
   };
@@ -136,6 +140,12 @@ export const ContractManagementFeature = () => {
       {isLoading && (
         <div className="flex justify-center items-center py-10">
           <div className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+
+      {!isLoading && isError && seriesList.length === 0 && (
+        <div className="mt-4 p-4 rounded-xl bg-warning/10 border border-warning/20 text-sm text-warning">
+          Không tải được danh sách từ BE. Kiểm tra backend đang chạy tại {import.meta.env.VITE_API_URL || 'localhost'}.
         </div>
       )}
 
