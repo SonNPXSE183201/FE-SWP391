@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { taskApi } from '../api/task.api';
-import type { Task } from '../../../types/entities';
+import type { Task, TaskStatus } from '../../../types/entities';
 import { components } from '../../../api/generated/schema';
 
 export type AvailableTaskDto = components['schemas']['TasksDto'];
@@ -12,19 +12,44 @@ export interface AvailableTasksResult {
   pageNumber: number;
 }
 
+type ApiEnvelope = {
+  Data?: unknown;
+  data?: unknown;
+  IsSuccess?: boolean;
+};
+
+const getPagedTaskItems = (body: unknown): AvailableTasksResult => {
+  const envelope = body as ApiEnvelope;
+  const raw = (envelope.Data ?? envelope.data) as Record<string, unknown> | unknown[] | undefined;
+  const items = (
+    Array.isArray(raw)
+      ? raw
+      : (raw as Record<string, unknown> | undefined)?.Items
+        ?? (raw as Record<string, unknown> | undefined)?.items
+        ?? []
+  ) as AvailableTaskDto[];
+  const pageSource = Array.isArray(raw) ? undefined : (raw as Record<string, unknown> | undefined);
+  return {
+    items,
+    totalPages: Number(pageSource?.TotalPages ?? pageSource?.totalPages ?? 1),
+    totalItems: Number(pageSource?.TotalItems ?? pageSource?.totalItems ?? items.length),
+    pageNumber: Number(pageSource?.PageNumber ?? pageSource?.pageNumber ?? 1),
+  };
+};
+
 export const mapTaskDtoToEntity = (dto: components['schemas']['TasksDto']): Task => {
   return {
     id: String(dto.Id || ''),
     createdAt: new Date().toISOString(), // Mock fallback if missing
     updatedAt: new Date().toISOString(),
     regionId: String(dto.RegionId || ''),
-    pageId: '', // Mock fallback
+    pageId: dto.PageNumber ? String(dto.PageNumber) : '',
     chapterId: '', // Mock fallback
     seriesId: '', // Mock fallback
     mangakaId: String(dto.MangakaId || ''),
     assignedAssistantId: dto.AssistantId ? String(dto.AssistantId) : undefined,
     assignedAssistantName: dto.AssistantName || undefined,
-    status: (dto.Status as any) || 'Pending',
+    status: (dto.Status as TaskStatus | undefined) ?? 'Pending',
     amount: dto.PaymentAmount || 0,
     deadline: dto.Deadline || '',
     extensionUsed: !!dto.ExtensionRequestDays,
@@ -41,9 +66,13 @@ export const useMangakaTasks = (params?: { page?: number; pageSize?: number; sta
     queryKey: ['tasks', 'mangaka', params],
     queryFn: async () => {
       const res = await taskApi.getMyTasks(params);
-      const apiData = res.data as any;
-      const rawData = apiData.Data ?? apiData.data;
-      const items: components['schemas']['TasksDto'][] = rawData?.Items ?? rawData?.items ?? (Array.isArray(rawData) ? rawData : []);
+      const envelope = res.data as ApiEnvelope;
+      const rawData = (envelope.Data ?? envelope.data) as Record<string, unknown> | unknown[] | undefined;
+      const items = (
+        Array.isArray(rawData)
+          ? rawData
+          : rawData?.Items ?? rawData?.items ?? []
+      ) as components['schemas']['TasksDto'][];
       return items.map(mapTaskDtoToEntity);
     },
     staleTime: 1000 * 60,
@@ -57,13 +86,7 @@ export const useAvailableTasks = (params?: { page?: number; pageSize?: number; s
     queryKey: ['tasks', 'available', params],
     queryFn: async () => {
       const res = await taskApi.getAvailableTasks(params);
-      const apiData = (res.data as any)?.Data ?? (res.data as any)?.data;
-      // Handle PagedResult: { Items, PageNumber, PageSize, TotalItems, TotalPages }
-      const items: AvailableTaskDto[] = apiData?.Items ?? apiData?.items ?? (Array.isArray(apiData) ? apiData : []);
-      const totalPages = apiData?.TotalPages ?? apiData?.totalPages ?? 1;
-      const totalItems = apiData?.TotalItems ?? apiData?.totalItems ?? items.length;
-      const pageNumber = apiData?.PageNumber ?? apiData?.pageNumber ?? 1;
-      return { items, totalPages, totalItems, pageNumber };
+      return getPagedTaskItems(res.data);
     },
     staleTime: 1000 * 30, // 30s — available tasks change frequently
     retry: 1,
@@ -75,12 +98,7 @@ export const useAssistantMyTasks = (params?: { page?: number; pageSize?: number 
     queryKey: ['tasks', 'assistant-my', params],
     queryFn: async () => {
       const res = await taskApi.getAssistantMyTasks(params);
-      const apiData = (res.data as any)?.Data ?? (res.data as any)?.data;
-      const items: AvailableTaskDto[] = apiData?.Items ?? apiData?.items ?? (Array.isArray(apiData) ? apiData : []);
-      const totalPages = apiData?.TotalPages ?? apiData?.totalPages ?? 1;
-      const totalItems = apiData?.TotalItems ?? apiData?.totalItems ?? items.length;
-      const pageNumber = apiData?.PageNumber ?? apiData?.pageNumber ?? 1;
-      return { items, totalPages, totalItems, pageNumber };
+      return getPagedTaskItems(res.data);
     },
     staleTime: 1000 * 30,
     retry: 1,
@@ -160,7 +178,7 @@ export const useTaskDetail = (taskId?: string) => {
     queryKey: ['task', taskId],
     queryFn: async () => {
       const res = await taskApi.getById(taskId as string);
-      const apiData = res.data as any;
+      const apiData = res.data as ApiEnvelope & { Data?: components['schemas']['TasksDto'] };
       if (!apiData.IsSuccess || !apiData.Data) return null;
       return mapTaskDtoToEntity(apiData.Data);
     },

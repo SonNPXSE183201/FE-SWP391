@@ -34,7 +34,9 @@ export const TASK_STATUS_FILTER_OPTIONS = [
 
 // ─── Deadline Formatter ──────────────────────────────────────
 export const formatDeadline = (deadline: string) => {
+  if (!deadline) return { text: 'Chưa có deadline', urgent: false };
   const d = new Date(deadline);
+  if (Number.isNaN(d.getTime())) return { text: 'Chưa có deadline', urgent: false };
   const now = new Date();
   const diff = d.getTime() - now.getTime();
   const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
