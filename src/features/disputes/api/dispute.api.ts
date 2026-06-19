@@ -1,7 +1,10 @@
 import { axiosInstance } from '../../../api/axios';
 import type { ApiResponse } from '../../../api/generated/types';
+import { isAxiosError } from 'axios';
 
-const USE_MOCK = true;
+/** BE resolve đã có; GET list/detail chưa — fallback mock khi 404 */
+const USE_MOCK = false;
+const FORCE_MOCK_READ = true;
 
 const mockDelay = (ms = 400) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -201,21 +204,43 @@ const MOCK_DISPUTE_DETAIL: Record<string, DisputeDetail> = {
   },
 };
 
+const shouldMockRead = () => USE_MOCK || FORCE_MOCK_READ;
+
+const readWithFallback = async <T>(
+  fetcher: () => ReturnType<typeof axiosInstance.get<ApiResponse<T>>>,
+  mockFn: () => Promise<{ data: ApiResponse<T> }>,
+) => {
+  if (shouldMockRead()) return mockFn();
+  try {
+    return await fetcher();
+  } catch (err) {
+    if (isAxiosError(err) && (err.response?.status === 404 || err.response?.status === 501)) {
+      return mockFn();
+    }
+    throw err;
+  }
+};
+
 export const disputeApi = {
   getDisputes: async () => {
-    if (USE_MOCK) {
+    if (shouldMockRead()) {
       await mockDelay();
       return mockResponse(MOCK_DISPUTES);
     }
-    return axiosInstance.get<ApiResponse<DisputeListItem[]>>('/api/disputes');
+    return readWithFallback(
+      () => axiosInstance.get<ApiResponse<DisputeListItem[]>>('/api/disputes'),
+      async () => {
+        await mockDelay();
+        return mockResponse(MOCK_DISPUTES);
+      },
+    );
   },
 
   getDisputeDetail: async (disputeId: string) => {
-    if (USE_MOCK) {
+    const mockDetail = async () => {
       await mockDelay(500);
       const detail = MOCK_DISPUTE_DETAIL[disputeId];
       if (detail) return mockResponse(detail);
-      // Fallback for disputes without detailed mock
       const listItem = MOCK_DISPUTES.find(d => d.id === disputeId);
       if (listItem) {
         return mockResponse({
@@ -229,9 +254,15 @@ export const disputeApi = {
           evidence: [],
         } as DisputeDetail);
       }
-      return mockResponse(null);
-    }
-    return axiosInstance.get<ApiResponse<DisputeDetail>>(`/api/disputes/${disputeId}`);
+      return mockResponse(null as unknown as DisputeDetail);
+    };
+
+    if (shouldMockRead()) return mockDetail();
+
+    return readWithFallback(
+      () => axiosInstance.get<ApiResponse<DisputeDetail>>(`/api/disputes/${disputeId}`),
+      mockDetail,
+    );
   },
 
   resolveDispute: async (disputeId: string, payload: { assistantPaymentPercent: number; editorNote: string }) => {
@@ -239,6 +270,8 @@ export const disputeApi = {
       await mockDelay(800);
       return mockResponse(true, 'Đã phân xử tranh chấp thành công');
     }
-    return axiosInstance.post<ApiResponse<boolean>>(`/api/disputes/${disputeId}/resolve`, payload);
+    return axiosInstance.post<ApiResponse<boolean>>(`/api/disputes/${disputeId}/resolve`, {
+      AssistantRate: payload.assistantPaymentPercent,
+    });
   },
 };
