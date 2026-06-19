@@ -1,10 +1,14 @@
 import { axiosInstance } from '../../../api/axios';
+import type { ApiResponse, SeriesDto, TasksDto, WalletDetailsDto } from '../../../api/generated/types';
+import type { components } from '../../../api/generated/schema';
+
+type DashboardStatsDto = components['schemas']['DashboardStatsResponseDto'];
+type AdminDashboardDto = components['schemas']['AdminDashboardResponseDto'];
 
 // SeriesStatus from entities.ts — kept as string literal since dashboard uses it for UI display
 type SeriesStatus = 'Draft' | 'PendingApproval' | 'Approved' | 'Published' | 'OnHold' | 'Cancelled';
 
-// ─── Toggle this to false when backend APIs are ready ────────
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 // ─── Response DTOs (no UI concerns — icons are mapped in hooks) ─
 export interface MangakaDashboardStatsDto {
@@ -134,6 +138,50 @@ const createMockAxiosResponse = <T>(data: T, message = 'Success') => ({
   },
 });
 
+const unwrapData = <T>(payload: ApiResponse<T> | undefined, fallbackMessage: string): T => {
+  if (!payload?.IsSuccess && payload?.success !== true) {
+    throw new Error(payload?.Message || fallbackMessage);
+  }
+  if (payload.Data === undefined || payload.Data === null) {
+    throw new Error(fallbackMessage);
+  }
+  return payload.Data;
+};
+
+const fetchDashboardStats = async (): Promise<DashboardStatsDto> => {
+  const res = await axiosInstance.get<ApiResponse<DashboardStatsDto>>('/api/dashboard/stats');
+  return unwrapData(res.data, 'Không tải được thống kê dashboard');
+};
+
+const extractTaskItems = (data: unknown): TasksDto[] => {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === 'object' && 'Items' in data) {
+    return ((data as { Items?: TasksDto[] }).Items) ?? [];
+  }
+  return [];
+};
+
+const extractSeriesItems = (data: unknown): SeriesDto[] => {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === 'object' && 'Items' in data) {
+    return ((data as { Items?: SeriesDto[] }).Items) ?? [];
+  }
+  return [];
+};
+
+const getMonthStart = () => new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+/** BE serializes PascalCase; OpenAPI schema may use camelCase — read both. */
+const statNum = (
+  dto: DashboardStatsDto,
+  camel: keyof DashboardStatsDto,
+  pascal: string,
+): number => {
+  const raw = dto as Record<string, unknown>;
+  const val = raw[camel] ?? raw[pascal];
+  return val == null ? 0 : Number(val);
+};
+
 // ─── Mock Data (moved from mockData.ts & AssistantDashboardFeature) ─
 
 const MOCK_MANGAKA_STATS: MangakaDashboardStatsDto = {
@@ -257,77 +305,47 @@ export const dashboardApi = {
       });
     }
 
-    // Real API: aggregate from individual endpoints
-    const [seriesRes, tasksRes, walletRes] = await Promise.all([
-      axiosInstance.get('/api/series/my', { params: { pageSize: 100 } }),
-      axiosInstance.get('/api/tasks/mangaka-list', { params: { pageSize: 100 } }),
-      axiosInstance.get('/api/wallets/me'),
+    // Real API: BE stats + series list + wallet transactions
+    const [statsDto, seriesRes, walletRes] = await Promise.all([
+      fetchDashboardStats(),
+      axiosInstance.get<ApiResponse<SeriesDto[] | { Items?: SeriesDto[] }>>('/api/series/my-list', {
+        params: { pageSize: 100 },
+      }),
+      axiosInstance.get<ApiResponse<WalletDetailsDto>>('/api/wallets/me'),
     ]);
 
-    const seriesData = seriesRes.data?.Data || seriesRes.data?.data || [];
-    const tasksData = tasksRes.data?.Data || tasksRes.data?.data || [];
-    const walletData = walletRes.data?.Data || walletRes.data?.data || {};
+    const seriesList = extractSeriesItems(unwrapData(seriesRes.data, 'Không tải được danh sách series'));
+    const walletData = unwrapData(walletRes.data, 'Không tải được ví');
+    const wallet = walletData.Wallet ?? {};
+    const transactions = walletData.Transactions ?? [];
 
-    // Aggregate stats from individual API responses
-    const seriesList = Array.isArray(seriesData) ? seriesData : seriesData.Items || [];
-    const tasksList = Array.isArray(tasksData) ? tasksData : tasksData.Items || [];
-
-    const activeSeries = seriesList.filter(
-      (s: any) => s.Status === 'Published' || s.Status === 'Approved'
-    ).length;
-
-    const activeTasks = tasksList.filter(
-      (t: any) => t.Status === 'In_Progress' || t.Status === 'Pending'
-    ).length;
-
-    const completedTasks = tasksList.filter(
-      (t: any) => t.Status === 'Approved'
-    ).length;
-
-    const wallet = walletData.Wallet || walletData;
     const walletBalance =
-      Number(wallet.SetupFundBalance || 0) +
-      Number(wallet.WithdrawableBalance || 0);
+      Number(wallet.SetupFundBalance ?? 0) + Number(wallet.WithdrawableBalance ?? 0);
 
-    // Transactions for monthly genkouryo
-    const transactions = walletData.Transactions || [];
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const monthlyGenkouryo = transactions
-      .filter((tx: any) => tx.Type === 'Genkouryo' && new Date(tx.CreateAt) >= monthStart)
-      .reduce((sum: number, tx: any) => sum + Number(tx.Amount || 0), 0);
-
-    // Pending chapters — count from series with chapters data if available
-    // Backend may not return chapters count directly, default to 0
-    const pendingChapters = 0; // TODO: needs a dedicated endpoint or chapters API
+      .filter((tx) => tx.Type === 'Genkouryo' && tx.CreateAt && new Date(tx.CreateAt) >= getMonthStart())
+      .reduce((sum, tx) => sum + Number(tx.Amount ?? 0), 0);
 
     const stats: MangakaDashboardStatsDto = {
-      activeSeries,
-      pendingChapters,
-      activeTasks,
+      activeSeries: statNum(statsDto, 'inProductionSeries', 'InProductionSeries') || statNum(statsDto, 'mySeries', 'MySeries') || seriesList.length,
+      pendingChapters: 0, // TODO: chapters API
+      activeTasks: statNum(statsDto, 'openTasks', 'OpenTasks'),
       walletBalance,
       monthlyGenkouryo,
-      completedTasks,
+      completedTasks: seriesList.filter((s) => s.Status === 'Published' || s.Status === 'Approved').length,
     };
 
-    // Recent activities — build from task/transaction data
-    // TODO: Replace with dedicated activity feed endpoint when available
-    const recentActivities: RecentActivityDto[] = [];
-
-    // Series overview — map from series list
-    const seriesOverview: SeriesOverviewDto[] = seriesList
-      .slice(0, 5)
-      .map((s: any) => ({
-        id: String(s.Id),
-        title: s.Title,
-        chapters: Number(s.ChapterCount || 0),
-        status: s.Status as SeriesStatus,
-        trend: '',
-      }));
+    const seriesOverview: SeriesOverviewDto[] = seriesList.slice(0, 5).map((s) => ({
+      id: String(s.Id ?? ''),
+      title: s.Title ?? '',
+      chapters: 0,
+      status: (s.Status as SeriesStatus) || 'Draft',
+      trend: '',
+    }));
 
     return createMockAxiosResponse<MangakaDashboardResponse>({
       stats,
-      recentActivities,
+      recentActivities: [],
       seriesOverview,
     });
   },
@@ -345,49 +363,50 @@ export const dashboardApi = {
       });
     }
 
-    // Real API: aggregate from individual endpoints
     const [tasksRes, walletRes] = await Promise.all([
-      axiosInstance.get('/api/tasks/my', { params: { pageSize: 100 } }),
-      axiosInstance.get('/api/wallets/me'),
+      axiosInstance.get<ApiResponse<TasksDto[] | { Items?: TasksDto[] }>>('/api/tasks/my-tasks', {
+        params: { PageNumber: 1, PageSize: 100 },
+      }),
+      axiosInstance.get<ApiResponse<WalletDetailsDto>>('/api/wallets/me'),
     ]);
 
-    const tasksData = tasksRes.data?.Data || tasksRes.data?.data || [];
-    const walletData = walletRes.data?.Data || walletRes.data?.data || {};
-    const tasksList = Array.isArray(tasksData) ? tasksData : tasksData.Items || [];
+    const tasksList = extractTaskItems(unwrapData(tasksRes.data, 'Không tải được danh sách task'));
+    const walletData = unwrapData(walletRes.data, 'Không tải được ví');
+    const transactions = walletData.Transactions ?? [];
 
-    const inProgress = tasksList.filter(
-      (t: any) => t.Status === 'In_Progress'
-    ).length;
+    const inProgress = tasksList.filter((t) => t.Status === 'In_Progress').length;
+    const completed = tasksList.filter((t) => t.Status === 'Approved').length;
 
-    const completed = tasksList.filter(
-      (t: any) => t.Status === 'Approved'
-    ).length;
-
-    // Monthly income from wallet transactions
-    const transactions = walletData.Transactions || [];
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const monthlyIncome = transactions
-      .filter((tx: any) => tx.Type === 'Transfer' && Number(tx.Amount) > 0 && new Date(tx.CreateAt) >= monthStart)
-      .reduce((sum: number, tx: any) => sum + Number(tx.Amount || 0), 0);
+      .filter(
+        (tx) =>
+          tx.Type === 'Transfer' &&
+          Number(tx.Amount ?? 0) > 0 &&
+          tx.CreateAt &&
+          new Date(tx.CreateAt) >= getMonthStart(),
+      )
+      .reduce((sum, tx) => sum + Number(tx.Amount ?? 0), 0);
 
     const stats: AssistantDashboardStatsDto = {
       inProgress,
       completed,
-      averageRating: 0, // TODO: needs AssistantProfile endpoint
+      averageRating: 0, // TODO: AssistantProfile endpoint
       monthlyIncome,
     };
 
-    // Recent tasks — map from task list
     const recentTasks: AssistantRecentTaskDto[] = tasksList
-      .sort((a: any, b: any) => new Date(b.UpdateAt || b.UpdatedAt).getTime() - new Date(a.UpdateAt || a.UpdatedAt).getTime())
+      .sort(
+        (a, b) =>
+          new Date(b.UpdateAt ?? b.CreateAt ?? 0).getTime() -
+          new Date(a.UpdateAt ?? a.CreateAt ?? 0).getTime(),
+      )
       .slice(0, 5)
-      .map((t: any) => ({
-        id: String(t.Id),
-        title: `${t.SeriesTitle || 'Task'} - ${t.RegionLabel || t.TaskName || ''}`,
-        status: t.Status,
-        amount: Number(t.Amount || 0),
-        date: t.UpdateAt || t.UpdatedAt || t.CreateAt || '',
+      .map((t) => ({
+        id: String(t.Id ?? ''),
+        title: t.Description || `Task #${t.Id}`,
+        status: t.Status ?? 'Pending',
+        amount: Number(t.PaymentAmount ?? 0),
+        date: t.UpdateAt || t.CreateAt || '',
       }));
 
     return createMockAxiosResponse<AssistantDashboardResponse>({
@@ -404,8 +423,28 @@ export const dashboardApi = {
         recentActivities: MOCK_ADMIN_RECENT,
       });
     }
-    const res = await axiosInstance.get('/api/dashboard/admin');
-    return res;
+    const data = unwrapData(
+      (await axiosInstance.get<ApiResponse<AdminDashboardDto>>('/api/dashboard/admin')).data,
+      'Không tải được dashboard admin',
+    );
+
+    return createMockAxiosResponse<AdminDashboardResponse>({
+      stats: {
+        users: data.stats?.users ?? (data.stats as Record<string, number> | undefined)?.Users ?? 0,
+        approvals: data.stats?.approvals ?? (data.stats as Record<string, number> | undefined)?.Approvals ?? 0,
+        series: data.stats?.series ?? (data.stats as Record<string, number> | undefined)?.Series ?? 0,
+        transactions: data.stats?.transactions ?? (data.stats as Record<string, number> | undefined)?.Transactions ?? 0,
+      },
+      recentActivities: (data.recentActivities ?? []).map((item) => {
+        const row = item as Record<string, string | null | undefined>;
+        return {
+          id: item.id ?? row.Id ?? '',
+          title: item.title ?? row.Title ?? '',
+          date: item.date ?? row.Date ?? '',
+          type: item.type ?? row.Type ?? '',
+        };
+      }),
+    });
   },
 
   getEditorDashboard: async () => {
@@ -416,8 +455,17 @@ export const dashboardApi = {
         recentActivities: MOCK_EDITOR_RECENT,
       });
     }
-    const res = await axiosInstance.get('/api/dashboard/editor');
-    return res;
+    const statsDto = await fetchDashboardStats();
+
+    return createMockAxiosResponse<EditorDashboardResponse>({
+      stats: {
+        reviewing: statNum(statsDto, 'seriesAwaitingReview', 'SeriesAwaitingReview'),
+        pending: statNum(statsDto, 'pendingSeries', 'PendingSeries'),
+        disputes: 0, // TODO: GET /api/disputes
+        completed: statNum(statsDto, 'inProductionSeries', 'InProductionSeries'),
+      },
+      recentActivities: [],
+    });
   },
 
   getBoardDashboard: async () => {
@@ -428,7 +476,16 @@ export const dashboardApi = {
         recentActivities: MOCK_BOARD_RECENT,
       });
     }
-    const res = await axiosInstance.get('/api/dashboard/board');
-    return res;
+    const statsDto = await fetchDashboardStats();
+
+    return createMockAxiosResponse<BoardDashboardResponse>({
+      stats: {
+        votes: statNum(statsDto, 'pendingSeries', 'PendingSeries'),
+        active: statNum(statsDto, 'inProductionSeries', 'InProductionSeries') || statNum(statsDto, 'approvedSeries', 'ApprovedSeries'),
+        cancelled: 0, // TODO: series cancelled count from BE
+        budget: 0, // TODO: aggregate budget from contracts/series
+      },
+      recentActivities: [],
+    });
   },
 };
