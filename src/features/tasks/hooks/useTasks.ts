@@ -41,6 +41,9 @@ export const mapTaskDtoToEntity = (dto: TasksDto): Task => {
     amount: dto.PaymentAmount || 0,
     deadline: dto.Deadline || '',
     extensionUsed: !!dto.ExtensionRequestDays,
+    extensionReason: dto.ExtensionReason ?? undefined,
+    extensionStatus: dto.ExtensionStatus ?? undefined,
+    extensionRequestDays: dto.ExtensionRequestDays ?? undefined,
     onLeave: false,
   };
 };
@@ -140,6 +143,19 @@ export const useRequestExtension = () => {
         reason: 'Xin gia hạn deadline',
       }),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'assistant-my'] });
+    },
+  });
+};
+
+// ─── Approve / reject extension (Mangaka F2.12) ───────────────
+export const useApproveExtension = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ taskId, approve }: { taskId: string; approve: boolean }) =>
+      taskApi.approveExtension(taskId, approve),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'mangaka'] });
       queryClient.invalidateQueries({ queryKey: ['tasks', 'assistant-my'] });
     },
   });
