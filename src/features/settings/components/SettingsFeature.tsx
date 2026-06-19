@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore, type UserRole } from '../../../stores/authStore';
 import { ChangePasswordModal } from '../../auth';
+import { useMangakaOnLeave } from '../hooks/useMangakaOnLeave';
 
 // ─── Types ───────────────────────────────────────────────────
 type TabId = 'profile' | 'password' | 'notifications';
@@ -147,7 +148,7 @@ export const SettingsFeature = () => {
   const user = useAuthStore((state) => state.user);
   const [activeTab, setActiveTab] = useState<TabId>('profile');
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [isOnLeave, setIsOnLeave] = useState(false);
+  const { isOnLeave, toggleOnLeave, isPending: isOnLeavePending } = useMangakaOnLeave();
   const [notificationPrefs, setNotificationPrefs] = useState<NotificationPref[]>(() =>
     loadNotificationPrefs(user?.id)
   );
@@ -284,8 +285,11 @@ export const SettingsFeature = () => {
             </div>
             <ToggleSwitch
               enabled={isOnLeave}
-              onChange={() => setIsOnLeave(!isOnLeave)}
+              onChange={toggleOnLeave}
             />
+            {isOnLeavePending && (
+              <p className="text-[10px] text-text-muted mt-2">Đang cập nhật...</p>
+            )}
           </div>
         </div>
       )}
