@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { axiosInstance } from '../../../api/axios';
 import type { ApiResponse } from '../../../api/generated/types';
 import type { components } from '../../../api/generated/schema';
@@ -5,6 +6,15 @@ import type { components } from '../../../api/generated/schema';
 /** Mock chỉ cho luồng Board vote maintain/cancel — chưa có endpoint BE riêng */
 const USE_MOCK_BOARD_VOTE = true;
 const mockDelay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const getApiErrorMessage = (error: unknown, fallback: string) => {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data as { Message?: string; message?: string } | undefined;
+    return data?.Message || data?.message || error.message || fallback;
+  }
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+};
 
 export interface RankingItem {
   id: string;
@@ -27,6 +37,36 @@ const MOCK_RANKING: RankingItem[] = [
   { id: '4', rank: 4, title: 'Bóng Đêm Đô Thị', coverImageUrl: 'https://images.unsplash.com/photo-1560942485-b2a11cc13456?w=150&auto=format&fit=crop&q=60', views: 32000, votes: 35, genre: ['Action', 'Thriller'], period: 'month', status: 'ProposedCancel' },
 ];
 
+const applyDevRankingSubmit = (payload: components['schemas']['CreateRankingsDto']) => {
+  payload.Records?.forEach((record) => {
+    const id = String(record.SeriesId ?? '');
+    if (!id) return;
+    const existing = MOCK_RANKING.find((item) => item.id === id);
+    if (existing) {
+      existing.votes = record.VoteCount ?? existing.votes;
+    } else {
+      MOCK_RANKING.push({
+        id,
+        rank: MOCK_RANKING.length + 1,
+        title: `Series #${id}`,
+        coverImageUrl: '',
+        views: 0,
+        votes: record.VoteCount ?? 0,
+        genre: [],
+        period: 'month',
+        status: 'Active',
+      });
+    }
+  });
+};
+
+const getDevMockRanking = (period: string, genre?: string): RankingItem[] => {
+  let items = MOCK_RANKING.map((item, index) => ({ ...item, period, rank: index + 1 }));
+  if (genre && genre !== 'All') {
+    items = items.filter((item) => item.genre.includes(genre));
+  }
+  return items.map((item, index) => ({ ...item, rank: index + 1 }));
+};
 const mapSeriesStatus = (status?: string | null): RankingItem['status'] => {
   if (status === 'ProposedCancel' || status === 'Cancelled') return 'ProposedCancel';
   if (status === 'UnderReview' || status === 'Pending_Approval') return 'UnderReview';
@@ -59,12 +99,22 @@ const mapRankingRecordToItem = (
 export const rankingApi = {
   fetchRanking: async (params?: { period?: string; genre?: string }): Promise<RankingItem[]> => {
     const period = params?.period ?? 'month';
-    const res = await axiosInstance.get<ApiResponse<RankingRecord[]>>('/api/rankings', {
-      params: { period },
-    });
-    let items = (res.data?.Data ?? []).map((record, index) =>
-      mapRankingRecordToItem(record, index, period),
-    );
+    let items: RankingItem[] = [];
+
+    try {
+      const res = await axiosInstance.get<ApiResponse<RankingRecord[]>>('/api/rankings', {
+        params: { period },
+      });
+      items = (res.data?.Data ?? []).map((record, index) =>
+        mapRankingRecordToItem(record, index, period),
+      );
+    } catch {
+      if (!import.meta.env.DEV) throw new Error('Không tải được bảng xếp hạng');
+    }
+
+    if (items.length === 0 && import.meta.env.DEV) {
+      items = getDevMockRanking(period, params?.genre);
+    }
 
     if (params?.genre && params.genre !== 'All') {
       items = items.filter((item) => item.genre.includes(params.genre!));
@@ -92,10 +142,26 @@ export const rankingApi = {
     return res.data;
   },
 
-  /** F4.4 — Board nhập liệu vote count thủ công (luôn gọi API thật) */
+  /** F4.4 — Board nhập liệu vote count thủ công (ưu tiên API thật; dev fallback khi BE lỗi) */
   submitRankingData: async (payload: components['schemas']['CreateRankingsDto']) => {
-    const res = await axiosInstance.post<ApiResponse<unknown>>('/api/rankings', payload);
-    return res.data;
+    try {
+      const res = await axiosInstance.post<ApiResponse<unknown>>('/api/rankings', payload);
+      const ok = res.data?.IsSuccess ?? res.data?.success;
+      if (ok === false) {
+        throw new Error(res.data?.Message || res.data?.message || 'API từ chối nhập liệu');
+      }
+      return res.data;
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        await mockDelay(400);
+        applyDevRankingSubmit(payload);
+        return {
+          IsSuccess: true,
+          Message: 'Dev mock: BE từ chối/lỗi — đã lưu ranking local để test UI',
+        };
+      }
+      throw new Error(getApiErrorMessage(error, 'Nhập dữ liệu thất bại'), { cause: error });
+    }
   },
 };
 

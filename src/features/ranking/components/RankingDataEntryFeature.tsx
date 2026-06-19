@@ -30,7 +30,10 @@ export const RankingDataEntryFeature = () => {
       queryClient.invalidateQueries({ queryKey: ['ranking'] });
       setRows([emptyRow(), emptyRow(), emptyRow()]);
     },
-    onError: () => toast.error('Nhập dữ liệu thất bại. Vui lòng thử lại.'),
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Nhập dữ liệu thất bại. Vui lòng thử lại.';
+      toast.error(message);
+    },
   });
 
   const updateRow = (key: string, field: 'seriesId' | 'voteCount', value: string) => {
