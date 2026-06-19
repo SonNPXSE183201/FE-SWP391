@@ -16,7 +16,7 @@ import { components } from '../../../api/generated/schema';
 import type { TaskStatus, Task } from '../../../types/entities';
 
 // ─── Mapper ──────────────────────────────────────────────────
-const mapTaskStatus = (status: any): TaskStatus => {
+const mapTaskStatus = (status: unknown): TaskStatus => {
   if (status === 0 || status === '0') return 'Pending';
   if (status === 1 || status === '1') return 'In_Progress';
   if (status === 2 || status === '2') return 'Pending_Review';
@@ -97,19 +97,57 @@ const createMockPaginatedResponse = <T>(
       IsSuccess: true,
       message: 'Success',
       Message: 'Success',
-      data: paginatedItems,
-      Data: paginatedItems,
+      data: {
+        Items: paginatedItems,
+        items: paginatedItems,
+        PageNumber: page,
+        pageNumber: page,
+        PageSize: pageSize,
+        pageSize: pageSize,
+        TotalItems: items.length,
+        totalItems: items.length,
+        TotalPages: Math.ceil(items.length / pageSize) || 1,
+        totalPages: Math.ceil(items.length / pageSize) || 1,
+      },
+      Data: {
+        Items: paginatedItems,
+        items: paginatedItems,
+        PageNumber: page,
+        pageNumber: page,
+        PageSize: pageSize,
+        pageSize: pageSize,
+        TotalItems: items.length,
+        totalItems: items.length,
+        TotalPages: Math.ceil(items.length / pageSize) || 1,
+        totalPages: Math.ceil(items.length / pageSize) || 1,
+      },
       totalCount: items.length,
       TotalCount: items.length,
       pageNumber: page,
       PageNumber: page,
       pageSize: pageSize,
       PageSize: pageSize,
-      totalPages: Math.ceil(items.length / pageSize),
-      TotalPages: Math.ceil(items.length / pageSize),
+      totalPages: Math.ceil(items.length / pageSize) || 1,
+      TotalPages: Math.ceil(items.length / pageSize) || 1,
     },
   };
 };
+
+const mapMockTaskToTasksDto = (t: MockTask): components['schemas']['TasksDto'] => ({
+  Id: t.id,
+  Description: t.taskName,
+  RegionId: t.regionId,
+  PaymentAmount: t.amount,
+  Status: t.status,
+  Deadline: t.deadline,
+  AssistantName: t.assignedAssistantName ?? undefined,
+  PageNumber: parseInt(t.pageName.replace(/[^0-9]/g, '') || '1', 10),
+  ExtensionRequestDays: t.extensionRequestDays,
+  ExtensionReason: t.extensionReason,
+  ExtensionStatus: t.extensionStatus,
+  CreateAt: t.createdAt,
+  UpdateAt: t.updatedAt,
+});
 
 // ─── API Functions ───────────────────────────────────────────
 
@@ -122,7 +160,11 @@ export const taskApi = {
       if (params?.status) {
         filtered = filtered.filter((t) => t.status === params.status);
       }
-      return createMockPaginatedResponse(filtered, params?.page, params?.pageSize);
+      return createMockPaginatedResponse(
+        filtered.map(mapMockTaskToTasksDto),
+        params?.page,
+        params?.pageSize,
+      );
     }
     return axiosInstance.get<PagedApiResponse<TasksDto>>('/api/tasks/my', { params });
   },
@@ -160,7 +202,7 @@ export const taskApi = {
   getAssistantMyTasks: async (params?: { page?: number; pageSize?: number }) => {
     if (USE_MOCK) {
       await mockDelay(300);
-      let filtered = MOCK_TASKS.filter((t) => 
+      const filtered = MOCK_TASKS.filter((t) => 
         ['In_Progress', 'Pending_Review', 'Approved', 'Disputed', 'Revision'].includes(t.status) &&
         (t.assignedAssistantName === 'Nguyễn Sơn' || t.assignedAssistantName === 'Minh Anh')
       );
@@ -339,13 +381,11 @@ export const taskApi = {
       await mockDelay(400);
       const task = MOCK_TASKS.find((t) => t.id === data.taskId);
       if (task) {
-        task.extensionUsed = true;
-        const extraHours = data.days * 24;
-        const oldDeadline = new Date(task.deadline);
-        oldDeadline.setHours(oldDeadline.getHours() + extraHours);
-        task.deadline = oldDeadline.toISOString();
+        task.extensionRequestDays = data.days;
+        task.extensionReason = data.reason;
+        task.extensionStatus = 'Pending';
       }
-      return createMockAxiosResponse(task as unknown as TasksDto, 'Xin gia hạn thành công');
+      return createMockAxiosResponse(mapMockTaskToTasksDto(task!), 'Xin gia hạn thành công');
     }
     return axiosInstance.post<ApiResponse<TasksDto>>(
       `/api/tasks/${data.taskId}/request-extension`,
@@ -356,7 +396,23 @@ export const taskApi = {
   approveExtension: async (taskId: string, approve: boolean) => {
     if (USE_MOCK) {
       await mockDelay(300);
-      return createMockAxiosResponse({ taskId, approve } as unknown as TasksDto, approve ? 'Đã duyệt gia hạn' : 'Đã từ chối gia hạn');
+      const task = MOCK_TASKS.find((t) => t.id === taskId || t.id === `task-${taskId}`);
+      if (task && approve && task.extensionRequestDays) {
+        task.extensionUsed = true;
+        const extraHours = task.extensionRequestDays * 24;
+        const oldDeadline = new Date(task.deadline);
+        oldDeadline.setHours(oldDeadline.getHours() + extraHours);
+        task.deadline = oldDeadline.toISOString();
+      }
+      if (task) {
+        task.extensionStatus = approve ? 'Approved' : 'Rejected';
+        task.extensionRequestDays = undefined;
+        task.extensionReason = undefined;
+      }
+      return createMockAxiosResponse(
+        task ? mapMockTaskToTasksDto(task) : ({ taskId, approve } as unknown as TasksDto),
+        approve ? 'Đã duyệt gia hạn' : 'Đã từ chối gia hạn',
+      );
     }
     return axiosInstance.post<ApiResponse<unknown>>(
       `/api/tasks/${taskId}/extension-approval`,
