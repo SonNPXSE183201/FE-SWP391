@@ -148,7 +148,8 @@ export const rankingApi = {
       const res = await axiosInstance.post<ApiResponse<unknown>>('/api/rankings', payload);
       const ok = res.data?.IsSuccess ?? res.data?.success;
       if (ok === false) {
-        throw new Error(res.data?.Message || res.data?.message || 'API từ chối nhập liệu');
+        const body = res.data as ApiResponse<unknown> & { message?: string };
+        throw new Error(body.Message || body.message || 'API từ chối nhập liệu');
       }
       return res.data;
     } catch (error) {
