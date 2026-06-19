@@ -139,13 +139,19 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
       }
 
       const res = await taskApi.create({
-        regionId: String(finalRegionId),
-        assignedAssistantId: '',
-        taskName: formData.taskName,
-        amount: amountNum,
-        deadline: new Date(formData.deadline + 'T23:59:59Z').toISOString(),
-      } as Parameters<typeof taskApi.create>[0]);
-      const resData = res.data as any;
+        RegionId: finalRegionId,
+        Description: formData.taskName,
+        PaymentAmount: amountNum,
+        Deadline: new Date(formData.deadline + 'T23:59:59Z').toISOString(),
+      });
+      const resData = res.data as {
+        success?: boolean;
+        IsSuccess?: boolean;
+        Message?: string;
+        message?: string;
+        Data?: unknown;
+        data?: unknown;
+      };
       if (!resData?.success && !resData?.IsSuccess) throw new Error(resData?.Message || resData?.message || 'Lỗi tạo task');
       return resData?.Data || resData?.data;
     },
