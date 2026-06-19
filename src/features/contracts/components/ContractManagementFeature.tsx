@@ -11,21 +11,26 @@ import {
   Calendar,
   BookOpen,
   Search,
+  Pencil,
 } from 'lucide-react';
 
 // ─── Mock Data ───
-import { useApprovedSeries, useCreateContract } from '../hooks/useContract';
+import { useApprovedSeries, useCreateContract, useUpdateContract } from '../hooks/useContract';
 import type { ApprovedSeries } from '../api/contract.api';
 
 export const ContractManagementFeature = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'contracted'>('pending');
   const [showContractModal, setShowContractModal] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [selectedSeries, setSelectedSeries] = useState<ApprovedSeries | null>(null);
   const [baseGenkouryoPrice, setBaseGenkouryoPrice] = useState('');
+  const [updateGenkouryoPrice, setUpdateGenkouryoPrice] = useState('');
+  const [updateEndDate, setUpdateEndDate] = useState('');
   
-  const { data: seriesList = [], isLoading } = useApprovedSeries();
+  const { data: seriesList = [], isLoading, isError } = useApprovedSeries();
   const createContract = useCreateContract();
+  const updateContract = useUpdateContract();
 
   const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
@@ -46,6 +51,39 @@ export const ContractManagementFeature = () => {
     setSelectedSeries(series);
     setBaseGenkouryoPrice('');
     setShowContractModal(true);
+  };
+
+  const handleOpenUpdateModal = (series: ApprovedSeries) => {
+    setSelectedSeries(series);
+    setUpdateGenkouryoPrice(series.genkouryoPrice ? String(series.genkouryoPrice) : '');
+    setUpdateEndDate(series.endDate ? series.endDate.slice(0, 10) : '');
+    setShowUpdateModal(true);
+  };
+
+  const handleUpdateContract = () => {
+    if (!selectedSeries?.contractId) return;
+    if (!updateGenkouryoPrice && !updateEndDate) {
+      toast.error('Vui lòng nhập ít nhất một trường cần cập nhật.');
+      return;
+    }
+    updateContract.mutate(
+      {
+        contractId: selectedSeries.contractId,
+        genkouryoPrice: updateGenkouryoPrice ? Number(updateGenkouryoPrice) : undefined,
+        endDate: updateEndDate || undefined,
+      },
+      {
+        onSuccess: () => {
+          toast.success(`Đã cập nhật phụ lục HĐ cho "${selectedSeries.title}"`);
+          setShowUpdateModal(false);
+        },
+        onError: (err: unknown) => {
+          const msg =
+            (err as { response?: { data?: { Message?: string } } })?.response?.data?.Message;
+          toast.error(msg || 'Cập nhật thất bại. Kiểm tra BE đang chạy hoặc contractId có tồn tại.');
+        },
+      }
+    );
   };
 
   const handleCreateContract = async () => {
@@ -102,6 +140,12 @@ export const ContractManagementFeature = () => {
       {isLoading && (
         <div className="flex justify-center items-center py-10">
           <div className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+
+      {!isLoading && isError && seriesList.length === 0 && (
+        <div className="mt-4 p-4 rounded-xl bg-warning/10 border border-warning/20 text-sm text-warning">
+          Không tải được danh sách từ BE. Kiểm tra backend đang chạy tại {import.meta.env.VITE_API_URL || 'localhost'}.
         </div>
       )}
 
@@ -229,10 +273,19 @@ export const ContractManagementFeature = () => {
               {/* Actions */}
               <div className="col-span-2 flex items-center justify-end gap-2">
                 {series.hasContract ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-medium">
-                    <Check size={12} />
-                    Đã có HĐ
-                  </span>
+                  <>
+                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-[10px] font-medium">
+                      <Check size={12} />
+                      Đã có HĐ
+                    </span>
+                    <button
+                      onClick={() => handleOpenUpdateModal(series)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-bg-surface hover:bg-brand/10 text-text-secondary hover:text-brand rounded-lg text-[10px] font-medium border-none cursor-pointer"
+                    >
+                      <Pencil size={12} />
+                      Phụ lục
+                    </button>
+                  </>
                 ) : (
                   <button
                     onClick={() => handleOpenContractModal(series)}
@@ -364,6 +417,57 @@ export const ContractManagementFeature = () => {
                   <Check size={16} />
                 )}
                 Tạo và gửi Hợp đồng
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
+
+      {/* ─── Update Contract Modal (F5.5) ─── */}
+      {showUpdateModal && selectedSeries && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowUpdateModal(false)} />
+          <div className="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-lg-custom w-full max-w-lg">
+            <div className="flex items-center justify-between p-5 border-b border-border-custom">
+              <div>
+                <h3 className="text-base font-semibold text-text-primary">Cập nhật Phụ lục HĐ (F5.5)</h3>
+                <p className="text-[10px] text-text-muted mt-0.5">{selectedSeries.title}</p>
+              </div>
+              <button onClick={() => setShowUpdateModal(false)} className="p-1.5 rounded-lg text-text-muted hover:text-text-primary border-none bg-transparent cursor-pointer">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">Đơn giá Genkōryō mới (VNĐ/trang)</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={updateGenkouryoPrice ? formatCurrencyInput(updateGenkouryoPrice) : ''}
+                  onChange={(e) => setUpdateGenkouryoPrice(e.target.value.replace(/[^0-9]/g, ''))}
+                  placeholder="VD: 60,000"
+                  className="w-full px-4 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">Ngày kết thúc hợp đồng</label>
+                <input
+                  type="date"
+                  value={updateEndDate}
+                  onChange={(e) => setUpdateEndDate(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 p-5 border-t border-border-custom">
+              <button onClick={() => setShowUpdateModal(false)} className="px-4 py-2.5 border border-border-custom rounded-xl text-sm bg-transparent cursor-pointer">Hủy</button>
+              <button
+                onClick={handleUpdateContract}
+                disabled={updateContract.isPending}
+                className="px-4 py-2.5 bg-brand text-white rounded-xl text-sm border-none cursor-pointer disabled:opacity-50"
+              >
+                {updateContract.isPending ? 'Đang lưu...' : 'Cập nhật'}
               </button>
             </div>
           </div>
