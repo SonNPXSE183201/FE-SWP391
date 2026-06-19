@@ -134,7 +134,11 @@ export const useRequestExtension = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ taskId, extensionHours }: { taskId: string; extensionHours: 24 | 48 }) =>
-      taskApi.requestExtension({ taskId, extensionHours }),
+      taskApi.requestExtension({
+        taskId,
+        days: extensionHours === 48 ? 2 : 1,
+        reason: 'Xin gia hạn deadline',
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', 'assistant-my'] });
     },

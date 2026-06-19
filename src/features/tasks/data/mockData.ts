@@ -20,6 +20,7 @@ export interface MockTask {
   amount: number;
   deadline: string; // ISO
   extensionUsed: boolean;
+  extensionRequestDays?: number;
   feedbackComment?: string;
   resultImageUrl?: string;
   createdAt: string;
