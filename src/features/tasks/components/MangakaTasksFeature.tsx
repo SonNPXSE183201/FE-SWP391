@@ -14,6 +14,7 @@ import {
   useMangakaTasks,
   useApproveTask,
   useRequestRevisionTask,
+  useApproveExtension,
 } from '../index';
 import { formatVND } from '../../wallet';
 import { usePagination } from '../../../hooks/usePagination';
@@ -28,6 +29,7 @@ export const MangakaTasksFeature = () => {
   const { data: tasks = [], isLoading, error } = useMangakaTasks();
   const approveMutation = useApproveTask();
   const revisionMutation = useRequestRevisionTask();
+  const extensionMutation = useApproveExtension();
 
   // ─── Revision Modal State ───
   const [revisionTaskId, setRevisionTaskId] = useState<string | null>(null);
@@ -40,6 +42,15 @@ export const MangakaTasksFeature = () => {
       toast.success('Duyệt bài thành công!');
     } catch {
       toast.error('Lỗi khi duyệt bài');
+    }
+  };
+
+  const handleApproveExtension = async (taskId: string, approve: boolean) => {
+    try {
+      await extensionMutation.mutateAsync({ taskId, approve });
+      toast.success(approve ? 'Đã duyệt gia hạn!' : 'Đã từ chối gia hạn');
+    } catch {
+      toast.error('Lỗi khi xử lý yêu cầu gia hạn');
     }
   };
 
@@ -242,6 +253,37 @@ export const MangakaTasksFeature = () => {
                       {dl.text}
                     </span>
                   </div>
+
+                  {task.extensionStatus === 'Pending' && (
+                    <div className="mt-3 p-3 rounded-lg bg-warning/5 border border-warning/20">
+                      <div className="flex items-start gap-2">
+                        <Clock size={14} className="text-warning mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] font-semibold text-warning">Yêu cầu gia hạn deadline</p>
+                          <p className="text-[11px] text-text-secondary mt-0.5">
+                            +{task.extensionRequestDays ?? '?'} ngày
+                            {task.extensionReason ? ` — ${task.extensionReason}` : ''}
+                          </p>
+                        </div>
+                        <div className="flex gap-1.5 flex-shrink-0">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleApproveExtension(task.id, true); }}
+                            disabled={extensionMutation.isPending}
+                            className="px-2.5 py-1 rounded-lg bg-success/10 text-success text-[10px] font-medium hover:bg-success/20 transition-colors border-none cursor-pointer disabled:opacity-50"
+                          >
+                            Duyệt GH
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleApproveExtension(task.id, false); }}
+                            disabled={extensionMutation.isPending}
+                            className="px-2.5 py-1 rounded-lg bg-danger/10 text-danger text-[10px] font-medium hover:bg-danger/20 transition-colors border-none cursor-pointer disabled:opacity-50"
+                          >
+                            Từ chối
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Removed Result Image Preview as not present in TasksDto */}
                 </div>
