@@ -133,21 +133,28 @@ const createMockPaginatedResponse = <T>(
   };
 };
 
-const mapMockTaskToTasksDto = (t: MockTask): components['schemas']['TasksDto'] => ({
-  Id: t.id,
-  Description: t.taskName,
-  RegionId: t.regionId,
-  PaymentAmount: t.amount,
-  Status: t.status,
-  Deadline: t.deadline,
-  AssistantName: t.assignedAssistantName ?? undefined,
-  PageNumber: parseInt(t.pageName.replace(/[^0-9]/g, '') || '1', 10),
-  ExtensionRequestDays: t.extensionRequestDays,
-  ExtensionReason: t.extensionReason,
-  ExtensionStatus: t.extensionStatus,
-  CreateAt: t.createdAt,
-  UpdateAt: t.updatedAt,
-});
+const mapMockTaskToTasksDto = (t: MockTask): components['schemas']['TasksDto'] => {
+  const parseMockNumericId = (value: string, fallback = 1): number => {
+    const parsed = parseInt(value.replace(/[^0-9]/g, '') || String(fallback), 10);
+    return Number.isNaN(parsed) ? fallback : parsed;
+  };
+
+  return {
+    Id: parseMockNumericId(t.id),
+    Description: t.taskName,
+    RegionId: parseMockNumericId(t.regionId),
+    PaymentAmount: t.amount,
+    Status: t.status,
+    Deadline: t.deadline,
+    AssistantName: t.assignedAssistantName ?? undefined,
+    PageNumber: parseInt(t.pageName.replace(/[^0-9]/g, '') || '1', 10),
+    ExtensionRequestDays: t.extensionRequestDays,
+    ExtensionReason: t.extensionReason,
+    ExtensionStatus: t.extensionStatus,
+    CreateAt: t.createdAt,
+    UpdateAt: t.updatedAt,
+  };
+};
 
 // ─── API Functions ───────────────────────────────────────────
 
