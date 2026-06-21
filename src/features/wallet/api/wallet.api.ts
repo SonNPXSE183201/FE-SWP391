@@ -24,7 +24,7 @@ export const walletApi = {
 
   deposit: async (data: DepositRequest) => {
     const payload: DepositRequestDto = {
-      Amount: data.amount,
+      amount: data.amount,
     };
     return axiosInstance.post<ApiResponse<string>>('/api/wallets/deposit', payload);
   },
@@ -37,10 +37,10 @@ export const walletApi = {
 
   withdraw: async (data: WithdrawRequest) => {
     const payload: WithdrawRequestDto = {
-      Amount: data.amount,
-      BankName: data.bankName,
-      BankAccountNumber: data.bankAccountNumber,
-      BankAccountName: data.bankAccountName,
+      amount: data.amount,
+      bankName: data.bankName,
+      bankAccountNumber: data.bankAccountNumber,
+      bankAccountName: data.bankAccountName,
     };
     return axiosInstance.post<ApiResponse<unknown>>('/api/wallets/withdraw', payload);
   },

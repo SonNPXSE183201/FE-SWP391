@@ -7,14 +7,14 @@ import type { Task, TaskStatus } from '../../../types/entities';
 export type AvailableTaskDto = TasksDto;
 
 const extractPagedTasks = (payload: ApiResponse<TasksDtoPagedResult | TasksDto[] | undefined>) => {
-  const rawData = payload.Data;
-  const paged = rawData && typeof rawData === 'object' && 'Items' in rawData ? rawData : null;
-  const items: TasksDto[] = paged?.Items ?? (Array.isArray(rawData) ? rawData : []);
+  const rawData = payload.data || payload.data;
+  const paged = rawData && typeof rawData === 'object' && 'items' in rawData ? rawData : null;
+  const items: TasksDto[] = paged?.items || (Array.isArray(rawData) ? rawData : []);
   return {
     items,
-    totalPages: paged?.TotalPages ?? 1,
-    totalItems: paged?.TotalItems ?? items.length,
-    pageNumber: paged?.PageNumber ?? 1,
+    totalPages: paged?.totalPages || 1,
+    totalItems: paged?.totalItems || items.length,
+    pageNumber: paged?.pageNumber || 1,
   };
 };
 
@@ -27,23 +27,23 @@ export interface AvailableTasksResult {
 
 export const mapTaskDtoToEntity = (dto: TasksDto): Task => {
   return {
-    id: String(dto.Id || ''),
+    id: String(dto.id || ''),
     createdAt: new Date().toISOString(), // Mock fallback if missing
     updatedAt: new Date().toISOString(),
-    regionId: String(dto.RegionId || ''),
+    regionId: String(dto.regionId || ''),
     pageId: '', // Mock fallback
     chapterId: '', // Mock fallback
     seriesId: '', // Mock fallback
-    mangakaId: String(dto.MangakaId || ''),
-    assignedAssistantId: dto.AssistantId ? String(dto.AssistantId) : undefined,
-    assignedAssistantName: dto.AssistantName || undefined,
-    status: (dto.Status as TaskStatus) || 'Pending',
-    amount: dto.PaymentAmount || 0,
-    deadline: dto.Deadline || '',
-    extensionUsed: !!dto.ExtensionRequestDays,
-    extensionReason: dto.ExtensionReason ?? undefined,
-    extensionStatus: dto.ExtensionStatus ?? undefined,
-    extensionRequestDays: dto.ExtensionRequestDays ?? undefined,
+    mangakaId: String(dto.mangakaId || ''),
+    assignedAssistantId: dto.assistantId ? String(dto.assistantId) : undefined,
+    assignedAssistantName: dto.assistantName || undefined,
+    status: (dto.status as TaskStatus) || 'Pending',
+    amount: dto.paymentAmount || 0,
+    deadline: dto.deadline || '',
+    extensionUsed: !!dto.extensionRequestDays,
+    extensionReason: dto.extensionReason || undefined,
+    extensionStatus: dto.extensionStatus || undefined,
+    extensionRequestDays: dto.extensionRequestDays || undefined,
     onLeave: false,
   };
 };
@@ -168,8 +168,10 @@ export const useTaskDetail = (taskId?: string) => {
     queryFn: async () => {
       const res = await taskApi.getById(taskId as string);
       const payload = res.data as ApiResponse<TasksDto>;
-      if (!payload.IsSuccess || !payload.Data) return null;
-      return mapTaskDtoToEntity(payload.Data);
+      if (!payload.success && !payload.success) return null;
+      const data = payload.data || payload.data;
+      if (!data) return null;
+      return mapTaskDtoToEntity(data);
     },
     enabled: !!taskId,
     retry: 1,

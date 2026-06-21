@@ -96,13 +96,13 @@ export interface NotificationListResponse {
 
 // ─── Mappers (mock camelCase → schema PascalCase) ────────────
 const toSchemaNotificationDto = (n: Notification): SchemaNotificationDto => ({
-  Id: Number(n.id.replace(/\D/g, '') || 0),
-  Content: n.message,
-  Type: n.type,
-  IsRead: n.isRead,
-  CreateAt: n.createdAt,
-  Title: n.title,
-  Link: n.link,
+  id: Number(n.id.replace(/\D/g, '') || 0),
+  content: n.message,
+  type: n.type,
+  isRead: n.isRead,
+  createAt: n.createdAt,
+  title: n.title,
+  link: n.link,
 });
 
 // Keep a mutable copy for mock state
@@ -136,11 +136,9 @@ export const notificationApi = {
   getUnreadCount: async () => {
     if (USE_MOCK) {
       await mockDelay(100);
-      return createMockAxiosResponse({
-        UnreadCount: mockState.filter(n => !n.isRead).length,
-      });
+      return createMockAxiosResponse(mockState.filter(n => !n.isRead).length);
     }
-    return axiosInstance.get<ApiResponse<{ UnreadCount: number }>>('/api/notifications/unread-count');
+    return axiosInstance.get<ApiResponse<number>>('/api/notifications/unread-count');
   },
 
   /**

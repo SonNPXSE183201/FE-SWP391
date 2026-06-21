@@ -27,7 +27,7 @@ export const useAdminUsers = ({
         page: Number(page),
         pageSize,
       });
-      return response.data.Data;
+      return response.data.data;
     },
   });
 };
