@@ -1,6 +1,12 @@
-import { axiosInstance, type ApiResponse } from '../../../api/axios';
+import { axiosInstance } from '../../../api/axios';
+import type {
+  ApiResponse,
+  SeriesReviewDto,
+  SubmitToBoardDto,
+} from '../../../api/generated/types';
 import type { ApproveChapterPayload, ChapterReviewDetail, ReviewQueueItem } from '../types';
 import { MOCK_REVIEW_QUEUE, buildChapterReviewDetail } from '../data/mockData';
+import { isAxiosError } from 'axios';
 
 const USE_MOCK = false;
 
@@ -15,61 +21,76 @@ const mockResponse = <T>(data: T, message = 'Success') => ({
   },
 });
 
-// UI-specific review detail type (mock shape — different from SeriesDto)
-export interface ReviewSeriesDetail {
-  id: string;
-  title: string;
-  synopsis: string;
-  genres: string[];
-  coverUrl: string;
-  mangakaName: string;
-  submittedAt: string;
-  requestedBudget: number;
-  nameFileUrl: string;
-  nameFileName: string;
-  status: string;
-}
+// Re-export for component usage
+export type { SeriesReviewDto };
+
+// ─── Mock Data (fallback) ───
+const MOCK_SERIES_REVIEW: SeriesReviewDto = {
+  Id: 1,
+  Title: 'Huyền Thoại Samurai',
+  Genre: 'Shōnen, Action, Historical',
+  Synopsis: 'Trong thời đại Edo đầy biến động, một samurai trẻ tên Kenji phải tìm lại thanh kiếm bị đánh cắp của gia tộc trước khi thế lực bóng tối thống trị thiên hạ.',
+  CoverArtworkUrl: '',
+  EstimatedProductionBudget: 2500000,
+  ApprovedProductionBudget: 0,
+  Status: 'Pending_Approval',
+  MangakaId: 4,
+  MangakaName: 'Nguyễn Minh Đức',
+  EditorName: null,
+  ChapterCount: 0,
+  Chapters: [],
+  CreateAt: '2026-06-01T10:00:00Z',
+};
+
+const readWithFallback = async <T>(
+  fetcher: () => ReturnType<typeof axiosInstance.get<ApiResponse<T>>>,
+  mockFn: () => Promise<{ data: ApiResponse<T> }>,
+) => {
+  try {
+    return await fetcher();
+  } catch (err) {
+    if (isAxiosError(err) && (err.response?.status === 404 || err.response?.status === 501)) {
+      console.warn('[review.api] BE returned 404/501, falling back to mock data');
+      return mockFn();
+    }
+    throw err;
+  }
+};
 
 export const reviewApi = {
+  /** GET /api/reviews/series/{id} — chi tiết series để Editor review */
   getReviewSeriesDetail: async (seriesId: string) => {
-    const FORCE_MOCK_SERIES = true; // Backend chưa có API duyệt Series
-    if (USE_MOCK || FORCE_MOCK_SERIES) {
+    if (USE_MOCK) {
       await mockDelay();
-      return mockResponse<ReviewSeriesDetail>({
-        id: seriesId,
-        title: 'Huyền Thoại Samurai',
-        synopsis: 'Trong thời đại Edo đầy biến động, một samurai trẻ tên Kenji phải tìm lại thanh kiếm bị đánh cắp của gia tộc trước khi thế lực bóng tối thống trị thiên hạ.',
-        genres: ['Shōnen', 'Action', 'Historical'],
-        coverUrl: '',
-        mangakaName: 'Nguyễn Minh Đức',
-        submittedAt: '2026-06-01T10:00:00Z',
-        requestedBudget: 2500000,
-        nameFileUrl: '#',
-        nameFileName: 'samurai_name_v1.pdf',
-        status: 'Pending_Review',
-      });
+      return mockResponse<SeriesReviewDto>({ ...MOCK_SERIES_REVIEW, Id: parseInt(seriesId, 10) || 1 });
     }
-    // When backend is ready, this will return SeriesDto with PascalCase
-    // and the component must be updated to use PascalCase fields.
-    return axiosInstance.get<ApiResponse<unknown>>(`/api/reviews/series/${seriesId}`);
+    return readWithFallback(
+      () => axiosInstance.get<ApiResponse<SeriesReviewDto>>(`/api/reviews/series/${seriesId}`),
+      async () => {
+        await mockDelay();
+        return mockResponse<SeriesReviewDto>({ ...MOCK_SERIES_REVIEW, Id: parseInt(seriesId, 10) || 1 });
+      },
+    );
   },
 
+  /** POST /api/reviews/series/{id}/submit-to-board — Editor trình lên Board */
   submitToBoard: async (seriesId: string, notes: string) => {
-    const FORCE_MOCK_SERIES = true;
-    if (USE_MOCK || FORCE_MOCK_SERIES) {
+    if (USE_MOCK) {
       await mockDelay(600);
       return mockResponse(true, 'Đã trình Hội đồng thành công');
     }
-    return axiosInstance.post<any>(`/api/reviews/series/${seriesId}/submit-to-board`, { notes });
+    const body: SubmitToBoardDto = { Notes: notes };
+    return axiosInstance.post<ApiResponse<boolean>>(`/api/reviews/series/${seriesId}/submit-to-board`, body);
   },
 
+  /** POST require-revision — chưa có BE endpoint, giữ mock */
+   
   requireRevision: async (seriesId: string, reason: string) => {
-    const FORCE_MOCK_SERIES = true;
-    if (USE_MOCK || FORCE_MOCK_SERIES) {
-      await mockDelay(600);
-      return mockResponse(true, 'Đã yêu cầu tác giả chỉnh sửa lại Bản thảo');
-    }
-    return axiosInstance.post<ApiResponse<boolean>>(`/api/reviews/series/${seriesId}/require-revision`, { reason });
+    // TODO: BE chưa có endpoint require-revision cho Series — giữ mock
+    // Khi BE ready: return axiosInstance.post(`/api/reviews/series/${seriesId}/require-revision`, { reason });
+    console.info('[review.api] requireRevision mock called for series:', seriesId, 'reason:', reason);
+    await mockDelay(600);
+    return mockResponse(true, 'Đã yêu cầu tác giả chỉnh sửa lại Bản thảo');
   },
 
   // ─── Chapter QC Review (F3.1, F3.2, F3.6) ──────────────────

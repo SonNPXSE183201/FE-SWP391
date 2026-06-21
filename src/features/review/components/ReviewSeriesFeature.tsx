@@ -5,8 +5,6 @@ import toast from 'react-hot-toast';
 import {
   ArrowLeft,
   BookOpen,
-  Download,
-  FileText,
   ImagePlus,
   Banknote,
   Tags,
@@ -20,21 +18,8 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useReviewSeriesDetail, useSubmitToBoard, useRequireRevision } from '../hooks/useReview';
+import type { SeriesReviewDto } from '../api/review.api';
 
-// Mock series detail shape (100% mock, BE chưa có API)
-interface SeriesReviewDetail {
-  id: string;
-  title: string;
-  synopsis: string;
-  genres: string[];
-  coverUrl: string;
-  mangakaName: string;
-  submittedAt: string;
-  requestedBudget: number;
-  nameFileUrl: string;
-  nameFileName: string;
-  status: string;
-}
 
 export const ReviewSeriesFeature = () => {
   const { seriesId } = useParams();
@@ -44,8 +29,8 @@ export const ReviewSeriesFeature = () => {
   const [showRevisionModal, setShowRevisionModal] = useState(false);
   const [revisionReason, setRevisionReason] = useState('');
 
-  const { data: rawSeries, isLoading } = useReviewSeriesDetail(seriesId ?? '');
-  const series = rawSeries as SeriesReviewDetail | undefined;
+  const { data: series, isLoading } = useReviewSeriesDetail(seriesId ?? '');
+  const typedSeries = series as SeriesReviewDto | null | undefined;
   const submitToBoard = useSubmitToBoard();
   const requireRevision = useRequireRevision();
 
@@ -96,9 +81,12 @@ export const ReviewSeriesFeature = () => {
     );
   }
 
-  if (!series) {
+  if (!typedSeries) {
     return <div className="text-center py-10 text-text-muted">Không tìm thấy thông tin series.</div>;
   }
+
+  // Parse genre string into array for tag display
+  const genreList = (typedSeries.Genre ?? '').split(',').map(g => g.trim()).filter(Boolean);
 
   const isSubmitting = submitToBoard.isPending || requireRevision.isPending;
 
@@ -121,7 +109,7 @@ export const ReviewSeriesFeature = () => {
           </p>
         </div>
         <span className="inline-flex items-center px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-medium">
-          Chờ Review
+          {typedSeries.Status === 'Pending_Approval' ? 'Chờ Review' : typedSeries.Status}
         </span>
       </div>
 
@@ -139,8 +127,8 @@ export const ReviewSeriesFeature = () => {
             <div className="flex gap-5">
               {/* Cover image */}
               <div className="w-28 h-[150px] rounded-xl overflow-hidden bg-bg-surface flex-shrink-0 border border-border-custom">
-                {series.coverUrl ? (
-                  <img src={series.coverUrl} alt={series.title} className="w-full h-full object-cover" />
+                {typedSeries.CoverArtworkUrl ? (
+                  <img src={typedSeries.CoverArtworkUrl} alt={typedSeries.Title ?? ''} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-text-muted">
                     <ImagePlus size={28} />
@@ -151,20 +139,20 @@ export const ReviewSeriesFeature = () => {
               {/* Info */}
               <div className="flex-1 min-w-0 space-y-3">
                 <div>
-                  <h3 className="text-lg font-bold text-text-primary">{series.title}</h3>
+                  <h3 className="text-lg font-bold text-text-primary">{typedSeries.Title}</h3>
                   <div className="flex items-center gap-2 mt-1">
                     <User size={12} className="text-text-muted" />
-                    <span className="text-xs text-text-secondary">{series.mangakaName}</span>
+                    <span className="text-xs text-text-secondary">{typedSeries.MangakaName}</span>
                     <span className="text-text-muted text-xs">·</span>
                     <Calendar size={12} className="text-text-muted" />
                     <span className="text-xs text-text-secondary">
-                      {new Date(series.submittedAt).toLocaleDateString('vi-VN')}
+                      {new Date(typedSeries.CreateAt ?? '').toLocaleDateString('vi-VN')}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap gap-1.5">
-                  {series.genres.map((g: string) => (
+                  {genreList.map((g: string) => (
                     <span key={g} className="px-2 py-0.5 rounded-md bg-brand/10 text-brand text-[10px] font-medium">
                       {g}
                     </span>
@@ -180,7 +168,7 @@ export const ReviewSeriesFeature = () => {
               <Tags size={16} className="text-brand" />
               <h2 className="text-sm font-semibold text-text-primary">Tóm tắt nội dung</h2>
             </div>
-            <p className="text-sm text-text-secondary leading-relaxed">{series.synopsis}</p>
+            <p className="text-sm text-text-secondary leading-relaxed">{typedSeries.Synopsis}</p>
           </div>
 
           {/* Finance & Name File */}
@@ -197,29 +185,26 @@ export const ReviewSeriesFeature = () => {
                   Vốn yêu cầu
                 </p>
                 <p className="text-xl font-bold text-text-primary">
-                  {formatCurrency(series.requestedBudget)}
+                  {formatCurrency(typedSeries.EstimatedProductionBudget ?? 0)}
                 </p>
                 <p className="text-[10px] text-text-muted mt-1">
-                  Mangaka đề xuất cho Chapter 1
+                  Mangaka đề xuất
                 </p>
               </div>
 
-              {/* Name file card */}
+              {/* Chapter count card */}
               <div className="bg-bg-surface border border-border-custom rounded-xl p-4">
                 <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">
-                  Bản phác thảo (Name)
+                  Chapters
                 </p>
-                <div className="flex items-center gap-2 mt-1.5">
-                  <FileText size={16} className="text-brand" />
-                  <span className="text-sm text-text-primary truncate flex-1">{series.nameFileName}</span>
-                </div>
-                <button
-                  onClick={() => toast.success('Đang tải file...')}
-                  className="mt-3 w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-brand/10 hover:bg-brand/15 text-brand rounded-lg text-xs font-medium transition-colors border-none cursor-pointer"
-                >
-                  <Download size={14} />
-                  Tải xuống PDF
-                </button>
+                <p className="text-xl font-bold text-text-primary">
+                  {typedSeries.ChapterCount ?? 0}
+                </p>
+                <p className="text-[10px] text-text-muted mt-1">
+                  {(typedSeries.Chapters ?? []).length > 0
+                    ? `Mới nhất: ${typedSeries.Chapters![typedSeries.Chapters!.length - 1].Title ?? 'N/A'}`
+                    : 'Chưa có chapter nào'}
+                </p>
               </div>
             </div>
           </div>
@@ -340,7 +325,7 @@ export const ReviewSeriesFeature = () => {
             {/* Body */}
             <div className="p-5 space-y-4">
               <p className="text-sm text-text-secondary">
-                Hồ sơ sẽ được trả về cho <span className="text-text-primary font-medium">{series.mangakaName}</span> để chỉnh sửa.
+                Hồ sơ sẽ được trả về cho <span className="text-text-primary font-medium">{typedSeries.MangakaName}</span> để chỉnh sửa.
               </p>
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">
