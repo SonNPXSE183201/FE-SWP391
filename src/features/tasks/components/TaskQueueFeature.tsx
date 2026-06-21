@@ -231,19 +231,19 @@ export const TaskQueueFeature = () => {
       {/* Task List */}
       <div className="space-y-3 mt-3">
         {tasks.map((task: AvailableTaskDto) => {
-          const statusKey = task.Status as TaskStatus;
+          const statusKey = task.status as TaskStatus;
           const statusCfg = TASK_STATUS_CONFIG[statusKey] || {
-            label: task.Status,
+            label: task.status,
             color: 'text-text-muted',
             bg: 'bg-bg-surface',
             icon: Clock,
           };
           const StatusIcon = statusCfg.icon;
-          const dl = task.Deadline ? formatDeadline(task.Deadline) : null;
+          const dl = task.deadline ? formatDeadline(task.deadline) : null;
 
           return (
             <div
-              key={task.Id}
+              key={task.id}
               className="group bg-bg-secondary border border-border-custom rounded-xl p-4 hover:border-brand/20 transition-all"
             >
               <div className="flex items-start gap-4">
@@ -256,7 +256,7 @@ export const TaskQueueFeature = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-sm font-semibold text-text-primary group-hover:text-brand transition-colors truncate">
-                      {task.Description || 'Untitled Task'}
+                      {task.description || 'Untitled Task'}
                     </h3>
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusCfg.bg} ${statusCfg.color}`}>
                       {statusCfg.label}
@@ -266,24 +266,24 @@ export const TaskQueueFeature = () => {
                   {/* Meta info row */}
                   <div className="flex items-center gap-4 mt-2.5 flex-wrap">
                     {/* Mangaka */}
-                    {task.MangakaName && (
+                    {task.mangakaName && (
                       <span className="inline-flex items-center gap-1 text-[11px] text-text-secondary">
                         <User size={12} />
-                        {task.MangakaName}
+                        {task.mangakaName}
                       </span>
                     )}
 
                     {/* Page number */}
-                    {(task.PageNumber ?? 0) > 0 && (
+                    {(task.pageNumber ?? 0) > 0 && (
                       <span className="inline-flex items-center gap-1 text-[11px] text-text-secondary">
                         <ImageIcon size={12} />
-                        Trang {task.PageNumber}
+                        Trang {task.pageNumber}
                       </span>
                     )}
 
                     {/* Payment */}
                     <span className="inline-flex items-center gap-1 text-[11px] font-medium text-text-primary">
-                      {formatVND(task.PaymentAmount ?? 0)}
+                      {formatVND(task.paymentAmount ?? 0)}
                     </span>
 
                     {/* Deadline */}
@@ -296,7 +296,7 @@ export const TaskQueueFeature = () => {
                   </div>
 
                   {/* Feedback Comment (For Revision) */}
-                  {task.FeedbackComment && task.Status === 'Revision' && (
+                  {task.feedbackComment && task.status === 'Revision' && (
                     <div className="mt-3 p-3 bg-danger/5 border border-danger/20 rounded-lg flex items-start gap-2">
                       <div className="w-5 h-5 rounded-full bg-danger/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                         <span className="text-[10px] text-danger font-bold">!</span>
@@ -304,18 +304,18 @@ export const TaskQueueFeature = () => {
                       <div className="flex-1">
                         <p className="text-[11px] font-semibold text-danger mb-0.5">Mangaka yêu cầu sửa đổi:</p>
                         <p className="text-xs text-text-primary leading-relaxed whitespace-pre-wrap">
-                          {task.FeedbackComment}
+                          {task.feedbackComment}
                         </p>
                       </div>
                     </div>
                   )}
 
                   {/* Page image preview */}
-                  {task.PageImageUrl && (
+                  {task.pageImageUrl && (
                     <div className="mt-3">
                       <img
-                        src={task.PageImageUrl}
-                        alt={`Trang ${task.PageNumber}`}
+                        src={task.pageImageUrl}
+                        alt={`Trang ${task.pageNumber}`}
                         className="h-16 rounded-md border border-border-custom object-cover opacity-60 hover:opacity-100 transition-opacity"
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                       />
@@ -324,9 +324,9 @@ export const TaskQueueFeature = () => {
                 </div>
 
                 {/* Right: Accept button */}
-                {activeTab === 'Available' && task.Status === 'Pending' && (
+                {activeTab === 'Available' && task.status === 'Pending' && (
                   <button
-                    onClick={() => handleAcceptTask(task.Id!)}
+                    onClick={() => handleAcceptTask(task.id!)}
                     disabled={acceptMutation.isPending}
                     className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-xl text-[11px] font-medium transition-all border-none cursor-pointer shadow-brand hover:shadow-brand-hover hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -336,29 +336,29 @@ export const TaskQueueFeature = () => {
                 )}
 
                 {/* Right: Submit button & Extension */}
-                {activeTab === 'MyTasks' && ['In_Progress', 'Revision'].includes(task.Status || '') && (
+                {activeTab === 'MyTasks' && ['In_Progress', 'Revision'].includes(task.status || '') && (
                   <div className="flex-shrink-0 flex flex-col gap-2 items-end">
                     <label className="cursor-pointer px-3 py-1.5 border border-border-custom rounded-lg text-[11px] hover:bg-bg-secondary transition-colors text-text-primary">
-                      {selectedFiles[task.Id!] ? selectedFiles[task.Id!].name : '📁 Chọn File ảnh'}
+                      {selectedFiles[task.id!] ? selectedFiles[task.id!].name : '📁 Chọn File ảnh'}
                       <input
                         type="file"
                         accept="image/*"
                         className="hidden"
-                        onChange={(e) => handleFileChange(task.Id!, e.target.files?.[0] || null)}
+                        onChange={(e) => handleFileChange(task.id!, e.target.files?.[0] || null)}
                       />
                     </label>
                     <div className="flex items-center gap-2">
-                      {extendingTaskId === task.Id ? (
+                      {extendingTaskId === task.id ? (
                         <div className="flex items-center gap-1 animate-fade-in">
                           <button
-                            onClick={() => handleRequestExtension(task.Id!, 24)}
+                            onClick={() => handleRequestExtension(task.id!, 24)}
                             disabled={extensionMutation.isPending}
                             className="px-2 py-1 bg-brand hover:bg-brand-hover text-white rounded text-[10px] font-medium border-none cursor-pointer"
                           >
                             +24h
                           </button>
                           <button
-                            onClick={() => handleRequestExtension(task.Id!, 48)}
+                            onClick={() => handleRequestExtension(task.id!, 48)}
                             disabled={extensionMutation.isPending}
                             className="px-2 py-1 bg-brand hover:bg-brand-hover text-white rounded text-[10px] font-medium border-none cursor-pointer"
                           >
@@ -373,15 +373,15 @@ export const TaskQueueFeature = () => {
                         </div>
                       ) : (
                         <button
-                          onClick={() => setExtendingTaskId(task.Id!)}
+                          onClick={() => setExtendingTaskId(task.id!)}
                           className="px-3 py-1.5 bg-bg-surface hover:bg-border-custom text-text-secondary rounded-lg text-[11px] font-medium transition-all border-none cursor-pointer"
                         >
                           Gia hạn
                         </button>
                       )}
                       <button
-                        onClick={() => handleSubmitResult(task.Id!)}
-                        disabled={!task.Id || !selectedFiles[task.Id]}
+                        onClick={() => handleSubmitResult(task.id!)}
+                        disabled={!task.id || !selectedFiles[task.id]}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-success hover:bg-green-600 text-white rounded-xl text-[11px] font-medium transition-all border-none cursor-pointer shadow-sm hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Download size={14} />

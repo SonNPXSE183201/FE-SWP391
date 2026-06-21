@@ -124,13 +124,13 @@ export const useRegisterForm = () => {
           verificationCode: formData.verificationCode
         });
 
-        if (response.IsSuccess) {
+        if (response.success) {
           toast.success('Xác thực thành công! Vui lòng chờ Admin duyệt tài khoản.');
           navigate('/login');
         }
       } catch (error: unknown) {
-        const axiosError = error as { response?: { data?: { Message?: string } } };
-        toast.error(axiosError.response?.data?.Message || 'Mã OTP không hợp lệ!');
+        const axiosError = error as { response?: { data?: { message?: string } } };
+        toast.error(axiosError.response?.data?.message || 'Mã OTP không hợp lệ!');
       } finally {
         setIsLoading(false);
       }
@@ -152,18 +152,18 @@ export const useRegisterForm = () => {
 
       setShowConfirmModal(false);
       
-      if (response.IsSuccess) {
-        if (response.Data?.RequiresVerification) {
+      if (response.success) {
+        if (response.data?.requiresVerification) {
           setCurrentStep(2);
-          toast.success(response.Data?.Message || 'Mã OTP đã được gửi đến email của bạn');
+          toast.success(response.data?.message || 'Mã OTP đã được gửi đến email của bạn');
         } else {
           toast.success('Đăng ký thành công! Vui lòng chờ Admin duyệt tài khoản.');
           navigate('/login');
         }
       }
     } catch (error: unknown) {
-      const axiosError = error as { response?: { data?: { Message?: string } } };
-      toast.error(axiosError.response?.data?.Message || 'Đăng ký thất bại! Vui lòng thử lại.');
+      const axiosError = error as { response?: { data?: { message?: string } } };
+      toast.error(axiosError.response?.data?.message || 'Đăng ký thất bại! Vui lòng thử lại.');
     } finally {
       setIsLoading(false);
     }

@@ -15,17 +15,36 @@ const mapSeriesStatus = (status: any): SeriesStatus => {
 };
 
 export const mapSeriesDtoToEntity = (dto: components['schemas']['SeriesDto']): Series => ({
-  id: dto.Id?.toString() || '',
-  title: dto.Title || '',
-  synopsis: dto.Synopsis || '',
-  genre: dto.Genre ? dto.Genre.split(',') : [],
-  coverImageUrl: dto.CoverArtworkUrl || '',
-  mangakaId: dto.MangakaId?.toString() || '',
-  mangakaName: dto.MangakaName || '',
-  status: mapSeriesStatus(dto.Status),
+  id: dto.id?.toString() || '',
+  title: dto.title || '',
+  synopsis: dto.synopsis || '',
+  genre: dto.genre ? dto.genre.split(',') : [],
+  coverImageUrl: dto.coverArtworkUrl || '',
+  mangakaId: dto.mangakaId?.toString() || '',
+  mangakaName: dto.mangakaName || '',
+  status: mapSeriesStatus(dto.status),
   chapterCount: 0,
-  createdAt: dto.CreateAt || new Date().toISOString(),
-  updatedAt: dto.UpdateAt || new Date().toISOString(),
+  createdAt: dto.createAt || new Date().toISOString(),
+  updatedAt: dto.updateAt || new Date().toISOString(),
+});
+
+export const mapPageStatus = (status: any): Page['status'] => {
+  if (status === 0 || status === '0') return 'Pending';
+  if (status === 1 || status === '1') return 'InProgress';
+  if (status === 2 || status === '2') return 'NeedsRevision';
+  if (status === 3 || status === '3') return 'Completed';
+  return (status as Page['status']) || 'Pending';
+};
+
+export const mapPageDtoToEntity = (dto: any): Page => ({
+  id: dto.id?.toString() || '',
+  chapterId: dto.chapterId?.toString() || '',
+  pageNumber: dto.pageNumber || 1,
+  imageUrl: dto.imageUrl || '',
+  status: mapPageStatus(dto.status),
+  regionCount: dto.regionCount || 0,
+  createdAt: dto.createAt || new Date().toISOString(),
+  updatedAt: dto.updateAt || new Date().toISOString(),
 });
 
 // ─── Series List ─────────────────────────────────────────────
@@ -97,14 +116,27 @@ export const useAllChapters = () => {
       // Instead, use getMySeries to get all series, then get chapters for each.
       // For simplicity with USE_MOCK, we call getAll and getChapters directly.
       const seriesRes = await seriesApi.getMySeries({ pageSize: 100 });
-      const seriesData = (seriesRes.data as any).Data ?? [];
+      const resData = seriesRes.data as any;
+      let seriesData = resData.Data ?? resData.data;
+      if (seriesData?.Items) seriesData = seriesData.Items;
+      if (seriesData?.items) seriesData = seriesData.items;
+      if (!Array.isArray(seriesData)) seriesData = [];
 
       const allChapters: (Chapter & { seriesTitle: string })[] = [];
       for (const series of seriesData) {
-        const chapRes = await seriesApi.getChapters(series.id, { pageSize: 100 });
-        const chapData = (chapRes.data as any).Data ?? [];
+        if (!series.id) continue;
+        const chapRes = await seriesApi.getChapters(series.id.toString(), { pageSize: 100 });
+        const chapResData = chapRes.data as any;
+        let chapData = chapResData.Data ?? chapResData.data;
+        if (chapData?.Items) chapData = chapData.Items;
+        if (chapData?.items) chapData = chapData.items;
+        if (!Array.isArray(chapData)) chapData = [];
+
         for (const ch of chapData) {
-          allChapters.push({ ...ch, seriesTitle: ch.seriesTitle || series.title });
+          allChapters.push({
+            ...ch,
+            seriesTitle: ch.seriesTitle || series.title
+          });
         }
       }
       return allChapters;
@@ -137,7 +169,8 @@ export const useChapterPages = (chapterId?: string) => {
       const res = await seriesApi.getPages(chapterId as string);
       const apiData = res.data as any;
       if (!apiData.IsSuccess) return [];
-      return apiData.Data ?? [];
+      const pagesData = apiData.Data ?? [];
+      return pagesData.map(mapPageDtoToEntity);
     },
     enabled: !!chapterId,
     staleTime: 1000 * 60,

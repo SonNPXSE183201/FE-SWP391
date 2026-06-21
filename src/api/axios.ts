@@ -2,11 +2,11 @@ import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 
 export interface ApiResponse<T> {
-  IsSuccess: boolean;
-  StatusCode: number;
-  Message: string;
-  Data?: T;
-  Errors?: Record<string, string[]>;
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: T;
+  errors?: Record<string, string[]>;
 }
 
 export const axiosInstance = axios.create({
@@ -19,7 +19,7 @@ export const axiosInstance = axios.create({
 // Intercept requests to rewrite /api/ → /api/v1/ for Gateway routing
 axiosInstance.interceptors.request.use(
   (config) => {
-    if (config.url?.startsWith('/api/')) {
+    if (config.url?.startsWith('/api/') && !config.url.startsWith('/api/v1/')) {
       config.url = config.url.replace('/api/', '/api/v1/');
     }
     return config;
@@ -55,23 +55,20 @@ const processQueue = (error: Error | null, token: string | null = null) => {
   failedQueue = [];
 };
 
-// Intercept responses for global error handling (e.g., 401 Unauthorized)
+// Intercept responses to unwrap data if necessary and handle 401s
 axiosInstance.interceptors.response.use(
   (response) => {
-    // Map 'success' (lowercase from C# JSON serialization) to 'IsSuccess' for frontend compatibility
-    if (response.data && typeof response.data === 'object') {
-      const successVal = response.data.success ?? response.data.isSuccess ?? response.data.IsSuccess;
-      if (successVal !== undefined) {
-        response.data.IsSuccess = successVal;
-        response.data.success = successVal;
-      }
-    }
     return response;
   },
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      originalRequest.url !== '/api/auth/refresh-token' &&
+      originalRequest.url !== '/api/v1/auth/refresh-token'
+    ) {
       if (isRefreshing) {
         return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });
@@ -96,9 +93,9 @@ axiosInstance.interceptors.response.use(
           const { authApi } = await import('../features/auth/api/auth.api');
           const response = await authApi.refreshToken({ token, refreshToken });
 
-          if (response.IsSuccess && response.Data) {
-            const newToken = response.Data.Token;
-            const newRefreshToken = response.Data.RefreshToken;
+          if (response.success && response.data) {
+            const newToken = response.data.token;
+            const newRefreshToken = response.data.refreshToken;
 
             // Update auth store
             if (authState.user && newToken && newRefreshToken) {

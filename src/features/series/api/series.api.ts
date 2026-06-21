@@ -139,9 +139,9 @@ export const seriesApi = {
         id: `s-${Date.now()}`,
         mangakaId: 'user-1',
         mangakaName: 'Mangaka Test',
-        title: data.Title || '',
-        synopsis: data.Synopsis || '',
-        genre: data.Genre ? data.Genre.split(',') : [],
+        title: data.title || '',
+        synopsis: data.synopsis || '',
+        genre: data.genre ? data.genre.split(',') : [],
         coverImageUrl: data.coverImage ? URL.createObjectURL(data.coverImage) : 'https://placehold.co/400x600/1A1A24/E2E8F0?text=New+Series',
         status: 'Draft',
         chapterCount: 0,
@@ -154,10 +154,10 @@ export const seriesApi = {
     }
 
     const payload = {
-      Title: data.Title,
-      Synopsis: data.Synopsis,
-      Genre: data.Genre,
-      EstimatedProductionBudget: data.EstimatedProductionBudget,
+      Title: data.title,
+      Synopsis: data.synopsis,
+      Genre: data.genre,
+      EstimatedProductionBudget: data.estimatedProductionBudget,
       CoverArtworkUrl: 'https://placehold.co/400x600/1A1A24/E2E8F0?text=New+Series', // Mock URL since upload API is not ready
     };
     return axiosInstance.post<ApiResponse<SeriesDto>>('/api/series', payload);
