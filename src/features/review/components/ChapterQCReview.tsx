@@ -15,7 +15,7 @@ import { useAuthStore } from '../../../stores/authStore';
 import type { Annotation, AnnotationType } from '../../../types/entities';
 import { useChapterReview, useApproveChapter, useRequireChapterRevision } from '../hooks/useReview';
 import { ANNOTATION_TYPE_CONFIG, QC_CHECKLIST_ITEMS, formatVND } from '../constants';
-import { Point } from 'fabric';
+import type { PageDto } from '../../../api/generated/types';
 
 interface ChapterQCReviewProps {
   chapterId: string;
@@ -72,9 +72,9 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
   // Reset canvas tool state when leaving.
   useEffect(() => () => resetCanvas(), [resetCanvas]);
 
-  const pages = useMemo(() => chapter?.Pages ?? [], [chapter?.Pages]);
+  const pages = useMemo(() => chapter?.pages ?? [], [chapter?.pages]);
   const currentPage = pages[currentPageIndex];
-  const pageId = String(currentPage?.Id ?? '');
+  const pageId = String(currentPage?.id ?? '');
 
   const pageAnnotations = useMemo(
     () => annotations.filter((a) => a.pageId === pageId),
@@ -88,11 +88,11 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
   );
 
   const validPageCount = useMemo(
-    () => pages.filter((p) => !pageHasError(String(p.Id))).length,
+    () => pages.filter((p: PageDto) => !pageHasError(String(p.id))).length,
     [pages, pageHasError],
   );
 
-  const genkouryo = validPageCount * (chapter?.AppliedGenkouryoPrice ?? 0);
+  const genkouryo = validPageCount * (chapter?.appliedGenkouryoPrice ?? 0);
   const totalUnresolved = annotations.filter((a) => !a.resolved).length;
 
   // ─── Handlers ───
@@ -236,10 +236,10 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
             </button>
             <div className="min-w-0">
               <h1 className="text-lg font-bold text-text-primary truncate">
-                {chapter.Series?.Title || `Series #${chapter.SeriesId}`} · Ch.{chapter.ChapterNumber}
+                {chapter.series?.title || `Series #${chapter.seriesId}`} · Ch.{chapter.chapterNumber}
               </h1>
               <p className="text-xs text-text-muted truncate">
-                {chapter.Title} — {chapter.Series?.Mangaka?.FullName || 'Unknown Mangaka'}
+                {chapter.title} — {chapter.series?.mangaka?.fullName || 'Unknown Mangaka'}
               </p>
             </div>
           </div>
@@ -280,7 +280,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                 {pageHasError(pageId) ? 'Invalid' : 'Hợp lệ'}
               </span>
               <span className="text-xs text-text-secondary">
-                Trang {currentPage?.PageNumber} · {pageAnnotations.length} ghim lỗi
+                Trang {currentPage?.pageNumber} · {pageAnnotations.length} ghim lỗi
               </span>
             </div>
 
@@ -332,8 +332,8 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                 {currentPage && (
                   <CanvasViewer
                     ref={canvasRef}
-                    key={currentPage.Id}
-                    imageUrl={currentPage.CompositeImageUrl || currentPage.RawImageUrl || ''}
+                    key={currentPage.id}
+                    imageUrl={currentPage.compositeImageUrl || currentPage.rawImageUrl || ''}
                     annotations={pageAnnotations}
                     mode={activeTool === 'annotate' ? 'annotate' : 'view'}
                     onAnnotationCreated={(data) =>
@@ -349,23 +349,23 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
 
               {/* Page filmstrip with valid/invalid badges */}
               <div className="flex items-center gap-2 flex-shrink-0 overflow-x-auto pb-1">
-                {pages.map((p, idx) => {
-                  const invalid = pageHasError(String(p.Id));
+                {pages.map((p: PageDto, idx: number) => {
+                  const invalid = pageHasError(String(p.id));
                   return (
                     <button
-                      key={p.Id}
+                      key={p.id}
                       onClick={() => setCurrentPageIndex(idx)}
                       className={`relative flex-shrink-0 w-12 h-16 rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${idx === currentPageIndex ? 'border-brand' : 'border-border-custom/50 hover:border-border-custom'
                         }`}
-                      title={`Trang ${p.PageNumber} — ${invalid ? 'Invalid' : 'Hợp lệ'}`}
+                      title={`Trang ${p.pageNumber} — ${invalid ? 'Invalid' : 'Hợp lệ'}`}
                     >
-                      <img src={p.CompositeImageUrl || p.RawImageUrl || ''} alt={`p${p.PageNumber}`} className="w-full h-full object-cover" />
+                      <img src={p.compositeImageUrl || p.rawImageUrl || ''} alt={`p${p.pageNumber}`} className="w-full h-full object-cover" />
                       <span
                         className={`absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full border border-bg-secondary ${invalid ? 'bg-danger' : 'bg-success'
                           }`}
                       />
                       <span className="absolute bottom-0 inset-x-0 text-[9px] text-center text-white bg-black/50">
-                        {p.PageNumber}
+                        {p.pageNumber}
                       </span>
                     </button>
                   );
@@ -401,7 +401,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                 <span className="text-sm font-bold text-success">{formatVND(genkouryo)}</span>
               </div>
               <p className="text-[9px] text-text-muted mt-1.5 text-center">
-                {validPageCount} trang × {formatVND(chapter.AppliedGenkouryoPrice || 0)} (G02)
+                {validPageCount} trang × {formatVND(chapter.appliedGenkouryoPrice || 0)} (G02)
               </p>
             </div>
 
@@ -409,7 +409,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
             <div className="bg-bg-secondary border border-border-custom rounded-xl flex flex-col flex-1 min-h-0">
               <div className="p-4 border-b border-border-custom flex-shrink-0">
                 <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
-                  <MapPin size={14} className="text-red-400" /> Ghim lỗi — Trang {currentPage?.PageNumber}
+                  <MapPin size={14} className="text-red-400" /> Ghim lỗi — Trang {currentPage?.pageNumber}
                 </h3>
 
                 {activeTool === 'annotate' && (
@@ -558,7 +558,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-text-secondary">Đơn giá nhuận bút</span>
-                  <span className="font-semibold text-text-primary">{formatVND(chapter.AppliedGenkouryoPrice || 0)}/trang</span>
+                  <span className="font-semibold text-text-primary">{formatVND(chapter.appliedGenkouryoPrice || 0)}/trang</span>
                 </div>
                 <div className="flex items-center justify-between pt-2 border-t border-border-custom">
                   <span className="text-xs text-text-secondary font-medium">Tổng giải ngân</span>
@@ -606,7 +606,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
             </div>
             <div className="p-5 space-y-4">
               <p className="text-sm text-text-secondary">
-                Chapter sẽ được trả về cho <span className="text-text-primary font-medium">{chapter.Series?.Mangaka?.FullName || 'Unknown Mangaka'}</span> kèm {totalUnresolved} lỗi đã ghim để chỉnh sửa.
+                Chapter sẽ được trả về cho <span className="text-text-primary font-medium">{chapter.series?.mangaka?.fullName || 'Unknown Mangaka'}</span> kèm {totalUnresolved} lỗi đã ghim để chỉnh sửa.
               </p>
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">

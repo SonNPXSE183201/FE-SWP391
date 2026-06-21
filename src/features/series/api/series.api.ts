@@ -8,6 +8,7 @@ import type {
 } from '../../../api/generated/types';
 import { MOCK_SERIES, MOCK_CHAPTERS } from '../data/mockData';
 import { getPagesByChapterId } from '../data/mockPages';
+import { isAxiosError } from 'axios';
 
 import { components } from '../../../api/generated/schema';
 
@@ -69,6 +70,24 @@ const createMockPaginatedResponse = <T>(
   };
 };
 
+// ─── readWithFallback: try real API, fallback to mock on 404/501 ─
+ 
+const readWithFallback = async <T>(
+  fetcher: () => Promise<T>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  mockFn: () => Promise<any>,
+): Promise<T> => {
+  try {
+    return await fetcher();
+  } catch (err) {
+    if (isAxiosError(err) && (err.response?.status === 404 || err.response?.status === 501)) {
+      console.warn('[series.api] BE returned', err.response?.status, '— falling back to mock data');
+      return mockFn();
+    }
+    throw err;
+  }
+};
+
 // ─── API Functions ───────────────────────────────────────────
 
 export const seriesApi = {
@@ -86,15 +105,23 @@ export const seriesApi = {
   },
 
   getById: async (seriesId: string) => {
-    if (true) { // TODO: Remove true when backend implements GET /api/series/{id}
+    if (USE_MOCK) {
       await mockDelay(200);
       const series = MOCK_SERIES.find((s) => s.id === seriesId);
       if (!series) {
-        return { data: { IsSuccess: true, success: true, Message: 'Thành công', Data: { ...MOCK_SERIES[0], id: seriesId } } } as any;
+        return createMockAxiosResponse(MOCK_SERIES[0]);
       }
       return createMockAxiosResponse(series);
     }
-    return axiosInstance.get<ApiResponse<SeriesDto>>(`/api/series/${seriesId}`);
+    return readWithFallback(
+      () => axiosInstance.get<ApiResponse<SeriesDto>>(`/api/series/${seriesId}`),
+      async () => {
+        console.info('[series.api] getById fallback mock for seriesId:', seriesId);
+        await mockDelay(200);
+        const series = MOCK_SERIES.find((s) => s.id === seriesId);
+        return createMockAxiosResponse(series ?? { ...MOCK_SERIES[0], id: seriesId });
+      },
+    );
   },
 
   getMySeries: async (params?: { page?: number; pageSize?: number }) => {
@@ -112,24 +139,25 @@ export const seriesApi = {
         id: `s-${Date.now()}`,
         mangakaId: 'user-1',
         mangakaName: 'Mangaka Test',
-        title: data.Title || '',
-        synopsis: data.Synopsis || '',
-        genre: data.Genre ? data.Genre.split(',') : [],
+        title: data.title || '',
+        synopsis: data.synopsis || '',
+        genre: data.genre ? data.genre.split(',') : [],
         coverImageUrl: data.coverImage ? URL.createObjectURL(data.coverImage) : 'https://placehold.co/400x600/1A1A24/E2E8F0?text=New+Series',
         status: 'Draft',
         chapterCount: 0,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       MOCK_SERIES.unshift(newSeries as any);
       return createMockAxiosResponse(newSeries, 'Tạo Series thành công!');
     }
 
     const payload = {
-      Title: data.Title,
-      Synopsis: data.Synopsis,
-      Genre: data.Genre,
-      EstimatedProductionBudget: data.EstimatedProductionBudget,
+      Title: data.title,
+      Synopsis: data.synopsis,
+      Genre: data.genre,
+      EstimatedProductionBudget: data.estimatedProductionBudget,
       CoverArtworkUrl: 'https://placehold.co/400x600/1A1A24/E2E8F0?text=New+Series', // Mock URL since upload API is not ready
     };
     return axiosInstance.post<ApiResponse<SeriesDto>>('/api/series', payload);
@@ -155,36 +183,61 @@ export const seriesApi = {
 
   // Chapter operations
   getChapters: async (seriesId: string, params?: { page?: number; pageSize?: number }) => {
-    if (true) { // TODO: Remove true when backend implements GET /api/series/{id}/chapters
+    if (USE_MOCK) {
       await mockDelay(300);
-      // Return mock chapters regardless of seriesId so user can test the UI
       const chapters = [...MOCK_CHAPTERS]
+        .filter((ch) => ch.seriesId === seriesId)
         .sort((a, b) => a.chapterNumber - b.chapterNumber);
       return createMockPaginatedResponse(chapters, params?.page, params?.pageSize);
     }
-    return axiosInstance.get<ApiResponse<ChapterDto[]>>(`/api/series/${seriesId}/chapters`, { params });
+    return readWithFallback(
+      () => axiosInstance.get<ApiResponse<ChapterDto[]>>(`/api/series/${seriesId}/chapters`, { params }),
+      async () => {
+        console.info('[series.api] getChapters fallback mock for seriesId:', seriesId);
+        await mockDelay(300);
+        const chapters = [...MOCK_CHAPTERS]
+          .sort((a, b) => a.chapterNumber - b.chapterNumber);
+        return createMockPaginatedResponse(chapters, params?.page, params?.pageSize);
+      },
+    );
   },
 
   getChapterById: async (chapterId: string) => {
-    if (true) { // TODO: Remove when backend implements GET /api/chapters/{id}
+    if (USE_MOCK) {
       await mockDelay(200);
       const chapter = MOCK_CHAPTERS.find((ch) => ch.id === chapterId);
       if (!chapter) {
-        return { data: { IsSuccess: true, success: true, Message: 'Mock Fallback', Data: MOCK_CHAPTERS[0] } } as any;
+        return createMockAxiosResponse(MOCK_CHAPTERS[0]);
       }
       return createMockAxiosResponse(chapter);
     }
-    return axiosInstance.get<ApiResponse<ChapterDto>>(`/api/chapters/${chapterId}`);
+    return readWithFallback(
+      () => axiosInstance.get<ApiResponse<ChapterDto>>(`/api/chapters/${chapterId}`),
+      async () => {
+        console.info('[series.api] getChapterById fallback mock for chapterId:', chapterId);
+        await mockDelay(200);
+        const chapter = MOCK_CHAPTERS.find((ch) => ch.id === chapterId);
+        return createMockAxiosResponse(chapter ?? MOCK_CHAPTERS[0]);
+      },
+    );
   },
 
   // Pages for a chapter
   getPages: async (chapterId: string) => {
-    if (true) { // TODO: Remove when backend implements GET /api/chapters/{id}/pages
+    if (USE_MOCK) {
       await mockDelay(200);
       const pages = getPagesByChapterId(chapterId);
       return createMockAxiosResponse(pages.length > 0 ? pages : getPagesByChapterId('1'));
     }
-    return axiosInstance.get<ApiResponse<PageDto[]>>(`/api/chapters/${chapterId}/pages`);
+    return readWithFallback(
+      () => axiosInstance.get<ApiResponse<PageDto[]>>(`/api/chapters/${chapterId}/pages`),
+      async () => {
+        console.info('[series.api] getPages fallback mock for chapterId:', chapterId);
+        await mockDelay(200);
+        const pages = getPagesByChapterId(chapterId);
+        return createMockAxiosResponse(pages.length > 0 ? pages : getPagesByChapterId('1'));
+      },
+    );
   },
 
   submitChapter: (seriesId: string, data: SubmitChapterRequest) => {

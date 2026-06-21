@@ -1,9 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { taskApi } from '../api/task.api';
+import type { ApiResponse } from '../../../api/axios';
+import type { TasksDto, TasksDtoPagedResult } from '../../../api/generated/types';
 import type { Task, TaskStatus } from '../../../types/entities';
-import { components } from '../../../api/generated/schema';
 
-export type AvailableTaskDto = components['schemas']['TasksDto'];
+export type AvailableTaskDto = TasksDto;
+
+const extractPagedTasks = (payload: ApiResponse<TasksDtoPagedResult | TasksDto[] | undefined>) => {
+  const rawData = payload.data || payload.data;
+  const paged = rawData && typeof rawData === 'object' && 'items' in rawData ? rawData : null;
+  const items: TasksDto[] = paged?.items || (Array.isArray(rawData) ? rawData : []);
+  return {
+    items,
+    totalPages: paged?.totalPages || 1,
+    totalItems: paged?.totalItems || items.length,
+    pageNumber: paged?.pageNumber || 1,
+  };
+};
 
 export interface AvailableTasksResult {
   items: AvailableTaskDto[];
@@ -12,51 +25,26 @@ export interface AvailableTasksResult {
   pageNumber: number;
 }
 
-type ApiEnvelope = {
-  Data?: unknown;
-  data?: unknown;
-  IsSuccess?: boolean;
-};
-
-const getPagedTaskItems = (body: unknown): AvailableTasksResult => {
-  const envelope = body as ApiEnvelope;
-  const raw = (envelope.Data ?? envelope.data) as Record<string, unknown> | unknown[] | undefined;
-  const items = (
-    Array.isArray(raw)
-      ? raw
-      : (raw as Record<string, unknown> | undefined)?.Items
-        ?? (raw as Record<string, unknown> | undefined)?.items
-        ?? []
-  ) as AvailableTaskDto[];
-  const pageSource = Array.isArray(raw) ? undefined : (raw as Record<string, unknown> | undefined);
+export const mapTaskDtoToEntity = (dto: TasksDto): Task => {
   return {
-    items,
-    totalPages: Number(pageSource?.TotalPages ?? pageSource?.totalPages ?? 1),
-    totalItems: Number(pageSource?.TotalItems ?? pageSource?.totalItems ?? items.length),
-    pageNumber: Number(pageSource?.PageNumber ?? pageSource?.pageNumber ?? 1),
-  };
-};
-
-export const mapTaskDtoToEntity = (dto: components['schemas']['TasksDto']): Task => {
-  return {
-    id: String(dto.Id || ''),
-    createdAt: new Date().toISOString(), // Mock fallback if missing
+    id: String(dto.id || ''),
+    createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    regionId: String(dto.RegionId || ''),
-    pageId: dto.PageNumber ? String(dto.PageNumber) : '',
-    chapterId: '', // Mock fallback
-    seriesId: '', // Mock fallback
-    mangakaId: String(dto.MangakaId || ''),
-    assignedAssistantId: dto.AssistantId ? String(dto.AssistantId) : undefined,
-    assignedAssistantName: dto.AssistantName || undefined,
-    status: (dto.Status as TaskStatus | undefined) ?? 'Pending',
-    amount: dto.PaymentAmount || 0,
-    deadline: dto.Deadline || '',
-    extensionUsed: !!dto.ExtensionRequestDays,
+    regionId: String(dto.regionId || ''),
+    pageId: '',
+    chapterId: '',
+    seriesId: '',
+    mangakaId: String(dto.mangakaId || ''),
+    assignedAssistantId: dto.assistantId ? String(dto.assistantId) : undefined,
+    assignedAssistantName: dto.assistantName || undefined,
+    status: (dto.status as TaskStatus) || 'Pending',
+    amount: dto.paymentAmount || 0,
+    deadline: dto.deadline || '',
+    extensionUsed: !!dto.extensionRequestDays,
+    extensionReason: dto.extensionReason || undefined,
+    extensionStatus: dto.extensionStatus || undefined,
+    extensionRequestDays: dto.extensionRequestDays || undefined,
     onLeave: false,
-    extensionReason: dto.ExtensionReason ?? undefined,
-    extensionStatus: dto.ExtensionStatus ?? undefined,
-    extensionRequestDays: dto.ExtensionRequestDays ?? undefined,
   };
 };
 
@@ -66,13 +54,8 @@ export const useMangakaTasks = (params?: { page?: number; pageSize?: number; sta
     queryKey: ['tasks', 'mangaka', params],
     queryFn: async () => {
       const res = await taskApi.getMyTasks(params);
-      const envelope = res.data as ApiEnvelope;
-      const rawData = (envelope.Data ?? envelope.data) as Record<string, unknown> | unknown[] | undefined;
-      const items = (
-        Array.isArray(rawData)
-          ? rawData
-          : rawData?.Items ?? rawData?.items ?? []
-      ) as components['schemas']['TasksDto'][];
+      const payload = res.data as ApiResponse<TasksDtoPagedResult | TasksDto[]>;
+      const items = extractPagedTasks(payload).items;
       return items.map(mapTaskDtoToEntity);
     },
     staleTime: 1000 * 60,
@@ -86,9 +69,10 @@ export const useAvailableTasks = (params?: { page?: number; pageSize?: number; s
     queryKey: ['tasks', 'available', params],
     queryFn: async () => {
       const res = await taskApi.getAvailableTasks(params);
-      return getPagedTaskItems(res.data);
+      const payload = res.data as ApiResponse<TasksDtoPagedResult | TasksDto[]>;
+      return extractPagedTasks(payload);
     },
-    staleTime: 1000 * 30, // 30s — available tasks change frequently
+    staleTime: 1000 * 30,
     retry: 1,
   });
 };
@@ -98,7 +82,8 @@ export const useAssistantMyTasks = (params?: { page?: number; pageSize?: number 
     queryKey: ['tasks', 'assistant-my', params],
     queryFn: async () => {
       const res = await taskApi.getAssistantMyTasks(params);
-      return getPagedTaskItems(res.data);
+      const payload = res.data as ApiResponse<TasksDtoPagedResult | TasksDto[]>;
+      return extractPagedTasks(payload);
     },
     staleTime: 1000 * 30,
     retry: 1,
@@ -178,9 +163,11 @@ export const useTaskDetail = (taskId?: string) => {
     queryKey: ['task', taskId],
     queryFn: async () => {
       const res = await taskApi.getById(taskId as string);
-      const apiData = res.data as ApiEnvelope & { Data?: components['schemas']['TasksDto'] };
-      if (!apiData.IsSuccess || !apiData.Data) return null;
-      return mapTaskDtoToEntity(apiData.Data);
+      const payload = res.data as ApiResponse<TasksDto>;
+      if (!payload.success && !payload.success) return null;
+      const data = payload.data || payload.data;
+      if (!data) return null;
+      return mapTaskDtoToEntity(data);
     },
     enabled: !!taskId,
     retry: 1,

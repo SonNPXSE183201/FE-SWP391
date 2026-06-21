@@ -29,8 +29,8 @@ export const useWalletActions = (
         setError(response.data.Message || 'Có lỗi xảy ra khi tạo giao dịch nạp tiền.');
       }
     },
-    onError: (err: any) => {
-      setError(err?.response?.data?.Message || 'Đã có lỗi hệ thống xảy ra.');
+    onError: (err: unknown) => {
+      setError((err as { response?: { data?: { Message?: string } } })?.response?.data?.Message || 'Đã có lỗi hệ thống xảy ra.');
     }
   });
 
@@ -45,8 +45,8 @@ export const useWalletActions = (
         setError(response.data.Message || 'Có lỗi xảy ra khi tạo yêu cầu rút tiền.');
       }
     },
-    onError: (err: any) => {
-      setError(err?.response?.data?.Message || 'Đã có lỗi hệ thống xảy ra.');
+    onError: (err: unknown) => {
+      setError((err as { response?: { data?: { Message?: string } } })?.response?.data?.Message || 'Đã có lỗi hệ thống xảy ra.');
     }
   });
 

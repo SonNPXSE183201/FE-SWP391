@@ -29,7 +29,7 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
   const [filter, setFilter] = useState<'All' | ChapterReviewStatus>('All');
 
   const filtered = useMemo(
-    () => (filter === 'All' ? queue : queue.filter((c) => c.Status === filter)),
+    () => (filter === 'All' ? queue : queue.filter((c) => c.status === filter)),
     [queue, filter],
   );
 
@@ -77,18 +77,18 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((c) => {
-            const status = STATUS_CONFIG[c.Status || ''] || { label: c.Status, cls: 'bg-bg-surface text-text-muted' };
-            const deadline = getDeadlineStatus(c.SubmissionDeadline || new Date().toISOString());
-            const seriesTitle = c.Series?.Title || `Series #${c.SeriesId}`;
-            const coverUrl = (c.Series as Record<string, unknown> | undefined)?.CoverImageUrl as string || '';
-            const mangakaName = c.Series?.Mangaka?.FullName || 'Unknown Mangaka';
-            const pageCount = c.Pages?.length || c.ValidPageCount || 0;
-            const genkouryoPrice = c.AppliedGenkouryoPrice || 0;
+            const status = STATUS_CONFIG[c.status || ''] || { label: c.status, cls: 'bg-bg-surface text-text-muted' };
+            const deadline = getDeadlineStatus(c.submissionDeadline || new Date().toISOString());
+            const seriesTitle = c.series?.title || `Series #${c.seriesId}`;
+            const coverUrl = c.series?.coverImageUrl || '';
+            const mangakaName = c.series?.mangaka?.fullName || 'Unknown Mangaka';
+            const pageCount = c.pages?.length || c.validPageCount || 0;
+            const genkouryoPrice = c.appliedGenkouryoPrice || 0;
 
             return (
               <button
-                key={c.Id}
-                onClick={() => onSelect(String(c.Id))}
+                key={c.id}
+                onClick={() => onSelect(String(c.id))}
                 className="group text-left bg-bg-secondary border border-border-custom rounded-xl p-4 hover:border-brand/40 hover:-translate-y-0.5 transition-all cursor-pointer"
               >
                 <div className="flex gap-3">
@@ -116,7 +116,7 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
                       {seriesTitle}
                     </h3>
                     <p className="text-xs text-text-secondary truncate">
-                      Ch.{c.ChapterNumber} · {c.Title}
+                      Ch.{c.chapterNumber} · {c.title}
                     </p>
                     <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-text-muted">
                       <User size={11} />
@@ -136,7 +136,7 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
                   </div>
                   <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
                     <Calendar size={12} />
-                    {new Date(c.CreateAt || '2026-01-01').toLocaleDateString('vi-VN')}
+                    {new Date(c.createAt || '2026-01-01').toLocaleDateString('vi-VN')}
                   </div>
                   <div
                     className={`flex items-center gap-1.5 text-[11px] font-medium ${

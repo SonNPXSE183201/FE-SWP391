@@ -9,8 +9,8 @@ import { MOCK_TASKS } from '../data/mockData';
 import type { MockTask } from '../data/mockData';
 import { MOCK_WALLET, MOCK_TRANSACTIONS } from '../../wallet/data/mockData';
 
-// ─── Toggle this to false when backend Tasks API is ready ────
-const USE_MOCK = true;
+// ─── Mock ──────────────────────────────────────────────────
+const USE_MOCK = false;
 
 import { components } from '../../../api/generated/schema';
 import type { TaskStatus, Task } from '../../../types/entities';
@@ -29,21 +29,21 @@ const mapTaskStatus = (status: unknown): TaskStatus => {
 };
 
 export const mapTaskDtoToEntity = (dto: components['schemas']['TasksDto']): Task => ({
-  id: dto.Id?.toString() || '',
-  regionId: dto.RegionId?.toString() || '',
-  pageId: dto.PageNumber?.toString() || '',
+  id: dto.id?.toString() || '',
+  regionId: dto.regionId?.toString() || '',
+  pageId: dto.pageNumber?.toString() || '',
   chapterId: '',
-  seriesId: dto.MangakaId?.toString() || '',
-  mangakaId: dto.MangakaId?.toString() || '',
-  assignedAssistantId: dto.AssistantId?.toString() || '',
-  assignedAssistantName: dto.AssistantName || '',
-  status: mapTaskStatus(dto.Status),
-  amount: dto.PaymentAmount || 0,
-  deadline: dto.Deadline || new Date().toISOString(),
-  extensionUsed: !!dto.ExtensionRequestDays,
+  seriesId: dto.mangakaId?.toString() || '',
+  mangakaId: dto.mangakaId?.toString() || '',
+  assignedAssistantId: dto.assistantId?.toString() || '',
+  assignedAssistantName: dto.assistantName || '',
+  status: mapTaskStatus(dto.status),
+  amount: dto.paymentAmount || 0,
+  deadline: dto.deadline || new Date().toISOString(),
+  extensionUsed: !!dto.extensionRequestDays,
   onLeave: false,
-  createdAt: dto.CreateAt || new Date().toISOString(),
-  updatedAt: dto.UpdateAt || new Date().toISOString(),
+  createdAt: dto.createAt || new Date().toISOString(),
+  updatedAt: dto.updateAt || new Date().toISOString(),
 });
 
 // ─── Request DTOs ────────────────────────────────────────────
@@ -140,19 +140,19 @@ const mapMockTaskToTasksDto = (t: MockTask): components['schemas']['TasksDto'] =
   };
 
   return {
-    Id: parseMockNumericId(t.id),
-    Description: t.taskName,
-    RegionId: parseMockNumericId(t.regionId),
-    PaymentAmount: t.amount,
-    Status: t.status,
-    Deadline: t.deadline,
-    AssistantName: t.assignedAssistantName ?? undefined,
-    PageNumber: parseInt(t.pageName.replace(/[^0-9]/g, '') || '1', 10),
-    ExtensionRequestDays: t.extensionRequestDays,
-    ExtensionReason: t.extensionReason,
-    ExtensionStatus: t.extensionStatus,
-    CreateAt: t.createdAt,
-    UpdateAt: t.updatedAt,
+    id: parseMockNumericId(t.id),
+    description: t.taskName,
+    regionId: parseMockNumericId(t.regionId),
+    paymentAmount: t.amount,
+    status: t.status,
+    deadline: t.deadline,
+    assistantName: t.assignedAssistantName ?? undefined,
+    pageNumber: parseInt(t.pageName.replace(/[^0-9]/g, '') || '1', 10),
+    extensionRequestDays: t.extensionRequestDays,
+    extensionReason: t.extensionReason,
+    extensionStatus: t.extensionStatus,
+    createAt: t.createdAt,
+    updateAt: t.updatedAt,
   };
 };
 
@@ -173,7 +173,7 @@ export const taskApi = {
         params?.pageSize,
       );
     }
-    return axiosInstance.get<PagedApiResponse<TasksDto>>('/api/tasks/my', { params });
+    return axiosInstance.get<PagedApiResponse<TasksDto>>('/api/tasks/mangaka-list', { params });
   },
 
   // Backend API ready (feat/assistant-available-tasks) — always call real endpoint
@@ -226,7 +226,7 @@ export const taskApi = {
       }));
       return createMockPaginatedResponse(mappedDtos, params?.page, params?.pageSize);
     }
-    return axiosInstance.get('/api/tasks/assistant-my', {
+    return axiosInstance.get('/api/tasks/my-tasks', {
       params: {
         PageNumber: params?.page ?? 1,
         PageSize: params?.pageSize ?? 10,
@@ -309,7 +309,17 @@ export const taskApi = {
       }
       return createMockAxiosResponse(task as unknown as TasksDto, 'Nhận việc thành công');
     }
-    return axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/accept`);
+    return axiosInstance.post<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/accept`);
+  },
+
+  // Upload file (dùng cho submitResult)
+  uploadFile: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await axiosInstance.post<ApiResponse<string>>('/api/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data.Data;
   },
 
   // Assistant downloads resource (F2.7)
@@ -329,11 +339,16 @@ export const taskApi = {
       }
       return createMockAxiosResponse({ taskId } as unknown as TaskVersionDto, 'Nộp bài thành công');
     }
-    const formData = new FormData();
-    formData.append('image', data.image);
-    if (data.comment) formData.append('comment', data.comment);
-    return axiosInstance.post<ApiResponse<TaskVersionDto>>(`/api/tasks/${taskId}/submit`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+    
+    // 1. Upload file trước để lấy URL
+    const fileUrl = await taskApi.uploadFile(data.image);
+    if (!fileUrl) {
+      throw new Error('Upload file thất bại');
+    }
+
+    // 2. Gọi API submit
+    return axiosInstance.post<ApiResponse<unknown>>(`/api/tasks/${taskId}/submit`, {
+      SubmittedFileUrl: fileUrl,
     });
   },
 
@@ -362,7 +377,7 @@ export const taskApi = {
       }
       return createMockAxiosResponse(task as unknown as TasksDto, 'Duyệt thành công');
     }
-    return axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/approve`);
+    return axiosInstance.post<ApiResponse<unknown>>(`/api/tasks/${taskId}/approve`, {});
   },
 
   requestRevision: async (taskId: string, payload: { FeedbackComment: string; RevisionExtensionHours: number; CoordinatesJson: string }) => {
@@ -379,10 +394,10 @@ export const taskApi = {
       }
       return createMockAxiosResponse(task as unknown as TasksDto, 'Yêu cầu sửa bài thành công');
     }
-    return axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/revision`, payload);
+    return axiosInstance.post<ApiResponse<unknown>>(`/api/tasks/${taskId}/reject`, payload);
   },
 
-  // Extension (F2.12 / T08)
+  // Extension (F2.12) — BE: POST /api/tasks/{id}/request-extension { Days, Reason }
   requestExtension: async (data: RequestExtensionRequest) => {
     if (USE_MOCK) {
       await mockDelay(400);
@@ -392,45 +407,22 @@ export const taskApi = {
         task.extensionReason = data.reason;
         task.extensionStatus = 'Pending';
       }
-      return createMockAxiosResponse(mapMockTaskToTasksDto(task!), 'Xin gia hạn thành công');
+      return createMockAxiosResponse(task as unknown as TasksDto, 'Xin gia hạn thành công');
     }
-    return axiosInstance.post<ApiResponse<TasksDto>>(
+    return axiosInstance.post<ApiResponse<unknown>>(
       `/api/tasks/${data.taskId}/request-extension`,
-      { Days: data.days, Reason: data.reason }
+      { Days: data.days, Reason: data.reason },
     );
   },
 
-  approveExtension: async (taskId: string, approve: boolean) => {
-    if (USE_MOCK) {
-      await mockDelay(300);
-      const task = MOCK_TASKS.find((t) => t.id === taskId || t.id === `task-${taskId}`);
-      if (task && approve && task.extensionRequestDays) {
-        task.extensionUsed = true;
-        const extraHours = task.extensionRequestDays * 24;
-        const oldDeadline = new Date(task.deadline);
-        oldDeadline.setHours(oldDeadline.getHours() + extraHours);
-        task.deadline = oldDeadline.toISOString();
-      }
-      if (task) {
-        task.extensionStatus = approve ? 'Approved' : 'Rejected';
-        task.extensionRequestDays = undefined;
-        task.extensionReason = undefined;
-      }
-      return createMockAxiosResponse(
-        task ? mapMockTaskToTasksDto(task) : ({ taskId, approve } as unknown as TasksDto),
-        approve ? 'Đã duyệt gia hạn' : 'Đã từ chối gia hạn',
-      );
-    }
-    return axiosInstance.post<ApiResponse<unknown>>(
-      `/api/tasks/${taskId}/extension-approval`,
-      null,
-      { params: { approve } }
-    );
-  },
+  approveExtension: async (taskId: string, approve: boolean) =>
+    axiosInstance.post<ApiResponse<unknown>>(
+      `/api/tasks/${taskId}/extension-approval?approve=${approve}`,
+    ),
 
   // Cancel (T03b, T05)
   cancel: (taskId: string, reason?: string) =>
-    axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/cancel`, { reason }),
+    axiosInstance.post<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/emergency-cancel`, { reason }),
 
   // Task versions (T07)
   getVersions: (taskId: string) =>

@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../../admin/api/admin.api';
 import type { CreateUserByAdminDto } from '../../../api/generated/types';
+import type { ApiResponse } from '../../../api/axios';
 import { CustomSelect } from '../../../components/common/CustomSelect';
 
 interface CreateUserModalProps {
@@ -13,11 +14,11 @@ interface CreateUserModalProps {
 export const CreateUserModal = ({ onClose }: CreateUserModalProps) => {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState<CreateUserByAdminDto>({
-    RoleId: 4, // Default to Mangaka (4)
-    UserName: '',
-    Email: '',
-    FullName: '',
-    PenName: '',
+    roleId: 4, // Default to Mangaka (4)
+    userName: '',
+    email: '',
+    fullName: '',
+    penName: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -25,7 +26,7 @@ export const CreateUserModal = ({ onClose }: CreateUserModalProps) => {
   const createMutation = useMutation({
     mutationFn: (data: CreateUserByAdminDto) => adminApi.createUser(data),
     onSuccess: (res) => {
-      const responseData = res.data as any;
+      const responseData = res.data as ApiResponse<unknown> & { IsSuccess?: boolean; Message?: string; Errors?: Record<string, string[]> };
       if (responseData.IsSuccess || responseData.success) {
         toast.success(responseData.Message || responseData.message || 'Tạo người dùng thành công');
         queryClient.invalidateQueries({ queryKey: ['admin-users'] });
@@ -41,8 +42,8 @@ export const CreateUserModal = ({ onClose }: CreateUserModalProps) => {
         }
       }
     },
-    onError: (error: any) => {
-      const data = error.response?.data;
+    onError: (error: unknown) => {
+      const data = (error as { response?: { data?: { errors?: Record<string, string[]>; Errors?: Record<string, string[]>; message?: string; Message?: string } } }).response?.data;
       if (data?.errors || data?.Errors) {
         const errObj = data.errors || data.Errors;
         const newErrors: Record<string, string> = {};
@@ -60,20 +61,20 @@ export const CreateUserModal = ({ onClose }: CreateUserModalProps) => {
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.Email) {
-      newErrors.Email = 'Email không được để trống';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.Email)) {
-      newErrors.Email = 'Email không đúng định dạng';
+    if (!formData.email) {
+      newErrors.email = 'Email không được để trống';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Email không đúng định dạng';
     }
 
-    if (!formData.UserName) {
-      newErrors.UserName = 'Tên đăng nhập không được để trống';
-    } else if (!/^[a-zA-Z0-9_.]+$/.test(formData.UserName)) {
-      newErrors.UserName = 'Tên đăng nhập chỉ được chứa chữ cái không dấu, số, _ hoặc .';
+    if (!formData.userName) {
+      newErrors.userName = 'Tên đăng nhập không được để trống';
+    } else if (!/^[a-zA-Z0-9_.]+$/.test(formData.userName)) {
+      newErrors.userName = 'Tên đăng nhập chỉ được chứa chữ cái không dấu, số, _ hoặc .';
     }
 
-    if (!formData.FullName) {
-      newErrors.FullName = 'Họ và tên không được để trống';
+    if (!formData.fullName) {
+      newErrors.fullName = 'Họ và tên không được để trống';
     }
 
     setErrors(newErrors);
@@ -117,14 +118,14 @@ export const CreateUserModal = ({ onClose }: CreateUserModalProps) => {
                 { value: '3', label: 'Editorial Board (Hội đồng)' },
                 { value: '4', label: 'Mangaka (Tác giả)' },
               ]}
-              value={String(formData.RoleId)}
+              value={String(formData.roleId)}
               onChange={(val) => {
-                setFormData({ ...formData, RoleId: Number(val) });
-                setErrors((prev) => ({ ...prev, RoleId: '' }));
+                setFormData({ ...formData, roleId: Number(val) });
+                setErrors((prev) => ({ ...prev, roleId: '' }));
               }}
               className="w-full"
             />
-            {errors.RoleId && <p className="text-xs text-danger mt-1">{errors.RoleId}</p>}
+            {errors.roleId && <p className="text-xs text-danger mt-1">{errors.roleId}</p>}
             <p className="text-xs text-text-muted mt-1.5 flex items-center gap-1">
               <span className="text-brand">*</span>
               Tài khoản Assistant (Trợ lý) phải tự đăng ký trên Landing Page.
@@ -137,22 +138,22 @@ export const CreateUserModal = ({ onClose }: CreateUserModalProps) => {
             </label>
             <input
               type="email"
-              className={`w-full bg-bg-secondary border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand placeholder:text-text-muted/50 ${errors.Email ? 'border-danger' : 'border-border-custom'}`}
+              className={`w-full bg-bg-secondary border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand placeholder:text-text-muted/50 ${errors.email ? 'border-danger' : 'border-border-custom'}`}
               placeholder="nguyenvana@gmail.com"
-              value={formData.Email || ''}
+              value={formData.email || ''}
               onChange={(e) => {
                 const email = e.target.value;
                 setFormData((prev: CreateUserByAdminDto) => {
-                  const updated = { ...prev, Email: email };
-                  if (!prev.UserName || prev.UserName === (prev.Email?.split('@')[0] || '')) {
-                    updated.UserName = email.split('@')[0] || '';
+                  const updated = { ...prev, email: email };
+                  if (!prev.userName || prev.userName === (prev.email?.split('@')[0] || '')) {
+                    updated.userName = email.split('@')[0] || '';
                   }
                   return updated;
                 });
-                setErrors((prev) => ({ ...prev, Email: '' }));
+                setErrors((prev) => ({ ...prev, email: '' }));
               }}
             />
-            {errors.Email && <p className="text-xs text-danger mt-1">{errors.Email}</p>}
+            {errors.email && <p className="text-xs text-danger mt-1">{errors.email}</p>}
           </div>
 
           <div>
@@ -161,16 +162,16 @@ export const CreateUserModal = ({ onClose }: CreateUserModalProps) => {
             </label>
             <input
               type="text"
-              className={`w-full bg-bg-secondary border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand placeholder:text-text-muted/50 ${errors.UserName ? 'border-danger' : 'border-border-custom'}`}
+              className={`w-full bg-bg-secondary border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand placeholder:text-text-muted/50 ${errors.userName ? 'border-danger' : 'border-border-custom'}`}
               placeholder="nguyenvana"
-              value={formData.UserName || ''}
+              value={formData.userName || ''}
               onChange={(e) => {
-                setFormData({ ...formData, UserName: e.target.value });
-                setErrors((prev) => ({ ...prev, UserName: '' }));
+                setFormData({ ...formData, userName: e.target.value });
+                setErrors((prev) => ({ ...prev, userName: '' }));
               }}
             />
-            {errors.UserName ? (
-              <p className="text-xs text-danger mt-1">{errors.UserName}</p>
+            {errors.userName ? (
+              <p className="text-xs text-danger mt-1">{errors.userName}</p>
             ) : (
               <p className="text-xs text-text-muted mt-1.5 italic">
                 Chỉ chứa chữ cái không dấu, số, _, hoặc .
@@ -184,18 +185,18 @@ export const CreateUserModal = ({ onClose }: CreateUserModalProps) => {
             </label>
             <input
               type="text"
-              className={`w-full bg-bg-secondary border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand placeholder:text-text-muted/50 ${errors.FullName ? 'border-danger' : 'border-border-custom'}`}
+              className={`w-full bg-bg-secondary border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand placeholder:text-text-muted/50 ${errors.fullName ? 'border-danger' : 'border-border-custom'}`}
               placeholder="Nguyễn Văn A"
-              value={formData.FullName || ''}
+              value={formData.fullName || ''}
               onChange={(e) => {
-                setFormData({ ...formData, FullName: e.target.value });
-                setErrors((prev) => ({ ...prev, FullName: '' }));
+                setFormData({ ...formData, fullName: e.target.value });
+                setErrors((prev) => ({ ...prev, fullName: '' }));
               }}
             />
-            {errors.FullName && <p className="text-xs text-danger mt-1">{errors.FullName}</p>}
+            {errors.fullName && <p className="text-xs text-danger mt-1">{errors.fullName}</p>}
           </div>
 
-          {formData.RoleId === 4 && (
+          {formData.roleId === 4 && (
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1">
                 Bút danh (Pen Name)
@@ -204,8 +205,8 @@ export const CreateUserModal = ({ onClose }: CreateUserModalProps) => {
                 type="text"
                 className="w-full bg-bg-secondary border border-border-custom rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand placeholder:text-text-muted/50"
                 placeholder="Oda Eiichiro"
-                value={formData.PenName || ''}
-                onChange={(e) => setFormData({ ...formData, PenName: e.target.value })}
+                value={formData.penName || ''}
+                onChange={(e) => setFormData({ ...formData, penName: e.target.value })}
               />
             </div>
           )}

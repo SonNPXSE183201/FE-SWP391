@@ -29,7 +29,12 @@ export const MangakaTasksFeature = () => {
   const { data: tasks = [], isLoading, error } = useMangakaTasks();
   const approveMutation = useApproveTask();
   const revisionMutation = useRequestRevisionTask();
-  const extensionApprovalMutation = useApproveExtension();
+  const extensionMutation = useApproveExtension();
+
+  // ─── Revision Modal State ───
+  const [revisionTaskId, setRevisionTaskId] = useState<string | null>(null);
+  const [revisionComment, setRevisionComment] = useState('');
+  const [extensionHours, setExtensionHours] = useState<24 | 48>(24);
 
   const handleApprove = async (taskId: string) => {
     try {
@@ -40,19 +45,15 @@ export const MangakaTasksFeature = () => {
     }
   };
 
-  const handleExtensionApproval = async (taskId: string, approve: boolean) => {
+  const handleApproveExtension = async (taskId: string, approve: boolean) => {
     try {
-      await extensionApprovalMutation.mutateAsync({ taskId, approve });
-      toast.success(approve ? 'Đã duyệt gia hạn' : 'Đã từ chối gia hạn');
+      await extensionMutation.mutateAsync({ taskId, approve });
+      toast.success(approve ? 'Đã duyệt gia hạn!' : 'Đã từ chối gia hạn');
     } catch {
       toast.error('Lỗi khi xử lý yêu cầu gia hạn');
     }
   };
 
-  // ─── Revision Modal State ───
-  const [revisionTaskId, setRevisionTaskId] = useState<string | null>(null);
-  const [revisionComment, setRevisionComment] = useState('');
-  const [extensionHours, setExtensionHours] = useState<24 | 48>(24);
 
   const submitRevision = async () => {
     if (!revisionTaskId) return;
@@ -254,30 +255,33 @@ export const MangakaTasksFeature = () => {
                     </span>
                   </div>
 
-                  {/* Extension request (F1.10 / F2.12) */}
-                  {task.extensionStatus === 'Pending' && task.extensionRequestDays && (
-                    <div className="mt-3 p-3 bg-warning/5 border border-warning/20 rounded-lg">
-                      <p className="text-[11px] font-semibold text-warning mb-1">
-                        Yêu cầu gia hạn +{task.extensionRequestDays} ngày
-                      </p>
-                      {task.extensionReason && (
-                        <p className="text-xs text-text-secondary mb-2">{task.extensionReason}</p>
-                      )}
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleExtensionApproval(task.id, true)}
-                          disabled={extensionApprovalMutation.isPending}
-                          className="px-3 py-1 rounded-lg bg-success/10 text-success text-[11px] font-medium border-none cursor-pointer"
-                        >
-                          Duyệt gia hạn
-                        </button>
-                        <button
-                          onClick={() => handleExtensionApproval(task.id, false)}
-                          disabled={extensionApprovalMutation.isPending}
-                          className="px-3 py-1 rounded-lg bg-danger/10 text-danger text-[11px] font-medium border-none cursor-pointer"
-                        >
-                          Từ chối
-                        </button>
+                  {task.extensionStatus === 'Pending' && (
+                    <div className="mt-3 p-3 rounded-lg bg-warning/5 border border-warning/20">
+                      <div className="flex items-start gap-2">
+                        <Clock size={14} className="text-warning mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] font-semibold text-warning">Yêu cầu gia hạn deadline</p>
+                          <p className="text-[11px] text-text-secondary mt-0.5">
+                            +{task.extensionRequestDays ?? '?'} ngày
+                            {task.extensionReason ? ` — ${task.extensionReason}` : ''}
+                          </p>
+                        </div>
+                        <div className="flex gap-1.5 flex-shrink-0">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleApproveExtension(task.id, true); }}
+                            disabled={extensionMutation.isPending}
+                            className="px-2.5 py-1 rounded-lg bg-success/10 text-success text-[10px] font-medium hover:bg-success/20 transition-colors border-none cursor-pointer disabled:opacity-50"
+                          >
+                            Duyệt GH
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleApproveExtension(task.id, false); }}
+                            disabled={extensionMutation.isPending}
+                            className="px-2.5 py-1 rounded-lg bg-danger/10 text-danger text-[10px] font-medium hover:bg-danger/20 transition-colors border-none cursor-pointer disabled:opacity-50"
+                          >
+                            Từ chối
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}

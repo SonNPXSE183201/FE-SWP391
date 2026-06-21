@@ -10,6 +10,8 @@ import {
 import { useWallet, formatVND } from '../../wallet';
 import { useMySeries, useChapters, useChapterPages } from '../../series';
 import { taskApi } from '../api/task.api';
+import type { ApiResponse } from '../../../api/axios';
+import type { TasksDto } from '../../../api/generated/types';
 import { CustomDatePicker } from '../../../components/common/CustomDatePicker';
 
 // ─── Types ───────────────────────────────────────────────────
@@ -144,16 +146,9 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
         PaymentAmount: amountNum,
         Deadline: new Date(formData.deadline + 'T23:59:59Z').toISOString(),
       });
-      const resData = res.data as {
-        success?: boolean;
-        IsSuccess?: boolean;
-        Message?: string;
-        message?: string;
-        Data?: unknown;
-        data?: unknown;
-      };
-      if (!resData?.success && !resData?.IsSuccess) throw new Error(resData?.Message || resData?.message || 'Lỗi tạo task');
-      return resData?.Data || resData?.data;
+      const resData = res.data as ApiResponse<TasksDto>;
+      if (!resData?.success) throw new Error(resData?.message || 'Lỗi tạo task');
+      return resData.data;
     },
     onSuccess: () => {
       setSuccess(true);

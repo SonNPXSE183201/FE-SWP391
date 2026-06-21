@@ -166,7 +166,11 @@ export const MangakaDashboardFeature = () => {
             </div>
             <div className="divide-y divide-border-custom">
               {seriesOverview.map((series) => {
-                const statusCfg = SERIES_STATUS_CONFIG[series.status];
+                const statusCfg = SERIES_STATUS_CONFIG[series.status] || {
+                  label: series.status,
+                  bg: 'bg-gray-500/10',
+                  color: 'text-gray-500',
+                };
                 return (
                   <div
                     key={series.id}
