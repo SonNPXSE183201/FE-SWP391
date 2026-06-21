@@ -801,6 +801,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/votes/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SeriesDtoIEnumerableApiResponse"];
+                        "application/json": components["schemas"]["SeriesDtoIEnumerableApiResponse"];
+                        "text/json": components["schemas"]["SeriesDtoIEnumerableApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/chapters/{id}": {
         parameters: {
             query?: never;
@@ -1096,6 +1133,84 @@ export interface paths {
                         "text/plain": components["schemas"]["DashboardStatsResponseDtoApiResponse"];
                         "application/json": components["schemas"]["DashboardStatsResponseDtoApiResponse"];
                         "text/json": components["schemas"]["DashboardStatsResponseDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/disputes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    status?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DisputeListItemDtoIEnumerableApiResponse"];
+                        "application/json": components["schemas"]["DisputeListItemDtoIEnumerableApiResponse"];
+                        "text/json": components["schemas"]["DisputeListItemDtoIEnumerableApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/disputes/{taskId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    taskId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DisputeDetailDtoApiResponse"];
+                        "application/json": components["schemas"]["DisputeDetailDtoApiResponse"];
+                        "text/json": components["schemas"]["DisputeDetailDtoApiResponse"];
                     };
                 };
             };
@@ -1831,6 +1946,90 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reviews/series/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SeriesReviewDtoApiResponse"];
+                        "application/json": components["schemas"]["SeriesReviewDtoApiResponse"];
+                        "text/json": components["schemas"]["SeriesReviewDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reviews/series/{id}/submit-to-board": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SubmitToBoardDto"];
+                    "text/json": components["schemas"]["SubmitToBoardDto"];
+                    "application/*+json": components["schemas"]["SubmitToBoardDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/series/{id}": {
         parameters: {
             query?: never;
@@ -1902,7 +2101,39 @@ export interface paths {
             };
         };
         put?: never;
-        post?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: int32 */
+                        ChapterNumber?: number;
+                        Title?: string;
+                        Pages?: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ChapterDtoApiResponse"];
+                        "application/json": components["schemas"]["ChapterDtoApiResponse"];
+                        "text/json": components["schemas"]["ChapterDtoApiResponse"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -3322,6 +3553,16 @@ export interface components {
                 [key: string]: string[] | null;
             } | null;
         };
+        ChapterSummaryDto: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: int32 */
+            ChapterNumber?: number;
+            Title?: string | null;
+            Status?: string | null;
+            /** Format: int32 */
+            PageCount?: number;
+        };
         Contract: {
             /** Format: int32 */
             Id?: number;
@@ -3509,6 +3750,79 @@ export interface components {
         DepositRequestDto: {
             /** Format: double */
             Amount?: number;
+        };
+        DisputeDetailDto: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: int32 */
+            TaskId?: number;
+            TaskTitle?: string | null;
+            SeriesTitle?: string | null;
+            ChapterTitle?: string | null;
+            MangakaName?: string | null;
+            AssistantName?: string | null;
+            /** Format: double */
+            LockedAmount?: number;
+            Status?: string | null;
+            /** Format: date-time */
+            CreatedAt?: string;
+            /** Format: date-time */
+            ResolvedAt?: string | null;
+            Resolution?: string | null;
+            /** Format: date-time */
+            TaskDeadline?: string;
+            /** Format: date-time */
+            TaskSubmittedAt?: string | null;
+            RegionInfo?: string | null;
+            MangakaReason?: string | null;
+            AssistantReason?: string | null;
+            Evidence?: components["schemas"]["DisputeEvidenceDto"][] | null;
+        };
+        DisputeDetailDtoApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            StatusCode?: number;
+            Message?: string | null;
+            Data?: components["schemas"]["DisputeDetailDto"];
+            Errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
+        DisputeEvidenceDto: {
+            SubmittedBy?: string | null;
+            SubmitterName?: string | null;
+            Type?: string | null;
+            Content?: string | null;
+            /** Format: date-time */
+            CreatedAt?: string;
+        };
+        DisputeListItemDto: {
+            /** Format: int32 */
+            Id?: number;
+            /** Format: int32 */
+            TaskId?: number;
+            TaskTitle?: string | null;
+            SeriesTitle?: string | null;
+            MangakaName?: string | null;
+            AssistantName?: string | null;
+            /** Format: double */
+            LockedAmount?: number;
+            Status?: string | null;
+            /** Format: date-time */
+            CreatedAt?: string;
+            /** Format: date-time */
+            ResolvedAt?: string | null;
+            Resolution?: string | null;
+        };
+        DisputeListItemDtoIEnumerableApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            StatusCode?: number;
+            Message?: string | null;
+            Data?: components["schemas"]["DisputeListItemDto"][] | null;
+            Errors?: {
+                [key: string]: string[] | null;
+            } | null;
         };
         DisputeLog: {
             /** Format: int32 */
@@ -3971,6 +4285,42 @@ export interface components {
                 [key: string]: string[] | null;
             } | null;
         };
+        SeriesReviewDto: {
+            /** Format: int32 */
+            Id?: number;
+            Title?: string | null;
+            Genre?: string | null;
+            Synopsis?: string | null;
+            CoverArtworkUrl?: string | null;
+            /** Format: double */
+            EstimatedProductionBudget?: number;
+            /** Format: double */
+            ApprovedProductionBudget?: number;
+            Status?: string | null;
+            /** Format: int32 */
+            MangakaId?: number;
+            MangakaName?: string | null;
+            /** Format: int32 */
+            EditorId?: number | null;
+            EditorName?: string | null;
+            /** Format: int32 */
+            ChapterCount?: number;
+            Chapters?: components["schemas"]["ChapterSummaryDto"][] | null;
+            /** Format: date-time */
+            CreateAt?: string;
+            /** Format: date-time */
+            UpdateAt?: string | null;
+        };
+        SeriesReviewDtoApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            StatusCode?: number;
+            Message?: string | null;
+            Data?: components["schemas"]["SeriesReviewDto"];
+            Errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
         StringApiResponse: {
             success?: boolean;
             /** Format: int32 */
@@ -3986,6 +4336,9 @@ export interface components {
         };
         SubmitTaskDto: {
             SubmittedFileUrl?: string | null;
+        };
+        SubmitToBoardDto: {
+            Notes?: string | null;
         };
         TaskVersion: {
             /** Format: int32 */
