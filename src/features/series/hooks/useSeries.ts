@@ -45,9 +45,9 @@ export const mapPageDtoToEntity = (dto: PageDto): Page => ({
   id: dto.id?.toString() || '',
   chapterId: dto.chapterId?.toString() || '',
   pageNumber: dto.pageNumber || 1,
-  imageUrl: dto.imageUrl || '',
+  imageUrl: dto.rawImageUrl || dto.compositeImageUrl || '',
   status: mapPageStatus(dto.status),
-  regionCount: dto.regionCount || 0,
+  regionCount: 0,
   createdAt: dto.createAt || new Date().toISOString(),
   updatedAt: dto.updateAt || new Date().toISOString(),
 });
@@ -73,9 +73,10 @@ export const useSeriesDetail = (id?: string) => {
     queryKey: ['series', id],
     queryFn: async () => {
       const res = await seriesApi.getById(id as string);
-      const apiData = res.data as ApiEnvelope<components['schemas']['SeriesDto'][]>;
-      if (!apiData.IsSuccess || !apiData.Data) return null;
-      return mapSeriesDtoToEntity(apiData.Data as components['schemas']['SeriesDto']);
+      const apiData = res.data as ApiEnvelope<components['schemas']['SeriesDto']>;
+      const data = apiData.data ?? apiData.Data;
+      if ((!apiData.IsSuccess && !apiData.success) || !data) return null;
+      return mapSeriesDtoToEntity(data);
     },
     enabled: !!id,
     retry: 1,
@@ -103,8 +104,8 @@ export const useChapters = (seriesId?: string, params?: { page?: number; pageSiz
     queryKey: ['chapters', seriesId, params],
     queryFn: async () => {
       const res = await seriesApi.getChapters(seriesId as string, params);
-      const apiData = res.data as ApiEnvelope<components['schemas']['SeriesDto'][]>;
-      return apiData.Data ?? apiData.data ?? [];
+      const apiData = res.data as unknown as ApiEnvelope<Chapter[]>;
+      return (apiData.data ?? apiData.Data ?? []) as Chapter[];
     },
     enabled: !!seriesId,
     staleTime: 1000 * 60,
@@ -122,25 +123,31 @@ export const useAllChapters = () => {
       // For simplicity with USE_MOCK, we call getAll and getChapters directly.
       const seriesRes = await seriesApi.getMySeries({ pageSize: 100 });
       const resData = seriesRes.data as ApiEnvelope<SeriesDto[] | { Items?: SeriesDto[]; items?: SeriesDto[] }>;
-      let seriesData = resData.Data ?? resData.data;
-      if (seriesData && typeof seriesData === 'object' && 'Items' in seriesData) seriesData = seriesData.Items;
-      if (seriesData && typeof seriesData === 'object' && 'items' in seriesData) seriesData = seriesData.items;
-      if (!Array.isArray(seriesData)) seriesData = [];
+      const rawSeries = resData.Data ?? resData.data;
+      let seriesData: SeriesDto[] = [];
+      if (Array.isArray(rawSeries)) {
+        seriesData = rawSeries;
+      } else if (rawSeries && typeof rawSeries === 'object') {
+        seriesData = rawSeries.Items ?? rawSeries.items ?? [];
+      }
 
       const allChapters: (Chapter & { seriesTitle: string })[] = [];
-      for (const series of seriesData as SeriesDto[]) {
+      for (const series of seriesData) {
         if (!series.id) continue;
         const chapRes = await seriesApi.getChapters(series.id.toString(), { pageSize: 100 });
         const chapResData = chapRes.data as ApiEnvelope<Chapter[] | { Items?: Chapter[]; items?: Chapter[] }>;
-        let chapData = chapResData.Data ?? chapResData.data;
-        if (chapData && typeof chapData === 'object' && 'Items' in chapData) chapData = chapData.Items;
-        if (chapData && typeof chapData === 'object' && 'items' in chapData) chapData = chapData.items;
-        if (!Array.isArray(chapData)) chapData = [];
+        const rawChapters = chapResData.Data ?? chapResData.data;
+        let chapData: Chapter[] = [];
+        if (Array.isArray(rawChapters)) {
+          chapData = rawChapters;
+        } else if (rawChapters && typeof rawChapters === 'object') {
+          chapData = rawChapters.Items ?? rawChapters.items ?? [];
+        }
 
         for (const ch of chapData) {
           allChapters.push({
             ...ch,
-            seriesTitle: ch.seriesTitle || series.title
+            seriesTitle: ch.seriesTitle || series.title || '',
           });
         }
       }

@@ -16,6 +16,7 @@ import type { Annotation, AnnotationType } from '../../../types/entities';
 import { useChapterReview, useApproveChapter, useRequireChapterRevision } from '../hooks/useReview';
 import { ANNOTATION_TYPE_CONFIG, QC_CHECKLIST_ITEMS, formatVND } from '../constants';
 import type { PageDto } from '../../../api/generated/types';
+import { Point } from 'fabric';
 
 interface ChapterQCReviewProps {
   chapterId: string;
