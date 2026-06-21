@@ -38,12 +38,12 @@ const MOCK_RANKING: RankingItem[] = [
 ];
 
 const applyDevRankingSubmit = (payload: components['schemas']['CreateRankingsDto']) => {
-  payload.Records?.forEach((record) => {
-    const id = String(record.SeriesId ?? '');
+  payload.records?.forEach((record) => {
+    const id = String(record.seriesId ?? '');
     if (!id) return;
     const existing = MOCK_RANKING.find((item) => item.id === id);
     if (existing) {
-      existing.votes = record.VoteCount ?? existing.votes;
+      existing.votes = record.voteCount ?? existing.votes;
     } else {
       MOCK_RANKING.push({
         id,
@@ -51,7 +51,7 @@ const applyDevRankingSubmit = (payload: components['schemas']['CreateRankingsDto
         title: `Series #${id}`,
         coverImageUrl: '',
         views: 0,
-        votes: record.VoteCount ?? 0,
+        votes: record.voteCount ?? 0,
         genre: [],
         period: 'month',
         status: 'Active',
@@ -78,21 +78,21 @@ const mapRankingRecordToItem = (
   index: number,
   period: string,
 ): RankingItem => {
-  const series = record.Series;
-  const genres = series?.Genre
-    ? series.Genre.split(/[,;]/).map((g) => g.trim()).filter(Boolean)
+  const series = record.series;
+  const genres = series?.genre
+    ? series.genre.split(/[,;]/).map((g: string) => g.trim()).filter(Boolean)
     : [];
 
   return {
-    id: String(record.SeriesId ?? record.Id ?? index),
-    rank: record.RankPosition ?? index + 1,
-    title: series?.Title ?? `Series #${record.SeriesId ?? '—'}`,
-    coverImageUrl: series?.CoverArtworkUrl ?? '',
+    id: String(record.seriesId ?? record.id ?? index),
+    rank: record.rankPosition ?? index + 1,
+    title: series?.title ?? `Series #${record.seriesId ?? '—'}`,
+    coverImageUrl: series?.coverArtworkUrl ?? '',
     views: 0,
-    votes: record.VoteCount ?? 0,
+    votes: record.voteCount ?? 0,
     genre: genres,
     period,
-    status: mapSeriesStatus(series?.Status),
+    status: mapSeriesStatus(series?.status),
   };
 };
 
@@ -105,7 +105,7 @@ export const rankingApi = {
       const res = await axiosInstance.get<ApiResponse<RankingRecord[]>>('/api/rankings', {
         params: { period },
       });
-      items = (res.data?.Data ?? []).map((record, index) =>
+      items = (res.data?.data ?? res.data?.Data ?? []).map((record, index) =>
         mapRankingRecordToItem(record, index, period),
       );
     } catch {
