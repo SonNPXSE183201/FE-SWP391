@@ -48,8 +48,8 @@ export const RankingDataEntryFeature = () => {
     const records = rows
       .filter((r) => r.seriesId.trim() && r.voteCount.trim())
       .map((r) => ({
-        SeriesId: Number(r.seriesId),
-        VoteCount: Number(r.voteCount),
+        seriesId: Number(r.seriesId),
+        voteCount: Number(r.voteCount),
       }));
 
     if (records.length === 0) {
@@ -57,14 +57,14 @@ export const RankingDataEntryFeature = () => {
       return;
     }
 
-    if (records.some((r) => Number.isNaN(r.SeriesId!) || Number.isNaN(r.VoteCount!))) {
+    if (records.some((r) => Number.isNaN(r.seriesId!) || Number.isNaN(r.voteCount!))) {
       toast.error('SeriesId và VoteCount phải là số hợp lệ');
       return;
     }
 
     mutation.mutate({
-      Records: records,
-      RecordedDate: new Date(recordedDate).toISOString(),
+      records,
+      recordedDate: new Date(recordedDate).toISOString(),
     });
   };
 
