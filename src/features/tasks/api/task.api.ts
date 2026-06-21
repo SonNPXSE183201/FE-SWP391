@@ -29,21 +29,21 @@ const mapTaskStatus = (status: unknown): TaskStatus => {
 };
 
 export const mapTaskDtoToEntity = (dto: components['schemas']['TasksDto']): Task => ({
-  id: dto.Id?.toString() || '',
-  regionId: dto.RegionId?.toString() || '',
-  pageId: dto.PageNumber?.toString() || '',
+  id: dto.id?.toString() || '',
+  regionId: dto.regionId?.toString() || '',
+  pageId: dto.pageNumber?.toString() || '',
   chapterId: '',
-  seriesId: dto.MangakaId?.toString() || '',
-  mangakaId: dto.MangakaId?.toString() || '',
-  assignedAssistantId: dto.AssistantId?.toString() || '',
-  assignedAssistantName: dto.AssistantName || '',
-  status: mapTaskStatus(dto.Status),
-  amount: dto.PaymentAmount || 0,
-  deadline: dto.Deadline || new Date().toISOString(),
-  extensionUsed: !!dto.ExtensionRequestDays,
+  seriesId: dto.mangakaId?.toString() || '',
+  mangakaId: dto.mangakaId?.toString() || '',
+  assignedAssistantId: dto.assistantId?.toString() || '',
+  assignedAssistantName: dto.assistantName || '',
+  status: mapTaskStatus(dto.status),
+  amount: dto.paymentAmount || 0,
+  deadline: dto.deadline || new Date().toISOString(),
+  extensionUsed: !!dto.extensionRequestDays,
   onLeave: false,
-  createdAt: dto.CreateAt || new Date().toISOString(),
-  updatedAt: dto.UpdateAt || new Date().toISOString(),
+  createdAt: dto.createAt || new Date().toISOString(),
+  updatedAt: dto.updateAt || new Date().toISOString(),
 });
 
 // ─── Request DTOs ────────────────────────────────────────────

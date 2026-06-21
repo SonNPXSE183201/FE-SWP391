@@ -50,10 +50,10 @@ export const UserManagementFeature = () => {
     pageSize,
   });
 
-  const users: components["schemas"]["UserListItemDto"][] = usersData?.Items || [];
-  const totalItems = usersData?.TotalItems || 0;
-  const totalPages = usersData?.TotalPages || 1;
-  const currentPage = usersData?.PageNumber || page;
+  const users: components["schemas"]["UserListItemDto"][] = usersData?.items || [];
+  const totalItems = usersData?.totalItems || 0;
+  const totalPages = usersData?.totalPages || 1;
+  const currentPage = usersData?.pageNumber || page;
 
   const pageRange = generatePageRange(currentPage, totalPages, 1);
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;

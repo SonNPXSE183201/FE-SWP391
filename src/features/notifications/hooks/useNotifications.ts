@@ -7,13 +7,13 @@ import type { NotificationDto } from '../../../api/generated/types';
 // ─── Mapper ──────────────────────────────────────────────────
 
 const mapDtoToItem = (dto: NotificationDto): NotificationItem => ({
-  id: String(dto.Id ?? 0),
-  title: dto.Title ?? '',
-  message: dto.Content ?? '',
-  isRead: dto.IsRead ?? false,
-  link: dto.Link ?? undefined,
-  type: (dto.Type as NotificationItem['type']) ?? 'SystemAlert',
-  createdAt: dto.CreateAt ?? new Date().toISOString(),
+  id: String(dto.id ?? 0),
+  title: dto.title ?? '',
+  message: dto.content ?? '',
+  isRead: dto.isRead ?? false,
+  link: dto.link ?? undefined,
+  type: (dto.type as NotificationItem['type']) ?? 'SystemAlert',
+  createdAt: dto.createAt ?? new Date().toISOString(),
 });
 
 // ─── Query Keys ──────────────────────────────────────────────
@@ -67,9 +67,10 @@ export const useUnreadCount = () => {
       const response = await notificationApi.getUnreadCount();
       const payload = response.data;
 
-      if (payload.IsSuccess && payload.Data) {
-        setUnreadCount(payload.Data.UnreadCount);
-        return payload.Data.UnreadCount;
+      if (payload?.IsSuccess && payload?.Data !== undefined) {
+        const count = typeof payload.Data === 'number' ? payload.Data : 0;
+        setUnreadCount(count);
+        return count;
       }
 
       return 0;

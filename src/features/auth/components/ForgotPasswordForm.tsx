@@ -35,13 +35,13 @@ export const ForgotPasswordForm: React.FC = () => {
         setIsLoading(true);
         try {
             const response = await forgotPasswordRequestApi({ email: email.trim() });
-            if (response.IsSuccess) {
+            if (response.success) {
                 setIsSubmitted(true);
-                toast.success(response.Message || 'Mã xác nhận đã được gửi đến email của bạn');
+                toast.success(response.message || 'Mã xác nhận đã được gửi đến email của bạn');
             }
         } catch (error: unknown) {
             const axiosError = error as { response?: { data?: { Message?: string } } };
-            const errorMsg = axiosError.response?.data?.Message || 'Có lỗi xảy ra. Vui lòng thử lại.';
+            const errorMsg = axiosError.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.';
             setLocalError(errorMsg);
             toast.error(errorMsg);
         } finally {

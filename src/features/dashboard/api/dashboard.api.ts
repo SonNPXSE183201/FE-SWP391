@@ -316,15 +316,15 @@ export const dashboardApi = {
 
     const seriesList = extractSeriesItems(unwrapData(seriesRes.data, 'Không tải được danh sách series'));
     const walletData = unwrapData(walletRes.data, 'Không tải được ví');
-    const wallet = walletData.Wallet ?? {};
-    const transactions = walletData.Transactions ?? [];
+    const wallet = walletData.wallet ?? {};
+    const transactions = walletData.transactions ?? [];
 
     const walletBalance =
-      Number(wallet.SetupFundBalance ?? 0) + Number(wallet.WithdrawableBalance ?? 0);
+      Number(wallet.setupFundBalance ?? 0) + Number(wallet.withdrawableBalance ?? 0);
 
     const monthlyGenkouryo = transactions
-      .filter((tx) => tx.Type === 'Genkouryo' && tx.CreateAt && new Date(tx.CreateAt) >= getMonthStart())
-      .reduce((sum, tx) => sum + Number(tx.Amount ?? 0), 0);
+      .filter((tx: any) => tx.type === 'Genkouryo' && tx.createAt && new Date(tx.createAt) >= getMonthStart())
+      .reduce((sum: number, tx: any) => sum + Number(tx.amount ?? 0), 0);
 
     const stats: MangakaDashboardStatsDto = {
       activeSeries: statNum(statsDto, 'inProductionSeries', 'InProductionSeries') || statNum(statsDto, 'mySeries', 'MySeries') || seriesList.length,
@@ -332,14 +332,14 @@ export const dashboardApi = {
       activeTasks: statNum(statsDto, 'openTasks', 'OpenTasks'),
       walletBalance,
       monthlyGenkouryo,
-      completedTasks: seriesList.filter((s) => s.Status === 'Published' || s.Status === 'Approved').length,
+      completedTasks: seriesList.filter((s: any) => s.status === 'Published' || s.status === 'Approved').length,
     };
 
-    const seriesOverview: SeriesOverviewDto[] = seriesList.slice(0, 5).map((s) => ({
-      id: String(s.Id ?? ''),
-      title: s.Title ?? '',
+    const seriesOverview: SeriesOverviewDto[] = seriesList.slice(0, 5).map((s: any) => ({
+      id: String(s.id ?? ''),
+      title: s.title ?? '',
       chapters: 0,
-      status: (s.Status as SeriesStatus) || 'Draft',
+      status: (s.status as SeriesStatus) || 'Draft',
       trend: '',
     }));
 
@@ -372,20 +372,20 @@ export const dashboardApi = {
 
     const tasksList = extractTaskItems(unwrapData(tasksRes.data, 'Không tải được danh sách task'));
     const walletData = unwrapData(walletRes.data, 'Không tải được ví');
-    const transactions = walletData.Transactions ?? [];
+    const transactions = walletData.transactions ?? [];
 
-    const inProgress = tasksList.filter((t) => t.Status === 'In_Progress').length;
-    const completed = tasksList.filter((t) => t.Status === 'Approved').length;
+    const inProgress = tasksList.filter((t: any) => t.status === 'In_Progress').length;
+    const completed = tasksList.filter((t: any) => t.status === 'Approved').length;
 
     const monthlyIncome = transactions
       .filter(
-        (tx) =>
-          tx.Type === 'Transfer' &&
-          Number(tx.Amount ?? 0) > 0 &&
-          tx.CreateAt &&
-          new Date(tx.CreateAt) >= getMonthStart(),
+        (tx: any) =>
+          tx.type === 'Transfer' &&
+          Number(tx.amount ?? 0) > 0 &&
+          tx.createAt &&
+          new Date(tx.createAt) >= getMonthStart(),
       )
-      .reduce((sum, tx) => sum + Number(tx.Amount ?? 0), 0);
+      .reduce((sum: number, tx: any) => sum + Number(tx.amount ?? 0), 0);
 
     const stats: AssistantDashboardStatsDto = {
       inProgress,
@@ -396,17 +396,17 @@ export const dashboardApi = {
 
     const recentTasks: AssistantRecentTaskDto[] = tasksList
       .sort(
-        (a, b) =>
-          new Date(b.UpdateAt ?? b.CreateAt ?? 0).getTime() -
-          new Date(a.UpdateAt ?? a.CreateAt ?? 0).getTime(),
+        (a: any, b: any) =>
+          new Date(b.updateAt ?? b.createAt ?? 0).getTime() -
+          new Date(a.updateAt ?? a.createAt ?? 0).getTime(),
       )
       .slice(0, 5)
-      .map((t) => ({
-        id: String(t.Id ?? ''),
-        title: t.Description || `Task #${t.Id}`,
-        status: t.Status ?? 'Pending',
-        amount: Number(t.PaymentAmount ?? 0),
-        date: t.UpdateAt || t.CreateAt || '',
+      .map((t: any) => ({
+        id: String(t.id ?? ''),
+        title: t.description || `Task #${t.id}`,
+        status: t.status ?? 'Pending',
+        amount: Number(t.paymentAmount ?? 0),
+        date: t.updateAt || t.createAt || '',
       }));
 
     return createMockAxiosResponse<AssistantDashboardResponse>({

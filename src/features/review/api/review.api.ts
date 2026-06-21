@@ -26,20 +26,20 @@ export type { SeriesReviewDto };
 
 // ─── Mock Data (fallback) ───
 const MOCK_SERIES_REVIEW: SeriesReviewDto = {
-  Id: 1,
-  Title: 'Huyền Thoại Samurai',
-  Genre: 'Shōnen, Action, Historical',
-  Synopsis: 'Trong thời đại Edo đầy biến động, một samurai trẻ tên Kenji phải tìm lại thanh kiếm bị đánh cắp của gia tộc trước khi thế lực bóng tối thống trị thiên hạ.',
-  CoverArtworkUrl: '',
-  EstimatedProductionBudget: 2500000,
-  ApprovedProductionBudget: 0,
-  Status: 'Pending_Approval',
-  MangakaId: 4,
-  MangakaName: 'Nguyễn Minh Đức',
-  EditorName: null,
-  ChapterCount: 0,
-  Chapters: [],
-  CreateAt: '2026-06-01T10:00:00Z',
+  id: 1,
+  title: 'Huyền Thoại Samurai',
+  genre: 'Shōnen, Action, Historical',
+  synopsis: 'Trong thời đại Edo đầy biến động, một samurai trẻ tên Kenji phải tìm lại thanh kiếm bị đánh cắp của gia tộc trước khi thế lực bóng tối thống trị thiên hạ.',
+  coverArtworkUrl: '',
+  estimatedProductionBudget: 2500000,
+  approvedProductionBudget: 0,
+  status: 'Pending_Approval',
+  mangakaId: 4,
+  mangakaName: 'Nguyễn Minh Đức',
+  editorName: null,
+  chapterCount: 0,
+  chapters: [],
+  createAt: '2026-06-01T10:00:00Z',
 };
 
 const readWithFallback = async <T>(
@@ -62,13 +62,13 @@ export const reviewApi = {
   getReviewSeriesDetail: async (seriesId: string) => {
     if (USE_MOCK) {
       await mockDelay();
-      return mockResponse<SeriesReviewDto>({ ...MOCK_SERIES_REVIEW, Id: parseInt(seriesId, 10) || 1 });
+      return mockResponse<SeriesReviewDto>({ ...MOCK_SERIES_REVIEW, id: parseInt(seriesId, 10) || 1 });
     }
     return readWithFallback(
       () => axiosInstance.get<ApiResponse<SeriesReviewDto>>(`/api/reviews/series/${seriesId}`),
       async () => {
         await mockDelay();
-        return mockResponse<SeriesReviewDto>({ ...MOCK_SERIES_REVIEW, Id: parseInt(seriesId, 10) || 1 });
+        return mockResponse<SeriesReviewDto>({ ...MOCK_SERIES_REVIEW, id: parseInt(seriesId, 10) || 1 });
       },
     );
   },
@@ -79,7 +79,7 @@ export const reviewApi = {
       await mockDelay(600);
       return mockResponse(true, 'Đã trình Hội đồng thành công');
     }
-    const body: SubmitToBoardDto = { Notes: notes };
+    const body: SubmitToBoardDto = { notes };
     return axiosInstance.post<ApiResponse<boolean>>(`/api/reviews/series/${seriesId}/submit-to-board`, body);
   },
 
