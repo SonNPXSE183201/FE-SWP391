@@ -194,36 +194,7 @@ export const taskApi = {
       }
       return createMockAxiosResponse(task);
     }
-    // Lách luật: BE chưa có GET /api/tasks/{id}, nên FE phải tìm task trong các list
-    try {
-      const [mangakaRes, myTasksRes, availableRes] = await Promise.allSettled([
-        axiosInstance.get<ApiResponse<TasksDto[]>>('/api/tasks/mangaka-list'),
-        axiosInstance.get<PagedApiResponse<TasksDto>>('/api/tasks/my-tasks', { params: { PageSize: 100 } }),
-        axiosInstance.get<PagedApiResponse<TasksDto>>('/api/tasks/available', { params: { PageSize: 100 } })
-      ]);
-
-      let taskDto: TasksDto | undefined;
-
-      if (mangakaRes.status === 'fulfilled' && mangakaRes.value.data.Data) {
-        taskDto = mangakaRes.value.data.Data.find((t) => t.Id?.toString() === taskId);
-      }
-      if (!taskDto && myTasksRes.status === 'fulfilled' && myTasksRes.value.data.Data?.Items) {
-        taskDto = myTasksRes.value.data.Data.Items.find((t) => t.Id?.toString() === taskId);
-      }
-      if (!taskDto && availableRes.status === 'fulfilled' && availableRes.value.data.Data?.Items) {
-        taskDto = availableRes.value.data.Data.Items.find((t) => t.Id?.toString() === taskId);
-      }
-
-      if (taskDto) {
-        return createMockAxiosResponse(taskDto);
-      }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { data: { IsSuccess: false, success: false, Message: 'Task not found', Data: null } } as any;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { data: { IsSuccess: false, success: false, Message: 'Lỗi khi lấy thông tin Task', Data: null } } as any;
-    }
+    return axiosInstance.get<ApiResponse<TasksDto>>(`/api/tasks/${taskId}`);
   },
 
   // Mangaka creates task (F2.3) — triggers Lock (T01)
