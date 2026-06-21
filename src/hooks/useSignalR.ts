@@ -98,6 +98,11 @@ export const useSignalR = () => {
       const item = mapSignalRPayload(payload);
       addNotification(item);
       notifyToast(item);
+
+      // Invalidate admin users query to reflect new registrations immediately
+      if (item.type === 'SystemAlert') {
+        queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      }
     });
 
     // ReceiveNotification: older generic notification format (content, type)
