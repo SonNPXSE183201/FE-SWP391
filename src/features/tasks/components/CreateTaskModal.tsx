@@ -147,8 +147,8 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
         Deadline: new Date(formData.deadline + 'T23:59:59Z').toISOString(),
       });
       const resData = res.data as ApiResponse<TasksDto>;
-      if (!resData?.IsSuccess) throw new Error(resData?.Message || 'Lỗi tạo task');
-      return resData.Data;
+      if (!resData?.success) throw new Error(resData?.message || 'Lỗi tạo task');
+      return resData.data;
     },
     onSuccess: () => {
       setSuccess(true);

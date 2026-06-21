@@ -2431,6 +2431,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tasks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TasksDtoApiResponse"];
+                        "application/json": components["schemas"]["TasksDtoApiResponse"];
+                        "text/json": components["schemas"]["TasksDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tasks/{id}/approve": {
         parameters: {
             query?: never;
@@ -3275,10 +3314,10 @@ export interface components {
         AdminDashboardResponseDtoApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["AdminDashboardResponseDto"];
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["AdminDashboardResponseDto"];
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
@@ -3300,23 +3339,23 @@ export interface components {
         };
         Annotation: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
             /** Format: int32 */
-            CreatedByUserId?: number;
+            createdByUserId?: number;
             /** Format: int32 */
-            PageId?: number | null;
+            pageId?: number | null;
             /** Format: int32 */
-            TaskVersionId?: number | null;
-            CoordinatesJson?: string | null;
-            Comment?: string | null;
-            Type?: string | null;
-            CreatedByUser?: components["schemas"]["User"];
-            Page?: components["schemas"]["Page"];
-            TaskVersion?: components["schemas"]["TaskVersion"];
+            taskVersionId?: number | null;
+            coordinatesJson?: string | null;
+            comment?: string | null;
+            type?: string | null;
+            createdByUser?: components["schemas"]["User"];
+            page?: components["schemas"]["Page"];
+            taskVersion?: components["schemas"]["TaskVersion"];
         };
         ApproveAssistantRequestDto: {
             userId?: string | null;
@@ -3325,17 +3364,17 @@ export interface components {
         };
         ApproveChapterDto: {
             /** Format: int32 */
-            ValidPageCount?: number;
-            QcChecklistData?: string | null;
+            validPageCount?: number;
+            qcChecklistData?: string | null;
         };
         ApproveTaskDto: {
             /** Format: int32 */
-            Rating?: number | null;
-            FeedbackComment?: string | null;
+            rating?: number | null;
+            feedbackComment?: string | null;
         };
         ApproveWithdrawRequestDto: {
-            IsApproved?: boolean;
-            AdminNote?: string | null;
+            isApproved?: boolean;
+            adminNote?: string | null;
         };
         ApprovedSeriesContractDto: {
             id?: string | null;
@@ -3352,34 +3391,34 @@ export interface components {
         ApprovedSeriesContractDtoListApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["ApprovedSeriesContractDto"][] | null;
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["ApprovedSeriesContractDto"][] | null;
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         AssistantProfile: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
             /** Format: int32 */
-            AssistantId?: number;
-            SpecialtyTags?: string | null;
+            assistantId?: number;
+            specialtyTags?: string | null;
             /** Format: int32 */
-            TotalCompletedTasks?: number;
+            totalCompletedTasks?: number;
             /** Format: double */
-            OnTimeRate?: number;
+            onTimeRate?: number;
             /** Format: double */
-            DisputeRate?: number;
+            disputeRate?: number;
             /** Format: int32 */
-            CurrentActiveTasks?: number;
+            currentActiveTasks?: number;
             /** Format: double */
-            AverageRating?: number;
-            Assistant?: components["schemas"]["User"];
+            averageRating?: number;
+            assistant?: components["schemas"]["User"];
         };
         AssistantProfileResponseDto: {
             id?: string | null;
@@ -3397,253 +3436,253 @@ export interface components {
         AssistantProfileResponseDtoApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["AssistantProfileResponseDto"];
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["AssistantProfileResponseDto"];
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         AssistantResponseDto: {
             /** Format: int32 */
-            Id?: number;
-            UserName?: string | null;
-            Email?: string | null;
-            FullName?: string | null;
-            Status?: string | null;
-            PortfolioUrl?: string | null;
-            Skills?: string | null;
+            id?: number;
+            userName?: string | null;
+            email?: string | null;
+            fullName?: string | null;
+            status?: string | null;
+            portfolioUrl?: string | null;
+            skills?: string | null;
         };
         AssistantResponseDtoListApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["AssistantResponseDto"][] | null;
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["AssistantResponseDto"][] | null;
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         AuthResponseDto: {
             /** Format: int32 */
-            UserId?: number;
-            UserName?: string | null;
-            Email?: string | null;
-            FullName?: string | null;
-            RoleName?: string | null;
-            Token?: string | null;
-            RefreshToken?: string | null;
+            userId?: number;
+            userName?: string | null;
+            email?: string | null;
+            fullName?: string | null;
+            roleName?: string | null;
+            token?: string | null;
+            refreshToken?: string | null;
         };
         AuthResponseDtoApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["AuthResponseDto"];
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["AuthResponseDto"];
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         BoardVote: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
             /** Format: int32 */
-            SeriesId?: number;
+            seriesId?: number;
             /** Format: int32 */
-            BoardMemberId?: number;
-            VoteType?: string | null;
+            boardMemberId?: number;
+            voteType?: string | null;
             /** Format: double */
-            RecommendedBudget?: number;
-            Comment?: string | null;
+            recommendedBudget?: number;
+            comment?: string | null;
             /** Format: date-time */
-            VoteAt?: string;
-            Series?: components["schemas"]["Series"];
-            BoardMember?: components["schemas"]["User"];
+            voteAt?: string;
+            series?: components["schemas"]["Series"];
+            boardMember?: components["schemas"]["User"];
         };
         ChangePasswordDto: {
-            CurrentPassword?: string | null;
-            NewPassword?: string | null;
-            ConfirmNewPassword?: string | null;
+            currentPassword?: string | null;
+            newPassword?: string | null;
+            confirmNewPassword?: string | null;
         };
         Chapter: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
             /** Format: int32 */
-            SeriesId?: number;
+            seriesId?: number;
             /** Format: int32 */
-            ChapterNumber?: number;
-            Title?: string | null;
+            chapterNumber?: number;
+            title?: string | null;
             /** Format: int32 */
-            ValidPageCount?: number;
+            validPageCount?: number;
             /** Format: double */
-            AppliedGenkouryoPrice?: number;
+            appliedGenkouryoPrice?: number;
             /** Format: date-time */
-            SubmissionDeadline?: string | null;
-            QcChecklistData?: string | null;
-            Status?: string | null;
-            Series?: components["schemas"]["Series"];
-            Pages?: components["schemas"]["Page"][] | null;
+            submissionDeadline?: string | null;
+            qcChecklistData?: string | null;
+            status?: string | null;
+            series?: components["schemas"]["Series"];
+            pages?: components["schemas"]["Page"][] | null;
         };
         ChapterApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["Chapter"];
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["Chapter"];
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         ChapterDto: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: int32 */
-            SeriesId?: number;
+            seriesId?: number;
             /** Format: int32 */
-            ChapterNumber?: number;
-            Title?: string | null;
+            chapterNumber?: number;
+            title?: string | null;
             /** Format: int32 */
-            ValidPageCount?: number;
+            validPageCount?: number;
             /** Format: double */
-            AppliedGenkouryoPrice?: number;
+            appliedGenkouryoPrice?: number;
             /** Format: date-time */
-            SubmissionDeadline?: string | null;
-            QcChecklistData?: string | null;
-            Status?: string | null;
+            submissionDeadline?: string | null;
+            qcChecklistData?: string | null;
+            status?: string | null;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
         };
         ChapterDtoApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["ChapterDto"];
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["ChapterDto"];
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         ChapterDtoIEnumerableApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["ChapterDto"][] | null;
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["ChapterDto"][] | null;
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         ChapterIEnumerableApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["Chapter"][] | null;
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["Chapter"][] | null;
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         ChapterSummaryDto: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: int32 */
-            ChapterNumber?: number;
-            Title?: string | null;
-            Status?: string | null;
+            chapterNumber?: number;
+            title?: string | null;
+            status?: string | null;
             /** Format: int32 */
-            PageCount?: number;
+            pageCount?: number;
         };
         Contract: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
             /** Format: int32 */
-            UserId?: number;
+            userId?: number;
             /** Format: int32 */
-            SeriesId?: number;
+            seriesId?: number;
             /** Format: double */
-            BaseGenkouryoPrice?: number;
+            baseGenkouryoPrice?: number;
             /** Format: date-time */
-            SignedDate?: string | null;
-            Status?: string | null;
-            User?: components["schemas"]["User"];
-            Series?: components["schemas"]["Series"];
-            ContractAddendums?: components["schemas"]["ContractAddendum"][] | null;
+            signedDate?: string | null;
+            status?: string | null;
+            user?: components["schemas"]["User"];
+            series?: components["schemas"]["Series"];
+            contractAddendums?: components["schemas"]["ContractAddendum"][] | null;
         };
         ContractAddendum: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
             /** Format: int32 */
-            ContractId?: number;
+            contractId?: number;
             /** Format: double */
-            NewGenkouryoPrice?: number;
+            newGenkouryoPrice?: number;
             /** Format: date-time */
-            EffectiveDate?: string;
+            effectiveDate?: string;
             /** Format: date-time */
-            SignedDate?: string | null;
-            Contract?: components["schemas"]["Contract"];
+            signedDate?: string | null;
+            contract?: components["schemas"]["Contract"];
         };
         ContractDto: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: int32 */
-            UserId?: number;
-            MangakaName?: string | null;
+            userId?: number;
+            mangakaName?: string | null;
             /** Format: int32 */
-            SeriesId?: number;
-            SeriesTitle?: string | null;
+            seriesId?: number;
+            seriesTitle?: string | null;
             /** Format: double */
-            BaseGenkouryoPrice?: number;
+            baseGenkouryoPrice?: number;
             /** Format: date-time */
-            SignedDate?: string | null;
-            Status?: string | null;
+            signedDate?: string | null;
+            status?: string | null;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
         };
         ContractDtoApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["ContractDto"];
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["ContractDto"];
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         ContractDtoIEnumerableApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["ContractDto"][] | null;
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["ContractDto"][] | null;
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         CreateContractDto: {
             /** Format: int32 */
-            UserId?: number;
+            userId?: number;
             /** Format: int32 */
-            SeriesId?: number;
+            seriesId?: number;
             /** Format: double */
-            BaseGenkouryoPrice?: number;
+            baseGenkouryoPrice?: number;
         };
         CreateContractRequestDto: {
             seriesId?: string | null;
@@ -3659,54 +3698,54 @@ export interface components {
         CreateContractResponseDtoApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["CreateContractResponseDto"];
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["CreateContractResponseDto"];
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         CreateRankingsDto: {
-            Records?: components["schemas"]["RankingInputDto"][] | null;
+            records?: components["schemas"]["RankingInputDto"][] | null;
             /** Format: date-time */
-            RecordedDate?: string;
+            recordedDate?: string;
         };
         CreateRegionDto: {
             /** Format: int32 */
-            PageId?: number;
-            Name?: string | null;
-            CoordinatesJson?: string | null;
+            pageId?: number;
+            name?: string | null;
+            coordinatesJson?: string | null;
         };
         CreateSeriesDto: {
-            Title?: string | null;
-            Genre?: string | null;
-            Synopsis?: string | null;
-            CoverArtworkUrl?: string | null;
+            title?: string | null;
+            genre?: string | null;
+            synopsis?: string | null;
+            coverArtworkUrl?: string | null;
             /** Format: double */
-            EstimatedProductionBudget?: number;
+            estimatedProductionBudget?: number;
         };
         CreateTaskDto: {
             /** Format: int32 */
-            RegionId?: number;
+            regionId?: number;
             /** Format: int32 */
-            AssistantId?: number | null;
-            Description?: string | null;
+            assistantId?: number | null;
+            description?: string | null;
             /** Format: double */
-            PaymentAmount?: number;
+            paymentAmount?: number;
             /** Format: date-time */
-            Deadline?: string;
+            deadline?: string;
             /** Format: int32 */
-            ZIndex_Order?: number;
+            zIndex_Order?: number;
         };
         CreateUserByAdminDto: {
             /** Format: int32 */
-            RoleId?: number;
-            UserName?: string | null;
-            Email?: string | null;
-            FullName?: string | null;
-            PenName?: string | null;
-            PortfolioUrl?: string | null;
-            Skills?: string | null;
+            roleId?: number;
+            userName?: string | null;
+            email?: string | null;
+            fullName?: string | null;
+            penName?: string | null;
+            portfolioUrl?: string | null;
+            skills?: string | null;
         };
         DashboardStatsResponseDto: {
             role?: string | null;
@@ -3740,281 +3779,281 @@ export interface components {
         DashboardStatsResponseDtoApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["DashboardStatsResponseDto"];
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["DashboardStatsResponseDto"];
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         DepositRequestDto: {
             /** Format: double */
-            Amount?: number;
+            amount?: number;
         };
         DisputeDetailDto: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: int32 */
-            TaskId?: number;
-            TaskTitle?: string | null;
-            SeriesTitle?: string | null;
-            ChapterTitle?: string | null;
-            MangakaName?: string | null;
-            AssistantName?: string | null;
+            taskId?: number;
+            taskTitle?: string | null;
+            seriesTitle?: string | null;
+            chapterTitle?: string | null;
+            mangakaName?: string | null;
+            assistantName?: string | null;
             /** Format: double */
-            LockedAmount?: number;
-            Status?: string | null;
+            lockedAmount?: number;
+            status?: string | null;
             /** Format: date-time */
-            CreatedAt?: string;
+            createdAt?: string;
             /** Format: date-time */
-            ResolvedAt?: string | null;
-            Resolution?: string | null;
+            resolvedAt?: string | null;
+            resolution?: string | null;
             /** Format: date-time */
-            TaskDeadline?: string;
+            taskDeadline?: string;
             /** Format: date-time */
-            TaskSubmittedAt?: string | null;
-            RegionInfo?: string | null;
-            MangakaReason?: string | null;
-            AssistantReason?: string | null;
-            Evidence?: components["schemas"]["DisputeEvidenceDto"][] | null;
+            taskSubmittedAt?: string | null;
+            regionInfo?: string | null;
+            mangakaReason?: string | null;
+            assistantReason?: string | null;
+            evidence?: components["schemas"]["DisputeEvidenceDto"][] | null;
         };
         DisputeDetailDtoApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["DisputeDetailDto"];
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["DisputeDetailDto"];
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         DisputeEvidenceDto: {
-            SubmittedBy?: string | null;
-            SubmitterName?: string | null;
-            Type?: string | null;
-            Content?: string | null;
+            submittedBy?: string | null;
+            submitterName?: string | null;
+            type?: string | null;
+            content?: string | null;
             /** Format: date-time */
-            CreatedAt?: string;
+            createdAt?: string;
         };
         DisputeListItemDto: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: int32 */
-            TaskId?: number;
-            TaskTitle?: string | null;
-            SeriesTitle?: string | null;
-            MangakaName?: string | null;
-            AssistantName?: string | null;
+            taskId?: number;
+            taskTitle?: string | null;
+            seriesTitle?: string | null;
+            mangakaName?: string | null;
+            assistantName?: string | null;
             /** Format: double */
-            LockedAmount?: number;
-            Status?: string | null;
+            lockedAmount?: number;
+            status?: string | null;
             /** Format: date-time */
-            CreatedAt?: string;
+            createdAt?: string;
             /** Format: date-time */
-            ResolvedAt?: string | null;
-            Resolution?: string | null;
+            resolvedAt?: string | null;
+            resolution?: string | null;
         };
         DisputeListItemDtoIEnumerableApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["DisputeListItemDto"][] | null;
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["DisputeListItemDto"][] | null;
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         DisputeLog: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
             /** Format: int32 */
-            EditorId?: number;
+            editorId?: number;
             /** Format: int32 */
-            TaskId?: number;
-            EditorComment?: string | null;
-            ResolutionType?: string | null;
+            taskId?: number;
+            editorComment?: string | null;
+            resolutionType?: string | null;
             /** Format: double */
-            AssistantPercentage?: number | null;
+            assistantPercentage?: number | null;
             /** Format: double */
-            MangakaPercentage?: number | null;
+            mangakaPercentage?: number | null;
             /** Format: date-time */
-            ResolvedAt?: string;
-            Editor?: components["schemas"]["User"];
-            Task?: components["schemas"]["Tasks"];
+            resolvedAt?: string;
+            editor?: components["schemas"]["User"];
+            task?: components["schemas"]["Tasks"];
         };
         ForgotPasswordRequestDto: {
-            Email?: string | null;
+            email?: string | null;
         };
         ForgotPasswordResetDto: {
-            Email?: string | null;
-            VerificationCode?: string | null;
-            NewPassword?: string | null;
-            ConfirmNewPassword?: string | null;
+            email?: string | null;
+            verificationCode?: string | null;
+            newPassword?: string | null;
+            confirmNewPassword?: string | null;
         };
         Int32ApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
+            statusCode?: number;
+            message?: string | null;
             /** Format: int32 */
-            Data?: number;
-            Errors?: {
+            data?: number;
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         LayerDto: {
             /** Format: int32 */
-            RegionId?: number;
-            RegionName?: string | null;
-            CoordinatesJson?: string | null;
+            regionId?: number;
+            regionName?: string | null;
+            coordinatesJson?: string | null;
             /** Format: int32 */
-            ZIndex_Order?: number;
-            ImageUrl?: string | null;
-            TaskStatus?: string | null;
+            zIndex_Order?: number;
+            imageUrl?: string | null;
+            taskStatus?: string | null;
         };
         LayerDtoIEnumerableApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["LayerDto"][] | null;
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["LayerDto"][] | null;
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         LoginDto: {
-            Identifier?: string | null;
-            Password?: string | null;
+            identifier?: string | null;
+            password?: string | null;
         };
         LogoutDto: {
-            RefreshToken?: string | null;
+            refreshToken?: string | null;
         };
         Notification: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
             /** Format: int32 */
-            UserId?: number;
-            Content?: string | null;
-            Type?: string | null;
-            IsRead?: boolean;
-            User?: components["schemas"]["User"];
+            userId?: number;
+            content?: string | null;
+            type?: string | null;
+            isRead?: boolean;
+            user?: components["schemas"]["User"];
         };
         NotificationDto: {
             /** Format: int32 */
-            Id?: number;
-            Content?: string | null;
-            Type?: string | null;
-            IsRead?: boolean;
+            id?: number;
+            content?: string | null;
+            type?: string | null;
+            isRead?: boolean;
             /** Format: date-time */
-            CreateAt?: string;
-            readonly Title?: string | null;
-            readonly Link?: string | null;
+            createAt?: string;
+            readonly title?: string | null;
+            readonly link?: string | null;
         };
         NotificationDtoIEnumerableApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["NotificationDto"][] | null;
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["NotificationDto"][] | null;
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         ObjectApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: unknown;
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: unknown;
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         Page: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
             /** Format: int32 */
-            ChapterId?: number;
+            chapterId?: number;
             /** Format: int32 */
-            PageNumber?: number;
-            RawImageUrl?: string | null;
-            CompositeImageUrl?: string | null;
-            BaseLayerUrl?: string | null;
-            Status?: string | null;
-            IsApproved?: boolean;
-            Chapter?: components["schemas"]["Chapter"];
-            Regions?: components["schemas"]["Region"][] | null;
-            Annotations?: components["schemas"]["Annotation"][] | null;
+            pageNumber?: number;
+            rawImageUrl?: string | null;
+            compositeImageUrl?: string | null;
+            baseLayerUrl?: string | null;
+            status?: string | null;
+            isApproved?: boolean;
+            chapter?: components["schemas"]["Chapter"];
+            regions?: components["schemas"]["Region"][] | null;
+            annotations?: components["schemas"]["Annotation"][] | null;
         };
         PageDto: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: int32 */
-            ChapterId?: number;
+            chapterId?: number;
             /** Format: int32 */
-            PageNumber?: number;
-            RawImageUrl?: string | null;
-            CompositeImageUrl?: string | null;
-            BaseLayerUrl?: string | null;
-            Status?: string | null;
-            IsApproved?: boolean;
+            pageNumber?: number;
+            rawImageUrl?: string | null;
+            compositeImageUrl?: string | null;
+            baseLayerUrl?: string | null;
+            status?: string | null;
+            isApproved?: boolean;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
         };
         PageDtoIEnumerableApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["PageDto"][] | null;
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["PageDto"][] | null;
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         RankingInputDto: {
             /** Format: int32 */
-            SeriesId?: number;
+            seriesId?: number;
             /** Format: int32 */
-            VoteCount?: number;
+            voteCount?: number;
         };
         RankingRecord: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
             /** Format: int32 */
-            SeriesId?: number;
+            seriesId?: number;
             /** Format: int32 */
-            VoteCount?: number;
+            voteCount?: number;
             /** Format: int32 */
-            RankPosition?: number;
+            rankPosition?: number;
             /** Format: date-time */
-            RecordedDate?: string;
-            Series?: components["schemas"]["Series"];
+            recordedDate?: string;
+            series?: components["schemas"]["Series"];
         };
         RankingRecordIEnumerableApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["RankingRecord"][] | null;
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["RankingRecord"][] | null;
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
@@ -4038,22 +4077,22 @@ export interface components {
         };
         ReconciliationReportDto: {
             /** Format: int32 */
-            TotalRows?: number;
+            totalRows?: number;
             /** Format: int32 */
-            MatchedCount?: number;
+            matchedCount?: number;
             /** Format: int32 */
-            ResolvedCount?: number;
+            resolvedCount?: number;
             /** Format: int32 */
-            UnresolvedCount?: number;
-            Details?: string[] | null;
+            unresolvedCount?: number;
+            details?: string[] | null;
         };
         ReconciliationReportDtoApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["ReconciliationReportDto"];
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["ReconciliationReportDto"];
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
@@ -4064,10 +4103,10 @@ export interface components {
         ReconciliationResponseDtoApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["ReconciliationResponseDto"];
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["ReconciliationResponseDto"];
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
@@ -4091,495 +4130,495 @@ export interface components {
         };
         RefreshToken: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
             /** Format: int32 */
-            UserId?: number;
-            Token?: string | null;
+            userId?: number;
+            token?: string | null;
             /** Format: date-time */
-            ExpiresAt?: string;
-            IsRevoked?: boolean;
-            User?: components["schemas"]["User"];
+            expiresAt?: string;
+            isRevoked?: boolean;
+            user?: components["schemas"]["User"];
         };
         RefreshTokenDto: {
-            AccessToken?: string | null;
-            RefreshToken?: string | null;
+            accessToken?: string | null;
+            refreshToken?: string | null;
         };
         Region: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
             /** Format: int32 */
-            PageId?: number;
-            CoordinatesJson?: string | null;
-            Name?: string | null;
-            Page?: components["schemas"]["Page"];
-            Tasks?: components["schemas"]["Tasks"][] | null;
+            pageId?: number;
+            coordinatesJson?: string | null;
+            name?: string | null;
+            page?: components["schemas"]["Page"];
+            tasks?: components["schemas"]["Tasks"][] | null;
         };
         RegionDto: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: int32 */
-            PageId?: number;
-            Name?: string | null;
-            CoordinatesJson?: string | null;
+            pageId?: number;
+            name?: string | null;
+            coordinatesJson?: string | null;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
         };
         RegionDtoApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["RegionDto"];
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["RegionDto"];
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         RegisterDto: {
-            UserName?: string | null;
-            Password?: string | null;
-            Email?: string | null;
-            FullName?: string | null;
-            PortfolioUrl?: string | null;
-            Skills?: string | null;
-            VerificationCode?: string | null;
+            userName?: string | null;
+            password?: string | null;
+            email?: string | null;
+            fullName?: string | null;
+            portfolioUrl?: string | null;
+            skills?: string | null;
+            verificationCode?: string | null;
         };
         RegisterResponseDto: {
-            RequiresVerification?: boolean;
-            Message?: string | null;
+            requiresVerification?: boolean;
+            message?: string | null;
         };
         RegisterResponseDtoApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["RegisterResponseDto"];
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["RegisterResponseDto"];
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         RejectChapterDto: {
-            FeedbackComment?: string | null;
+            feedbackComment?: string | null;
         };
         RejectTaskDto: {
-            FeedbackComment?: string | null;
+            feedbackComment?: string | null;
             /** Format: int32 */
-            RevisionExtensionHours?: number;
-            CoordinatesJson?: string | null;
+            revisionExtensionHours?: number;
+            coordinatesJson?: string | null;
         };
         Report: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
             /** Format: int32 */
-            ReporterId?: number;
+            reporterId?: number;
             /** Format: int32 */
-            ReportedUserId?: number;
-            Reason?: string | null;
-            Status?: string | null;
-            Reporter?: components["schemas"]["User"];
-            ReportedUser?: components["schemas"]["User"];
+            reportedUserId?: number;
+            reason?: string | null;
+            status?: string | null;
+            reporter?: components["schemas"]["User"];
+            reportedUser?: components["schemas"]["User"];
         };
         RequestExtensionDto: {
             /** Format: int32 */
-            Days?: number;
-            Reason?: string | null;
+            days?: number;
+            reason?: string | null;
         };
         ResolveDisputeDto: {
             /** Format: double */
-            AssistantRate?: number;
+            assistantRate?: number;
         };
         Role: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
-            RoleName?: string | null;
-            Users?: components["schemas"]["User"][] | null;
+            updateAt?: string | null;
+            roleName?: string | null;
+            users?: components["schemas"]["User"][] | null;
         };
         Series: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
             /** Format: int32 */
-            MangakaId?: number;
+            mangakaId?: number;
             /** Format: int32 */
-            EditorId?: number | null;
-            Title?: string | null;
-            Genre?: string | null;
-            Synopsis?: string | null;
-            CoverArtworkUrl?: string | null;
+            editorId?: number | null;
+            title?: string | null;
+            genre?: string | null;
+            synopsis?: string | null;
+            coverArtworkUrl?: string | null;
             /** Format: double */
-            EstimatedProductionBudget?: number;
+            estimatedProductionBudget?: number;
             /** Format: double */
-            ApprovedProductionBudget?: number;
-            PublicationSchedule?: string | null;
-            Status?: string | null;
-            ResourceFolderUrl?: string | null;
-            Mangaka?: components["schemas"]["User"];
-            Editor?: components["schemas"]["User"];
-            RankingRecords?: components["schemas"]["RankingRecord"][] | null;
-            BoardVotes?: components["schemas"]["BoardVote"][] | null;
-            Contracts?: components["schemas"]["Contract"][] | null;
-            Chapters?: components["schemas"]["Chapter"][] | null;
+            approvedProductionBudget?: number;
+            publicationSchedule?: string | null;
+            status?: string | null;
+            resourceFolderUrl?: string | null;
+            mangaka?: components["schemas"]["User"];
+            editor?: components["schemas"]["User"];
+            rankingRecords?: components["schemas"]["RankingRecord"][] | null;
+            boardVotes?: components["schemas"]["BoardVote"][] | null;
+            contracts?: components["schemas"]["Contract"][] | null;
+            chapters?: components["schemas"]["Chapter"][] | null;
         };
         SeriesDto: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: int32 */
-            MangakaId?: number;
+            mangakaId?: number;
             /** Format: int32 */
-            EditorId?: number | null;
-            Title?: string | null;
-            Genre?: string | null;
-            Synopsis?: string | null;
-            CoverArtworkUrl?: string | null;
+            editorId?: number | null;
+            title?: string | null;
+            genre?: string | null;
+            synopsis?: string | null;
+            coverArtworkUrl?: string | null;
             /** Format: double */
-            EstimatedProductionBudget?: number;
+            estimatedProductionBudget?: number;
             /** Format: double */
-            ApprovedProductionBudget?: number;
-            PublicationSchedule?: string | null;
-            Status?: string | null;
-            ResourceFolderUrl?: string | null;
-            MangakaName?: string | null;
-            EditorName?: string | null;
+            approvedProductionBudget?: number;
+            publicationSchedule?: string | null;
+            status?: string | null;
+            resourceFolderUrl?: string | null;
+            mangakaName?: string | null;
+            editorName?: string | null;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
         };
         SeriesDtoApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["SeriesDto"];
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["SeriesDto"];
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         SeriesDtoIEnumerableApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["SeriesDto"][] | null;
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["SeriesDto"][] | null;
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         SeriesReviewDto: {
             /** Format: int32 */
-            Id?: number;
-            Title?: string | null;
-            Genre?: string | null;
-            Synopsis?: string | null;
-            CoverArtworkUrl?: string | null;
+            id?: number;
+            title?: string | null;
+            genre?: string | null;
+            synopsis?: string | null;
+            coverArtworkUrl?: string | null;
             /** Format: double */
-            EstimatedProductionBudget?: number;
+            estimatedProductionBudget?: number;
             /** Format: double */
-            ApprovedProductionBudget?: number;
-            Status?: string | null;
+            approvedProductionBudget?: number;
+            status?: string | null;
             /** Format: int32 */
-            MangakaId?: number;
-            MangakaName?: string | null;
+            mangakaId?: number;
+            mangakaName?: string | null;
             /** Format: int32 */
-            EditorId?: number | null;
-            EditorName?: string | null;
+            editorId?: number | null;
+            editorName?: string | null;
             /** Format: int32 */
-            ChapterCount?: number;
-            Chapters?: components["schemas"]["ChapterSummaryDto"][] | null;
+            chapterCount?: number;
+            chapters?: components["schemas"]["ChapterSummaryDto"][] | null;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
         };
         SeriesReviewDtoApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["SeriesReviewDto"];
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["SeriesReviewDto"];
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         StringApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: string | null;
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: string | null;
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         SubmitSeriesReviewDto: {
-            SubmissionNotes?: string | null;
+            submissionNotes?: string | null;
         };
         SubmitTaskDto: {
-            SubmittedFileUrl?: string | null;
+            submittedFileUrl?: string | null;
         };
         SubmitToBoardDto: {
-            Notes?: string | null;
+            notes?: string | null;
         };
         TaskVersion: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
             /** Format: int32 */
-            TaskId?: number;
+            taskId?: number;
             /** Format: int32 */
-            VersionNumber?: number;
-            SubmittedFileUrl?: string | null;
-            Status?: string | null;
+            versionNumber?: number;
+            submittedFileUrl?: string | null;
+            status?: string | null;
             /** Format: date-time */
-            SubmittedAt?: string;
-            Task?: components["schemas"]["Tasks"];
-            Annotations?: components["schemas"]["Annotation"][] | null;
+            submittedAt?: string;
+            task?: components["schemas"]["Tasks"];
+            annotations?: components["schemas"]["Annotation"][] | null;
         };
         TaskVersionDto: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: int32 */
-            TaskId?: number;
+            taskId?: number;
             /** Format: int32 */
-            VersionNumber?: number;
-            SubmittedFileUrl?: string | null;
-            Status?: string | null;
+            versionNumber?: number;
+            submittedFileUrl?: string | null;
+            status?: string | null;
             /** Format: date-time */
-            SubmittedAt?: string;
+            submittedAt?: string;
         };
         TaskVersionDtoIEnumerableApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["TaskVersionDto"][] | null;
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["TaskVersionDto"][] | null;
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         Tasks: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
             /** Format: int32 */
-            MangakaId?: number;
+            mangakaId?: number;
             /** Format: int32 */
-            RegionId?: number;
+            regionId?: number;
             /** Format: int32 */
-            AssistantId?: number | null;
-            Description?: string | null;
+            assistantId?: number | null;
+            description?: string | null;
             /** Format: double */
-            PaymentAmount?: number;
+            paymentAmount?: number;
             /** Format: date-time */
-            Deadline?: string;
+            deadline?: string;
             /** Format: int32 */
-            ExtensionRequestDays?: number | null;
-            ExtensionReason?: string | null;
-            ExtensionStatus?: string | null;
+            extensionRequestDays?: number | null;
+            extensionReason?: string | null;
+            extensionStatus?: string | null;
             /** Format: int32 */
-            ZIndex_Order?: number;
-            Status?: string | null;
+            zIndex_Order?: number;
+            status?: string | null;
             /** Format: int32 */
-            Rating?: number | null;
-            FeedbackComment?: string | null;
-            Mangaka?: components["schemas"]["User"];
-            Region?: components["schemas"]["Region"];
-            Assistant?: components["schemas"]["User"];
-            TaskVersions?: components["schemas"]["TaskVersion"][] | null;
-            DisputeLogs?: components["schemas"]["DisputeLog"][] | null;
+            rating?: number | null;
+            feedbackComment?: string | null;
+            mangaka?: components["schemas"]["User"];
+            region?: components["schemas"]["Region"];
+            assistant?: components["schemas"]["User"];
+            taskVersions?: components["schemas"]["TaskVersion"][] | null;
+            disputeLogs?: components["schemas"]["DisputeLog"][] | null;
         };
         TasksDto: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: int32 */
-            MangakaId?: number;
+            mangakaId?: number;
             /** Format: int32 */
-            RegionId?: number;
+            regionId?: number;
             /** Format: int32 */
-            AssistantId?: number | null;
-            Description?: string | null;
+            assistantId?: number | null;
+            description?: string | null;
             /** Format: double */
-            PaymentAmount?: number;
+            paymentAmount?: number;
             /** Format: date-time */
-            Deadline?: string;
+            deadline?: string;
             /** Format: int32 */
-            ExtensionRequestDays?: number | null;
-            ExtensionReason?: string | null;
-            ExtensionStatus?: string | null;
+            extensionRequestDays?: number | null;
+            extensionReason?: string | null;
+            extensionStatus?: string | null;
             /** Format: int32 */
-            ZIndex_Order?: number;
-            Status?: string | null;
+            zIndex_Order?: number;
+            status?: string | null;
             /** Format: int32 */
-            Rating?: number | null;
-            FeedbackComment?: string | null;
-            MangakaName?: string | null;
-            AssistantName?: string | null;
+            rating?: number | null;
+            feedbackComment?: string | null;
+            mangakaName?: string | null;
+            assistantName?: string | null;
             /** Format: int32 */
-            PageNumber?: number;
-            PageImageUrl?: string | null;
+            pageNumber?: number;
+            pageImageUrl?: string | null;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
         };
         TasksDtoApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["TasksDto"];
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["TasksDto"];
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         TasksDtoIEnumerableApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["TasksDto"][] | null;
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["TasksDto"][] | null;
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         TasksDtoPagedResult: {
-            Items?: components["schemas"]["TasksDto"][] | null;
+            items?: components["schemas"]["TasksDto"][] | null;
             /** Format: int32 */
-            PageNumber?: number;
+            pageNumber?: number;
             /** Format: int32 */
-            PageSize?: number;
+            pageSize?: number;
             /** Format: int32 */
-            TotalItems?: number;
+            totalItems?: number;
             /** Format: int32 */
-            TotalPages?: number;
-            readonly HasPreviousPage?: boolean;
-            readonly HasNextPage?: boolean;
+            totalPages?: number;
+            readonly hasPreviousPage?: boolean;
+            readonly hasNextPage?: boolean;
         };
         TasksDtoPagedResultApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["TasksDtoPagedResult"];
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["TasksDtoPagedResult"];
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         Transaction: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
             /** Format: int32 */
-            WalletId?: number;
-            Type?: string | null;
+            walletId?: number;
+            type?: string | null;
             /** Format: int32 */
-            ReferenceId?: number | null;
+            referenceId?: number | null;
             /** Format: double */
-            SetupFundAmount?: number;
+            setupFundAmount?: number;
             /** Format: double */
-            WithdrawableAmount?: number;
+            withdrawableAmount?: number;
             /** Format: double */
-            Amount?: number;
-            Status?: string | null;
-            ReferenceCode?: string | null;
+            amount?: number;
+            status?: string | null;
+            referenceCode?: string | null;
             /** Format: int32 */
-            FromUserId?: number | null;
+            fromUserId?: number | null;
             /** Format: int32 */
-            ToUserId?: number | null;
-            BankName?: string | null;
-            BankAccountNumber?: string | null;
-            BankAccountName?: string | null;
-            AdminNote?: string | null;
-            Wallet?: components["schemas"]["Wallet"];
-            FromUser?: components["schemas"]["User"];
-            ToUser?: components["schemas"]["User"];
+            toUserId?: number | null;
+            bankName?: string | null;
+            bankAccountNumber?: string | null;
+            bankAccountName?: string | null;
+            adminNote?: string | null;
+            wallet?: components["schemas"]["Wallet"];
+            fromUser?: components["schemas"]["User"];
+            toUser?: components["schemas"]["User"];
         };
         TransactionDto: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: int32 */
-            WalletId?: number;
-            Type?: string | null;
+            walletId?: number;
+            type?: string | null;
             /** Format: int32 */
-            ReferenceId?: number | null;
+            referenceId?: number | null;
             /** Format: double */
-            SetupFundAmount?: number;
+            setupFundAmount?: number;
             /** Format: double */
-            WithdrawableAmount?: number;
+            withdrawableAmount?: number;
             /** Format: double */
-            Amount?: number;
-            Status?: string | null;
-            ReferenceCode?: string | null;
+            amount?: number;
+            status?: string | null;
+            referenceCode?: string | null;
             /** Format: int32 */
-            FromUserId?: number | null;
+            fromUserId?: number | null;
             /** Format: int32 */
-            ToUserId?: number | null;
-            FromUserName?: string | null;
-            FromUserFullName?: string | null;
-            ToUserName?: string | null;
-            ToUserFullName?: string | null;
-            BankName?: string | null;
-            BankAccountNumber?: string | null;
-            BankAccountName?: string | null;
-            AdminNote?: string | null;
+            toUserId?: number | null;
+            fromUserName?: string | null;
+            fromUserFullName?: string | null;
+            toUserName?: string | null;
+            toUserFullName?: string | null;
+            bankName?: string | null;
+            bankAccountNumber?: string | null;
+            bankAccountName?: string | null;
+            adminNote?: string | null;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
         };
         TransactionDtoApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["TransactionDto"];
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["TransactionDto"];
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         TransactionDtoListApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["TransactionDto"][] | null;
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["TransactionDto"][] | null;
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         UpdateContractDto: {
             /** Format: double */
-            BaseGenkouryoPrice?: number;
-            Status?: string | null;
+            baseGenkouryoPrice?: number;
+            status?: string | null;
         };
         UpdateContractRequestDto: {
             contractId?: string | null;
@@ -4589,43 +4628,43 @@ export interface components {
         };
         UpdateDeadlineDto: {
             /** Format: date-time */
-            Deadline?: string;
+            deadline?: string;
         };
         User: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
             /** Format: int32 */
-            RoleId?: number;
-            UserName?: string | null;
-            PasswordHash?: string | null;
-            Email?: string | null;
-            FullName?: string | null;
-            Status?: components["schemas"]["UserStatus"];
-            PenName?: string | null;
-            PortfolioUrl?: string | null;
-            Skills?: string | null;
-            IsOnLeave?: boolean;
-            Role?: components["schemas"]["Role"];
-            Wallet?: components["schemas"]["Wallet"];
-            AssistantProfile?: components["schemas"]["AssistantProfile"];
-            Notifications?: components["schemas"]["Notification"][] | null;
-            MangakaSeries?: components["schemas"]["Series"][] | null;
-            EditorSeries?: components["schemas"]["Series"][] | null;
-            BoardVotes?: components["schemas"]["BoardVote"][] | null;
-            Contracts?: components["schemas"]["Contract"][] | null;
-            MangakaTasks?: components["schemas"]["Tasks"][] | null;
-            AssistantTasks?: components["schemas"]["Tasks"][] | null;
-            EditorDisputes?: components["schemas"]["DisputeLog"][] | null;
-            Annotations?: components["schemas"]["Annotation"][] | null;
-            FiledReports?: components["schemas"]["Report"][] | null;
-            ReceivedReports?: components["schemas"]["Report"][] | null;
-            FromTransactions?: components["schemas"]["Transaction"][] | null;
-            ToTransactions?: components["schemas"]["Transaction"][] | null;
-            RefreshTokens?: components["schemas"]["RefreshToken"][] | null;
+            roleId?: number;
+            userName?: string | null;
+            passwordHash?: string | null;
+            email?: string | null;
+            fullName?: string | null;
+            status?: components["schemas"]["UserStatus"];
+            penName?: string | null;
+            portfolioUrl?: string | null;
+            skills?: string | null;
+            isOnLeave?: boolean;
+            role?: components["schemas"]["Role"];
+            wallet?: components["schemas"]["Wallet"];
+            assistantProfile?: components["schemas"]["AssistantProfile"];
+            notifications?: components["schemas"]["Notification"][] | null;
+            mangakaSeries?: components["schemas"]["Series"][] | null;
+            editorSeries?: components["schemas"]["Series"][] | null;
+            boardVotes?: components["schemas"]["BoardVote"][] | null;
+            contracts?: components["schemas"]["Contract"][] | null;
+            mangakaTasks?: components["schemas"]["Tasks"][] | null;
+            assistantTasks?: components["schemas"]["Tasks"][] | null;
+            editorDisputes?: components["schemas"]["DisputeLog"][] | null;
+            annotations?: components["schemas"]["Annotation"][] | null;
+            filedReports?: components["schemas"]["Report"][] | null;
+            receivedReports?: components["schemas"]["Report"][] | null;
+            fromTransactions?: components["schemas"]["Transaction"][] | null;
+            toTransactions?: components["schemas"]["Transaction"][] | null;
+            refreshTokens?: components["schemas"]["RefreshToken"][] | null;
         };
         UserListItemDto: {
             id?: string | null;
@@ -4636,48 +4675,48 @@ export interface components {
             createdAt?: string | null;
         };
         UserListItemDtoPagedResult: {
-            Items?: components["schemas"]["UserListItemDto"][] | null;
+            items?: components["schemas"]["UserListItemDto"][] | null;
             /** Format: int32 */
-            PageNumber?: number;
+            pageNumber?: number;
             /** Format: int32 */
-            PageSize?: number;
+            pageSize?: number;
             /** Format: int32 */
-            TotalItems?: number;
+            totalItems?: number;
             /** Format: int32 */
-            TotalPages?: number;
-            readonly HasPreviousPage?: boolean;
-            readonly HasNextPage?: boolean;
+            totalPages?: number;
+            readonly hasPreviousPage?: boolean;
+            readonly hasNextPage?: boolean;
         };
         UserListItemDtoPagedResultApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["UserListItemDtoPagedResult"];
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["UserListItemDtoPagedResult"];
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         UserResponseDto: {
             /** Format: int32 */
-            Id?: number;
-            UserName?: string | null;
-            Email?: string | null;
-            FullName?: string | null;
+            id?: number;
+            userName?: string | null;
+            email?: string | null;
+            fullName?: string | null;
             /** Format: int32 */
-            RoleId?: number;
-            Status?: string | null;
-            PenName?: string | null;
-            IsOnLeave?: boolean;
-            Message?: string | null;
+            roleId?: number;
+            status?: string | null;
+            penName?: string | null;
+            isOnLeave?: boolean;
+            message?: string | null;
         };
         UserResponseDtoApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["UserResponseDto"];
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["UserResponseDto"];
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
@@ -4687,69 +4726,69 @@ export interface components {
          */
         UserStatus: 0 | 1 | 2 | 3;
         VoteSeriesRequestDto: {
-            Approved?: boolean;
-            Comment?: string | null;
+            approved?: boolean;
+            comment?: string | null;
             /** Format: double */
-            RecommendedBudget?: number;
+            recommendedBudget?: number;
         };
         Wallet: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
             /** Format: int32 */
-            UserId?: number;
+            userId?: number;
             /** Format: double */
-            SetupFundBalance?: number;
+            setupFundBalance?: number;
             /** Format: double */
-            WithdrawableBalance?: number;
+            withdrawableBalance?: number;
             /** Format: double */
-            LockedFund?: number;
+            lockedFund?: number;
             /** Format: double */
-            LockedWithdrawable?: number;
-            User?: components["schemas"]["User"];
-            Transactions?: components["schemas"]["Transaction"][] | null;
+            lockedWithdrawable?: number;
+            user?: components["schemas"]["User"];
+            transactions?: components["schemas"]["Transaction"][] | null;
         };
         WalletDetailsDto: {
-            Wallet?: components["schemas"]["WalletDto"];
-            Transactions?: components["schemas"]["TransactionDto"][] | null;
+            wallet?: components["schemas"]["WalletDto"];
+            transactions?: components["schemas"]["TransactionDto"][] | null;
         };
         WalletDetailsDtoApiResponse: {
             success?: boolean;
             /** Format: int32 */
-            StatusCode?: number;
-            Message?: string | null;
-            Data?: components["schemas"]["WalletDetailsDto"];
-            Errors?: {
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["WalletDetailsDto"];
+            errors?: {
                 [key: string]: string[] | null;
             } | null;
         };
         WalletDto: {
             /** Format: int32 */
-            Id?: number;
+            id?: number;
             /** Format: int32 */
-            UserId?: number;
+            userId?: number;
             /** Format: double */
-            SetupFundBalance?: number;
+            setupFundBalance?: number;
             /** Format: double */
-            WithdrawableBalance?: number;
+            withdrawableBalance?: number;
             /** Format: double */
-            LockedFund?: number;
+            lockedFund?: number;
             /** Format: double */
-            LockedWithdrawable?: number;
+            lockedWithdrawable?: number;
             /** Format: date-time */
-            CreateAt?: string;
+            createAt?: string;
             /** Format: date-time */
-            UpdateAt?: string | null;
+            updateAt?: string | null;
         };
         WithdrawRequestDto: {
             /** Format: double */
-            Amount?: number;
-            BankName?: string | null;
-            BankAccountNumber?: string | null;
-            BankAccountName?: string | null;
+            amount?: number;
+            bankName?: string | null;
+            bankAccountNumber?: string | null;
+            bankAccountName?: string | null;
         };
     };
     responses: never;

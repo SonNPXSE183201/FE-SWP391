@@ -1,51 +1,51 @@
 import type { ChapterReviewDetail, ReviewPageItem, ReviewQueueItem } from '../types';
 
 // Partial Series shape used in mock data (avoids full schema requirement).
-type MockSeries = NonNullable<ReviewQueueItem['Series']>;
+type MockSeries = NonNullable<ReviewQueueItem['series']>;
 
 // ─── Review Queue (chapters awaiting QC) ─────────────────────
 export const MOCK_REVIEW_QUEUE: ReviewQueueItem[] = [
   {
-    Id: 1,
-    SeriesId: 1,
-    Series: { Title: 'Huyền Thoại Samurai', Mangaka: { FullName: 'Nguyễn Minh Đức' } } as MockSeries,
-    ChapterNumber: 5,
-    Title: 'Thanh kiếm thức tỉnh',
-    SubmissionDeadline: '2026-06-18T23:59:59Z',
-    ValidPageCount: 5,
-    AppliedGenkouryoPrice: 150000,
-    Status: 'Pending_Review',
+    id: 1,
+    seriesId: 1,
+    series: { title: 'Huyền Thoại Samurai', mangaka: { fullName: 'Nguyễn Minh Đức' } } as unknown as MockSeries,
+    chapterNumber: 5,
+    title: 'Thanh kiếm thức tỉnh',
+    submissionDeadline: '2026-06-18T23:59:59Z',
+    validPageCount: 5,
+    appliedGenkouryoPrice: 150000,
+    status: 'Pending_Review',
   },
   {
-    Id: 2,
-    SeriesId: 2,
-    Series: { Title: 'Học Viện Pháp Sư', Mangaka: { FullName: 'Trần Lê Hương' } } as MockSeries,
-    ChapterNumber: 12,
-    Title: 'Kỳ thi nhập học',
-    SubmissionDeadline: '2026-06-25T23:59:59Z',
-    ValidPageCount: 4,
-    AppliedGenkouryoPrice: 180000,
-    Status: 'Pending_Review',
+    id: 2,
+    seriesId: 2,
+    series: { title: 'Học Viện Pháp Sư', mangaka: { fullName: 'Trần Lê Hương' } } as unknown as MockSeries,
+    chapterNumber: 12,
+    title: 'Kỳ thi nhập học',
+    submissionDeadline: '2026-06-25T23:59:59Z',
+    validPageCount: 4,
+    appliedGenkouryoPrice: 180000,
+    status: 'Pending_Review',
   },
   {
-    Id: 3,
-    SeriesId: 3,
-    Series: { Title: 'Đầu Bếp Thượng Hạng', Mangaka: { FullName: 'Phạm Quốc Anh' } } as MockSeries,
-    ChapterNumber: 8,
-    Title: 'Trận chiến nhà bếp',
-    SubmissionDeadline: '2026-06-17T23:59:59Z',
-    ValidPageCount: 4,
-    AppliedGenkouryoPrice: 120000,
-    Status: 'Revision',
+    id: 3,
+    seriesId: 3,
+    series: { title: 'Đầu Bếp Thượng Hạng', mangaka: { fullName: 'Phạm Quốc Anh' } } as unknown as MockSeries,
+    chapterNumber: 8,
+    title: 'Trận chiến nhà bếp',
+    submissionDeadline: '2026-06-17T23:59:59Z',
+    validPageCount: 4,
+    appliedGenkouryoPrice: 120000,
+    status: 'Revision',
   },
 ];
 
 // ─── Page + Annotation builders ──────────────────────────────
 const buildPages = (chapterId: string, count: number): ReviewPageItem[] =>
   Array.from({ length: count }, (_, i) => ({
-    Id: parseInt(chapterId) * 100 + i,
-    PageNumber: i + 1,
-    CompositeImageUrl: `https://picsum.photos/seed/${chapterId}-p${i + 1}/1200/1750`,
+    id: parseInt(chapterId) * 100 + i,
+    pageNumber: i + 1,
+    compositeImageUrl: `https://picsum.photos/seed/${chapterId}-p${i + 1}/1200/1750`,
   }));
 
 const now = '2026-06-15T09:00:00Z';
@@ -81,11 +81,11 @@ const buildSeedAnnotations = (chapterId: string): Record<string, unknown>[] => [
 ];
 
 export const buildChapterReviewDetail = (chapterId: string): ChapterReviewDetail | null => {
-  const item = MOCK_REVIEW_QUEUE.find((c) => String(c.Id) === chapterId);
+  const item = MOCK_REVIEW_QUEUE.find((c) => String(c.id) === chapterId);
   if (!item) return null;
   return {
     ...item,
-    Pages: buildPages(chapterId, item.ValidPageCount || 0) as ChapterReviewDetail['Pages'],
-    Annotations: buildSeedAnnotations(chapterId),
+    pages: buildPages(chapterId, item.validPageCount || 0) as unknown as ChapterReviewDetail['pages'],
+    annotations: buildSeedAnnotations(chapterId),
   };
 };

@@ -21,7 +21,7 @@ export const scheduleApi = {
       return mockResponse<ScheduleItem[]>(MOCK_SCHEDULE.map((s) => ({ ...s })));
     }
     const res = await axiosInstance.get<ApiResponse<any[]>>('/api/publishing/schedule', { params: { month } });
-    const items: ScheduleItem[] = (res.data?.Data || []).map((ch: any) => ({
+    const items: ScheduleItem[] = (res.data?.data || []).map((ch: any) => ({
       id: ch.id?.toString() || '',
       seriesId: ch.seriesId?.toString() || '',
       seriesTitle: ch.series?.title || ch.title || 'Unknown Series',
