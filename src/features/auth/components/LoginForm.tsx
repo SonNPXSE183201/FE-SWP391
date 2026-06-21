@@ -1,30 +1,21 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { Mail, Lock, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
-import { useAuthStore } from '../../../stores/authStore';
+import { useAuthStore, type UserRole } from '../../../stores/authStore';
 import { authApi } from '../api/auth.api';
 
 export const LoginForm: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => localStorage.getItem('inku-remembered-email') || '');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem('inku-remembered-email'));
   const [localError, setLocalError] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
   const { setAuth, setLoading, isLoading } = useAuthStore();
-
-  useEffect(() => {
-    // Load saved email if exists
-    const savedEmail = localStorage.getItem('inku-remembered-email');
-    if (savedEmail) {
-      setEmail(savedEmail);
-      setRememberMe(true);
-    }
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +32,7 @@ export const LoginForm: React.FC = () => {
     try {
       const response = await authApi.login({ email, password });
 
-      if (response.IsSuccess && response.Data && response.Data.Token) {
+      if (response.success && response.data && response.data.token) {
         // Handle remember me
         if (rememberMe) {
           localStorage.setItem('inku-remembered-email', email);
@@ -50,20 +41,20 @@ export const LoginForm: React.FC = () => {
         }
 
         // Map backend role to frontend role
-        let mappedRole = response.Data.RoleName;
+        let mappedRole = response.data.roleName;
         if (mappedRole === 'System Admin') mappedRole = 'Admin';
         else if (mappedRole === 'Tantou Editor') mappedRole = 'Editor';
         else if (mappedRole === 'Editorial Board') mappedRole = 'Board';
 
         // Save to store (include RefreshToken)
         setAuth({
-          id: response.Data.UserId?.toString() || '0',
-          fullName: response.Data.FullName || response.Data.UserName || 'User',
-          email: response.Data.Email || email,
-          role: mappedRole as any
-        }, response.Data.Token, response.Data.RefreshToken || '');
+          id: response.data.userId?.toString() || '0',
+          fullName: response.data.fullName || response.data.userName || 'User',
+          email: response.data.email || email,
+          role: mappedRole as UserRole
+        }, response.data.token, response.data.refreshToken || '');
 
-        toast.success(response.Message || 'Đăng nhập thành công');
+        toast.success(response.message || 'Đăng nhập thành công');
 
         // Wait a tick for Zustand to update its persisted state before navigating
         setTimeout(() => {
@@ -73,7 +64,7 @@ export const LoginForm: React.FC = () => {
         return;
       }
 
-      const errorMsg = response.Message || 'Tên đăng nhập hoặc mật khẩu không chính xác.';
+      const errorMsg = response.message || 'Tên đăng nhập hoặc mật khẩu không chính xác.';
       setLocalError(errorMsg);
       toast.error(errorMsg);
     } catch (error: unknown) {

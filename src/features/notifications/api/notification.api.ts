@@ -3,7 +3,7 @@ import type { ApiResponse, NotificationDto as SchemaNotificationDto } from '../.
 import type { Notification } from '../../../types/entities';
 
 // ─── Toggle this to false when backend notification API is ready ───
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 // ─── Mock Data ───────────────────────────────────────────────
 const MOCK_NOTIFICATIONS: Notification[] = [
@@ -96,17 +96,17 @@ export interface NotificationListResponse {
 
 // ─── Mappers (mock camelCase → schema PascalCase) ────────────
 const toSchemaNotificationDto = (n: Notification): SchemaNotificationDto => ({
-  Id: Number(n.id.replace(/\D/g, '') || 0),
-  Content: n.message,
-  Type: n.type,
-  IsRead: n.isRead,
-  CreateAt: n.createdAt,
-  Title: n.title,
-  Link: n.link,
+  id: Number(n.id.replace(/\D/g, '') || 0),
+  content: n.message,
+  type: n.type,
+  isRead: n.isRead,
+  createAt: n.createdAt,
+  title: n.title,
+  link: n.link,
 });
 
 // Keep a mutable copy for mock state
-let mockState = MOCK_NOTIFICATIONS.map(n => ({ ...n }));
+const mockState = MOCK_NOTIFICATIONS.map(n => ({ ...n }));
 
 // ─── Notification API ────────────────────────────────────────
 export const notificationApi = {
@@ -136,11 +136,9 @@ export const notificationApi = {
   getUnreadCount: async () => {
     if (USE_MOCK) {
       await mockDelay(100);
-      return createMockAxiosResponse({
-        UnreadCount: mockState.filter(n => !n.isRead).length,
-      });
+      return createMockAxiosResponse(mockState.filter(n => !n.isRead).length);
     }
-    return axiosInstance.get<ApiResponse<{ UnreadCount: number }>>('/api/notifications/unread-count');
+    return axiosInstance.get<ApiResponse<number>>('/api/notifications/unread-count');
   },
 
   /**

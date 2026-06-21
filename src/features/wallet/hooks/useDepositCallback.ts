@@ -44,10 +44,10 @@ export const useDepositCallback = () => {
             message: apiData.Message || 'Giao dịch nạp tiền thất bại hoặc bị hủy.',
           });
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         setState({
           status: 'error',
-          message: error?.response?.data?.Message || 'Có lỗi xảy ra khi xác thực giao dịch.',
+          message: (error as { response?: { data?: { Message?: string } } })?.response?.data?.Message || 'Có lỗi xảy ra khi xác thực giao dịch.',
         });
       }
     };

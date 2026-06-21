@@ -20,16 +20,16 @@ export const scheduleApi = {
       await mockDelay();
       return mockResponse<ScheduleItem[]>(MOCK_SCHEDULE.map((s) => ({ ...s })));
     }
-    const res = await axiosInstance.get<ApiResponse<any[]>>('/api/publishing/schedule', { params: { month } });
-    const items: ScheduleItem[] = (res.data?.Data || []).map((ch: any) => ({
-      id: ch.id?.toString() || '',
-      seriesId: ch.seriesId?.toString() || '',
-      seriesTitle: ch.series?.title || ch.title || 'Unknown Series',
-      chapterLabel: `Chapter ${ch.chapterNumber}`,
-      mangakaName: ch.series?.mangaka?.fullName || 'Unknown Mangaka',
-      coverUrl: ch.series?.coverUrl || undefined,
-      publishDate: ch.submissionDeadline || new Date().toISOString(),
-      status: ch.status === 'Published' ? 'Published' : (new Date(ch.submissionDeadline) < new Date() ? 'Delayed' : 'Scheduled'),
+    const res = await axiosInstance.get<ApiResponse<Record<string, unknown>[]>>('/api/publishing/schedule', { params: { month } });
+    const items: ScheduleItem[] = (res.data?.data || []).map((ch: Record<string, unknown>) => ({
+      id: String(ch.id ?? ''),
+      seriesId: String(ch.seriesId ?? ''),
+      seriesTitle: String((ch.series as Record<string, unknown> | undefined)?.title ?? ch.title ?? 'Unknown Series'),
+      chapterLabel: `Chapter ${String(ch.chapterNumber ?? '')}`,
+      mangakaName: String((ch.series as Record<string, unknown> | undefined)?.mangaka ? ((ch.series as Record<string, unknown>).mangaka as Record<string, unknown>).fullName : 'Unknown Mangaka'),
+      coverUrl: ((ch.series as Record<string, unknown> | undefined)?.coverUrl as string | undefined) || undefined,
+      publishDate: String(ch.submissionDeadline ?? new Date().toISOString()),
+      status: ch.status === 'Published' ? 'Published' : (new Date(String(ch.submissionDeadline)) < new Date() ? 'Delayed' : 'Scheduled'),
       genres: [],
     }));
     return { data: { IsSuccess: true, Message: 'Success', Data: items } };

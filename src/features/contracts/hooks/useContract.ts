@@ -9,7 +9,6 @@ export const useApprovedSeries = () =>
   useQuery({
     queryKey: KEYS.approvedSeries,
     queryFn: () => contractApi.getApprovedSeries(),
-    select: (res) => res.data?.Data ?? [],
   });
 
 export const useCreateContract = () => {
@@ -17,6 +16,19 @@ export const useCreateContract = () => {
   return useMutation({
     mutationFn: ({ seriesId, baseGenkouryoPrice }: { seriesId: string; baseGenkouryoPrice: number }) =>
       contractApi.createContract(seriesId, baseGenkouryoPrice),
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.approvedSeries }),
+  });
+};
+
+export const useUpdateContract = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { contractId: string; genkouryoPrice?: number; endDate?: string }) =>
+      contractApi.updateContract({
+        contractId: payload.contractId,
+        genkouryoPrice: payload.genkouryoPrice,
+        endDate: payload.endDate,
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.approvedSeries }),
   });
 };

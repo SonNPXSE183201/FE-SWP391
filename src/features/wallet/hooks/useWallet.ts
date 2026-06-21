@@ -1,7 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
 import { walletApi } from '../api/wallet.api';
 import type { Wallet, Transaction, TransactionType } from '../../../types/entities';
+import type { WalletDetailsDto, TransactionDto } from '../../../api/generated/types';
 import { useAuthStore } from '../../../stores/authStore';
+
+type WalletApiEnvelope = {
+  IsSuccess?: boolean;
+  success?: boolean;
+  Message?: string;
+  message?: string;
+  Data?: WalletDetailsDto;
+  data?: WalletDetailsDto;
+};
+
+type LegacyWalletRow = Record<string, string | number | undefined>;
 
 export const useWallet = () => {
   const user = useAuthStore(state => state.user);
@@ -12,26 +24,31 @@ export const useWallet = () => {
       const response = await walletApi.getMyWallet();
       
       // Backend returns ApiResponse where IsSuccess and Data are PascalCase
-      const apiResponse = response.data as any;
-      if (!apiResponse.IsSuccess || !apiResponse.Data) {
-        throw new Error(apiResponse.Message || 'Failed to fetch wallet data');
+      const apiResponse = response.data as WalletApiEnvelope;
+      if (!apiResponse.IsSuccess && !apiResponse.success) {
+        throw new Error(apiResponse.Message || apiResponse.message || 'Failed to fetch wallet data');
       }
 
-      const backendData = apiResponse.Data;
-      const bWallet = backendData.Wallet;
+      const backendData = (apiResponse.data || apiResponse.Data) as WalletDetailsDto & {
+        Wallet?: LegacyWalletRow;
+        Transactions?: TransactionDto[];
+      };
+      const bWallet = (backendData.wallet || backendData.Wallet || {}) as LegacyWalletRow;
       
       const wallet: Wallet = {
-        id: String(bWallet.Id),
-        userId: String(bWallet.UserId),
-        setupFundBalance: Number(bWallet.SetupFundBalance || 0),
-        withdrawableBalance: Number(bWallet.WithdrawableBalance || 0),
-        lockedAmount: Number(bWallet.LockedFund || 0) + Number(bWallet.LockedWithdrawable || 0),
-        totalBalance: Number(bWallet.SetupFundBalance || 0) + Number(bWallet.WithdrawableBalance || 0),
-        createdAt: bWallet.CreateAt,
-        updatedAt: bWallet.UpdateAt,
+        id: String(bWallet.id || bWallet.Id),
+        userId: String(bWallet.userId || bWallet.UserId),
+        setupFundBalance: Number(bWallet.setupFundBalance || bWallet.SetupFundBalance || 0),
+        withdrawableBalance: Number(bWallet.withdrawableBalance || bWallet.WithdrawableBalance || 0),
+        lockedAmount: Number(bWallet.lockedFund || bWallet.LockedFund || 0) + Number(bWallet.lockedWithdrawable || bWallet.LockedWithdrawable || 0),
+        totalBalance: Number(bWallet.setupFundBalance || bWallet.SetupFundBalance || 0) + Number(bWallet.withdrawableBalance || bWallet.WithdrawableBalance || 0),
+        createdAt: bWallet.createAt || bWallet.CreateAt,
+        updatedAt: bWallet.updateAt || bWallet.UpdateAt,
       } as Wallet;
 
-      const transactions: Transaction[] = (backendData.Transactions || []).map((tx: any) => {
+      const transactions: Transaction[] = (backendData.transactions || backendData.Transactions || []).map((tx: TransactionDto & LegacyWalletRow) => {
+        const txType = tx.type || (tx.Type as string | undefined);
+        const txStatus = tx.status || (tx.Status as string | undefined);
         const typeVi = {
           'Deposit': 'Nạp tiền',
           'Withdraw': 'Rút tiền',
@@ -42,22 +59,22 @@ export const useWallet = () => {
           'Transfer': 'Thanh toán',
           'Funding': 'Cấp vốn',
           'Genkouryo': 'Nhuận bút',
-        }[tx.Type as string] || tx.Type;
+        }[txType as string] || txType;
 
-        const statusVi = tx.Status === 'Success' ? 'Thành công' : tx.Status === 'Pending' ? 'Đang xử lý' : tx.Status === 'Failed' ? 'Thất bại' : tx.Status;
+        const statusVi = txStatus === 'Success' ? 'Thành công' : txStatus === 'Pending' ? 'Đang xử lý' : txStatus === 'Failed' ? 'Thất bại' : txStatus;
 
         return {
-          id: String(tx.Id),
-          walletId: String(tx.WalletId),
-          type: tx.Type as TransactionType,
-          amount: Number(tx.Amount || 0),
-          setupFundAmount: Number(tx.SetupFundAmount || 0),
-          withdrawableAmount: Number(tx.WithdrawableAmount || 0),
-          referenceId: tx.ReferenceId ? String(tx.ReferenceId) : undefined,
-          referenceCode: tx.ReferenceCode || '',
-          description: tx.Description || `Giao dịch ${typeVi} (${statusVi})`,
-          createdAt: tx.CreateAt,
-          updatedAt: tx.UpdateAt,
+          id: String(tx.id || tx.Id),
+          walletId: String(tx.walletId || tx.WalletId),
+          type: txType as TransactionType,
+          amount: Number(tx.amount || tx.Amount || 0),
+          setupFundAmount: Number(tx.setupFundAmount || tx.SetupFundAmount || 0),
+          withdrawableAmount: Number(tx.withdrawableAmount || tx.WithdrawableAmount || 0),
+          referenceId: (tx.referenceId || tx.ReferenceId) ? String(tx.referenceId || tx.ReferenceId) : undefined,
+          referenceCode: tx.referenceCode || tx.ReferenceCode || '',
+          description: tx.description || tx.Description || `Giao dịch ${typeVi} (${statusVi})`,
+          createdAt: tx.createAt || tx.CreateAt,
+          updatedAt: tx.updateAt || tx.UpdateAt,
         };
       });
 

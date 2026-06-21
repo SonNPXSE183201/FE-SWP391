@@ -24,7 +24,7 @@ import {
   MapPin,
 } from 'lucide-react';
 import { useDisputes, useDisputeDetail, useResolveDispute } from '../hooks/useDispute';
-import type { DisputeListItem, DisputeEvidence } from '../api/dispute.api';
+import type { DisputeListItemDto, DisputeEvidenceDto } from '../api/dispute.api';
 
 // ─── Helpers ───
 const formatCurrency = (value: number): string =>
@@ -46,7 +46,7 @@ const statusConfig: Record<string, { label: string; color: string; bg: string; i
 };
 
 // ─── Evidence Card ───
-const EvidenceCard = ({ ev }: { ev: DisputeEvidence }) => {
+const EvidenceCard = ({ ev }: { ev: DisputeEvidenceDto }) => {
   const isMangaka = ev.submittedBy === 'Mangaka';
   const borderColor = isMangaka ? 'border-orange-400/30' : 'border-blue-400/30';
   const badgeBg = isMangaka ? 'bg-orange-400/10 text-orange-400' : 'bg-blue-400/10 text-blue-400';
@@ -63,14 +63,14 @@ const EvidenceCard = ({ ev }: { ev: DisputeEvidence }) => {
             {ev.submittedBy}
           </span>
         </div>
-        <span className="text-[10px] text-text-muted">{formatDateTime(ev.createdAt)}</span>
+        <span className="text-[10px] text-text-muted">{formatDateTime(ev.createdAt ?? '')}</span>
       </div>
 
       {ev.type === 'text' ? (
         <p className="text-sm text-text-secondary leading-relaxed">{ev.content}</p>
       ) : (
         <div className="rounded-lg overflow-hidden border border-border-custom">
-          <img src={ev.content} alt="Evidence" className="w-full h-48 object-cover" />
+          <img src={ev.content ?? ''} alt="Evidence" className="w-full h-48 object-cover" />
         </div>
       )}
     </div>
@@ -79,7 +79,7 @@ const EvidenceCard = ({ ev }: { ev: DisputeEvidence }) => {
 
 // ─── Main Component ───
 export const DisputeManagementFeature = () => {
-  const [selectedDisputeId, setSelectedDisputeId] = useState<string | null>(null);
+  const [selectedDisputeId, setSelectedDisputeId] = useState<number | null>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | 'Open' | 'Resolved' | 'Closed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -90,29 +90,29 @@ export const DisputeManagementFeature = () => {
 
   // ─── Queries ───
   const { data: disputes = [], isLoading: listLoading } = useDisputes();
-  const { data: disputeDetail, isLoading: detailLoading } = useDisputeDetail(selectedDisputeId ?? '');
+  const { data: disputeDetail, isLoading: detailLoading } = useDisputeDetail(selectedDisputeId ?? 0);
   const resolveDispute = useResolveDispute();
 
   // ─── Filters ───
   const filteredDisputes = useMemo(() => {
-    return disputes.filter((d: DisputeListItem) => {
+    return disputes.filter((d: DisputeListItemDto) => {
       const matchesStatus = filterStatus === 'all' || d.status === filterStatus;
       const q = searchQuery.toLowerCase();
       const matchesSearch =
         !q ||
-        d.taskTitle.toLowerCase().includes(q) ||
-        d.seriesTitle.toLowerCase().includes(q) ||
-        d.mangakaName.toLowerCase().includes(q) ||
-        d.assistantName.toLowerCase().includes(q);
+        (d.taskTitle ?? '').toLowerCase().includes(q) ||
+        (d.seriesTitle ?? '').toLowerCase().includes(q) ||
+        (d.mangakaName ?? '').toLowerCase().includes(q) ||
+        (d.assistantName ?? '').toLowerCase().includes(q);
       return matchesStatus && matchesSearch;
     });
   }, [disputes, filterStatus, searchQuery]);
 
   const statusCounts = useMemo(() => ({
     all: disputes.length,
-    Open: disputes.filter((d: DisputeListItem) => d.status === 'Open').length,
-    Resolved: disputes.filter((d: DisputeListItem) => d.status === 'Resolved').length,
-    Closed: disputes.filter((d: DisputeListItem) => d.status === 'Closed').length,
+    Open: disputes.filter((d: DisputeListItemDto) => d.status === 'Open').length,
+    Resolved: disputes.filter((d: DisputeListItemDto) => d.status === 'Resolved').length,
+    Closed: disputes.filter((d: DisputeListItemDto) => d.status === 'Closed').length,
   }), [disputes]);
 
   // ─── Handlers ───
@@ -165,11 +165,13 @@ export const DisputeManagementFeature = () => {
       );
     }
 
-    const sc = statusConfig[disputeDetail.status] ?? statusConfig.Open;
-    const assistantAmount = Math.round(disputeDetail.lockedAmount * assistantPercent / 100);
-    const mangakaRefund = disputeDetail.lockedAmount - assistantAmount;
-    const mangakaEvidence = disputeDetail.evidence.filter(e => e.submittedBy === 'Mangaka');
-    const assistantEvidence = disputeDetail.evidence.filter(e => e.submittedBy === 'Assistant');
+    const sc = statusConfig[disputeDetail.status ?? 'Open'] ?? statusConfig.Open;
+    const lockedAmt = disputeDetail.lockedAmount ?? 0;
+    const assistantAmount = Math.round(lockedAmt * assistantPercent / 100);
+    const mangakaRefund = lockedAmt - assistantAmount;
+    const evidenceList = disputeDetail.evidence ?? [];
+    const mangakaEvidence = evidenceList.filter(e => e.submittedBy === 'Mangaka');
+    const assistantEvidence = evidenceList.filter(e => e.submittedBy === 'Assistant');
 
     return (
       <div className="animate-fade-in">
@@ -189,7 +191,7 @@ export const DisputeManagementFeature = () => {
               </span>
             </div>
             <p className="text-xs text-text-muted mt-0.5">
-              {disputeDetail.seriesTitle} • {disputeDetail.chapterTitle} • Mở lúc {formatDateTime(disputeDetail.createdAt)}
+              {disputeDetail.seriesTitle} • {disputeDetail.chapterTitle} • Mở lúc {formatDateTime(disputeDetail.createdAt ?? '')}
             </p>
           </div>
         </div>
@@ -217,12 +219,12 @@ export const DisputeManagementFeature = () => {
                 <div className="bg-bg-surface border border-border-custom rounded-lg p-3">
                   <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">Deadline</p>
                   <p className="text-sm font-medium text-text-primary flex items-center gap-1.5">
-                    <Clock size={12} className="text-text-muted" /> {formatDateTime(disputeDetail.taskDeadline)}
+                    <Clock size={12} className="text-text-muted" /> {formatDateTime(disputeDetail.taskDeadline ?? '')}
                   </p>
                 </div>
                 <div className="bg-bg-surface border border-border-custom rounded-lg p-3">
                   <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">Số tiền Lock</p>
-                  <p className="text-sm font-bold text-amber-400">{formatCurrency(disputeDetail.lockedAmount)}</p>
+                  <p className="text-sm font-bold text-amber-400">{formatCurrency(lockedAmt)}</p>
                 </div>
               </div>
             </div>
@@ -259,9 +261,9 @@ export const DisputeManagementFeature = () => {
             <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
               <div className="flex items-center gap-2 mb-4">
                 <ImageIcon size={16} className="text-brand" />
-                <h2 className="text-sm font-semibold text-text-primary">Bằng chứng ({disputeDetail.evidence.length})</h2>
+                <h2 className="text-sm font-semibold text-text-primary">Bằng chứng ({evidenceList.length})</h2>
               </div>
-              {disputeDetail.evidence.length === 0 ? (
+              {evidenceList.length === 0 ? (
                 <p className="text-sm text-text-muted text-center py-6">Chưa có bằng chứng nào được gửi.</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -272,7 +274,7 @@ export const DisputeManagementFeature = () => {
                       <span className="text-xs font-medium text-text-secondary">Từ Mangaka ({mangakaEvidence.length})</span>
                     </div>
                     {mangakaEvidence.length > 0 ? (
-                      mangakaEvidence.map(ev => <EvidenceCard key={ev.id} ev={ev} />)
+                      mangakaEvidence.map((ev: DisputeEvidenceDto, idx: number) => <EvidenceCard key={`mangaka-${idx}`} ev={ev} />)
                     ) : (
                       <p className="text-xs text-text-muted text-center py-4">Không có</p>
                     )}
@@ -284,7 +286,7 @@ export const DisputeManagementFeature = () => {
                       <span className="text-xs font-medium text-text-secondary">Từ Assistant ({assistantEvidence.length})</span>
                     </div>
                     {assistantEvidence.length > 0 ? (
-                      assistantEvidence.map(ev => <EvidenceCard key={ev.id} ev={ev} />)
+                      assistantEvidence.map((ev: DisputeEvidenceDto, idx: number) => <EvidenceCard key={`assistant-${idx}`} ev={ev} />)
                     ) : (
                       <p className="text-xs text-text-muted text-center py-4">Không có</p>
                     )}
@@ -333,24 +335,14 @@ export const DisputeManagementFeature = () => {
               <div className="bg-bg-surface border border-border-custom rounded-xl p-4 space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-text-muted">Số tiền Lock</span>
-                  <span className="text-sm font-bold text-text-primary">{formatCurrency(disputeDetail.lockedAmount)}</span>
+                  <span className="text-sm font-bold text-text-primary">{formatCurrency(lockedAmt)}</span>
                 </div>
-                {disputeDetail.status === 'Resolved' && disputeDetail.assistantPaymentPercent != null && (
+                {disputeDetail.status === 'Resolved' && disputeDetail.resolution && (
                   <>
                     <div className="h-px bg-border-custom" />
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-blue-400">→ Assistant nhận</span>
-                      <span className="text-sm font-medium text-blue-400">
-                        {formatCurrency(Math.round(disputeDetail.lockedAmount * disputeDetail.assistantPaymentPercent / 100))}
-                        <span className="text-[10px] ml-1">({disputeDetail.assistantPaymentPercent}%)</span>
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-orange-400">← Mangaka hoàn</span>
-                      <span className="text-sm font-medium text-orange-400">
-                        {formatCurrency(disputeDetail.lockedAmount - Math.round(disputeDetail.lockedAmount * disputeDetail.assistantPaymentPercent / 100))}
-                        <span className="text-[10px] ml-1">({100 - disputeDetail.assistantPaymentPercent}%)</span>
-                      </span>
+                      <span className="text-xs text-text-muted">Kết quả</span>
+                      <span className="text-sm font-medium text-emerald-400">{disputeDetail.resolution}</span>
                     </div>
                   </>
                 )}
@@ -388,15 +380,15 @@ export const DisputeManagementFeature = () => {
                   <div className="w-2 h-2 rounded-full bg-amber-400 mt-1.5 flex-shrink-0" />
                   <div>
                     <p className="text-xs font-medium text-text-primary">Mở tranh chấp</p>
-                    <p className="text-[10px] text-text-muted">{formatDateTime(disputeDetail.createdAt)}</p>
+                    <p className="text-[10px] text-text-muted">{formatDateTime(disputeDetail.createdAt ?? '')}</p>
                   </div>
                 </div>
-                {disputeDetail.evidence.length > 0 && (
+                {evidenceList.length > 0 && (
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 rounded-full bg-blue-400 mt-1.5 flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-medium text-text-primary">{disputeDetail.evidence.length} bằng chứng đã gửi</p>
-                      <p className="text-[10px] text-text-muted">Lần cuối: {formatDateTime(disputeDetail.evidence[disputeDetail.evidence.length - 1].createdAt)}</p>
+                      <p className="text-xs font-medium text-text-primary">{evidenceList.length} bằng chứng đã gửi</p>
+                      <p className="text-[10px] text-text-muted">Lần cuối: {formatDateTime(evidenceList[evidenceList.length - 1].createdAt ?? '')}</p>
                     </div>
                   </div>
                 )}
@@ -446,7 +438,7 @@ export const DisputeManagementFeature = () => {
                 {/* Locked Amount */}
                 <div className="bg-bg-surface border border-border-custom rounded-xl p-4 text-center">
                   <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">Tổng tiền Lock</p>
-                  <p className="text-2xl font-bold text-text-primary">{formatCurrency(disputeDetail.lockedAmount)}</p>
+                  <p className="text-2xl font-bold text-text-primary">{formatCurrency(lockedAmt)}</p>
                 </div>
 
                 {/* Slider */}
@@ -595,9 +587,8 @@ export const DisputeManagementFeature = () => {
               `}
             >
               {tab.label}
-              <span className={`ml-1.5 px-1.5 py-0.5 rounded-md text-[10px] ${
-                filterStatus === tab.key ? 'bg-brand/20' : 'bg-bg-secondary'
-              }`}>
+              <span className={`ml-1.5 px-1.5 py-0.5 rounded-md text-[10px] ${filterStatus === tab.key ? 'bg-brand/20' : 'bg-bg-secondary'
+                }`}>
                 {tab.count}
               </span>
             </button>
@@ -626,12 +617,12 @@ export const DisputeManagementFeature = () => {
 
       {/* ─── Dispute Cards ─── */}
       <div className="space-y-3">
-        {!listLoading && filteredDisputes.map((dispute: DisputeListItem) => {
-          const sc = statusConfig[dispute.status] ?? statusConfig.Open;
+        {!listLoading && filteredDisputes.map((dispute: DisputeListItemDto) => {
+          const sc = statusConfig[dispute.status ?? 'Open'] ?? statusConfig.Open;
           return (
             <div
               key={dispute.id}
-              onClick={() => setSelectedDisputeId(dispute.id)}
+              onClick={() => setSelectedDisputeId(dispute.id ?? 0)}
               className="bg-bg-secondary border border-border-custom rounded-xl p-5 hover:border-brand/20 transition-all duration-200 cursor-pointer group"
             >
               <div className="flex items-center gap-4">
@@ -667,9 +658,9 @@ export const DisputeManagementFeature = () => {
 
                 {/* Right Info */}
                 <div className="hidden sm:flex flex-col items-end gap-1 flex-shrink-0">
-                  <span className="text-sm font-bold text-text-primary">{formatCurrency(dispute.lockedAmount)}</span>
+                  <span className="text-sm font-bold text-text-primary">{formatCurrency(dispute.lockedAmount ?? 0)}</span>
                   <span className="text-[10px] text-text-muted flex items-center gap-1">
-                    <Clock size={10} /> {formatDate(dispute.createdAt)}
+                    <Clock size={10} /> {formatDate(dispute.createdAt ?? '')}
                   </span>
                 </div>
 
