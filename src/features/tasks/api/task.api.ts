@@ -9,10 +9,8 @@ import { MOCK_TASKS } from '../data/mockData';
 import type { MockTask } from '../data/mockData';
 import { MOCK_WALLET, MOCK_TRANSACTIONS } from '../../wallet/data/mockData';
 
-// ─── Mock chỉ cho flow chưa có BE (getById, submit cần Firebase URL) ───
+// ─── Mock ──────────────────────────────────────────────────
 const USE_MOCK = false;
-const FORCE_MOCK_GET_BY_ID = true; // BE chưa có GET /api/tasks/{id}
-const FORCE_MOCK_SUBMIT = true; // BE cần SubmittedFileUrl — chờ Firebase upload
 
 import { components } from '../../../api/generated/schema';
 import type { TaskStatus, Task } from '../../../types/entities';
@@ -188,7 +186,7 @@ export const taskApi = {
   },
 
   getById: async (taskId: string) => {
-    if (USE_MOCK || FORCE_MOCK_GET_BY_ID) {
+    if (USE_MOCK) {
       await mockDelay(200);
       const task = MOCK_TASKS.find((t) => t.id === taskId);
       if (!task) {
@@ -196,7 +194,36 @@ export const taskApi = {
       }
       return createMockAxiosResponse(task);
     }
-    return axiosInstance.get<ApiResponse<TasksDto>>(`/api/tasks/${taskId}`);
+    // Lách luật: BE chưa có GET /api/tasks/{id}, nên FE phải tìm task trong các list
+    try {
+      const [mangakaRes, myTasksRes, availableRes] = await Promise.allSettled([
+        axiosInstance.get<ApiResponse<TasksDto[]>>('/api/tasks/mangaka-list'),
+        axiosInstance.get<PagedApiResponse<TasksDto>>('/api/tasks/my-tasks', { params: { PageSize: 100 } }),
+        axiosInstance.get<PagedApiResponse<TasksDto>>('/api/tasks/available', { params: { PageSize: 100 } })
+      ]);
+
+      let taskDto: TasksDto | undefined;
+
+      if (mangakaRes.status === 'fulfilled' && mangakaRes.value.data.Data) {
+        taskDto = mangakaRes.value.data.Data.find((t) => t.Id?.toString() === taskId);
+      }
+      if (!taskDto && myTasksRes.status === 'fulfilled' && myTasksRes.value.data.Data?.Items) {
+        taskDto = myTasksRes.value.data.Data.Items.find((t) => t.Id?.toString() === taskId);
+      }
+      if (!taskDto && availableRes.status === 'fulfilled' && availableRes.value.data.Data?.Items) {
+        taskDto = availableRes.value.data.Data.Items.find((t) => t.Id?.toString() === taskId);
+      }
+
+      if (taskDto) {
+        return createMockAxiosResponse(taskDto);
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return { data: { IsSuccess: false, success: false, Message: 'Task not found', Data: null } } as any;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return { data: { IsSuccess: false, success: false, Message: 'Lỗi khi lấy thông tin Task', Data: null } } as any;
+    }
   },
 
   // Mangaka creates task (F2.3) — triggers Lock (T01)
@@ -265,13 +292,23 @@ export const taskApi = {
     return axiosInstance.post<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/accept`);
   },
 
+  // Upload file (dùng cho submitResult)
+  uploadFile: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await axiosInstance.post<ApiResponse<string>>('/api/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data.Data;
+  },
+
   // Assistant downloads resource (F2.7)
   downloadResource: (taskId: string) =>
     axiosInstance.get(`/api/tasks/${taskId}/resource`, { responseType: 'blob' }),
 
   // Assistant submits result (F2.8)
   submitResult: async (taskId: string, data: SubmitTaskResultRequest) => {
-    if (USE_MOCK || FORCE_MOCK_SUBMIT) {
+    if (USE_MOCK) {
       await mockDelay(600);
       const task = MOCK_TASKS.find((t) => t.id === taskId || t.id === `task-${taskId}`);
       if (task) {
@@ -282,8 +319,16 @@ export const taskApi = {
       }
       return createMockAxiosResponse({ taskId } as unknown as TaskVersionDto, 'Nộp bài thành công');
     }
+    
+    // 1. Upload file trước để lấy URL
+    const fileUrl = await taskApi.uploadFile(data.image);
+    if (!fileUrl) {
+      throw new Error('Upload file thất bại');
+    }
+
+    // 2. Gọi API submit
     return axiosInstance.post<ApiResponse<unknown>>(`/api/tasks/${taskId}/submit`, {
-      SubmittedFileUrl: data.image.name, // TODO: upload Firebase → public URL
+      SubmittedFileUrl: fileUrl,
     });
   },
 
@@ -355,7 +400,7 @@ export const taskApi = {
 
   // Cancel (T03b, T05)
   cancel: (taskId: string, reason?: string) =>
-    axiosInstance.put<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/cancel`, { reason }),
+    axiosInstance.post<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/emergency-cancel`, { reason }),
 
   // On_Leave toggle (F2.14)
   toggleOnLeave: (onLeave: boolean) =>
