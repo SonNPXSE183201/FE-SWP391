@@ -3,7 +3,7 @@ import { disputeApi } from '../api/dispute.api';
 
 const KEYS = {
   disputes: ['disputes'] as const,
-  disputeDetail: (id: string) => ['disputes', id] as const,
+  disputeDetail: (id: number | string) => ['disputes', id] as const,
 };
 
 export const useDisputes = () =>
@@ -13,7 +13,7 @@ export const useDisputes = () =>
     select: (res) => res.data?.Data ?? [],
   });
 
-export const useDisputeDetail = (disputeId: string) =>
+export const useDisputeDetail = (disputeId: number | string) =>
   useQuery({
     queryKey: KEYS.disputeDetail(disputeId),
     queryFn: () => disputeApi.getDisputeDetail(disputeId),
@@ -24,7 +24,7 @@ export const useDisputeDetail = (disputeId: string) =>
 export const useResolveDispute = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ disputeId, payload }: { disputeId: string; payload: { assistantPaymentPercent: number; editorNote: string } }) =>
+    mutationFn: ({ disputeId, payload }: { disputeId: number | string; payload: { assistantPaymentPercent: number; editorNote: string } }) =>
       disputeApi.resolveDispute(disputeId, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEYS.disputes });
