@@ -1,6 +1,7 @@
 import { axiosInstance } from '../../../api/axios';
 import type { ApiResponse, SeriesDto, TasksDto, TransactionDto, WalletDetailsDto } from '../../../api/generated/types';
 import type { components } from '../../../api/generated/schema';
+import { unwrapApiData, getPagedItems } from '../../../api/apiResponse';
 
 type DashboardStatsDto = components['schemas']['DashboardStatsResponseDto'];
 type AdminDashboardDto = components['schemas']['AdminDashboardResponseDto'];
@@ -132,53 +133,26 @@ const mockDelay = (ms: number = 400) =>
 
 const createMockAxiosResponse = <T>(data: T, message = 'Success') => ({
   data: {
-    IsSuccess: true,
-    Message: message,
-    Data: data,
-  },
+    success: true,
+    statusCode: 200,
+    message,
+    data,
+  } satisfies ApiResponse<T>,
 });
-
-const unwrapData = <T>(payload: ApiResponse<T> | undefined, fallbackMessage: string): T => {
-  if (!payload?.IsSuccess && payload?.success !== true) {
-    throw new Error(payload?.Message || fallbackMessage);
-  }
-  if (payload.Data === undefined || payload.Data === null) {
-    throw new Error(fallbackMessage);
-  }
-  return payload.Data;
-};
 
 const fetchDashboardStats = async (): Promise<DashboardStatsDto> => {
   const res = await axiosInstance.get<ApiResponse<DashboardStatsDto>>('/api/dashboard/stats');
-  return unwrapData(res.data, 'Không tải được thống kê dashboard');
+  return unwrapApiData(res.data, 'Không tải được thống kê dashboard');
 };
 
-const extractTaskItems = (data: unknown): TasksDto[] => {
-  if (Array.isArray(data)) return data;
-  if (data && typeof data === 'object' && 'Items' in data) {
-    return ((data as { Items?: TasksDto[] }).Items) ?? [];
-  }
-  return [];
-};
+const extractTaskItems = (data: unknown): TasksDto[] => getPagedItems(data as TasksDto[] | { items?: TasksDto[] });
 
-const extractSeriesItems = (data: unknown): SeriesDto[] => {
-  if (Array.isArray(data)) return data;
-  if (data && typeof data === 'object' && 'Items' in data) {
-    return ((data as { Items?: SeriesDto[] }).Items) ?? [];
-  }
-  return [];
-};
+const extractSeriesItems = (data: unknown): SeriesDto[] => getPagedItems(data as SeriesDto[] | { items?: SeriesDto[] });
 
 const getMonthStart = () => new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
-/** BE serializes PascalCase; OpenAPI schema may use camelCase — read both. */
-const statNum = (
-  dto: DashboardStatsDto,
-  camel: keyof DashboardStatsDto,
-  pascal: string,
-): number => {
-  const raw = dto as Record<string, unknown>;
-  const val = raw[camel] ?? raw[pascal];
+const statNum = (dto: DashboardStatsDto, key: keyof DashboardStatsDto): number => {
+  const val = dto[key];
   return val == null ? 0 : Number(val);
 };
 
@@ -314,8 +288,8 @@ export const dashboardApi = {
       axiosInstance.get<ApiResponse<WalletDetailsDto>>('/api/wallets/me'),
     ]);
 
-    const seriesList = extractSeriesItems(unwrapData(seriesRes.data, 'Không tải được danh sách series'));
-    const walletData = unwrapData(walletRes.data, 'Không tải được ví');
+    const seriesList = extractSeriesItems(unwrapApiData(seriesRes.data, 'Không tải được danh sách series'));
+    const walletData = unwrapApiData(walletRes.data, 'Không tải được ví');
     const wallet = walletData.wallet ?? {};
     const transactions = walletData.transactions ?? [];
 
@@ -327,9 +301,9 @@ export const dashboardApi = {
       .reduce((sum: number, tx: TransactionDto) => sum + Number(tx.amount ?? 0), 0);
 
     const stats: MangakaDashboardStatsDto = {
-      activeSeries: statNum(statsDto, 'inProductionSeries', 'InProductionSeries') || statNum(statsDto, 'mySeries', 'MySeries') || seriesList.length,
+      activeSeries: statNum(statsDto, 'inProductionSeries') || statNum(statsDto, 'mySeries') || seriesList.length,
       pendingChapters: 0, // TODO: chapters API
-      activeTasks: statNum(statsDto, 'openTasks', 'OpenTasks'),
+      activeTasks: statNum(statsDto, 'openTasks'),
       walletBalance,
       monthlyGenkouryo,
       completedTasks: seriesList.filter((s: SeriesDto) => s.status === 'Published' || s.status === 'Approved').length,
@@ -370,8 +344,8 @@ export const dashboardApi = {
       axiosInstance.get<ApiResponse<WalletDetailsDto>>('/api/wallets/me'),
     ]);
 
-    const tasksList = extractTaskItems(unwrapData(tasksRes.data, 'Không tải được danh sách task'));
-    const walletData = unwrapData(walletRes.data, 'Không tải được ví');
+    const tasksList = extractTaskItems(unwrapApiData(tasksRes.data, 'Không tải được danh sách task'));
+    const walletData = unwrapApiData(walletRes.data, 'Không tải được ví');
     const transactions = walletData.transactions ?? [];
 
     const inProgress = tasksList.filter((t: TasksDto) => t.status === 'In_Progress').length;
@@ -423,7 +397,7 @@ export const dashboardApi = {
         recentActivities: MOCK_ADMIN_RECENT,
       });
     }
-    const data = unwrapData(
+    const data = unwrapApiData(
       (await axiosInstance.get<ApiResponse<AdminDashboardDto>>('/api/dashboard/admin')).data,
       'Không tải được dashboard admin',
     );
@@ -459,10 +433,10 @@ export const dashboardApi = {
 
     return createMockAxiosResponse<EditorDashboardResponse>({
       stats: {
-        reviewing: statNum(statsDto, 'seriesAwaitingReview', 'SeriesAwaitingReview'),
-        pending: statNum(statsDto, 'pendingSeries', 'PendingSeries'),
+        reviewing: statNum(statsDto, 'seriesAwaitingReview'),
+        pending: statNum(statsDto, 'pendingSeries'),
         disputes: 0, // TODO: GET /api/disputes
-        completed: statNum(statsDto, 'inProductionSeries', 'InProductionSeries'),
+        completed: statNum(statsDto, 'inProductionSeries'),
       },
       recentActivities: [],
     });
@@ -480,8 +454,8 @@ export const dashboardApi = {
 
     return createMockAxiosResponse<BoardDashboardResponse>({
       stats: {
-        votes: statNum(statsDto, 'pendingSeries', 'PendingSeries'),
-        active: statNum(statsDto, 'inProductionSeries', 'InProductionSeries') || statNum(statsDto, 'approvedSeries', 'ApprovedSeries'),
+        votes: statNum(statsDto, 'pendingSeries'),
+        active: statNum(statsDto, 'inProductionSeries') || statNum(statsDto, 'approvedSeries'),
         cancelled: 0, // TODO: series cancelled count from BE
         budget: 0, // TODO: aggregate budget from contracts/series
       },

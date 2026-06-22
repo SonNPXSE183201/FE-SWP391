@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { walletApi } from '../api/wallet.api';
+import { getAxiosErrorMessage } from '../../../api/apiResponse';
 
 export const useWalletActions = (
   mode: 'deposit' | 'withdraw',
@@ -21,32 +22,32 @@ export const useWalletActions = (
   const depositMutation = useMutation({
     mutationFn: (amountValue: number) => walletApi.deposit({ amount: amountValue }),
     onSuccess: (response) => {
-      if (response.data.IsSuccess && response.data.Data) {
+      if (response.data.success && response.data.data) {
         // Redirect to VNPay or mock url in a new tab
-        window.open(response.data.Data, '_blank');
+        window.open(response.data.data, '_blank');
         onClose();
       } else {
-        setError(response.data.Message || 'Có lỗi xảy ra khi tạo giao dịch nạp tiền.');
+        setError(response.data.message || 'Có lỗi xảy ra khi tạo giao dịch nạp tiền.');
       }
     },
     onError: (err: unknown) => {
-      setError((err as { response?: { data?: { Message?: string } } })?.response?.data?.Message || 'Đã có lỗi hệ thống xảy ra.');
+      setError(getAxiosErrorMessage(err, 'Đã có lỗi hệ thống xảy ra.'));
     }
   });
 
   const withdrawMutation = useMutation({
     mutationFn: (data: { amount: number; bankName: string; bankAccountNumber: string; bankAccountName: string }) => walletApi.withdraw(data),
     onSuccess: (response) => {
-      if (response.data.IsSuccess) {
+      if (response.data.success) {
         queryClient.invalidateQueries({ queryKey: ['wallet'] });
         if (onSuccess) onSuccess();
         onClose();
       } else {
-        setError(response.data.Message || 'Có lỗi xảy ra khi tạo yêu cầu rút tiền.');
+        setError(response.data.message || 'Có lỗi xảy ra khi tạo yêu cầu rút tiền.');
       }
     },
     onError: (err: unknown) => {
-      setError((err as { response?: { data?: { Message?: string } } })?.response?.data?.Message || 'Đã có lỗi hệ thống xảy ra.');
+      setError(getAxiosErrorMessage(err, 'Đã có lỗi hệ thống xảy ra.'));
     }
   });
 

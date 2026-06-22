@@ -27,12 +27,12 @@ export const CreateUserModal = ({ onClose }: CreateUserModalProps) => {
     mutationFn: (data: CreateUserByAdminDto) => adminApi.createUser(data),
     onSuccess: (res) => {
       const responseData = res.data as ApiResponse<unknown> & { IsSuccess?: boolean; Message?: string; Errors?: Record<string, string[]> };
-      if (responseData.IsSuccess || responseData.success) {
-        toast.success(responseData.Message || responseData.message || 'Tạo người dùng thành công');
+      if (responseData.success) {
+        toast.success(responseData.message || 'Tạo người dùng thành công');
         queryClient.invalidateQueries({ queryKey: ['admin-users'] });
         onClose();
       } else {
-        toast.error(responseData.Message || responseData.message || 'Có lỗi xảy ra');
+        toast.error(responseData.message || 'Có lỗi xảy ra');
         if (responseData.Errors) {
            const newErrors: Record<string, string> = {};
            const errorsMap = responseData.Errors;
@@ -55,7 +55,7 @@ export const CreateUserModal = ({ onClose }: CreateUserModalProps) => {
         setErrors(newErrors);
         toast.error('Dữ liệu không hợp lệ, vui lòng kiểm tra lại');
       } else {
-        const msg = data?.message || data?.Message || 'Có lỗi xảy ra khi tạo người dùng';
+        const msg = data?.message || 'Có lỗi xảy ra khi tạo người dùng';
         toast.error(msg);
       }
     }

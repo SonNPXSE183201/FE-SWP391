@@ -3,15 +3,11 @@ import type { ApiResponse } from '../../../api/generated/types';
 
 const USE_MOCK = true;
 
+import { createMockApiResponse } from '../../../api/apiResponse';
+
 const mockDelay = (ms = 400) => new Promise(resolve => setTimeout(resolve, ms));
 
-const mockResponse = <T>(data: T, message = 'Success') => ({
-  data: {
-    IsSuccess: true,
-    Message: message,
-    Data: data,
-  },
-});
+const mockResponse = createMockApiResponse;
 
 export const profileApi = {
   getAssistantProfile: async () => {
@@ -28,7 +24,7 @@ export const profileApi = {
         }
       });
     }
-    return axiosInstance.get<ApiResponse<any>>('/api/assistant/profile');
+    return axiosInstance.get<ApiResponse<any>>('/api/assistant/profile'); // eslint-disable-line @typescript-eslint/no-explicit-any
   },
 
   updateAssistantProfile: async (payload: { portfolioUrl: string; skills: string[] }) => {

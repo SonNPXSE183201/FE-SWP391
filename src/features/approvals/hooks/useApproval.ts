@@ -9,7 +9,7 @@ export const usePendingProposals = () =>
   useQuery({
     queryKey: KEYS.pendingProposals,
     queryFn: () => approvalApi.getPendingProposals(),
-    select: (res) => res.data?.Data ?? [],
+    select: (res) => res.data?.data ?? [],
   });
 
 export const useApproveProposal = () => {

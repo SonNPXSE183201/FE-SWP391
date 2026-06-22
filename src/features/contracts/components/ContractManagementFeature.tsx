@@ -79,7 +79,7 @@ export const ContractManagementFeature = () => {
         },
         onError: (err: unknown) => {
           const msg =
-            (err as { response?: { data?: { Message?: string } } })?.response?.data?.Message;
+            (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
           toast.error(msg || 'Cập nhật thất bại. Kiểm tra BE đang chạy hoặc contractId có tồn tại.');
         },
       }

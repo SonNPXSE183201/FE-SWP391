@@ -3,10 +3,8 @@ import { seriesApi } from '../api/series.api';
 import type { Series, Chapter, Page, SeriesStatus } from '../../../types/entities';
 import { components } from '../../../api/generated/schema';
 
-import type { SeriesDto, PageDto } from '../../../api/generated/types';
-import type { ApiResponse } from '../../../api/axios';
-
-type ApiEnvelope<T> = ApiResponse<T> & { IsSuccess?: boolean; Data?: T; Items?: T; items?: T };
+import type { ApiResponse, SeriesDto, PageDto, PagedResult } from '../../../api/generated/types';
+import { getPagedItems, isApiSuccess } from '../../../api/apiResponse';
 
 // ─── Mapper ──────────────────────────────────────────────────
 const mapSeriesStatus = (status: unknown): SeriesStatus => {
@@ -58,8 +56,8 @@ export const useSeriesList = (params?: { page?: number; pageSize?: number; statu
     queryKey: ['series', params],
     queryFn: async () => {
       const res = await seriesApi.getAll(params);
-      const apiData = res.data as ApiEnvelope<components['schemas']['SeriesDto'][]>;
-      const dtoArray: components['schemas']['SeriesDto'][] = apiData.Data ?? apiData.data ?? [];
+      const apiData = res.data as ApiResponse<components['schemas']['SeriesDto'][] | PagedResult<components['schemas']['SeriesDto']>>;
+      const dtoArray = getPagedItems<components['schemas']['SeriesDto']>(apiData.data);
       return dtoArray.map(mapSeriesDtoToEntity);
     },
     staleTime: 1000 * 60,
@@ -73,9 +71,9 @@ export const useSeriesDetail = (id?: string) => {
     queryKey: ['series', id],
     queryFn: async () => {
       const res = await seriesApi.getById(id as string);
-      const apiData = res.data as ApiEnvelope<components['schemas']['SeriesDto']>;
-      const data = apiData.data ?? apiData.Data;
-      if ((!apiData.IsSuccess && !apiData.success) || !data) return null;
+      const apiData = res.data as ApiResponse<components['schemas']['SeriesDto']>;
+      const data = apiData.data;
+      if (!isApiSuccess(apiData) || !data) return null;
       return mapSeriesDtoToEntity(data);
     },
     enabled: !!id,
@@ -89,8 +87,8 @@ export const useMySeries = (params?: { page?: number; pageSize?: number }) => {
     queryKey: ['series', 'my', params],
     queryFn: async () => {
       const res = await seriesApi.getMySeries(params);
-      const apiData = res.data as ApiEnvelope<components['schemas']['SeriesDto'][]>;
-      const dtoArray: components['schemas']['SeriesDto'][] = apiData.Data ?? apiData.data ?? [];
+      const apiData = res.data as ApiResponse<components['schemas']['SeriesDto'][] | PagedResult<components['schemas']['SeriesDto']>>;
+      const dtoArray = getPagedItems<components['schemas']['SeriesDto']>(apiData.data);
       return dtoArray.map(mapSeriesDtoToEntity);
     },
     staleTime: 1000 * 60,
@@ -104,8 +102,8 @@ export const useChapters = (seriesId?: string, params?: { page?: number; pageSiz
     queryKey: ['chapters', seriesId, params],
     queryFn: async () => {
       const res = await seriesApi.getChapters(seriesId as string, params);
-      const apiData = res.data as unknown as ApiEnvelope<Chapter[]>;
-      return (apiData.data ?? apiData.Data ?? []) as Chapter[];
+      const apiData = res.data as ApiResponse<Chapter[] | PagedResult<Chapter>>;
+      return getPagedItems(apiData.data) as Chapter[];
     },
     enabled: !!seriesId,
     staleTime: 1000 * 60,
@@ -122,27 +120,15 @@ export const useAllChapters = () => {
       // Instead, use getMySeries to get all series, then get chapters for each.
       // For simplicity with USE_MOCK, we call getAll and getChapters directly.
       const seriesRes = await seriesApi.getMySeries({ pageSize: 100 });
-      const resData = seriesRes.data as ApiEnvelope<SeriesDto[] | { Items?: SeriesDto[]; items?: SeriesDto[] }>;
-      const rawSeries = resData.Data ?? resData.data;
-      let seriesData: SeriesDto[] = [];
-      if (Array.isArray(rawSeries)) {
-        seriesData = rawSeries;
-      } else if (rawSeries && typeof rawSeries === 'object') {
-        seriesData = rawSeries.Items ?? rawSeries.items ?? [];
-      }
+      const resData = seriesRes.data as ApiResponse<SeriesDto[] | PagedResult<SeriesDto>>;
+      const seriesData = getPagedItems<SeriesDto>(resData.data);
 
       const allChapters: (Chapter & { seriesTitle: string })[] = [];
       for (const series of seriesData) {
         if (!series.id) continue;
         const chapRes = await seriesApi.getChapters(series.id.toString(), { pageSize: 100 });
-        const chapResData = chapRes.data as ApiEnvelope<Chapter[] | { Items?: Chapter[]; items?: Chapter[] }>;
-        const rawChapters = chapResData.Data ?? chapResData.data;
-        let chapData: Chapter[] = [];
-        if (Array.isArray(rawChapters)) {
-          chapData = rawChapters;
-        } else if (rawChapters && typeof rawChapters === 'object') {
-          chapData = rawChapters.Items ?? rawChapters.items ?? [];
-        }
+        const chapResData = chapRes.data as ApiResponse<Chapter[] | PagedResult<Chapter>>;
+        const chapData = getPagedItems(chapResData.data) as Chapter[];
 
         for (const ch of chapData) {
           allChapters.push({
@@ -164,9 +150,9 @@ export const useChapterDetail = (chapterId?: string) => {
     queryKey: ['chapter', chapterId],
     queryFn: async () => {
       const res = await seriesApi.getChapterById(chapterId as string);
-      const apiData = res.data as ApiEnvelope<Chapter & { seriesTitle: string }>;
-      if (!apiData.IsSuccess && !apiData.success) return null;
-      return (apiData.data ?? apiData.Data) ?? null;
+      const apiData = res.data as ApiResponse<Chapter & { seriesTitle: string }>;
+      if (!isApiSuccess(apiData)) return null;
+      return apiData.data ?? null;
     },
     enabled: !!chapterId,
     retry: 1,
@@ -179,10 +165,9 @@ export const useChapterPages = (chapterId?: string) => {
     queryKey: ['pages', chapterId],
     queryFn: async () => {
       const res = await seriesApi.getPages(chapterId as string);
-      const apiData = res.data as ApiEnvelope<PageDto[]>;
-      if (!apiData.IsSuccess && !apiData.success) return [];
-      const pagesData = apiData.data ?? apiData.Data ?? [];
-      return pagesData.map(mapPageDtoToEntity);
+      const apiData = res.data as ApiResponse<PageDto[]>;
+      if (!isApiSuccess(apiData)) return [];
+      return (apiData.data ?? []).map(mapPageDtoToEntity);
     },
     enabled: !!chapterId,
     staleTime: 1000 * 60,

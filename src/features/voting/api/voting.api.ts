@@ -138,7 +138,7 @@ export const votingApi = {
     const res = await axiosInstance.get<ApiResponse<VotingSeriesItem[]>>('/api/votes/pending', {
       params: filter && filter !== 'All' ? { status: filter } : undefined,
     });
-    return res.data?.Data ?? [];
+    return res.data?.data ?? [];
   },
 
   /** Lấy chi tiết 1 voting item */
@@ -148,11 +148,11 @@ export const votingApi = {
       return MOCK_VOTING_SERIES.find((item) => item.id === votingId) ?? null;
     }
     const res = await axiosInstance.get<ApiResponse<VotingSeriesItem>>(`/api/votes/${votingId}`);
-    return res.data?.Data ?? null;
+    return res.data?.data ?? null;
   },
 
   /** Gửi phiếu bầu */
-  submitVote: async (payload: SubmitVotePayload): Promise<{ IsSuccess: boolean; Message: string }> => {
+  submitVote: async (payload: SubmitVotePayload): Promise<{ success: boolean; message: string }> => {
     if (USE_MOCK) {
       await mockDelay(500);
       const item = MOCK_VOTING_SERIES.find((s) => s.id === payload.votingId);
@@ -163,9 +163,9 @@ export const votingApi = {
         else if (payload.decision === 'Reject') item.voteResults.reject += 1;
         else item.voteResults.abstain += 1;
       }
-      return { IsSuccess: true, Message: 'Bỏ phiếu thành công!' };
+      return { success: true, message: 'Bỏ phiếu thành công!' };
     }
     const res = await axiosInstance.post<ApiResponse<unknown>>('/api/votes', payload);
-    return { IsSuccess: res.data?.IsSuccess ?? false, Message: res.data?.Message ?? '' };
+    return { success: res.data?.success ?? false, message: res.data?.message ?? '' };
   },
 };

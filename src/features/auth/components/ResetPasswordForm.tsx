@@ -53,13 +53,13 @@ export const ResetPasswordForm: React.FC = () => {
                 newPassword,
                 confirmNewPassword,
             });
-            if (response.IsSuccess) {
+            if (response.success) {
                 setIsSuccess(true);
-                toast.success(response.Message || 'Đặt lại mật khẩu thành công!');
+                toast.success(response.message || 'Đặt lại mật khẩu thành công!');
             }
         } catch (error: unknown) {
             const axiosError = error as { response?: { data?: { Message?: string } } };
-            const errorMsg = axiosError.response?.data?.Message || 'Có lỗi xảy ra. Vui lòng thử lại.';
+            const errorMsg = (axiosError.response?.data as { message?: string })?.message || 'Có lỗi xảy ra. Vui lòng thử lại.';
             setLocalError(errorMsg);
             toast.error(errorMsg);
         } finally {

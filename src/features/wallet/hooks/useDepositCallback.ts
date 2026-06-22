@@ -33,21 +33,21 @@ export const useDepositCallback = () => {
         const apiData = response.data;
         
         // Backend returns standard ApiResponse
-        if (apiData.IsSuccess && apiData.Data !== undefined) {
+        if (apiData.success) {
           setState({
             status: 'success',
-            message: apiData.Message || 'Nạp tiền thành công! Số dư của bạn đã được cập nhật.',
+            message: apiData.message || 'Nạp tiền thành công! Số dư của bạn đã được cập nhật.',
           });
         } else {
           setState({
             status: 'error',
-            message: apiData.Message || 'Giao dịch nạp tiền thất bại hoặc bị hủy.',
+            message: apiData.message || 'Giao dịch nạp tiền thất bại hoặc bị hủy.',
           });
         }
       } catch (error: unknown) {
         setState({
           status: 'error',
-          message: (error as { response?: { data?: { Message?: string } } })?.response?.data?.Message || 'Có lỗi xảy ra khi xác thực giao dịch.',
+          message: (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Có lỗi xảy ra khi xác thực giao dịch.',
         });
       }
     };
