@@ -40,7 +40,9 @@ export const useNotificationList = (page: number = 1, pageSize: number = 20) => 
       const payload = response.data;
 
       if (isApiSuccess(payload) && payload.data) {
-        const allItems = payload.data.map(mapDtoToItem);
+        const allItems = payload.data
+          .map(mapDtoToItem)
+          .filter((n) => !n.isRead);
         const start = (page - 1) * pageSize;
         const items = allItems.slice(start, start + pageSize);
         const unreadCount = allItems.filter((n) => !n.isRead).length;

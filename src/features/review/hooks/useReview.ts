@@ -4,9 +4,17 @@ import type { ApproveChapterPayload } from '../types';
 
 const KEYS = {
   reviewSeriesDetail: (seriesId: string) => ['review', 'series', seriesId] as const,
+  pendingSeries: ['review', 'series', 'pending'] as const,
   reviewQueue: ['review', 'queue'] as const,
   chapterReview: (chapterId: string) => ['review', 'chapter', chapterId] as const,
 };
+
+export const usePendingSeriesReview = () =>
+  useQuery({
+    queryKey: KEYS.pendingSeries,
+    queryFn: () => reviewApi.getPendingSeries(),
+    select: (res) => res.data?.data ?? [],
+  });
 
 export const useReviewSeriesDetail = (seriesId: string) =>
   useQuery({
