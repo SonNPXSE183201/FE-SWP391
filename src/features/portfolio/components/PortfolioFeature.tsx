@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { usePortfolioStats, usePortfolioSamples, useUploadPortfolioSample } from '../hooks/usePortfolio';
 import type { PortfolioSample } from '../api/portfolio.api';
+import { getPagedItems } from '../../../api/apiResponse';
 import { taskApi } from '../../tasks/api/task.api';
 import { formatVND } from '../../wallet';
 import type { Task } from '../../../types';
@@ -45,7 +46,14 @@ export const PortfolioFeature = () => {
     queryKey: ['portfolio', 'tasks'],
     queryFn: () => taskApi.getMyTasks({ pageSize: 100 }),
   });
-  const tasks = ((tasksRes?.data as any)?.Data ?? (tasksRes?.data as any)?.data ?? []) as PortfolioHistoryTask[];
+  const tasks = getPagedItems<PortfolioHistoryTask>(tasksRes?.data?.data).map((task) => ({
+    ...task,
+    id: String((task as { id?: number | string }).id ?? ''),
+    title: (task as { description?: string }).description,
+    amount: (task as { paymentAmount?: number }).paymentAmount ?? 0,
+    deadline: (task as { deadline?: string }).deadline ?? '',
+    status: (task as { status?: string }).status ?? 'Pending',
+  }));
 
   const handleOpenUpload = () => {
     setTitle('');

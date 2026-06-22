@@ -1,4 +1,5 @@
 import { axiosInstance } from '../../../api/axios';
+import { createMockApiResponse } from '../../../api/apiResponse';
 import type {
   ApiResponse,
   SeriesReviewDto,
@@ -12,14 +13,7 @@ const USE_MOCK = false;
 
 const mockDelay = (ms = 400) => new Promise(resolve => setTimeout(resolve, ms));
 
-const mockResponse = <T>(data: T, message = 'Success') => ({
-  data: {
-    IsSuccess: true,
-    success: true,
-    Message: message,
-    Data: data,
-  },
-});
+const mockResponse = createMockApiResponse;
 
 // Re-export for component usage
 export type { SeriesReviewDto };
@@ -120,7 +114,7 @@ export const reviewApi = {
     }
     const res = await axiosInstance.post<ApiResponse<boolean>>(
       `/api/reviews/chapters/${payload.chapterId}/approve`,
-      { ValidPageCount: payload.validPageCount, QcChecklistData: "{}" },
+      { validPageCount: payload.validPageCount, qcChecklistData: '{}' },
     );
     return res;
   },
@@ -132,7 +126,7 @@ export const reviewApi = {
     }
     const res = await axiosInstance.post<ApiResponse<boolean>>(
       `/api/reviews/chapters/${chapterId}/revision`,
-      { FeedbackComment: reason },
+      { feedbackComment: reason },
     );
     return res;
   },

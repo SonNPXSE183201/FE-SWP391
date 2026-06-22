@@ -7,10 +7,10 @@ export const useAdminDashboard = () => {
     queryFn: async () => {
       const response = await dashboardApi.getAdminDashboard();
       const apiResponse = response.data;
-      if (!apiResponse.IsSuccess || !apiResponse.Data) {
-        throw new Error(apiResponse.Message || 'Failed to fetch admin dashboard');
+      if (!apiResponse.success || !apiResponse.data) {
+        throw new Error(apiResponse.message || 'Failed to fetch admin dashboard');
       }
-      return apiResponse.Data;
+      return apiResponse.data;
     },
     staleTime: 5 * 60 * 1000,
   });

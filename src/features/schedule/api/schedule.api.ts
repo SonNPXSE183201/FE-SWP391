@@ -1,4 +1,5 @@
 import { axiosInstance, type ApiResponse } from '../../../api/axios';
+import { createMockApiResponse } from '../../../api/apiResponse';
 import type { ScheduleItem } from '../types';
 import { MOCK_SCHEDULE } from '../data/mockData';
 
@@ -6,13 +7,7 @@ const USE_MOCK = false;
 
 const mockDelay = (ms = 350) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const mockResponse = <T>(data: T, message = 'Success') => ({
-  data: {
-    IsSuccess: true,
-    Message: message,
-    Data: data,
-  },
-});
+const mockResponse = createMockApiResponse;
 
 export const scheduleApi = {
   getSchedule: async (month: string) => {
@@ -32,7 +27,7 @@ export const scheduleApi = {
       status: ch.status === 'Published' ? 'Published' : (new Date(String(ch.submissionDeadline)) < new Date() ? 'Delayed' : 'Scheduled'),
       genres: [],
     }));
-    return { data: { IsSuccess: true, Message: 'Success', Data: items } };
+    return createMockApiResponse(items);
   },
 
   reschedule: async (id: string, publishDate: string) => {
