@@ -1,7 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
 import { walletApi } from '../api/wallet.api';
 import type { Wallet, Transaction, TransactionType } from '../../../types/entities';
+import type { WalletDetailsDto, TransactionDto } from '../../../api/generated/types';
 import { useAuthStore } from '../../../stores/authStore';
+
+type WalletApiEnvelope = {
+  IsSuccess?: boolean;
+  success?: boolean;
+  Message?: string;
+  message?: string;
+  Data?: WalletDetailsDto;
+  data?: WalletDetailsDto;
+};
+
+type LegacyWalletRow = Record<string, string | number | undefined>;
 
 export const useWallet = () => {
   const user = useAuthStore(state => state.user);
@@ -12,13 +24,16 @@ export const useWallet = () => {
       const response = await walletApi.getMyWallet();
       
       // Backend returns ApiResponse where IsSuccess and Data are PascalCase
-      const apiResponse = response.data as any;
-      if (!apiResponse.IsSuccess || !apiResponse.Data) {
-        throw new Error(apiResponse.Message || 'Failed to fetch wallet data');
+      const apiResponse = response.data as WalletApiEnvelope;
+      if (!apiResponse.IsSuccess && !apiResponse.success) {
+        throw new Error(apiResponse.Message || apiResponse.message || 'Failed to fetch wallet data');
       }
 
-      const backendData = apiResponse.data || apiResponse.Data;
-      const bWallet = backendData.wallet || backendData.Wallet;
+      const backendData = (apiResponse.data || apiResponse.Data) as WalletDetailsDto & {
+        Wallet?: LegacyWalletRow;
+        Transactions?: TransactionDto[];
+      };
+      const bWallet = (backendData.wallet || backendData.Wallet || {}) as LegacyWalletRow;
       
       const wallet: Wallet = {
         id: String(bWallet.id || bWallet.Id),
@@ -31,9 +46,10 @@ export const useWallet = () => {
         updatedAt: bWallet.updateAt || bWallet.UpdateAt,
       } as Wallet;
 
-      const transactions: Transaction[] = (backendData.transactions || backendData.Transactions || []).map((tx: any) => {
-        const txType = tx.type || tx.Type;
-        const txStatus = tx.status || tx.Status;
+      const transactions: Transaction[] = (backendData.transactions || backendData.Transactions || []).map((tx: TransactionDto) => {
+        const legacy = tx as TransactionDto & Record<string, string | number | null | undefined>;
+        const txType = tx.type || (legacy.Type as string | undefined);
+        const txStatus = tx.status || (legacy.Status as string | undefined);
         const typeVi = {
           'Deposit': 'Nạp tiền',
           'Withdraw': 'Rút tiền',
@@ -49,17 +65,17 @@ export const useWallet = () => {
         const statusVi = txStatus === 'Success' ? 'Thành công' : txStatus === 'Pending' ? 'Đang xử lý' : txStatus === 'Failed' ? 'Thất bại' : txStatus;
 
         return {
-          id: String(tx.id || tx.Id),
-          walletId: String(tx.walletId || tx.WalletId),
+          id: String(tx.id || legacy.Id),
+          walletId: String(tx.walletId || legacy.WalletId),
           type: txType as TransactionType,
-          amount: Number(tx.amount || tx.Amount || 0),
-          setupFundAmount: Number(tx.setupFundAmount || tx.SetupFundAmount || 0),
-          withdrawableAmount: Number(tx.withdrawableAmount || tx.WithdrawableAmount || 0),
-          referenceId: (tx.referenceId || tx.ReferenceId) ? String(tx.referenceId || tx.ReferenceId) : undefined,
-          referenceCode: tx.referenceCode || tx.ReferenceCode || '',
-          description: tx.description || tx.Description || `Giao dịch ${typeVi} (${statusVi})`,
-          createdAt: tx.createAt || tx.CreateAt,
-          updatedAt: tx.updateAt || tx.UpdateAt,
+          amount: Number(tx.amount || legacy.Amount || 0),
+          setupFundAmount: Number(tx.setupFundAmount || legacy.SetupFundAmount || 0),
+          withdrawableAmount: Number(tx.withdrawableAmount || legacy.WithdrawableAmount || 0),
+          referenceId: (tx.referenceId || legacy.ReferenceId) ? String(tx.referenceId || legacy.ReferenceId) : undefined,
+          referenceCode: String(tx.referenceCode || legacy.ReferenceCode || ''),
+          description: String(legacy.Description || `Giao dịch ${typeVi} (${statusVi})`),
+          createdAt: String(tx.createAt || legacy.CreateAt || ''),
+          updatedAt: String(tx.updateAt || legacy.UpdateAt || ''),
         };
       });
 

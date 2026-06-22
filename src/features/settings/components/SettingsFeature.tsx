@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Settings,
   User,
@@ -152,10 +152,6 @@ export const SettingsFeature = () => {
   const [notificationPrefs, setNotificationPrefs] = useState<NotificationPref[]>(() =>
     loadNotificationPrefs(user?.id)
   );
-
-  useEffect(() => {
-    setNotificationPrefs(loadNotificationPrefs(user?.id));
-  }, [user?.id]);
 
   const role = user?.role ?? 'Mangaka';
   const roleBadge = ROLE_BADGE_STYLES[role];

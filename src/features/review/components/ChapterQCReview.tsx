@@ -15,6 +15,7 @@ import { useAuthStore } from '../../../stores/authStore';
 import type { Annotation, AnnotationType } from '../../../types/entities';
 import { useChapterReview, useApproveChapter, useRequireChapterRevision } from '../hooks/useReview';
 import { ANNOTATION_TYPE_CONFIG, QC_CHECKLIST_ITEMS, formatVND } from '../constants';
+import type { PageDto } from '../../../api/generated/types';
 import { Point } from 'fabric';
 
 interface ChapterQCReviewProps {
@@ -88,7 +89,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
   );
 
   const validPageCount = useMemo(
-    () => pages.filter((p: any) => !pageHasError(String(p.id))).length,
+    () => pages.filter((p: PageDto) => !pageHasError(String(p.id))).length,
     [pages, pageHasError],
   );
 
@@ -349,7 +350,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
 
               {/* Page filmstrip with valid/invalid badges */}
               <div className="flex items-center gap-2 flex-shrink-0 overflow-x-auto pb-1">
-                {pages.map((p: any, idx: number) => {
+                {pages.map((p: PageDto, idx: number) => {
                   const invalid = pageHasError(String(p.id));
                   return (
                     <button

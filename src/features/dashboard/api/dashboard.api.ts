@@ -1,5 +1,5 @@
 import { axiosInstance } from '../../../api/axios';
-import type { ApiResponse, SeriesDto, TasksDto, WalletDetailsDto } from '../../../api/generated/types';
+import type { ApiResponse, SeriesDto, TasksDto, TransactionDto, WalletDetailsDto } from '../../../api/generated/types';
 import type { components } from '../../../api/generated/schema';
 
 type DashboardStatsDto = components['schemas']['DashboardStatsResponseDto'];
@@ -323,8 +323,8 @@ export const dashboardApi = {
       Number(wallet.setupFundBalance ?? 0) + Number(wallet.withdrawableBalance ?? 0);
 
     const monthlyGenkouryo = transactions
-      .filter((tx: any) => tx.type === 'Genkouryo' && tx.createAt && new Date(tx.createAt) >= getMonthStart())
-      .reduce((sum: number, tx: any) => sum + Number(tx.amount ?? 0), 0);
+      .filter((tx: TransactionDto) => tx.type === 'Genkouryo' && tx.createAt && new Date(tx.createAt) >= getMonthStart())
+      .reduce((sum: number, tx: TransactionDto) => sum + Number(tx.amount ?? 0), 0);
 
     const stats: MangakaDashboardStatsDto = {
       activeSeries: statNum(statsDto, 'inProductionSeries', 'InProductionSeries') || statNum(statsDto, 'mySeries', 'MySeries') || seriesList.length,
@@ -332,10 +332,10 @@ export const dashboardApi = {
       activeTasks: statNum(statsDto, 'openTasks', 'OpenTasks'),
       walletBalance,
       monthlyGenkouryo,
-      completedTasks: seriesList.filter((s: any) => s.status === 'Published' || s.status === 'Approved').length,
+      completedTasks: seriesList.filter((s: SeriesDto) => s.status === 'Published' || s.status === 'Approved').length,
     };
 
-    const seriesOverview: SeriesOverviewDto[] = seriesList.slice(0, 5).map((s: any) => ({
+    const seriesOverview: SeriesOverviewDto[] = seriesList.slice(0, 5).map((s: SeriesDto) => ({
       id: String(s.id ?? ''),
       title: s.title ?? '',
       chapters: 0,
@@ -374,18 +374,18 @@ export const dashboardApi = {
     const walletData = unwrapData(walletRes.data, 'Không tải được ví');
     const transactions = walletData.transactions ?? [];
 
-    const inProgress = tasksList.filter((t: any) => t.status === 'In_Progress').length;
-    const completed = tasksList.filter((t: any) => t.status === 'Approved').length;
+    const inProgress = tasksList.filter((t: TasksDto) => t.status === 'In_Progress').length;
+    const completed = tasksList.filter((t: TasksDto) => t.status === 'Approved').length;
 
     const monthlyIncome = transactions
       .filter(
-        (tx: any) =>
+        (tx: TransactionDto) =>
           tx.type === 'Transfer' &&
           Number(tx.amount ?? 0) > 0 &&
           tx.createAt &&
           new Date(tx.createAt) >= getMonthStart(),
       )
-      .reduce((sum: number, tx: any) => sum + Number(tx.amount ?? 0), 0);
+      .reduce((sum: number, tx: TransactionDto) => sum + Number(tx.amount ?? 0), 0);
 
     const stats: AssistantDashboardStatsDto = {
       inProgress,
@@ -396,12 +396,12 @@ export const dashboardApi = {
 
     const recentTasks: AssistantRecentTaskDto[] = tasksList
       .sort(
-        (a: any, b: any) =>
+        (a: TasksDto, b: TasksDto) =>
           new Date(b.updateAt ?? b.createAt ?? 0).getTime() -
           new Date(a.updateAt ?? a.createAt ?? 0).getTime(),
       )
       .slice(0, 5)
-      .map((t: any) => ({
+      .map((t: TasksDto) => ({
         id: String(t.id ?? ''),
         title: t.description || `Task #${t.id}`,
         status: t.status ?? 'Pending',

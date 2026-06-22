@@ -21,6 +21,8 @@ export interface MockTask {
   deadline: string; // ISO
   extensionUsed: boolean;
   extensionRequestDays?: number;
+  extensionReason?: string;
+  extensionStatus?: string;
   feedbackComment?: string;
   resultImageUrl?: string;
   createdAt: string;
@@ -58,7 +60,7 @@ export const MOCK_TASKS: MockTask[] = [
     pageId: 'page-1', pageName: 'Trang 1',
     chapterId: 'ch-1', chapterTitle: 'Ch.1: Khởi đầu',
     seriesId: 's-1', seriesTitle: 'Huyền Thoại Samurai',
-    assignedAssistantName: 'Thiên Kim',
+    assignedAssistantName: 'Nguyễn Sơn',
     status: 'In_Progress', amount: 500000,
     deadline: '2026-06-22T23:59:59Z',
     extensionUsed: false,

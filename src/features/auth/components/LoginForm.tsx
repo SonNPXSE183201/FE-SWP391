@@ -1,30 +1,21 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { Mail, Lock, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
-import { useAuthStore } from '../../../stores/authStore';
+import { useAuthStore, type UserRole } from '../../../stores/authStore';
 import { authApi } from '../api/auth.api';
 
 export const LoginForm: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => localStorage.getItem('inku-remembered-email') || '');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem('inku-remembered-email'));
   const [localError, setLocalError] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
   const { setAuth, setLoading, isLoading } = useAuthStore();
-
-  useEffect(() => {
-    // Load saved email if exists
-    const savedEmail = localStorage.getItem('inku-remembered-email');
-    if (savedEmail) {
-      setEmail(savedEmail);
-      setRememberMe(true);
-    }
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +51,7 @@ export const LoginForm: React.FC = () => {
           id: response.data.userId?.toString() || '0',
           fullName: response.data.fullName || response.data.userName || 'User',
           email: response.data.email || email,
-          role: mappedRole as any
+          role: mappedRole as UserRole
         }, response.data.token, response.data.refreshToken || '');
 
         toast.success(response.message || 'Đăng nhập thành công');
