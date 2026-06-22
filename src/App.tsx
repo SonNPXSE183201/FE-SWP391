@@ -62,6 +62,7 @@ import {
   AdminRolesPage,
   AdminContractsPage,
   AdminReconciliationPage,
+  AdminWithdrawApprovalPage,
   AdminSettingsPage,
 } from './pages/admin';
 
@@ -214,6 +215,7 @@ function App() {
             <Route path="/admin/roles" element={<AdminRolesPage />} />
             <Route path="/admin/contracts" element={<AdminContractsPage />} />
             <Route path="/admin/reconciliation" element={<AdminReconciliationPage />} />
+            <Route path="/admin/withdraw-approval" element={<AdminWithdrawApprovalPage />} />
             <Route path="/admin/settings" element={<AdminSettingsPage />} />
           </Route>
         </Route>

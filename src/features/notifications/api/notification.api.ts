@@ -144,8 +144,8 @@ export const notificationApi = {
   markAsRead: async (notificationId: string) => {
     if (USE_MOCK) {
       await mockDelay(150);
-      const notif = mockState.find(n => n.id === notificationId);
-      if (notif) notif.isRead = true;
+      const notifIndex = mockState.findIndex(n => n.id === notificationId);
+      if (notifIndex >= 0) mockState.splice(notifIndex, 1);
       return createMockAxiosResponse(true, 'Đã đánh dấu đã đọc');
     }
     return axiosInstance.patch<ApiResponse<boolean>>(`/api/notifications/${notificationId}/read`);
@@ -158,7 +158,9 @@ export const notificationApi = {
   markAllAsRead: async () => {
     if (USE_MOCK) {
       await mockDelay(200);
-      mockState.forEach(n => { n.isRead = true; });
+      for (let i = mockState.length - 1; i >= 0; i -= 1) {
+        if (!mockState[i].isRead) mockState.splice(i, 1);
+      }
       return createMockAxiosResponse(true, 'Đã đánh dấu tất cả đã đọc');
     }
     return axiosInstance.post<ApiResponse<boolean>>('/api/notifications/mark-all-read');

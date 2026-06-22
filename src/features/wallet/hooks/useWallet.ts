@@ -4,6 +4,7 @@ import type { Wallet, Transaction, TransactionType } from '../../../types/entiti
 import type { ApiResponse, WalletDetailsDto, TransactionDto } from '../../../api/generated/types';
 import { isApiSuccess, getApiMessage } from '../../../api/apiResponse';
 import { useAuthStore } from '../../../stores/authStore';
+import { normalizeTransactionType } from '../utils';
 
 export const useWallet = () => {
   const user = useAuthStore(state => state.user);
@@ -33,11 +34,12 @@ export const useWallet = () => {
       } as Wallet;
 
       const transactions: Transaction[] = (backendData.transactions ?? []).map((tx: TransactionDto) => {
-        const txType = tx.type;
+        const txType = normalizeTransactionType(tx.type ?? '');
         const txStatus = tx.status;
         const typeVi = {
           'Deposit': 'Nạp tiền',
           'Withdraw': 'Rút tiền',
+          'Withdrawal': 'Rút tiền',
           'Lock': 'Khóa tiền',
           'Unlock': 'Mở khóa',
           'Escrow_Lock': 'Tạm giữ tiền',

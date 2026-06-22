@@ -7,6 +7,15 @@ import type { ApiResponse, SeriesDto, PageDto, PagedResult } from '../../../api/
 import { getPagedItems, isApiSuccess } from '../../../api/apiResponse';
 
 // ─── Mapper ──────────────────────────────────────────────────
+const BE_STATUS_MAP: Record<string, SeriesStatus> = {
+  Draft: 'Draft',
+  Pending_Approval: 'PendingApproval',
+  Pending_Board_Vote: 'PendingApproval',
+  Fund_Pending: 'Approved',
+  Active: 'Published',
+  Rejected: 'Cancelled',
+};
+
 const mapSeriesStatus = (status: unknown): SeriesStatus => {
   if (status === 0 || status === '0') return 'Draft';
   if (status === 1 || status === '1') return 'PendingApproval';
@@ -14,6 +23,7 @@ const mapSeriesStatus = (status: unknown): SeriesStatus => {
   if (status === 3 || status === '3') return 'Published';
   if (status === 4 || status === '4') return 'OnHold';
   if (status === 5 || status === '5') return 'Cancelled';
+  if (typeof status === 'string' && BE_STATUS_MAP[status]) return BE_STATUS_MAP[status];
   return (status as SeriesStatus) || 'Draft';
 };
 

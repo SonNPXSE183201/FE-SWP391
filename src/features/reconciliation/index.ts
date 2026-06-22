@@ -9,3 +9,4 @@ export type {
   ReconciliationParams,
   ReconciliationResponse,
 } from './types/reconciliation.types';
+export { toReconciliationStatus } from './types/reconciliation.types';

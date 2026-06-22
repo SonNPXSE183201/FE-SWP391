@@ -34,19 +34,15 @@ export const SeriesDetailFeature = () => {
 
   const isLoading = seriesLoading || chaptersLoading;
 
-  // Local status state (derived from server data)
-  const [currentStatus, setCurrentStatus] = useState<SeriesStatus>('Draft');
-
-  // Sync currentStatus when series data loads
-  useState(() => {
-    if (series?.status) setCurrentStatus(series.status);
-  });
+  const [statusOverride, setStatusOverride] = useState<SeriesStatus | null>(null);
+  const currentStatus = statusOverride ?? series?.status ?? 'Draft';
 
   // Feature hooks
   const nameUpload = useNameUpload();
   const seriesSubmit = useSeriesSubmit({
+    seriesId,
     nameFile: nameUpload.nameFile,
-    onStatusChange: useCallback((status: SeriesStatus) => setCurrentStatus(status), []),
+    onStatusChange: useCallback((status: SeriesStatus) => setStatusOverride(status), []),
   });
 
   // ─── Loading ───
@@ -79,7 +75,8 @@ export const SeriesDetailFeature = () => {
     );
   }
 
-  const isDraft = currentStatus === 'Draft' || series.status === 'Draft';
+  const isDraft = series.status === 'Draft' && currentStatus === 'Draft';
+  const isPendingReview = currentStatus === 'PendingApproval' || series.status === 'PendingApproval';
   const statusConfig = SERIES_STATUS_CONFIG[currentStatus];
 
   // Build checklist items for SubmitChecklist
@@ -164,7 +161,7 @@ export const SeriesDetailFeature = () => {
           )}
 
           {/* After Submit: Pending Message */}
-          {currentStatus === 'PendingApproval' && (
+          {isPendingReview && (
             <div className="bg-warning/5 border border-warning/20 rounded-xl p-5 animate-fade-in">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center flex-shrink-0">
