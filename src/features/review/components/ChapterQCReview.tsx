@@ -138,8 +138,13 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
   }, []);
 
   const handleApprove = () => {
+    const qcChecklist = QC_CHECKLIST_ITEMS.reduce<Record<string, boolean>>((acc, label, index) => {
+      acc[label] = checklist[index] ?? false;
+      return acc;
+    }, {});
+
     approveChapter.mutate(
-      { chapterId, validPageCount, genkouryo },
+      { chapterId, validPageCount, genkouryo, qcChecklist },
       {
         onSuccess: () => {
           toast.success(`Đã duyệt Chapter · Giải ngân ${formatVND(genkouryo)} nhuận bút`, { duration: 4000 });
