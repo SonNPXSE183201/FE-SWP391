@@ -3,6 +3,7 @@ import type {
   ApiResponse,
   CreateUserByAdminDto,
   AssistantResponseDto,
+  UpdateUserByAdminDto,
   UserResponseDto,
 } from '../../../api/generated/types';
 import type { components } from '../../../api/generated/schema';
@@ -18,6 +19,9 @@ export const adminApi = {
 
   createUser: (data: CreateUserByAdminDto) =>
     axiosInstance.post<ApiResponse<UserResponseDto>>('/api/admin/users', data),
+
+  updateUser: (id: number | string, data: UpdateUserByAdminDto) =>
+    axiosInstance.put<ApiResponse<UserResponseDto>>(`/api/admin/users/${id}`, data),
 
   getPendingAssistants: () =>
     axiosInstance.get<ApiResponse<AssistantResponseDto[]>>('/api/admin/users/pending'),
