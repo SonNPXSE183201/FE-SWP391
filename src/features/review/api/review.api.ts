@@ -120,7 +120,10 @@ export const reviewApi = {
     }
     const res = await axiosInstance.post<ApiResponse<boolean>>(
       `/api/reviews/chapters/${payload.chapterId}/approve`,
-      { ValidPageCount: payload.validPageCount, QcChecklistData: "{}" },
+      {
+        validPageCount: payload.validPageCount,
+        qcChecklistData: JSON.stringify(payload.qcChecklist ?? {}),
+      },
     );
     return res;
   },

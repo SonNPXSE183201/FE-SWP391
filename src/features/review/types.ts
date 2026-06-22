@@ -23,4 +23,5 @@ export interface ApproveChapterPayload {
   chapterId: string;
   validPageCount: number;
   genkouryo: number;
+  qcChecklist?: Record<string, boolean>;
 }
