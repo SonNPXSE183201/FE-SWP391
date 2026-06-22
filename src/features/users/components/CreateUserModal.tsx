@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../../admin/api/admin.api';
 import type { CreateUserByAdminDto } from '../../../api/generated/types';
+import type { ApiResponse } from '../../../api/axios';
 import { CustomSelect } from '../../../components/common/CustomSelect';
 
 interface CreateUserModalProps {
@@ -25,7 +26,7 @@ export const CreateUserModal = ({ onClose }: CreateUserModalProps) => {
   const createMutation = useMutation({
     mutationFn: (data: CreateUserByAdminDto) => adminApi.createUser(data),
     onSuccess: (res) => {
-      const responseData = res.data as any;
+      const responseData = res.data as ApiResponse<unknown> & { IsSuccess?: boolean; Message?: string; Errors?: Record<string, string[]> };
       if (responseData.IsSuccess || responseData.success) {
         toast.success(responseData.Message || responseData.message || 'Tạo người dùng thành công');
         queryClient.invalidateQueries({ queryKey: ['admin-users'] });
@@ -34,17 +35,19 @@ export const CreateUserModal = ({ onClose }: CreateUserModalProps) => {
         toast.error(responseData.Message || responseData.message || 'Có lỗi xảy ra');
         if (responseData.Errors) {
            const newErrors: Record<string, string> = {};
-           Object.keys(responseData.Errors).forEach(k => {
-             newErrors[k] = responseData.Errors[k][0];
+           const errorsMap = responseData.Errors;
+           Object.keys(errorsMap).forEach(k => {
+             newErrors[k] = errorsMap[k][0];
            });
            setErrors(newErrors);
         }
       }
     },
-    onError: (error: any) => {
-      const data = error.response?.data;
+    onError: (error: unknown) => {
+      const data = (error as { response?: { data?: { errors?: Record<string, string[]>; Errors?: Record<string, string[]>; message?: string; Message?: string } } }).response?.data;
       if (data?.errors || data?.Errors) {
         const errObj = data.errors || data.Errors;
+        if (!errObj) return;
         const newErrors: Record<string, string> = {};
         Object.keys(errObj).forEach(k => {
           newErrors[k] = errObj[k][0];

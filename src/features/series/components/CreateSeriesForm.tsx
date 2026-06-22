@@ -19,6 +19,8 @@ import { useSeriesForm } from '../hooks/useSeriesForm';
 import { GENRE_OPTIONS } from '../types/series.types';
 import { SeriesPreviewModal } from './SeriesPreviewModal';
 import { seriesApi } from '../api/series.api';
+import type { ApiResponse } from '../../../api/axios';
+import type { SeriesDto } from '../../../api/generated/types';
 
 export const CreateSeriesForm = () => {
   const navigate = useNavigate();
@@ -49,9 +51,10 @@ export const CreateSeriesForm = () => {
         estimatedProductionBudget: Number(formData.requestedBudget.replace(/[^0-9]/g, '')) || 0,
         coverImage: formData.coverImage || undefined,
       });
-      toast.success((response.data as any).Message || (response.data as any).message || 'Tạo Series thành công! Trạng thái: Bản nháp (Draft)');
-      const createdData = (response.data as any).Data || (response.data as any).data;
-      navigate(`/mangaka/series/${createdData?.id || createdData?.Id || 'new'}`);
+      const payload = response.data as ApiResponse<SeriesDto> & { Message?: string; Data?: SeriesDto };
+      toast.success(payload.Message || payload.message || 'Tạo Series thành công! Trạng thái: Bản nháp (Draft)');
+      const createdData = payload.data || payload.Data;
+      navigate(`/mangaka/series/${createdData?.id || 'new'}`);
     } catch {
       toast.error('Có lỗi xảy ra. Vui lòng thử lại.');
     } finally {

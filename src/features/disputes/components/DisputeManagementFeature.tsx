@@ -274,7 +274,7 @@ export const DisputeManagementFeature = () => {
                       <span className="text-xs font-medium text-text-secondary">Từ Mangaka ({mangakaEvidence.length})</span>
                     </div>
                     {mangakaEvidence.length > 0 ? (
-                      mangakaEvidence.map((ev: any, idx: number) => <EvidenceCard key={`mangaka-${idx}`} ev={ev} />)
+                      mangakaEvidence.map((ev: DisputeEvidenceDto, idx: number) => <EvidenceCard key={`mangaka-${idx}`} ev={ev} />)
                     ) : (
                       <p className="text-xs text-text-muted text-center py-4">Không có</p>
                     )}
@@ -286,7 +286,7 @@ export const DisputeManagementFeature = () => {
                       <span className="text-xs font-medium text-text-secondary">Từ Assistant ({assistantEvidence.length})</span>
                     </div>
                     {assistantEvidence.length > 0 ? (
-                      assistantEvidence.map((ev: any, idx: number) => <EvidenceCard key={`assistant-${idx}`} ev={ev} />)
+                      assistantEvidence.map((ev: DisputeEvidenceDto, idx: number) => <EvidenceCard key={`assistant-${idx}`} ev={ev} />)
                     ) : (
                       <p className="text-xs text-text-muted text-center py-4">Không có</p>
                     )}

@@ -28,12 +28,12 @@ export interface AvailableTasksResult {
 export const mapTaskDtoToEntity = (dto: TasksDto): Task => {
   return {
     id: String(dto.id || ''),
-    createdAt: new Date().toISOString(), // Mock fallback if missing
+    createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     regionId: String(dto.regionId || ''),
-    pageId: '', // Mock fallback
-    chapterId: '', // Mock fallback
-    seriesId: '', // Mock fallback
+    pageId: '',
+    chapterId: '',
+    seriesId: '',
     mangakaId: String(dto.mangakaId || ''),
     assignedAssistantId: dto.assistantId ? String(dto.assistantId) : undefined,
     assignedAssistantName: dto.assistantName || undefined,
@@ -72,7 +72,7 @@ export const useAvailableTasks = (params?: { page?: number; pageSize?: number; s
       const payload = res.data as ApiResponse<TasksDtoPagedResult | TasksDto[]>;
       return extractPagedTasks(payload);
     },
-    staleTime: 1000 * 30, // 30s — available tasks change frequently
+    staleTime: 1000 * 30,
     retry: 1,
   });
 };
@@ -136,19 +136,15 @@ export const useRequestRevisionTask = () => {
 export const useRequestExtension = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ taskId, extensionHours }: { taskId: string; extensionHours: 24 | 48 }) =>
-      taskApi.requestExtension({
-        taskId,
-        days: extensionHours === 48 ? 2 : 1,
-        reason: 'Xin gia hạn deadline',
-      }),
+    mutationFn: ({ taskId, days, reason }: { taskId: string; days: 1 | 2; reason: string }) =>
+      taskApi.requestExtension({ taskId, days, reason }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', 'assistant-my'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'mangaka'] });
     },
   });
 };
 
-// ─── Approve / reject extension (Mangaka F2.12) ───────────────
 export const useApproveExtension = () => {
   const queryClient = useQueryClient();
   return useMutation({

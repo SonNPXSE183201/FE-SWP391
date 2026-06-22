@@ -97,17 +97,62 @@ const createMockPaginatedResponse = <T>(
       IsSuccess: true,
       message: 'Success',
       Message: 'Success',
-      data: paginatedItems,
-      Data: paginatedItems,
+      data: {
+        Items: paginatedItems,
+        items: paginatedItems,
+        PageNumber: page,
+        pageNumber: page,
+        PageSize: pageSize,
+        pageSize: pageSize,
+        TotalItems: items.length,
+        totalItems: items.length,
+        TotalPages: Math.ceil(items.length / pageSize) || 1,
+        totalPages: Math.ceil(items.length / pageSize) || 1,
+      },
+      Data: {
+        Items: paginatedItems,
+        items: paginatedItems,
+        PageNumber: page,
+        pageNumber: page,
+        PageSize: pageSize,
+        pageSize: pageSize,
+        TotalItems: items.length,
+        totalItems: items.length,
+        TotalPages: Math.ceil(items.length / pageSize) || 1,
+        totalPages: Math.ceil(items.length / pageSize) || 1,
+      },
       totalCount: items.length,
       TotalCount: items.length,
       pageNumber: page,
       PageNumber: page,
       pageSize: pageSize,
       PageSize: pageSize,
-      totalPages: Math.ceil(items.length / pageSize),
-      TotalPages: Math.ceil(items.length / pageSize),
+      totalPages: Math.ceil(items.length / pageSize) || 1,
+      TotalPages: Math.ceil(items.length / pageSize) || 1,
     },
+  };
+};
+
+const mapMockTaskToTasksDto = (t: MockTask): components['schemas']['TasksDto'] => {
+  const parseMockNumericId = (value: string, fallback = 1): number => {
+    const parsed = parseInt(value.replace(/[^0-9]/g, '') || String(fallback), 10);
+    return Number.isNaN(parsed) ? fallback : parsed;
+  };
+
+  return {
+    id: parseMockNumericId(t.id),
+    description: t.taskName,
+    regionId: parseMockNumericId(t.regionId),
+    paymentAmount: t.amount,
+    status: t.status,
+    deadline: t.deadline,
+    assistantName: t.assignedAssistantName ?? undefined,
+    pageNumber: parseInt(t.pageName.replace(/[^0-9]/g, '') || '1', 10),
+    extensionRequestDays: t.extensionRequestDays,
+    extensionReason: t.extensionReason,
+    extensionStatus: t.extensionStatus,
+    createAt: t.createdAt,
+    updateAt: t.updatedAt,
   };
 };
 
@@ -122,7 +167,11 @@ export const taskApi = {
       if (params?.status) {
         filtered = filtered.filter((t) => t.status === params.status);
       }
-      return createMockPaginatedResponse(filtered, params?.page, params?.pageSize);
+      return createMockPaginatedResponse(
+        filtered.map(mapMockTaskToTasksDto),
+        params?.page,
+        params?.pageSize,
+      );
     }
     return axiosInstance.get<PagedApiResponse<TasksDto>>('/api/tasks/mangaka-list', { params });
   },
@@ -355,6 +404,8 @@ export const taskApi = {
       const task = MOCK_TASKS.find((t) => t.id === data.taskId);
       if (task) {
         task.extensionRequestDays = data.days;
+        task.extensionReason = data.reason;
+        task.extensionStatus = 'Pending';
       }
       return createMockAxiosResponse(task as unknown as TasksDto, 'Xin gia hạn thành công');
     }
@@ -372,10 +423,6 @@ export const taskApi = {
   // Cancel (T03b, T05)
   cancel: (taskId: string, reason?: string) =>
     axiosInstance.post<ApiResponse<TasksDto>>(`/api/tasks/${taskId}/emergency-cancel`, { reason }),
-
-  // On_Leave toggle (F2.14)
-  toggleOnLeave: (onLeave: boolean) =>
-    axiosInstance.put<ApiResponse<null>>('/api/tasks/on-leave', { onLeave }),
 
   // Task versions (T07)
   getVersions: (taskId: string) =>

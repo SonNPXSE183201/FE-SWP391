@@ -40,8 +40,8 @@ export const ForgotPasswordForm: React.FC = () => {
                 toast.success(response.message || 'Mã xác nhận đã được gửi đến email của bạn');
             }
         } catch (error: unknown) {
-            const axiosError = error as { response?: { data?: { Message?: string } } };
-            const errorMsg = axiosError.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.';
+            const axiosError = error as { response?: { data?: { Message?: string; message?: string } } };
+            const errorMsg = axiosError.response?.data?.Message || axiosError.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.';
             setLocalError(errorMsg);
             toast.error(errorMsg);
         } finally {

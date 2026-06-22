@@ -54,6 +54,7 @@ export const MangakaTasksFeature = () => {
     }
   };
 
+
   const submitRevision = async () => {
     if (!revisionTaskId) return;
     if (!revisionComment.trim()) {
