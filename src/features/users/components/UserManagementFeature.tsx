@@ -7,8 +7,10 @@ import {
   UserPlus,
   Lock,
   Unlock,
+  Pencil,
 } from "lucide-react";
 import { CreateUserModal } from "./CreateUserModal";
+import { EditUserModal } from "./EditUserModal";
 import type { components } from "../../../api/generated/schema";
 import { CustomSelect } from "../../../components/common/CustomSelect";
 import { Pagination } from "../../../components/common/Pagination";
@@ -29,6 +31,7 @@ export const UserManagementFeature = () => {
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<components["schemas"]["UserListItemDto"] | null>(null);
 
   // Debounce search
   useEffect(() => {
@@ -144,13 +147,15 @@ export const UserManagementFeature = () => {
                       <th className="p-4 font-medium">Email</th>
                       <th className="p-4 font-medium">Vai trò</th>
                       <th className="p-4 font-medium">Trạng thái</th>
+                      <th className="p-4 font-medium">Editor phụ trách</th>
+                      <th className="p-4 font-medium">Ngày tạo</th>
                       <th className="p-4 font-medium text-right rounded-tr-lg">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody className="text-sm">
                     {users.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="p-8 text-center text-text-muted">
+                        <td colSpan={7} className="p-8 text-center text-text-muted">
                           Không tìm thấy người dùng nào phù hợp
                         </td>
                       </tr>
@@ -200,6 +205,13 @@ export const UserManagementFeature = () => {
                               {user.status}
                             </span>
                           </td>
+                          <td className="p-4 text-text-secondary text-xs">
+                            {user.role === "Mangaka"
+                              ? user.assignedEditorName ?? (
+                                  <span className="text-warning">Chưa gán</span>
+                                )
+                              : "—"}
+                          </td>
                           <td className="p-4 text-text-secondary">
                             {user.createdAt ? new Date(user.createdAt).toLocaleDateString("vi-VN") : "—"}
                           </td>
@@ -223,6 +235,15 @@ export const UserManagementFeature = () => {
                               </div>
                             ) : (
                               <div className="flex justify-end gap-2">
+                                {user.role === "Mangaka" && (user.status === "Active" || user.status === "Locked") && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingUser(user)}
+                                    className="px-3 py-1.5 bg-brand/10 hover:bg-brand/20 text-brand rounded-lg transition-colors text-xs font-medium flex items-center gap-1"
+                                  >
+                                    <Pencil size={14} /> Sửa
+                                  </button>
+                                )}
                                 {user.status === "Active" && (
                                   <button
                                     onClick={() => lockMutation.mutate(Number(user.id))}
@@ -276,6 +297,10 @@ export const UserManagementFeature = () => {
 
       {isCreateModalOpen && (
         <CreateUserModal onClose={() => setIsCreateModalOpen(false)} />
+      )}
+
+      {editingUser && (
+        <EditUserModal user={editingUser} onClose={() => setEditingUser(null)} />
       )}
     </div>
   );
