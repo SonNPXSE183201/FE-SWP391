@@ -81,7 +81,7 @@ export const AnnotationReviewFeature = ({ chapterId = 'ch-1' }: AnnotationReview
   const handleToggleResolved = useCallback((annoId: string) => {
     toggleResolved.mutate(annoId, {
       onSuccess: (res) => {
-        toast.success(res.data?.Message || 'Đã cập nhật trạng thái');
+        toast.success(res.data?.message || 'Đã cập nhật trạng thái');
       },
       onError: () => toast.error('Lỗi cập nhật trạng thái'),
     });

@@ -141,10 +141,10 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
       }
 
       const res = await taskApi.create({
-        RegionId: finalRegionId,
-        Description: formData.taskName,
-        PaymentAmount: amountNum,
-        Deadline: new Date(formData.deadline + 'T23:59:59Z').toISOString(),
+        regionId: finalRegionId,
+        description: formData.taskName,
+        paymentAmount: amountNum,
+        deadline: new Date(formData.deadline + 'T23:59:59Z').toISOString(),
       });
       const resData = res.data as ApiResponse<TasksDto>;
       if (!resData?.success) throw new Error(resData?.message || 'Lỗi tạo task');

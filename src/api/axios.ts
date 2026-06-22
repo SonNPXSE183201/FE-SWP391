@@ -1,13 +1,17 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 
-export interface ApiResponse<T> {
-  success: boolean;
-  statusCode: number;
-  message: string;
-  data: T;
-  errors?: Record<string, string[]>;
-}
+export type { ApiResponse, PagedResult, PagedApiResponse } from './generated/types';
+export {
+  isApiSuccess,
+  getApiData,
+  getApiMessage,
+  getPagedItems,
+  unwrapPaged,
+  unwrapApiData,
+  getAxiosErrorMessage,
+  createMockApiResponse,
+} from './apiResponse';
 
 export const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',

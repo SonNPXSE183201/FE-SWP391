@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { canvasApi } from '../api/canvas.api';
-import type { AnnotationType } from '../../../types/entities';
+import type { Annotation, AnnotationType, Page, Region } from '../../../types/entities';
 
 // ─── Query Keys ──────────────────────────────────────────────
 const KEYS = {
@@ -15,7 +15,7 @@ export const useCanvasPages = (chapterId: string) =>
   useQuery({
     queryKey: KEYS.pages(chapterId),
     queryFn: () => canvasApi.getPagesByChapterId(chapterId),
-    select: (res) => res.data?.Data ?? [],
+    select: (res) => (res.data?.data ?? []) as Page[],
     enabled: !!chapterId,
   });
 
@@ -23,7 +23,7 @@ export const useCanvasPage = (pageId: string) =>
   useQuery({
     queryKey: KEYS.page(pageId),
     queryFn: () => canvasApi.getPageById(pageId),
-    select: (res) => res.data?.Data ?? null,
+    select: (res) => (res.data?.data ?? null) as Page | null,
     enabled: !!pageId,
   });
 
@@ -32,7 +32,7 @@ export const useRegions = (pageId: string) =>
   useQuery({
     queryKey: KEYS.regions(pageId),
     queryFn: () => canvasApi.getRegionsByPageId(pageId),
-    select: (res) => res.data?.Data ?? [],
+    select: (res) => (res.data?.data ?? []) as Region[],
     enabled: !!pageId,
   });
 
@@ -67,7 +67,7 @@ export const useAnnotations = (pageId: string) =>
   useQuery({
     queryKey: KEYS.annotations(pageId),
     queryFn: () => canvasApi.getAnnotationsByPageId(pageId),
-    select: (res) => res.data?.Data ?? [],
+    select: (res) => (res.data?.data ?? []) as Annotation[],
     enabled: !!pageId,
   });
 

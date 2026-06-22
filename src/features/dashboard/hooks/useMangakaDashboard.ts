@@ -76,11 +76,11 @@ export const useMangakaDashboard = () => {
       const response = await dashboardApi.getMangakaDashboard();
 
       const apiResponse = response.data;
-      if (!apiResponse.IsSuccess || !apiResponse.Data) {
-        throw new Error(apiResponse.Message || 'Failed to fetch dashboard data');
+      if (!apiResponse.success || !apiResponse.data) {
+        throw new Error(apiResponse.message || 'Failed to fetch dashboard data');
       }
 
-      const data = apiResponse.Data;
+      const data = apiResponse.data;
 
       // Map stats (direct passthrough — shape matches)
       const stats: DashboardStats = { ...data.stats };

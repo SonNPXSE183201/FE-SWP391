@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- mock-first module; real BE types wired when USE_MOCK is false */
 import { axiosInstance } from '../../../api/axios';
+import { createMockApiResponse } from '../../../api/apiResponse';
 import type { Annotation, Region, AnnotationType } from '../../../types/entities';
 import {
   MOCK_CANVAS_PAGES,
@@ -13,9 +15,7 @@ const USE_MOCK = true;
 
 const mockDelay = (ms = 50) => new Promise((r) => setTimeout(r, ms));
 
-const mockResponse = <T>(data: T, message = 'Success') => ({
-  data: { IsSuccess: true, success: true, Message: message, Data: data },
-});
+const mockResponse = createMockApiResponse;
 
 // ─── Canvas API ──────────────────────────────────────────────
 // Note: When USE_MOCK is off, the return types will be from the

@@ -1,4 +1,4 @@
-import { axiosInstance } from '../../../api/axios';
+import { axiosInstance, createMockApiResponse } from '../../../api/axios';
 import type {
   ApiResponse,
   SeriesDto,
@@ -40,14 +40,7 @@ export interface SubmitChapterRequest {
 const mockDelay = (ms: number = 50) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
-const createMockAxiosResponse = <T>(data: T, message = 'Success') => ({
-  data: {
-    IsSuccess: true,
-    success: true,
-    Message: message,
-    Data: data,
-  } as unknown as ApiResponse<T>,
-});
+const createMockAxiosResponse = createMockApiResponse;
 
 const createMockPaginatedResponse = <T>(
   items: T[],
@@ -56,18 +49,15 @@ const createMockPaginatedResponse = <T>(
 ) => {
   const start = (page - 1) * pageSize;
   const paginatedItems = items.slice(start, start + pageSize);
-  return {
-    data: {
-      IsSuccess: true,
-      success: true,
-      Message: 'Success',
-      Data: paginatedItems,
-      TotalCount: items.length,
-      PageNumber: page,
-      PageSize: pageSize,
-      TotalPages: Math.ceil(items.length / pageSize),
-    },
-  };
+  return createMockApiResponse({
+    items: paginatedItems,
+    pageNumber: page,
+    pageSize,
+    totalItems: items.length,
+    totalPages: Math.ceil(items.length / pageSize) || 1,
+    hasPreviousPage: page > 1,
+    hasNextPage: page * pageSize < items.length,
+  });
 };
 
 // ─── readWithFallback: try real API, fallback to mock on 404/501 ─
