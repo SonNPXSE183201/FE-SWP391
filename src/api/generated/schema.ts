@@ -1991,6 +1991,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reviews/series/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SeriesReviewDtoIEnumerableApiResponse"];
+                        "application/json": components["schemas"]["SeriesReviewDtoIEnumerableApiResponse"];
+                        "text/json": components["schemas"]["SeriesReviewDtoIEnumerableApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/reviews/series/{id}": {
         parameters: {
             query?: never;
@@ -4119,6 +4156,7 @@ export interface components {
             internalStatus?: string | null;
             status?: string | null;
             userName?: string | null;
+            userRole?: string | null;
             description?: string | null;
             discrepancyNote?: string | null;
         };
@@ -4407,6 +4445,16 @@ export interface components {
                 [key: string]: string[] | null;
             } | null;
         };
+        SeriesReviewDtoIEnumerableApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["SeriesReviewDto"][] | null;
+            errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
         StringApiResponse: {
             success?: boolean;
             /** Format: int32 */
@@ -4633,6 +4681,7 @@ export interface components {
             fromUserFullName?: string | null;
             toUserName?: string | null;
             toUserFullName?: string | null;
+            requesterRole?: string | null;
             bankName?: string | null;
             bankAccountNumber?: string | null;
             bankAccountName?: string | null;
