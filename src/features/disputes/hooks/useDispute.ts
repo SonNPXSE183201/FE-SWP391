@@ -10,14 +10,14 @@ export const useDisputes = () =>
   useQuery({
     queryKey: KEYS.disputes,
     queryFn: () => disputeApi.getDisputes(),
-    select: (res) => res.data?.Data ?? [],
+    select: (res) => res.data?.data ?? [],
   });
 
 export const useDisputeDetail = (disputeId: number | string) =>
   useQuery({
     queryKey: KEYS.disputeDetail(disputeId),
     queryFn: () => disputeApi.getDisputeDetail(disputeId),
-    select: (res) => res.data?.Data ?? null,
+    select: (res) => res.data?.data ?? null,
     enabled: !!disputeId,
   });
 

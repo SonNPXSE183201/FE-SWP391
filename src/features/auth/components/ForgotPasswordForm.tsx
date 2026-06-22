@@ -41,7 +41,7 @@ export const ForgotPasswordForm: React.FC = () => {
             }
         } catch (error: unknown) {
             const axiosError = error as { response?: { data?: { Message?: string; message?: string } } };
-            const errorMsg = axiosError.response?.data?.Message || axiosError.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.';
+            const errorMsg = axiosError.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.';
             setLocalError(errorMsg);
             toast.error(errorMsg);
         } finally {

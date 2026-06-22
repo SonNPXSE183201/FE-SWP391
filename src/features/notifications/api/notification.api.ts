@@ -80,18 +80,18 @@ const mockDelay = (ms: number = 300) => new Promise(resolve => setTimeout(resolv
 
 const createMockAxiosResponse = <T>(data: T, message = 'Success') => ({
   data: {
-    IsSuccess: true,
     success: true,
-    Message: message,
-    Data: data,
-  },
+    statusCode: 200,
+    message,
+    data,
+  } satisfies ApiResponse<T>,
 });
 
 // ─── Response DTOs ───────────────────────────────────────────
 export interface NotificationListResponse {
-  Items: SchemaNotificationDto[];
-  TotalCount: number;
-  UnreadCount: number;
+  items: SchemaNotificationDto[];
+  totalCount: number;
+  unreadCount: number;
 }
 
 // ─── Mappers (mock camelCase → schema PascalCase) ────────────
@@ -118,13 +118,9 @@ export const notificationApi = {
     if (USE_MOCK) {
       await mockDelay(250);
       const items = mockState.map(toSchemaNotificationDto);
-      return createMockAxiosResponse({
-        Items: items.slice((page - 1) * pageSize, page * pageSize),
-        TotalCount: items.length,
-        UnreadCount: mockState.filter(n => !n.isRead).length,
-      } as NotificationListResponse);
+      return createMockAxiosResponse(items);
     }
-    return axiosInstance.get<ApiResponse<NotificationListResponse>>('/api/notifications', {
+    return axiosInstance.get<ApiResponse<SchemaNotificationDto[]>>('/api/notifications', {
       params: { page, pageSize },
     });
   },

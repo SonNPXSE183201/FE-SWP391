@@ -53,7 +53,7 @@ const getHubUrl = () => {
 const mapSignalRPayload = (payload: any): NotificationItem => ({
   id: payload.Id || payload.id || crypto.randomUUID(),
   title: payload.Title || payload.title || 'Thông báo mới',
-  message: payload.Message || payload.message || '',
+  message: payload.message || '',
   isRead: false,
   link: payload.Link || payload.link,
   type: payload.Type || payload.type || 'SystemAlert',
@@ -126,7 +126,7 @@ export const useSignalR = () => {
       const item: NotificationItem = {
         id: crypto.randomUUID(),
         title: 'Cập nhật Task',
-        message: payload.Message || payload.message || `Task "${payload.TaskName || payload.taskName || ''}" đã chuyển sang ${payload.NewStatus || payload.newStatus || 'trạng thái mới'}`,
+        message: payload.message || `Task "${payload.taskName || ''}" đã chuyển sang ${payload.newStatus || 'trạng thái mới'}`,
         isRead: false,
         link: payload.Link || payload.link || '/mangaka/tasks',
         type: 'TaskUpdate',
@@ -144,7 +144,7 @@ export const useSignalR = () => {
       const item: NotificationItem = {
         id: crypto.randomUUID(),
         title: 'Cập nhật ví',
-        message: payload.Message || payload.message || 'Số dư ví của bạn đã thay đổi',
+        message: payload.message || 'Số dư ví của bạn đã thay đổi',
         isRead: false,
         link: payload.Link || payload.link || '/mangaka/wallet',
         type: 'WalletUpdate',

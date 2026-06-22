@@ -12,7 +12,7 @@ export const useReviewSeriesDetail = (seriesId: string) =>
   useQuery({
     queryKey: KEYS.reviewSeriesDetail(seriesId),
     queryFn: () => reviewApi.getReviewSeriesDetail(seriesId),
-    select: (res) => res.data?.Data ?? null,
+    select: (res) => res.data?.data ?? null,
     enabled: !!seriesId,
   });
 
@@ -33,14 +33,14 @@ export const useReviewQueue = () =>
   useQuery({
     queryKey: KEYS.reviewQueue,
     queryFn: () => reviewApi.getReviewQueue(),
-    select: (res) => res.data?.Data ?? [],
+    select: (res) => res.data?.data ?? [],
   });
 
 export const useChapterReview = (chapterId: string) =>
   useQuery({
     queryKey: KEYS.chapterReview(chapterId),
     queryFn: () => reviewApi.getChapterReview(chapterId),
-    select: (res) => res.data?.Data ?? null,
+    select: (res) => res.data?.data ?? null,
     enabled: !!chapterId,
   });
 

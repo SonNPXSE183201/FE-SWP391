@@ -90,7 +90,7 @@ export const contractApi = {
       const res = await axiosInstance.get<ApiResponse<ApprovedSeriesContractDto[]>>(
         '/api/admin/contracts/series',
       );
-      const items = (res.data?.Data ?? []).map(mapApprovedSeriesContractDto);
+      const items = (res.data?.data ?? []).map(mapApprovedSeriesContractDto);
       if (items.length > 0) return items;
     } catch (err) {
       if (!import.meta.env.DEV) throw err;
@@ -134,7 +134,7 @@ export const contractApi = {
             }
           : s,
       );
-      return { IsSuccess: true, Message: 'Cập nhật phụ lục (mock dev)' };
+      return { success: true, message: 'Cập nhật phụ lục (mock dev)' };
     }
 
     const res = await axiosInstance.put<ApiResponse<unknown>>(

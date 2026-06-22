@@ -1,22 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { taskApi } from '../api/task.api';
-import type { ApiResponse } from '../../../api/axios';
-import type { TasksDto, TasksDtoPagedResult } from '../../../api/generated/types';
+import type { ApiResponse, TasksDto } from '../../../api/generated/types';
 import type { Task, TaskStatus } from '../../../types/entities';
+import { unwrapPaged } from '../../../api/apiResponse';
 
 export type AvailableTaskDto = TasksDto;
-
-const extractPagedTasks = (payload: ApiResponse<TasksDtoPagedResult | TasksDto[] | undefined>) => {
-  const rawData = payload.data || payload.data;
-  const paged = rawData && typeof rawData === 'object' && 'items' in rawData ? rawData : null;
-  const items: TasksDto[] = paged?.items || (Array.isArray(rawData) ? rawData : []);
-  return {
-    items,
-    totalPages: paged?.totalPages || 1,
-    totalItems: paged?.totalItems || items.length,
-    pageNumber: paged?.pageNumber || 1,
-  };
-};
 
 export interface AvailableTasksResult {
   items: AvailableTaskDto[];
@@ -54,8 +42,8 @@ export const useMangakaTasks = (params?: { page?: number; pageSize?: number; sta
     queryKey: ['tasks', 'mangaka', params],
     queryFn: async () => {
       const res = await taskApi.getMyTasks(params);
-      const payload = res.data as ApiResponse<TasksDtoPagedResult | TasksDto[]>;
-      const items = extractPagedTasks(payload).items;
+      const payload = res.data as ApiResponse<unknown>;
+      const items = unwrapPaged<TasksDto>(payload).items;
       return items.map(mapTaskDtoToEntity);
     },
     staleTime: 1000 * 60,
@@ -69,8 +57,8 @@ export const useAvailableTasks = (params?: { page?: number; pageSize?: number; s
     queryKey: ['tasks', 'available', params],
     queryFn: async () => {
       const res = await taskApi.getAvailableTasks(params);
-      const payload = res.data as ApiResponse<TasksDtoPagedResult | TasksDto[]>;
-      return extractPagedTasks(payload);
+      const payload = res.data as ApiResponse<unknown>;
+      return unwrapPaged<TasksDto>(payload);
     },
     staleTime: 1000 * 30,
     retry: 1,
@@ -82,8 +70,8 @@ export const useAssistantMyTasks = (params?: { page?: number; pageSize?: number 
     queryKey: ['tasks', 'assistant-my', params],
     queryFn: async () => {
       const res = await taskApi.getAssistantMyTasks(params);
-      const payload = res.data as ApiResponse<TasksDtoPagedResult | TasksDto[]>;
-      return extractPagedTasks(payload);
+      const payload = res.data as ApiResponse<unknown>;
+      return unwrapPaged<TasksDto>(payload);
     },
     staleTime: 1000 * 30,
     retry: 1,
@@ -121,9 +109,9 @@ export const useRequestRevisionTask = () => {
   return useMutation({
     mutationFn: ({ taskId, comment, extensionHours }: { taskId: string; comment: string; extensionHours: 24 | 48 }) =>
       taskApi.requestRevision(taskId, {
-        FeedbackComment: comment,
-        RevisionExtensionHours: extensionHours,
-        CoordinatesJson: '[]',
+        feedbackComment: comment,
+        revisionExtensionHours: extensionHours,
+        coordinatesJson: '[]',
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', 'mangaka'] });
@@ -164,8 +152,8 @@ export const useTaskDetail = (taskId?: string) => {
     queryFn: async () => {
       const res = await taskApi.getById(taskId as string);
       const payload = res.data as ApiResponse<TasksDto>;
-      if (!payload.success && !payload.success) return null;
-      const data = payload.data || payload.data;
+      if (!payload.success) return null;
+      const data = payload.data;
       if (!data) return null;
       return mapTaskDtoToEntity(data);
     },

@@ -52,8 +52,8 @@ export const CreateSeriesForm = () => {
         coverImage: formData.coverImage || undefined,
       });
       const payload = response.data as ApiResponse<SeriesDto> & { Message?: string; Data?: SeriesDto };
-      toast.success(payload.Message || payload.message || 'Tạo Series thành công! Trạng thái: Bản nháp (Draft)');
-      const createdData = payload.data || payload.Data;
+      toast.success(payload.message || 'Tạo Series thành công! Trạng thái: Bản nháp (Draft)');
+      const createdData = payload.data;
       navigate(`/mangaka/series/${createdData?.id || 'new'}`);
     } catch {
       toast.error('Có lỗi xảy ra. Vui lòng thử lại.');

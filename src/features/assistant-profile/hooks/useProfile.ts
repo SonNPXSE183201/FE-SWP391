@@ -9,7 +9,7 @@ export const useAssistantProfile = () =>
   useQuery({
     queryKey: KEYS.assistantProfile,
     queryFn: () => profileApi.getAssistantProfile(),
-    select: (res) => res.data?.Data ?? null,
+    select: (res) => res.data?.data ?? null,
   });
 
 export const useUpdateAssistantProfile = () => {
