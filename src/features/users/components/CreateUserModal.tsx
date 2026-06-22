@@ -6,6 +6,7 @@ import { adminApi } from '../../admin/api/admin.api';
 import type { CreateUserByAdminDto } from '../../../api/generated/types';
 import type { ApiResponse } from '../../../api/axios';
 import { CustomSelect } from '../../../components/common/CustomSelect';
+import { AssignedEditorField } from './AssignedEditorField';
 
 interface CreateUserModalProps {
   onClose: () => void;
@@ -79,6 +80,14 @@ export const CreateUserModal = ({ onClose }: CreateUserModalProps) => {
       newErrors.fullName = 'Họ và tên không được để trống';
     }
 
+    if (formData.roleId === 4 && !formData.assignedEditorId) {
+      newErrors.assignedEditorId = 'Vui lòng chọn Editor phụ trách cho Mangaka';
+    }
+
+    if (formData.roleId === 4 && !formData.penName?.trim()) {
+      newErrors.penName = 'Bút danh không được để trống khi tạo Mangaka';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -122,8 +131,13 @@ export const CreateUserModal = ({ onClose }: CreateUserModalProps) => {
               ]}
               value={String(formData.roleId)}
               onChange={(val) => {
-                setFormData({ ...formData, roleId: Number(val) });
-                setErrors((prev) => ({ ...prev, roleId: '' }));
+                const roleId = Number(val);
+                setFormData({
+                  ...formData,
+                  roleId,
+                  assignedEditorId: roleId === 4 ? formData.assignedEditorId : undefined,
+                });
+                setErrors((prev) => ({ ...prev, roleId: '', assignedEditorId: '' }));
               }}
               className="w-full"
             />
@@ -199,18 +213,33 @@ export const CreateUserModal = ({ onClose }: CreateUserModalProps) => {
           </div>
 
           {formData.roleId === 4 && (
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-1">
-                Bút danh (Pen Name)
-              </label>
-              <input
-                type="text"
-                className="w-full bg-bg-secondary border border-border-custom rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand placeholder:text-text-muted/50"
-                placeholder="Oda Eiichiro"
-                value={formData.penName || ''}
-                onChange={(e) => setFormData({ ...formData, penName: e.target.value })}
+            <>
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1">
+                  Bút danh (Pen Name) <span className="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  className={`w-full bg-bg-secondary border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand placeholder:text-text-muted/50 ${errors.penName ? 'border-danger' : 'border-border-custom'}`}
+                  placeholder="Oda Eiichiro"
+                  value={formData.penName || ''}
+                  onChange={(e) => {
+                    setFormData({ ...formData, penName: e.target.value });
+                    setErrors((prev) => ({ ...prev, penName: '' }));
+                  }}
+                />
+                {errors.penName && <p className="text-xs text-danger mt-1">{errors.penName}</p>}
+              </div>
+
+              <AssignedEditorField
+                value={formData.assignedEditorId ?? undefined}
+                onChange={(editorId) => {
+                  setFormData({ ...formData, assignedEditorId: editorId });
+                  setErrors((prev) => ({ ...prev, assignedEditorId: '' }));
+                }}
+                error={errors.assignedEditorId}
               />
-            </div>
+            </>
           )}
 
           <div className="pt-4 flex items-center justify-end gap-3 border-t border-border-custom mt-6">

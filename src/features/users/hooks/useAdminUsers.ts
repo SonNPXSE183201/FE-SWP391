@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { adminApi } from "../../admin";
+import type { UpdateUserByAdminDto } from "../../../api/generated/types";
 
 interface UseAdminUsersOptions {
   filterRole: string;
@@ -77,5 +78,26 @@ export const useUnlockUser = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     },
     onError: () => toast.error("Có lỗi xảy ra khi mở khóa tài khoản"),
+  });
+};
+
+export const useUpdateUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateUserByAdminDto }) =>
+      adminApi.updateUser(id, data),
+    onSuccess: (res) => {
+      const responseData = res.data;
+      if (responseData.success) {
+        toast.success(responseData.message || "Cập nhật tài khoản thành công");
+        queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      } else {
+        toast.error(responseData.message || "Có lỗi xảy ra");
+      }
+    },
+    onError: (error: unknown) => {
+      const msg = (error as { response?: { data?: { message?: string } } }).response?.data?.message;
+      toast.error(msg || "Có lỗi xảy ra khi cập nhật tài khoản");
+    },
   });
 };
