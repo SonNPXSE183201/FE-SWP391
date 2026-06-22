@@ -1,10 +1,9 @@
 import { axiosInstance } from '../../../api/axios';
-import type { ApiResponse } from '../../../api/generated/types';
+import type { ApiResponse, ReconciliationReportDto, ReconciliationResponseDto } from '../../../api/generated/types';
 import type {
   ReconciliationRecord,
   ReconciliationSummary,
   ReconciliationParams,
-  ReconciliationResponse,
 } from '../types/reconciliation.types';
 
 // ─── Config ──────────────────────────────────────────────────
@@ -133,17 +132,18 @@ const calculateSummary = (records: ReconciliationRecord[]): ReconciliationSummar
   mismatchCount: records.filter((r) => r.status === 'Mismatch').length,
   missingCount: records.filter((r) => r.status === 'Missing').length,
   pendingCount: records.filter((r) => r.status === 'Pending').length,
-  totalVnpayAmount: records.reduce((sum, r) => sum + r.vnpayAmount, 0),
-  totalInternalAmount: records.reduce((sum, r) => sum + r.internalAmount, 0),
+  totalVnpayAmount: records.reduce((sum, r) => sum + (r.vnpayAmount ?? 0), 0),
+  totalInternalAmount: records.reduce((sum, r) => sum + (r.internalAmount ?? 0), 0),
   differenceAmount: Math.abs(
-    records.reduce((sum, r) => sum + r.vnpayAmount, 0) - records.reduce((sum, r) => sum + r.internalAmount, 0)
+    records.reduce((sum, r) => sum + (r.vnpayAmount ?? 0), 0)
+      - records.reduce((sum, r) => sum + (r.internalAmount ?? 0), 0),
   ),
 });
 
 // ─── API ─────────────────────────────────────────────────────
 
 export const reconciliationApi = {
-  fetchReconciliation: async (params?: ReconciliationParams): Promise<ReconciliationResponse> => {
+  fetchReconciliation: async (params?: ReconciliationParams): Promise<ReconciliationResponseDto> => {
     if (USE_MOCK) {
       await mockDelay();
       let filtered = [...MOCK_RECORDS];
@@ -152,22 +152,36 @@ export const reconciliationApi = {
       }
       if (params?.referenceCode) {
         filtered = filtered.filter((r) =>
-          r.referenceCode.toLowerCase().includes(params.referenceCode!.toLowerCase()) ||
-          r.vnpayTransactionId.toLowerCase().includes(params.referenceCode!.toLowerCase())
+          (r.referenceCode ?? '').toLowerCase().includes(params.referenceCode!.toLowerCase()) ||
+          (r.vnpayTransactionId ?? '').toLowerCase().includes(params.referenceCode!.toLowerCase())
         );
       }
       if (params?.from) {
-        filtered = filtered.filter((r) => new Date(r.vnpayDate) >= new Date(params.from!));
+        filtered = filtered.filter((r) => new Date(r.vnpayDate ?? 0) >= new Date(params.from!));
       }
       if (params?.to) {
-        filtered = filtered.filter((r) => new Date(r.vnpayDate) <= new Date(params.to! + 'T23:59:59Z'));
+        filtered = filtered.filter((r) => new Date(r.vnpayDate ?? 0) <= new Date(params.to! + 'T23:59:59Z'));
       }
       return { records: filtered, summary: calculateSummary(filtered) };
     }
-    const res = await axiosInstance.get<ApiResponse<ReconciliationResponse>>(
+    const res = await axiosInstance.get<ApiResponse<ReconciliationResponseDto>>(
       '/api/admin/reconciliation',
       { params }
     );
     return res.data?.data ?? { records: [], summary: calculateSummary([]) };
+  },
+
+  importCsv: async (file: File): Promise<ReconciliationReportDto> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await axiosInstance.post<ApiResponse<ReconciliationReportDto>>(
+      '/api/admin/reconciliation/import-csv',
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
+    if (!res.data?.success || !res.data.data) {
+      throw new Error(res.data?.message || 'Import file đối soát thất bại');
+    }
+    return res.data.data;
   },
 };

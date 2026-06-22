@@ -14,6 +14,7 @@ import {
 export const TX_TYPE_CONFIG: Record<TransactionType, { label: string; color: string; bg: string; icon: typeof Wallet; sign: '+' | '-' | '' }> = {
   Deposit: { label: 'Nạp tiền', color: 'text-success', bg: 'bg-success/10', icon: ArrowDownToLine, sign: '+' },
   Withdraw: { label: 'Rút tiền', color: 'text-danger', bg: 'bg-danger/10', icon: ArrowUpFromLine, sign: '-' },
+  Withdrawal: { label: 'Rút tiền', color: 'text-danger', bg: 'bg-danger/10', icon: ArrowUpFromLine, sign: '-' },
   Lock: { label: 'Khóa tiền', color: 'text-warning', bg: 'bg-warning/10', icon: Lock, sign: '-' },
   Unlock: { label: 'Mở khóa', color: 'text-info', bg: 'bg-info/10', icon: Unlock, sign: '+' },
   Escrow_Lock: { label: 'Tạm giữ tiền', color: 'text-warning', bg: 'bg-warning/10', icon: Lock, sign: '-' },

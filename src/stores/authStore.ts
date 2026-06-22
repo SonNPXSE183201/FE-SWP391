@@ -53,7 +53,7 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'auth-storage',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({ user: state.user, token: state.token, refreshToken: state.refreshToken }), // don't persist isLoading
     }
   )

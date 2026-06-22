@@ -52,6 +52,12 @@ const readWithFallback = async <T>(
 };
 
 export const reviewApi = {
+  /** GET /api/reviews/series/pending — series chờ Editor duyệt bản thảo (PA3) */
+  getPendingSeries: async () => {
+    const res = await axiosInstance.get<ApiResponse<SeriesReviewDto[]>>('/api/reviews/series/pending');
+    return res;
+  },
+
   /** GET /api/reviews/series/{id} — chi tiết series để Editor review */
   getReviewSeriesDetail: async (seriesId: string) => {
     if (USE_MOCK) {

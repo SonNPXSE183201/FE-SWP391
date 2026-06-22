@@ -6,10 +6,8 @@ import { useNotificationList, useMarkAsRead, useMarkAllAsRead, useUnreadCount } 
 import { useClickOutside } from '../../../hooks/useClickOutside';
 import type { NotificationItem } from '../../../stores/notificationStore';
 
-const NotificationIcon = ({ type, isRead }: { type: NotificationItem['type']; isRead: boolean }) => {
-  const baseClass = `flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center border ${
-    isRead ? 'opacity-60 grayscale-[0.5]' : ''
-  }`;
+const NotificationIcon = ({ type }: { type: NotificationItem['type'] }) => {
+  const baseClass = 'flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center border';
 
   switch (type) {
     case 'TaskUpdate':
@@ -71,11 +69,9 @@ export const NotificationDropdown = () => {
     }
   }, [isDropdownOpen, refetch]);
 
-  const handleNotificationClick = (id: string, isRead: boolean) => {
-    if (!isRead) {
-      markAsRead(id);
-    }
-    closeDropdown(); // Close when navigating
+  const handleNotificationClick = (id: string) => {
+    markAsRead(id);
+    closeDropdown();
   };
 
   return (
@@ -113,7 +109,7 @@ export const NotificationDropdown = () => {
                 className="flex items-center gap-1.5 text-[12px] text-brand hover:text-brand-light bg-transparent border-none cursor-pointer disabled:opacity-50 transition-colors"
               >
                 {isMarkingAll ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                Đánh dấu tất cả đã đọc
+                Đọc tất cả
               </button>
             )}
           </div>
@@ -137,30 +133,18 @@ export const NotificationDropdown = () => {
                 {notifications.map((notif) => {
                   const content = (
                     <div
-                      className={`flex gap-4 p-4 border-b border-border-custom/50 hover:bg-bg-surface transition-colors duration-200 cursor-pointer ${
-                        !notif.isRead ? 'bg-[#182030]/30' : ''
-                      }`}
-                      onClick={() => handleNotificationClick(notif.id, notif.isRead)}
+                      className="flex gap-4 p-4 border-b border-border-custom/50 hover:bg-bg-surface transition-colors duration-200 cursor-pointer bg-[#182030]/30"
+                      onClick={() => handleNotificationClick(notif.id)}
                     >
-                      <NotificationIcon type={notif.type} isRead={notif.isRead} />
+                      <NotificationIcon type={notif.type} />
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start mb-1">
-                          <h4
-                            className={`text-[13px] font-medium m-0 truncate pr-3 ${
-                              !notif.isRead ? 'text-text-primary' : 'text-text-secondary'
-                            }`}
-                          >
+                          <h4 className="text-[13px] font-medium m-0 truncate pr-3 text-text-primary">
                             {notif.title}
                           </h4>
-                          {!notif.isRead && (
-                            <span className="flex-shrink-0 w-2 h-2 rounded-full bg-brand mt-1.5"></span>
-                          )}
+                          <span className="flex-shrink-0 w-2 h-2 rounded-full bg-brand mt-1.5" />
                         </div>
-                        <p
-                          className={`text-[13px] leading-relaxed m-0 line-clamp-2 ${
-                            !notif.isRead ? 'text-text-secondary' : 'text-text-muted'
-                          }`}
-                        >
+                        <p className="text-[13px] leading-relaxed m-0 line-clamp-2 text-text-secondary">
                           {notif.message}
                         </p>
                         <div className="flex items-center gap-1.5 mt-2 text-[11px] text-text-muted">

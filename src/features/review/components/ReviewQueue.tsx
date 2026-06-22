@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   FileText, Loader2, User, Calendar, Layers,
-  Banknote, AlertTriangle, Clock, ChevronRight, Inbox,
+  Banknote, AlertTriangle, Clock, ChevronRight, Inbox, BookOpen,
 } from 'lucide-react';
-import { useReviewQueue } from '../hooks/useReview';
+import { useReviewQueue, usePendingSeriesReview } from '../hooks/useReview';
 import { formatVND, getDeadlineStatus } from '../constants';
 import type { ChapterReviewStatus } from '../types';
 
@@ -26,6 +27,7 @@ const FILTERS: { value: 'All' | ChapterReviewStatus; label: string }[] = [
 
 export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
   const { data: queue = [], isLoading } = useReviewQueue();
+  const { data: pendingSeries = [], isLoading: pendingSeriesLoading } = usePendingSeriesReview();
   const [filter, setFilter] = useState<'All' | ChapterReviewStatus>('All');
 
   const filtered = useMemo(
@@ -63,6 +65,68 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
             {f.label}
           </button>
         ))}
+      </div>
+
+      {/* Series chờ duyệt bản thảo (submit-review — TC-0b.3) */}
+      {(pendingSeriesLoading || pendingSeries.length > 0) && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <BookOpen size={16} className="text-brand" />
+            <h2 className="text-sm font-semibold text-text-primary">Series chờ duyệt bản thảo</h2>
+            <span className="text-[10px] text-text-muted bg-bg-surface px-2 py-0.5 rounded-full">
+              {pendingSeries.length}
+            </span>
+          </div>
+          {pendingSeriesLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="animate-spin text-brand" size={24} />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {pendingSeries.map((s) => (
+                <Link
+                  key={s.id}
+                  to={`/editor/review/${s.id}`}
+                  className="group text-left bg-bg-secondary border border-border-custom rounded-xl p-4 hover:border-brand/40 hover:-translate-y-0.5 transition-all no-underline text-inherit"
+                >
+                  <div className="flex gap-3">
+                    <div className="w-16 h-[88px] rounded-lg overflow-hidden bg-bg-surface flex-shrink-0 border border-border-custom">
+                      {s.coverArtworkUrl ? (
+                        <img src={s.coverArtworkUrl} alt={s.title || ''} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-text-muted">
+                          <BookOpen size={20} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 text-amber-400">
+                        Chờ duyệt Series
+                      </span>
+                      <h3 className="text-sm font-semibold text-text-primary mt-1.5 truncate group-hover:text-brand transition-colors">
+                        {s.title}
+                      </h3>
+                      <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-text-muted">
+                        <User size={11} />
+                        <span className="truncate">{s.mangakaName || 'Mangaka'}</span>
+                      </div>
+                    </div>
+                    <ChevronRight
+                      size={16}
+                      className="text-text-muted group-hover:text-brand transition-colors flex-shrink-0 mt-1"
+                    />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Chapter QC queue */}
+      <div className="flex items-center gap-2 mb-3">
+        <FileText size={16} className="text-text-muted" />
+        <h2 className="text-sm font-semibold text-text-primary">Chapter chờ QC</h2>
       </div>
 
       {isLoading ? (

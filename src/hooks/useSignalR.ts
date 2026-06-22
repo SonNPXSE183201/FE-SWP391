@@ -7,7 +7,7 @@ import {
   LogLevel,
   HubConnectionState,
 } from '@microsoft/signalr';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../stores/authStore';
 import { useNotificationStore } from '../stores/notificationStore';
@@ -53,12 +53,50 @@ const getHubUrl = () => {
 const mapSignalRPayload = (payload: any): NotificationItem => ({
   id: payload.Id || payload.id || crypto.randomUUID(),
   title: payload.Title || payload.title || 'Thông báo mới',
-  message: payload.message || '',
+  message: payload.Message || payload.message || '',
   isRead: false,
   link: payload.Link || payload.link,
-  type: payload.Type || payload.type || 'SystemAlert',
+  type: normalizeNotificationType(payload.Type || payload.type || 'SystemAlert'),
   createdAt: payload.CreateAt || payload.createdAt || new Date().toISOString(),
 });
+
+const normalizeNotificationType = (type: string): NotificationItem['type'] => {
+  if (
+    type === 'Series_Pending_Review'
+    || type === 'Series_Submitted'
+    || type === 'Series_Submitted_To_Board'
+    || type === 'Chapter_Submitted'
+  ) {
+    return 'Review';
+  }
+  if (type === 'Wallet_Withdrawal_Admin_Pending') return 'SystemAlert';
+  if (type.startsWith('Task_')) return 'TaskUpdate';
+  if (type.startsWith('Wallet')) return 'WalletUpdate';
+  if (type === 'TaskUpdate' || type === 'WalletUpdate' || type === 'Review' || type === 'SystemAlert') {
+    return type;
+  }
+  return 'SystemAlert';
+};
+
+const shouldRefreshAdminUsers = (type: string, link?: string) =>
+  type === 'SystemAlert' || link?.includes('/admin/users');
+
+const shouldRefreshEditorReview = (type: string, link?: string) =>
+  type === 'Series_Pending_Review' || type === 'Review' || link?.includes('/editor/review');
+
+const WITHDRAW_ADMIN_PENDING = 'Wallet_Withdrawal_Admin_Pending';
+
+const WALLET_NOTIFICATION_TYPES_SKIP_TOAST = new Set([
+  'Wallet_Deposit_Success',
+  'Wallet_Withdrawal_Pending',
+  'Wallet_Withdrawal_Approve',
+  'Wallet_Withdrawal_Reject',
+]);
+
+const refreshEditorReviewQueries = (queryClient: QueryClient) => {
+  queryClient.invalidateQueries({ queryKey: ['review'] });
+  queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+};
 
 /**
  * Hook kết nối WebSockets qua SignalR với ASP.NET Core Backend.
@@ -95,29 +133,49 @@ export const useSignalR = () => {
     // NewNotification: generic notification from server
     connection.on('NewNotification', (payload: any) => {
       console.log('[SignalR] NewNotification received:', payload);
+      const rawType = payload.Type || payload.type || 'SystemAlert';
       const item = mapSignalRPayload(payload);
       addNotification(item);
-      notifyToast(item);
+      if (!WALLET_NOTIFICATION_TYPES_SKIP_TOAST.has(rawType)) {
+        notifyToast(item);
+      }
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      if (rawType === WITHDRAW_ADMIN_PENDING) {
+        queryClient.invalidateQueries({ queryKey: ['admin', 'withdraw-pending'] });
+      }
+      if (item.type === 'WalletUpdate') {
+        queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      }
 
-      // Invalidate admin users query to reflect new registrations immediately
-      if (item.type === 'SystemAlert') {
+      if (shouldRefreshAdminUsers(item.type, item.link)) {
         queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      }
+      if (shouldRefreshEditorReview(item.type, item.link)) {
+        refreshEditorReviewQueries(queryClient);
       }
     });
 
     // ReceiveNotification: older generic notification format (content, type)
     connection.on('ReceiveNotification', (content: string, type: string) => {
       console.log('[SignalR] ReceiveNotification received:', { content, type });
+      const normalizedType = normalizeNotificationType(type);
       const item: NotificationItem = {
         id: crypto.randomUUID(),
-        title: 'Thông báo',
+        title: normalizedType === 'Review' ? 'Series chờ duyệt' : 'Thông báo',
         message: content || '',
         isRead: false,
-        type: (type as NotificationItem['type']) || 'SystemAlert',
+        type: normalizedType,
         createdAt: new Date().toISOString(),
       };
       addNotification(item);
       notifyToast(item);
+
+      if (shouldRefreshAdminUsers(item.type)) {
+        queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      }
+      if (shouldRefreshEditorReview(type)) {
+        refreshEditorReviewQueries(queryClient);
+      }
     });
 
     // TaskStatusChanged: task status update → notify + refresh task data (F1.6)
@@ -141,17 +199,6 @@ export const useSignalR = () => {
     // WalletUpdated: wallet balance change → notify + refresh wallet data (F1.6)
     connection.on('WalletUpdated', (payload: any) => {
       console.log('[SignalR] WalletUpdated received:', payload);
-      const item: NotificationItem = {
-        id: crypto.randomUUID(),
-        title: 'Cập nhật ví',
-        message: payload.message || 'Số dư ví của bạn đã thay đổi',
-        isRead: false,
-        link: payload.Link || payload.link || '/mangaka/wallet',
-        type: 'WalletUpdate',
-        createdAt: new Date().toISOString(),
-      };
-      addNotification(item);
-      notifyToast(item);
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
     });
 
