@@ -1,41 +1,85 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Upload, Clock, AlertCircle, BookOpen, Loader2 } from 'lucide-react';
+import {
+  FileText,
+  Upload,
+  Clock,
+  AlertCircle,
+  BookOpen,
+  Loader2,
+  ChevronDown,
+  Plus,
+} from 'lucide-react';
 
 import {
   CHAPTER_STATUS_CONFIG,
   CHAPTER_STATUS_FILTER_OPTIONS,
+  SERIES_STATUS_CONFIG,
   UploadChapterModal,
   useAllChapters,
+  useMySeries,
+  formatChapterDate,
 } from '../index';
-import { usePagination } from '../../../hooks/usePagination';
-import { Pagination } from '../../../components/common/Pagination';
 import { CustomSelect } from '../../../components/common/CustomSelect';
+import type { Chapter, Series } from '../../../types/entities';
+
+type SeriesGroup = Series & { chapters: Chapter[] };
 
 export const ManuscriptsFeature = () => {
   const navigate = useNavigate();
-  const [seriesFilter, setSeriesFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [expandedSeriesIds, setExpandedSeriesIds] = useState<Set<string>>(new Set());
+  const [uploadSeriesId, setUploadSeriesId] = useState<string | undefined>();
   const [showUploadModal, setShowUploadModal] = useState(false);
 
-  const { data: chapters = [], isLoading, error } = useAllChapters();
+  const { data: seriesList = [], isLoading: seriesLoading } = useMySeries({ pageSize: 100 });
+  const { data: chapters = [], isLoading: chaptersLoading, error } = useAllChapters();
 
-  const seriesFilterOptions = useMemo(() => {
-    return [...new Set(chapters.map((c) => c.seriesTitle).filter(Boolean))] as string[];
-  }, [chapters]);
+  const isLoading = seriesLoading || chaptersLoading;
 
-  const filtered = useMemo(() => chapters.filter((c) => {
-    const matchesSeries = !seriesFilter || c.seriesTitle === seriesFilter;
-    const matchesStatus = !statusFilter || c.status === statusFilter;
-    return matchesSeries && matchesStatus;
-  }), [chapters, seriesFilter, statusFilter]);
+  const seriesGroups = useMemo((): SeriesGroup[] => {
+    const chaptersBySeries = new Map<string, Chapter[]>();
+    for (const chapter of chapters) {
+      const list = chaptersBySeries.get(chapter.seriesId) ?? [];
+      list.push(chapter);
+      chaptersBySeries.set(chapter.seriesId, list);
+    }
 
-  const pagination = usePagination(filtered, { pageSize: 10 });
+    return seriesList
+      .map((series) => {
+        let seriesChapters = (chaptersBySeries.get(series.id) ?? [])
+          .sort((a, b) => a.chapterNumber - b.chapterNumber);
+        if (statusFilter) {
+          seriesChapters = seriesChapters.filter((c) => c.status === statusFilter);
+        }
+        return { ...series, chapters: seriesChapters };
+      })
+      .filter((group) => !statusFilter || group.chapters.length > 0);
+  }, [seriesList, chapters, statusFilter]);
 
-  useEffect(() => {
-    pagination.goToPage(1);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seriesFilter, statusFilter]);
+  const totalChapters = useMemo(
+    () => seriesGroups.reduce((sum, g) => sum + g.chapters.length, 0),
+    [seriesGroups],
+  );
+
+  const toggleSeries = useCallback((seriesId: string) => {
+    setExpandedSeriesIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(seriesId)) next.delete(seriesId);
+      else next.add(seriesId);
+      return next;
+    });
+  }, []);
+
+  const openUploadModal = useCallback((seriesId?: string) => {
+    setUploadSeriesId(seriesId);
+    setShowUploadModal(true);
+  }, []);
+
+  const closeUploadModal = useCallback(() => {
+    setShowUploadModal(false);
+    setUploadSeriesId(undefined);
+  }, []);
 
   if (isLoading) {
     return (
@@ -63,11 +107,12 @@ export const ManuscriptsFeature = () => {
           </div>
           <div>
             <h1 className="text-xl font-bold text-text-primary">Quản lý bản thảo</h1>
-            <p className="text-xs text-text-muted mt-0.5">Upload và theo dõi trạng thái chapters</p>
+            <p className="text-xs text-text-muted mt-0.5">Upload và theo dõi chapters theo từng series</p>
           </div>
         </div>
         <button
-          onClick={() => setShowUploadModal(true)}
+          type="button"
+          onClick={() => openUploadModal()}
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition-all duration-200 border-none cursor-pointer shadow-brand hover:shadow-brand-hover hover:-translate-y-0.5"
         >
           <Upload size={16} />
@@ -75,124 +120,183 @@ export const ManuscriptsFeature = () => {
         </button>
       </div>
 
-      {/* Filters */}
+      {/* Status filter */}
       <div className="flex flex-wrap items-center gap-3 mt-6">
-        <div className="w-[180px]">
+        <div className="w-[200px]">
           <CustomSelect
-            options={seriesFilterOptions.map((s) => ({ value: s, label: s }))}
-            value={seriesFilter}
-            onChange={(v) => setSeriesFilter(v)}
-            placeholder="Tất cả Series"
-            icon={<BookOpen size={14} />}
-            size="sm"
-          />
-        </div>
-
-        <div className="w-[180px]">
-          <CustomSelect
-            options={CHAPTER_STATUS_FILTER_OPTIONS.filter((o) => o.value !== '').map((o) => ({ value: o.value, label: o.label }))}
+            options={CHAPTER_STATUS_FILTER_OPTIONS.filter((o) => o.value !== '').map((o) => ({
+              value: o.value,
+              label: o.label,
+            }))}
             value={statusFilter}
-            onChange={(v) => setStatusFilter(v)}
+            onChange={setStatusFilter}
             placeholder="Tất cả trạng thái"
             size="sm"
           />
         </div>
-
         <span className="text-xs text-text-muted ml-auto">
-          {filtered.length} chapters
+          {seriesGroups.length} series · {totalChapters} chapters
         </span>
       </div>
 
-      {/* Chapter List */}
+      {/* Series accordion */}
       <div className="space-y-3 mt-5">
-        {pagination.paginatedData.map((chapter) => {
-          const statusCfg = CHAPTER_STATUS_CONFIG[chapter.status];
-          const StatusIcon = statusCfg.icon;
-          const date = chapter.submittedAt
-            ? new Date(chapter.submittedAt).toLocaleDateString('vi-VN')
-            : new Date(chapter.createdAt).toLocaleDateString('vi-VN');
+        {seriesGroups.map((group) => {
+          const isExpanded = expandedSeriesIds.has(group.id);
+          const seriesStatus = SERIES_STATUS_CONFIG[group.status];
 
           return (
             <div
-              key={chapter.id}
-              onClick={() => navigate(`/mangaka/manuscripts/${chapter.id}`)}
-              className="group flex items-center gap-4 bg-bg-secondary border border-border-custom rounded-xl p-4 hover:border-brand/20 transition-all cursor-pointer"
+              key={group.id}
+              className="bg-bg-secondary border border-border-custom rounded-xl overflow-hidden"
             >
-              {/* Chapter number */}
-              <div className="w-11 h-11 rounded-xl bg-bg-surface flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-bold text-text-primary">
-                  {String(chapter.chapterNumber).padStart(2, '0')}
-                </span>
+              <div className="flex items-center gap-3 p-4">
+                <button
+                  type="button"
+                  onClick={() => toggleSeries(group.id)}
+                  className="flex flex-1 items-center gap-3 min-w-0 text-left bg-transparent border-none cursor-pointer p-0"
+                >
+                  <ChevronDown
+                    size={18}
+                    className={`text-text-muted flex-shrink-0 transition-transform duration-200 ${
+                      isExpanded ? 'rotate-0' : '-rotate-90'
+                    }`}
+                  />
+                  <div className="w-10 h-14 rounded-lg overflow-hidden bg-bg-surface border border-border-custom flex-shrink-0">
+                    {group.coverImageUrl ? (
+                      <img
+                        src={group.coverImageUrl}
+                        alt={group.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <BookOpen size={16} className="text-text-muted" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h2 className="text-sm font-semibold text-text-primary truncate">
+                        {group.title}
+                      </h2>
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${seriesStatus.bg} ${seriesStatus.color}`}
+                      >
+                        {seriesStatus.label}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-text-muted mt-0.5">
+                      {group.chapters.length} chapter{group.chapters.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => openUploadModal(group.id)}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-brand bg-brand/10 hover:bg-brand/15 border border-brand/20 cursor-pointer transition-colors flex-shrink-0"
+                  title="Nộp chapter cho series này"
+                >
+                  <Plus size={14} />
+                  <span className="hidden sm:inline">Nộp chapter</span>
+                </button>
               </div>
 
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold text-text-primary truncate group-hover:text-brand transition-colors">
-                    Ch.{chapter.chapterNumber}: {chapter.title}
-                  </h3>
-                </div>
-                <div className="flex items-center gap-3 mt-1">
-                  <span className="text-[11px] text-text-muted">{chapter.seriesTitle}</span>
-                  <span className="text-text-muted">·</span>
-                  <span className="text-[11px] text-text-muted">{chapter.pageCount} trang</span>
-                  <span className="text-text-muted">·</span>
-                  <span className="text-[11px] text-text-muted flex items-center gap-1">
-                    <Clock size={10} />
-                    {date}
-                  </span>
-                </div>
-              </div>
+              {isExpanded && (
+                <div className="border-t border-border-custom bg-bg-primary/40 px-4 py-3 space-y-2">
+                  {group.chapters.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+                      <FileText size={28} className="text-text-muted" />
+                      <p className="text-xs text-text-muted">Chưa có chapter nào trong series này</p>
+                      <button
+                        type="button"
+                        onClick={() => openUploadModal(group.id)}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium bg-brand text-white border-none cursor-pointer hover:bg-brand-hover transition-colors"
+                      >
+                        <Upload size={14} />
+                        Nộp chapter đầu tiên
+                      </button>
+                    </div>
+                  ) : (
+                    group.chapters.map((chapter) => {
+                      const statusCfg = CHAPTER_STATUS_CONFIG[chapter.status];
+                      const StatusIcon = statusCfg.icon;
+                      const date = formatChapterDate(chapter);
 
-              {/* Status */}
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${statusCfg.bg} ${statusCfg.color}`}>
-                  <StatusIcon size={12} />
-                  {statusCfg.label}
-                </span>
-              </div>
+                      return (
+                        <div
+                          key={chapter.id}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => navigate(`/mangaka/manuscripts/${chapter.id}`)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              navigate(`/mangaka/manuscripts/${chapter.id}`);
+                            }
+                          }}
+                          className="group flex items-center gap-3 rounded-xl border border-border-custom/60 bg-bg-secondary px-3 py-3 hover:border-brand/25 hover:bg-brand/[0.03] transition-all cursor-pointer"
+                        >
+                          <div className="w-9 h-9 rounded-lg bg-bg-surface flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-bold text-text-primary">
+                              {String(chapter.chapterNumber).padStart(2, '0')}
+                            </span>
+                          </div>
 
-              {/* Valid pages indicator */}
-              {chapter.status === 'Approved' || chapter.status === 'Published' ? (
-                <div className="hidden sm:flex flex-col items-center flex-shrink-0">
-                  <span className="text-xs font-semibold text-success">{chapter.validPageCount}</span>
-                  <span className="text-[9px] text-text-muted">Hợp lệ</span>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-medium text-text-primary truncate group-hover:text-brand transition-colors">
+                              Ch.{chapter.chapterNumber}: {chapter.title}
+                            </h3>
+                            <div className="flex items-center gap-2 mt-0.5 text-[11px] text-text-muted">
+                              <span>{chapter.pageCount} trang</span>
+                              <span>·</span>
+                              <span className="inline-flex items-center gap-1">
+                                <Clock size={10} />
+                                {date}
+                              </span>
+                            </div>
+                          </div>
+
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold flex-shrink-0 ${statusCfg.bg} ${statusCfg.color}`}
+                          >
+                            <StatusIcon size={11} />
+                            {statusCfg.label}
+                          </span>
+
+                          {(chapter.status === 'Approved' || chapter.status === 'Published') && (
+                            <div className="hidden sm:flex flex-col items-center flex-shrink-0 min-w-[36px]">
+                              <span className="text-xs font-semibold text-success">
+                                {chapter.validPageCount}
+                              </span>
+                              <span className="text-[9px] text-text-muted">Hợp lệ</span>
+                            </div>
+                          )}
+
+                          {chapter.status === 'Revision' && (
+                            <AlertCircle size={14} className="text-danger flex-shrink-0" />
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
-              ) : chapter.status === 'Revision' ? (
-                <div className="hidden sm:flex items-center gap-1 flex-shrink-0">
-                  <AlertCircle size={14} className="text-danger" />
-                </div>
-              ) : null}
+              )}
             </div>
           );
         })}
       </div>
 
-      {filtered.length === 0 && (
+      {seriesGroups.length === 0 && (
         <div className="mt-8 bg-bg-secondary border border-border-custom rounded-xl p-12 flex flex-col items-center gap-4">
-          <FileText size={40} className="text-text-muted" />
-          <p className="text-sm text-text-secondary">Không có chapter nào</p>
+          <BookOpen size={40} className="text-text-muted" />
+          <p className="text-sm text-text-secondary">Không có series hoặc chapter phù hợp bộ lọc</p>
         </div>
       )}
 
-      {/* Pagination */}
-      <Pagination
-        currentPage={pagination.currentPage}
-        totalPages={pagination.totalPages}
-        pageRange={pagination.pageRange}
-        totalItems={pagination.totalItems}
-        startItem={pagination.startItem}
-        endItem={pagination.endItem}
-        canGoNext={pagination.canGoNext}
-        canGoPrev={pagination.canGoPrev}
-        onPageChange={pagination.goToPage}
-        onNextPage={pagination.nextPage}
-        onPrevPage={pagination.prevPage}
-        itemLabel="chapters"
-      />
-
-      {/* Upload Modal (Feature Component) */}
-      {showUploadModal && <UploadChapterModal onClose={() => setShowUploadModal(false)} />}
+      {showUploadModal && (
+        <UploadChapterModal onClose={closeUploadModal} seriesId={uploadSeriesId} />
+      )}
     </div>
   );
 };

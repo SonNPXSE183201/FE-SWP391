@@ -4,6 +4,7 @@ import { Bell, Check, CheckCircle2, AlertCircle, FileText, Wallet, Clock, Loader
 import { useNotificationStore } from '../../../stores/notificationStore';
 import { useNotificationList, useMarkAsRead, useMarkAllAsRead, useUnreadCount } from '../hooks/useNotifications';
 import { useClickOutside } from '../../../hooks/useClickOutside';
+import { parseApiDate } from '../../../utils/parseApiDate';
 import type { NotificationItem } from '../../../stores/notificationStore';
 
 const NotificationIcon = ({ type }: { type: NotificationItem['type'] }) => {
@@ -39,7 +40,8 @@ const NotificationIcon = ({ type }: { type: NotificationItem['type'] }) => {
 };
 
 const formatTimeAgo = (dateString: string) => {
-  const date = new Date(dateString);
+  const date = parseApiDate(dateString);
+  if (Number.isNaN(date.getTime())) return 'Vừa xong';
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 

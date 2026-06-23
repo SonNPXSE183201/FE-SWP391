@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   ClipboardList, Clock, Download, Loader2, Search, User,
   Image as ImageIcon,
+  DollarSign,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -190,28 +191,36 @@ export const TaskQueueFeature = () => {
   return (
     <div className="animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
-          <ClipboardList size={20} className="text-brand" />
+      <div className="flex items-center gap-4 bg-gradient-to-r from-bg-secondary to-transparent p-6 rounded-2xl border border-border-custom">
+        <div className="w-14 h-14 rounded-2xl bg-brand/10 flex items-center justify-center shadow-[0_0_15px_rgba(var(--brand),0.15)] border border-brand/20">
+          <ClipboardList size={26} className="text-brand" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-text-primary">Danh sách công việc</h1>
-          <p className="text-xs text-text-muted mt-0.5">{totalItems} task hiện có</p>
+          <h1 className="text-2xl font-black text-text-primary tracking-tight">Danh sách công việc</h1>
+          <p className="text-sm text-text-muted mt-1">{totalItems} task hiện có</p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-border-custom mt-6">
+      <div className="flex gap-4 border-b border-border-custom mt-8 relative">
         {(['Available', 'MyTasks'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => handleTabChange(tab)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-all duration-200 ${activeTab === tab
-                ? 'border-brand text-brand'
-                : 'border-transparent text-text-secondary hover:text-text-primary'
+            className={`px-6 py-3.5 text-sm font-bold transition-all duration-300 relative border-none bg-transparent cursor-pointer ${activeTab === tab
+                ? 'text-brand'
+                : 'text-text-secondary hover:text-text-primary'
               }`}
           >
-            {tab === 'Available' ? '🔓 Việc có sẵn' : '📋 Việc của tôi'}
+            <span className="relative z-10 flex items-center gap-2">
+              {tab === 'Available' ? '🔓 Việc có sẵn' : '📋 Việc của tôi'}
+            </span>
+            {activeTab === tab && (
+              <div className="absolute bottom-0 left-0 w-full h-[3px] bg-brand rounded-t-full shadow-[0_-2px_10px_rgba(var(--brand),0.5)] z-20"></div>
+            )}
+            {activeTab === tab && (
+              <div className="absolute bottom-0 left-0 w-full h-full bg-gradient-to-t from-brand/10 to-transparent z-0"></div>
+            )}
           </button>
         ))}
       </div>
@@ -262,52 +271,58 @@ export const TaskQueueFeature = () => {
           return (
             <div
               key={task.id}
-              className="group bg-bg-secondary border border-border-custom rounded-xl p-4 hover:border-brand/20 transition-all"
+              className="group relative bg-bg-secondary border border-border-custom rounded-2xl p-5 hover:border-brand/40 hover:shadow-lg-custom hover:-translate-y-1 transition-all duration-300 overflow-hidden"
             >
-              <div className="flex items-start gap-4">
+              {/* Optional background glow for Pending tasks */}
+              {activeTab === 'Available' && task.status === 'Pending' && (
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-brand/5 blur-3xl rounded-full z-0 transition-all group-hover:bg-brand/10"></div>
+              )}
+
+              <div className="flex items-start gap-5 relative z-10">
                 {/* Left: Status icon */}
-                <div className={`w-10 h-10 rounded-xl ${statusCfg.bg} flex items-center justify-center flex-shrink-0`}>
-                  <StatusIcon size={18} className={statusCfg.color} />
+                <div className={`w-12 h-12 rounded-2xl ${statusCfg.bg} flex items-center justify-center flex-shrink-0 shadow-sm border border-black/5`}>
+                  <StatusIcon size={22} className={statusCfg.color} />
                 </div>
 
                 {/* Middle: Task info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-sm font-semibold text-text-primary group-hover:text-brand transition-colors truncate">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h3 className="text-base font-bold text-text-primary group-hover:text-brand transition-colors line-clamp-1">
                       {task.description || 'Untitled Task'}
                     </h3>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusCfg.bg} ${statusCfg.color}`}>
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${statusCfg.bg} ${statusCfg.color}`}>
                       {statusCfg.label}
                     </span>
                   </div>
 
                   {/* Meta info row */}
-                  <div className="flex items-center gap-4 mt-2.5 flex-wrap">
+                  <div className="flex items-center gap-5 mt-3 flex-wrap">
+                    {/* Payment */}
+                    <span className="inline-flex items-center gap-1.5 text-sm font-bold text-brand bg-brand/10 px-3 py-1.5 rounded-lg border border-brand/20">
+                      <DollarSign size={14} />
+                      {formatVND(task.paymentAmount ?? 0)}
+                    </span>
+
                     {/* Mangaka */}
                     {task.mangakaName && (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-text-secondary">
-                        <User size={12} />
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-text-secondary bg-bg-surface px-2.5 py-1 rounded-lg">
+                        <User size={13} />
                         {task.mangakaName}
                       </span>
                     )}
 
                     {/* Page number */}
                     {(task.pageNumber ?? 0) > 0 && (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-text-secondary">
-                        <ImageIcon size={12} />
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-text-secondary bg-bg-surface px-2.5 py-1 rounded-lg">
+                        <ImageIcon size={13} />
                         Trang {task.pageNumber}
                       </span>
                     )}
 
-                    {/* Payment */}
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-text-primary">
-                      {formatVND(task.paymentAmount ?? 0)}
-                    </span>
-
                     {/* Deadline */}
                     {dl && (
-                      <span className={`inline-flex items-center gap-1 text-[11px] font-medium ${dl.urgent ? 'text-danger' : 'text-text-muted'}`}>
-                        <Clock size={12} />
+                      <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-lg ${dl.urgent ? 'text-danger bg-danger/10 border border-danger/20' : 'text-text-muted bg-bg-surface'}`}>
+                        <Clock size={13} />
                         {dl.text}
                       </span>
                     )}
@@ -330,11 +345,11 @@ export const TaskQueueFeature = () => {
 
                   {/* Page image preview */}
                   {task.pageImageUrl && (
-                    <div className="mt-3">
+                    <div className="mt-4 overflow-hidden rounded-xl border border-border-custom w-fit bg-black/20">
                       <img
                         src={task.pageImageUrl}
                         alt={`Trang ${task.pageNumber}`}
-                        className="h-16 rounded-md border border-border-custom object-cover opacity-60 hover:opacity-100 transition-opacity"
+                        className="h-24 w-auto object-cover hover:scale-105 transition-transform duration-500 cursor-zoom-in opacity-80 hover:opacity-100"
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                       />
                     </div>
@@ -343,21 +358,24 @@ export const TaskQueueFeature = () => {
 
                 {/* Right: Accept button */}
                 {activeTab === 'Available' && task.status === 'Pending' && (
-                  <button
-                    onClick={() => handleAcceptTask(task.id!)}
-                    disabled={acceptMutation.isPending}
-                    className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-xl text-[11px] font-medium transition-all border-none cursor-pointer shadow-brand hover:shadow-brand-hover hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Download size={14} />
-                    Nhận việc
-                  </button>
+                  <div className="flex-shrink-0 ml-auto flex items-center justify-center pt-2">
+                    <button
+                      onClick={() => handleAcceptTask(task.id!)}
+                      disabled={acceptMutation.isPending}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-bold transition-all border-none cursor-pointer shadow-brand hover:shadow-brand-hover hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Download size={16} />
+                      Nhận việc ngay
+                    </button>
+                  </div>
                 )}
 
                 {/* Right: Submit button & Extension */}
                 {activeTab === 'MyTasks' && ['In_Progress', 'Revision'].includes(task.status || '') && (
-                  <div className="flex-shrink-0 flex flex-col gap-2 items-end">
-                    <label className="cursor-pointer px-3 py-1.5 border border-border-custom rounded-lg text-[11px] hover:bg-bg-secondary transition-colors text-text-primary">
-                      {selectedFiles[task.id!] ? selectedFiles[task.id!].name : '📁 Chọn PNG'}
+                  <div className="flex-shrink-0 ml-auto flex flex-col gap-3 items-end pt-1">
+                    <label className="cursor-pointer px-4 py-2 bg-bg-surface hover:bg-bg-secondary border border-border-custom rounded-xl text-xs font-semibold hover:border-brand/30 transition-all text-text-primary shadow-sm flex items-center gap-2">
+                      <ImageIcon size={14} className="text-text-muted" />
+                      {selectedFiles[task.id!] ? selectedFiles[task.id!].name : 'Chọn File PNG'}
                       <input
                         type="file"
                         accept="image/png,.png"
@@ -367,31 +385,31 @@ export const TaskQueueFeature = () => {
                     </label>
                     <div className="flex items-center gap-2">
                       {extendingTaskId === task.id ? (
-                        <div className="flex flex-col items-end gap-2 animate-fade-in min-w-[200px]">
+                        <div className="flex flex-col items-end gap-2 animate-fade-in min-w-[220px] bg-bg-surface p-3 rounded-xl border border-border-custom">
                           <textarea
                             value={extensionReason}
                             onChange={(e) => setExtensionReason(e.target.value)}
                             placeholder="Lý do xin gia hạn..."
-                            className="w-full px-2 py-1.5 bg-bg-surface border border-border-custom rounded text-[10px] text-text-primary resize-none h-14"
+                            className="w-full px-3 py-2 bg-bg-secondary border border-border-custom rounded-lg text-[11px] text-text-primary resize-none h-16 focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all"
                           />
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1.5 w-full">
                             <button
                               onClick={() => handleRequestExtension(task.id!, 1)}
                               disabled={extensionMutation.isPending || !!task.extensionRequestDays}
-                              className="px-2 py-1 bg-brand hover:bg-brand-hover text-white rounded text-[10px] font-medium border-none cursor-pointer disabled:opacity-50"
+                              className="flex-1 py-1.5 bg-brand/10 hover:bg-brand/20 text-brand rounded-lg text-[11px] font-bold border-none cursor-pointer disabled:opacity-50 transition-colors"
                             >
                               +24h
                             </button>
                             <button
                               onClick={() => handleRequestExtension(task.id!, 2)}
                               disabled={extensionMutation.isPending || !!task.extensionRequestDays}
-                              className="px-2 py-1 bg-brand hover:bg-brand-hover text-white rounded text-[10px] font-medium border-none cursor-pointer disabled:opacity-50"
+                              className="flex-1 py-1.5 bg-brand/10 hover:bg-brand/20 text-brand rounded-lg text-[11px] font-bold border-none cursor-pointer disabled:opacity-50 transition-colors"
                             >
                               +48h
                             </button>
                             <button
                               onClick={() => { setExtendingTaskId(null); setExtensionReason(''); }}
-                              className="px-2 py-1 bg-bg-surface hover:bg-border-custom text-text-secondary rounded text-[10px] font-medium border-none cursor-pointer ml-1"
+                              className="px-3 py-1.5 bg-bg-secondary hover:bg-border-custom text-text-secondary rounded-lg text-[11px] font-medium border-none cursor-pointer transition-colors"
                             >
                               Hủy
                             </button>
@@ -401,19 +419,19 @@ export const TaskQueueFeature = () => {
                         <button
                           onClick={() => setExtendingTaskId(task.id!)}
                           disabled={!!task.extensionRequestDays}
-                          className="px-3 py-1.5 bg-bg-surface hover:bg-border-custom text-text-secondary rounded-lg text-[11px] font-medium transition-all border-none cursor-pointer disabled:opacity-50"
+                          className="px-4 py-2 bg-bg-surface hover:bg-bg-secondary border border-border-custom text-text-secondary rounded-xl text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
                           title={task.extensionRequestDays ? 'Task đã xin gia hạn' : undefined}
                         >
-                          {task.extensionRequestDays ? 'Đã gia hạn' : 'Gia hạn'}
+                          {task.extensionRequestDays ? 'Đã gia hạn' : 'Xin gia hạn'}
                         </button>
                       )}
                       <button
                         onClick={() => handleSubmitResult(task.id!)}
                         disabled={!task.id || !selectedFiles[task.id]}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-success hover:bg-green-600 text-white rounded-xl text-[11px] font-medium transition-all border-none cursor-pointer shadow-sm hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="inline-flex items-center gap-2 px-5 py-2 bg-success hover:bg-green-600 text-white rounded-xl text-sm font-bold transition-all border-none cursor-pointer shadow-success hover:shadow-success-hover hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <Download size={14} />
-                        Nộp
+                        <Download size={16} />
+                        Nộp bài
                       </button>
                     </div>
                   </div>

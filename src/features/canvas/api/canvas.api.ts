@@ -1,7 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- mock-first module; real BE types wired when USE_MOCK is false */
 import { axiosInstance } from '../../../api/axios';
 import { createMockApiResponse } from '../../../api/apiResponse';
+import type {
+  AnnotationDtoApiResponse,
+  AnnotationDtoIEnumerableApiResponse,
+  RegionDtoApiResponse,
+  RegionDtoIEnumerableApiResponse,
+} from '../../../api/generated/types';
 import type { Annotation, Region, AnnotationType } from '../../../types/entities';
+import { seriesApi } from '../../series/api/series.api';
 import {
   MOCK_CANVAS_PAGES,
   MOCK_REGIONS,
@@ -9,26 +15,24 @@ import {
   getRegionsByPageId,
   getAnnotationsByPageId,
 } from '../data/mockData';
+import {
+  toCreateAnnotationDto,
+  toCreateRegionDto,
+  toUpdateRegionDto,
+} from '../utils/canvas.utils';
 
-// ─── Toggle to false when backend canvas API is ready ────────
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 const mockDelay = (ms = 50) => new Promise((r) => setTimeout(r, ms));
-
 const mockResponse = createMockApiResponse;
 
-// ─── Canvas API ──────────────────────────────────────────────
-// Note: When USE_MOCK is off, the return types will be from the
-// OpenAPI schema (PascalCase). The hook's select() must adapt.
-// For now, all consumers use entities.ts camelCase types via mock data.
 export const canvasApi = {
-  // ─── Pages ───
   getPagesByChapterId: async (chapterId: string) => {
     if (USE_MOCK) {
       await mockDelay();
       return mockResponse(MOCK_CANVAS_PAGES.filter((p) => p.chapterId === chapterId));
     }
-    return axiosInstance.get<any>(`/api/pages/chapter/${chapterId}`);
+    return seriesApi.getPages(chapterId);
   },
 
   getPageById: async (pageId: string) => {
@@ -37,19 +41,25 @@ export const canvasApi = {
       const page = MOCK_CANVAS_PAGES.find((p) => p.id === pageId);
       return mockResponse(page || null);
     }
-    return axiosInstance.get<any>(`/api/pages/${pageId}`);
+    return Promise.reject(new Error('GET /api/pages/{id} không tồn tại — dùng GET /api/chapters/{chapterId}/pages'));
   },
 
-  // ─── Regions ───
   getRegionsByPageId: async (pageId: string) => {
     if (USE_MOCK) {
       await mockDelay();
       return mockResponse(getRegionsByPageId(pageId));
     }
-    return axiosInstance.get<any>(`/api/pages/${pageId}/regions`);
+    return axiosInstance.get<RegionDtoIEnumerableApiResponse>(`/api/pages/${pageId}/regions`);
   },
 
-  createRegion: async (data: { pageId: string; x: number; y: number; width: number; height: number; label?: string }) => {
+  createRegion: async (data: {
+    pageId: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    label?: string;
+  }) => {
     if (USE_MOCK) {
       await mockDelay(500);
       const newRegion: Region = {
@@ -66,7 +76,7 @@ export const canvasApi = {
       MOCK_REGIONS.push(newRegion);
       return mockResponse(newRegion, 'Region đã được tạo thành công');
     }
-    return axiosInstance.post<any>('/api/regions', data);
+    return axiosInstance.post<RegionDtoApiResponse>('/api/regions', toCreateRegionDto(data));
   },
 
   updateRegion: async (regionId: string, data: Partial<Region>) => {
@@ -76,7 +86,7 @@ export const canvasApi = {
       if (idx >= 0) Object.assign(MOCK_REGIONS[idx], data, { updatedAt: new Date().toISOString() });
       return mockResponse(MOCK_REGIONS[idx] || null, 'Region đã được cập nhật');
     }
-    return axiosInstance.put<any>(`/api/regions/${regionId}`, data);
+    return axiosInstance.put<RegionDtoApiResponse>(`/api/regions/${regionId}`, toUpdateRegionDto(data));
   },
 
   deleteRegion: async (regionId: string) => {
@@ -86,19 +96,26 @@ export const canvasApi = {
       if (idx >= 0) MOCK_REGIONS.splice(idx, 1);
       return mockResponse(true, 'Region đã được xoá');
     }
-    return axiosInstance.delete<any>(`/api/regions/${regionId}`);
+    return axiosInstance.delete(`/api/regions/${regionId}`);
   },
 
-  // ─── Annotations ───
   getAnnotationsByPageId: async (pageId: string) => {
     if (USE_MOCK) {
       await mockDelay();
       return mockResponse(getAnnotationsByPageId(pageId));
     }
-    return axiosInstance.get<any>(`/api/pages/${pageId}/annotations`);
+    return axiosInstance.get<AnnotationDtoIEnumerableApiResponse>('/api/annotations', {
+      params: { pageId },
+    });
   },
 
-  createAnnotation: async (data: { pageId: string; x: number; y: number; type: AnnotationType; comment: string }) => {
+  createAnnotation: async (data: {
+    pageId: string;
+    x: number;
+    y: number;
+    type: AnnotationType;
+    comment: string;
+  }) => {
     if (USE_MOCK) {
       await mockDelay(500);
       const newAnno: Annotation = {
@@ -117,7 +134,7 @@ export const canvasApi = {
       MOCK_ANNOTATIONS.push(newAnno);
       return mockResponse(newAnno, 'Annotation đã được tạo');
     }
-    return axiosInstance.post<any>('/api/annotations', data);
+    return axiosInstance.post<AnnotationDtoApiResponse>('/api/annotations', toCreateAnnotationDto(data));
   },
 
   deleteAnnotation: async (annotationId: string) => {
@@ -127,19 +144,6 @@ export const canvasApi = {
       if (idx >= 0) MOCK_ANNOTATIONS.splice(idx, 1);
       return mockResponse(true, 'Annotation đã được xoá');
     }
-    return axiosInstance.delete<any>(`/api/annotations/${annotationId}`);
-  },
-
-  toggleAnnotationResolved: async (annotationId: string) => {
-    if (USE_MOCK) {
-      await mockDelay(300);
-      const anno = MOCK_ANNOTATIONS.find((a) => a.id === annotationId);
-      if (anno) {
-        anno.resolved = !anno.resolved;
-        anno.updatedAt = new Date().toISOString();
-      }
-      return mockResponse(anno || null, anno?.resolved ? 'Đã đánh dấu giải quyết' : 'Đã mở lại');
-    }
-    return axiosInstance.patch<any>(`/api/annotations/${annotationId}/toggle-resolved`);
+    return axiosInstance.delete(`/api/annotations/${annotationId}`);
   },
 };

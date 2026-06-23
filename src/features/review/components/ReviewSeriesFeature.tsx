@@ -15,6 +15,8 @@ import {
   ClipboardCheck,
   User,
   Calendar,
+  FileText,
+  ExternalLink,
   Loader2,
 } from 'lucide-react';
 import { useReviewSeriesDetail, useSubmitToBoard, useRequireRevision } from '../hooks/useReview';
@@ -205,6 +207,38 @@ export const ReviewSeriesFeature = () => {
                     ? `Mới nhất: ${typedSeries.chapters![typedSeries.chapters!.length - 1].title ?? 'N/A'}`
                     : 'Chưa có chapter nào'}
                 </p>
+              </div>
+            </div>
+
+            {/* Name manuscript (F1.2) */}
+            <div className="mt-4 p-4 rounded-xl border border-border-custom bg-bg-surface">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-lg bg-brand/10 flex items-center justify-center flex-shrink-0">
+                    <FileText size={18} className="text-brand" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-text-primary">Bản phác thảo (Name)</p>
+                    <p className="text-[11px] text-text-muted mt-0.5">
+                      {typedSeries.resourceFolderUrl
+                        ? 'Mangaka đã nộp file PDF phác thảo Chapter mẫu.'
+                        : 'Chưa có file Name được nộp kèm hồ sơ.'}
+                    </p>
+                  </div>
+                </div>
+                {typedSeries.resourceFolderUrl ? (
+                  <a
+                    href={typedSeries.resourceFolderUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-brand/10 hover:bg-brand/20 text-brand text-xs font-medium no-underline flex-shrink-0 transition-colors"
+                  >
+                    <ExternalLink size={14} />
+                    Xem PDF
+                  </a>
+                ) : (
+                  <span className="text-[10px] text-danger font-medium flex-shrink-0">Thiếu file</span>
+                )}
               </div>
             </div>
           </div>
