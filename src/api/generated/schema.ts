@@ -296,6 +296,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/users/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateUserByAdminDto"];
+                    "text/json": components["schemas"]["UpdateUserByAdminDto"];
+                    "application/*+json": components["schemas"]["UpdateUserByAdminDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UserResponseDtoApiResponse"];
+                        "application/json": components["schemas"]["UserResponseDtoApiResponse"];
+                        "text/json": components["schemas"]["UserResponseDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/contracts/series": {
         parameters: {
             query?: never;
@@ -1940,6 +1985,43 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reviews/series/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SeriesReviewDtoIEnumerableApiResponse"];
+                        "application/json": components["schemas"]["SeriesReviewDtoIEnumerableApiResponse"];
+                        "text/json": components["schemas"]["SeriesReviewDtoIEnumerableApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3746,6 +3828,8 @@ export interface components {
             penName?: string | null;
             portfolioUrl?: string | null;
             skills?: string | null;
+            /** Format: int32 */
+            assignedEditorId?: number | null;
         };
         DashboardStatsResponseDto: {
             role?: string | null;
@@ -4072,6 +4156,7 @@ export interface components {
             internalStatus?: string | null;
             status?: string | null;
             userName?: string | null;
+            userRole?: string | null;
             description?: string | null;
             discrepancyNote?: string | null;
         };
@@ -4360,6 +4445,16 @@ export interface components {
                 [key: string]: string[] | null;
             } | null;
         };
+        SeriesReviewDtoIEnumerableApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["SeriesReviewDto"][] | null;
+            errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
         StringApiResponse: {
             success?: boolean;
             /** Format: int32 */
@@ -4586,6 +4681,7 @@ export interface components {
             fromUserFullName?: string | null;
             toUserName?: string | null;
             toUserFullName?: string | null;
+            requesterRole?: string | null;
             bankName?: string | null;
             bankAccountNumber?: string | null;
             bankAccountName?: string | null;
@@ -4630,6 +4726,15 @@ export interface components {
             /** Format: date-time */
             deadline?: string;
         };
+        UpdateUserByAdminDto: {
+            email?: string | null;
+            fullName?: string | null;
+            penName?: string | null;
+            portfolioUrl?: string | null;
+            skills?: string | null;
+            /** Format: int32 */
+            assignedEditorId?: number | null;
+        };
         User: {
             /** Format: int32 */
             id?: number;
@@ -4648,6 +4753,9 @@ export interface components {
             portfolioUrl?: string | null;
             skills?: string | null;
             isOnLeave?: boolean;
+            /** Format: int32 */
+            assignedEditorId?: number | null;
+            assignedEditor?: components["schemas"]["User"];
             role?: components["schemas"]["Role"];
             wallet?: components["schemas"]["Wallet"];
             assistantProfile?: components["schemas"]["AssistantProfile"];
@@ -4673,6 +4781,9 @@ export interface components {
             role?: string | null;
             status?: string | null;
             createdAt?: string | null;
+            /** Format: int32 */
+            assignedEditorId?: number | null;
+            assignedEditorName?: string | null;
         };
         UserListItemDtoPagedResult: {
             items?: components["schemas"]["UserListItemDto"][] | null;
@@ -4708,6 +4819,9 @@ export interface components {
             status?: string | null;
             penName?: string | null;
             isOnLeave?: boolean;
+            /** Format: int32 */
+            assignedEditorId?: number | null;
+            assignedEditorName?: string | null;
             message?: string | null;
         };
         UserResponseDtoApiResponse: {

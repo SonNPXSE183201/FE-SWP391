@@ -1,14 +1,9 @@
 import { axiosInstance } from '../../../api/axios';
+import { createMockApiResponse } from '../../../api/apiResponse';
 
 const USE_MOCK = true;
 const mockDelay = (ms = 400) => new Promise(resolve => setTimeout(resolve, ms));
-const mockResponse = <T>(data: T, message = 'Success') => ({
-  data: {
-    IsSuccess: true,
-    Message: message,
-    Data: data,
-  },
-});
+const mockResponse = createMockApiResponse;
 
 export interface PortfolioSample {
   id: string;

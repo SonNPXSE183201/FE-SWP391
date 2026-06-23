@@ -1,52 +1,72 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader2, Wallet, Clock, Hash, Banknote } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { useDepositCallback } from '../hooks/useDepositCallback';
 import { useAuthStore } from '../../../stores/authStore';
 import { formatVND } from '../constants';
 
+/** Trang fallback khi FrontendReturnUrl trỏ về /wallet/deposit/callback */
 export const DepositCallbackFeature = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const user = useAuthStore(state => state.user);
   const { status, message } = useDepositCallback();
 
-  // Role-aware navigation
   const walletPath = user?.role === 'Assistant' ? '/assistant/wallet' : '/mangaka/wallet';
 
-  // Parse amount from URL for display
   const search = new URLSearchParams(window.location.search);
   const amountStr = search.get('amount') || search.get('vnp_Amount');
   const amount = amountStr ? (search.has('vnp_Amount') ? Number(amountStr) / 100 : Number(amountStr)) : null;
   const referenceCode = search.get('referenceCode') || search.get('vnp_TxnRef');
 
+  useEffect(() => {
+    if (status === 'loading') return;
+
+    if (status === 'success') {
+      toast.success(
+        amount
+          ? `Nạp tiền thành công! +${formatVND(Number(amount))}`
+          : 'Nạp tiền thành công!',
+      );
+      queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    } else {
+      toast.error(message || 'Giao dịch nạp tiền thất bại hoặc bị hủy.');
+    }
+
+    const timer = window.setTimeout(() => {
+      navigate(walletPath, { replace: true });
+    }, 1200);
+
+    return () => window.clearTimeout(timer);
+  }, [status, amount, message, navigate, walletPath, queryClient]);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center animate-fade-in">
-      {/* Status Icon */}
       <div className="mb-6">
         {status === 'loading' && <Loader2 className="w-16 h-16 text-brand animate-spin" />}
         {status === 'success' && <CheckCircle className="w-16 h-16 text-success" />}
         {status === 'error' && <XCircle className="w-16 h-16 text-danger" />}
       </div>
 
-      {/* Title */}
       <h2 className="text-2xl font-bold text-text-primary mb-3">
         {status === 'loading' && 'Đang xác thực giao dịch...'}
         {status === 'success' && 'Nạp tiền thành công!'}
         {status === 'error' && 'Giao dịch không thành công'}
       </h2>
 
-      {/* Message */}
       <p className="text-text-secondary mb-4 max-w-md">
-        {message}
+        {status === 'loading' ? message : 'Đang chuyển về trang ví...'}
       </p>
 
-      {/* Amount Display */}
       {status === 'success' && amount && (
         <div className="text-3xl font-bold font-mono text-success mb-6">
           +{formatVND(Number(amount))}
         </div>
       )}
 
-      {/* Transaction Details Card */}
       {status !== 'loading' && (
         <div className="w-full max-w-sm bg-bg-secondary border border-border-custom rounded-xl p-4 mb-6 text-left space-y-3">
           {referenceCode && (
@@ -76,13 +96,12 @@ export const DepositCallbackFeature = () => {
         </div>
       )}
 
-      {/* Back Button */}
       {status !== 'loading' && (
         <button
-          onClick={() => navigate(walletPath)}
+          onClick={() => navigate(walletPath, { replace: true })}
           className="inline-flex items-center gap-2 px-6 py-3 bg-brand hover:bg-brand-hover text-white font-medium rounded-xl transition-colors shadow-brand cursor-pointer"
         >
-          <Wallet size={16} /> Quay lại ví
+          <Wallet size={16} /> Quay lại ví ngay
         </button>
       )}
     </div>

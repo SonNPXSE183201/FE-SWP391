@@ -1,4 +1,4 @@
-import { axiosInstance } from '../../../api/axios';
+import { axiosInstance, createMockApiResponse } from '../../../api/axios';
 import type {
   ApiResponse,
   TasksDto,
@@ -49,12 +49,12 @@ export const mapTaskDtoToEntity = (dto: components['schemas']['TasksDto']): Task
 // ─── Request DTOs ────────────────────────────────────────────
 
 export interface CreateTaskRequest {
-  RegionId: number;
-  Description?: string;
-  AssistantId?: string;
-  PaymentAmount: number;
-  Deadline: string;
-  ZIndex_Order?: number;
+  regionId: number;
+  description?: string;
+  assistantId?: string;
+  paymentAmount: number;
+  deadline: string;
+  zIndex_Order?: number;
 }
 
 export interface SubmitTaskResultRequest {
@@ -73,16 +73,7 @@ export interface RequestExtensionRequest {
 const mockDelay = (ms: number = 50) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
-const createMockAxiosResponse = <T>(data: T, message = 'Success') => ({
-  data: {
-    success: true,
-    IsSuccess: true,
-    message: message,
-    Message: message,
-    data: data,
-    Data: data,
-  },
-});
+const createMockAxiosResponse = createMockApiResponse;
 
 const createMockPaginatedResponse = <T>(
   items: T[],
@@ -91,46 +82,15 @@ const createMockPaginatedResponse = <T>(
 ) => {
   const start = (page - 1) * pageSize;
   const paginatedItems = items.slice(start, start + pageSize);
-  return {
-    data: {
-      success: true,
-      IsSuccess: true,
-      message: 'Success',
-      Message: 'Success',
-      data: {
-        Items: paginatedItems,
-        items: paginatedItems,
-        PageNumber: page,
-        pageNumber: page,
-        PageSize: pageSize,
-        pageSize: pageSize,
-        TotalItems: items.length,
-        totalItems: items.length,
-        TotalPages: Math.ceil(items.length / pageSize) || 1,
-        totalPages: Math.ceil(items.length / pageSize) || 1,
-      },
-      Data: {
-        Items: paginatedItems,
-        items: paginatedItems,
-        PageNumber: page,
-        pageNumber: page,
-        PageSize: pageSize,
-        pageSize: pageSize,
-        TotalItems: items.length,
-        totalItems: items.length,
-        TotalPages: Math.ceil(items.length / pageSize) || 1,
-        totalPages: Math.ceil(items.length / pageSize) || 1,
-      },
-      totalCount: items.length,
-      TotalCount: items.length,
-      pageNumber: page,
-      PageNumber: page,
-      pageSize: pageSize,
-      PageSize: pageSize,
-      totalPages: Math.ceil(items.length / pageSize) || 1,
-      TotalPages: Math.ceil(items.length / pageSize) || 1,
-    },
-  };
+  return createMockApiResponse({
+    items: paginatedItems,
+    pageNumber: page,
+    pageSize,
+    totalItems: items.length,
+    totalPages: Math.ceil(items.length / pageSize) || 1,
+    hasPreviousPage: page > 1,
+    hasNextPage: page * pageSize < items.length,
+  });
 };
 
 const mapMockTaskToTasksDto = (t: MockTask): components['schemas']['TasksDto'] => {
@@ -184,23 +144,14 @@ export const taskApi = {
       if (params?.skill) {
         filtered = filtered.filter((t) => t.taskName.toLowerCase().includes(params.skill!.toLowerCase()));
       }
-      const mappedDtos = filtered.map(t => ({
-        Id: t.id,
-        Description: t.taskName,
-        PaymentAmount: t.amount,
-        Status: t.status,
-        Deadline: t.deadline,
-        MangakaName: t.seriesTitle,
-        PageNumber: parseInt(t.pageName.replace(/[^0-9]/g, '') || '1'),
-        PageImageUrl: null,
-      }));
+      const mappedDtos = filtered.map(mapMockTaskToTasksDto);
       return createMockPaginatedResponse(mappedDtos, params?.page, params?.pageSize);
     }
     return axiosInstance.get('/api/tasks/available', {
       params: {
-        PageNumber: params?.page ?? 1,
-        PageSize: params?.pageSize ?? 10,
-        ...(params?.skill ? { Skill: params.skill } : {}),
+        pageNumber: params?.page ?? 1,
+        pageSize: params?.pageSize ?? 10,
+        ...(params?.skill ? { skill: params.skill } : {}),
       },
     });
   },
@@ -213,23 +164,13 @@ export const taskApi = {
         ['In_Progress', 'Pending_Review', 'Approved', 'Disputed', 'Revision'].includes(t.status) &&
         (t.assignedAssistantName === 'Nguyễn Sơn' || t.assignedAssistantName === 'Minh Anh')
       );
-      const mappedDtos = filtered.map(t => ({
-        Id: t.id,
-        Description: t.taskName,
-        PaymentAmount: t.amount,
-        Status: t.status,
-        Deadline: t.deadline,
-        MangakaName: t.seriesTitle,
-        PageNumber: parseInt(t.pageName.replace(/[^0-9]/g, '') || '1'),
-        PageImageUrl: null,
-        FeedbackComment: t.feedbackComment || null,
-      }));
+      const mappedDtos = filtered.map(mapMockTaskToTasksDto);
       return createMockPaginatedResponse(mappedDtos, params?.page, params?.pageSize);
     }
     return axiosInstance.get('/api/tasks/my-tasks', {
       params: {
-        PageNumber: params?.page ?? 1,
-        PageSize: params?.pageSize ?? 10,
+        pageNumber: params?.page ?? 1,
+        pageSize: params?.pageSize ?? 10,
       },
     });
   },
@@ -239,7 +180,7 @@ export const taskApi = {
       await mockDelay(200);
       const task = MOCK_TASKS.find((t) => t.id === taskId);
       if (!task) {
-        return { data: { IsSuccess: false, success: false, Message: 'Task not found', Data: null } };
+        return { data: { success: false, statusCode: 404, message: 'Task not found', data: null } };
       }
       return createMockAxiosResponse(task);
     }
@@ -252,8 +193,8 @@ export const taskApi = {
       await mockDelay(600);
       const newTask: MockTask = {
         id: `task-${Date.now()}`,
-        taskName: data.Description || 'Task mới',
-        regionId: String(data.RegionId),
+        taskName: data.description || 'Task mới',
+        regionId: String(data.regionId),
         regionLabel: 'Vùng mới',
         pageId: 'page-1',
         pageName: 'Trang 1',
@@ -263,8 +204,8 @@ export const taskApi = {
         seriesTitle: 'Huyền Thoại Samurai',
         assignedAssistantName: null,
         status: 'Pending',
-        amount: data.PaymentAmount,
-        deadline: data.Deadline,
+        amount: data.paymentAmount,
+        deadline: data.deadline,
         extensionUsed: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -272,7 +213,7 @@ export const taskApi = {
       MOCK_TASKS.unshift(newTask);
 
       // Simulate Wallet Lock (Rule F03 & T01)
-      const amountToLock = data.PaymentAmount;
+      const amountToLock = data.paymentAmount;
       const availableSF = MOCK_WALLET.setupFundBalance; 
       const sfPortion = Math.min(amountToLock, availableSF);
       const wbPortion = amountToLock - sfPortion;
@@ -319,7 +260,7 @@ export const taskApi = {
     const res = await axiosInstance.post<ApiResponse<string>>('/api/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
-    return res.data.Data;
+    return res.data.data;
   },
 
   // Assistant downloads resource (F2.7)
@@ -348,7 +289,7 @@ export const taskApi = {
 
     // 2. Gọi API submit
     return axiosInstance.post<ApiResponse<unknown>>(`/api/tasks/${taskId}/submit`, {
-      SubmittedFileUrl: fileUrl,
+      submittedFileUrl: fileUrl,
     });
   },
 
@@ -380,16 +321,15 @@ export const taskApi = {
     return axiosInstance.post<ApiResponse<unknown>>(`/api/tasks/${taskId}/approve`, {});
   },
 
-  requestRevision: async (taskId: string, payload: { FeedbackComment: string; RevisionExtensionHours: number; CoordinatesJson: string }) => {
+  requestRevision: async (taskId: string, payload: { feedbackComment: string; revisionExtensionHours: number; coordinatesJson: string }) => {
     if (USE_MOCK) {
       await mockDelay(500);
       const task = MOCK_TASKS.find((t) => t.id === taskId || t.id === `task-${taskId}`);
       if (task) {
         task.status = 'Revision';
-        task.feedbackComment = payload.FeedbackComment;
-        // Mock extending deadline by extensionHours
+        task.feedbackComment = payload.feedbackComment;
         const oldDeadline = new Date(task.deadline);
-        oldDeadline.setHours(oldDeadline.getHours() + payload.RevisionExtensionHours);
+        oldDeadline.setHours(oldDeadline.getHours() + payload.revisionExtensionHours);
         task.deadline = oldDeadline.toISOString();
       }
       return createMockAxiosResponse(task as unknown as TasksDto, 'Yêu cầu sửa bài thành công');

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { walletApi } from '../api/wallet.api';
+import { getAxiosErrorMessage } from '../../../api/apiResponse';
 
 export const useWalletActions = (
   mode: 'deposit' | 'withdraw',
@@ -11,7 +13,6 @@ export const useWalletActions = (
   const [amount, setAmount] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // States cho Withdraw
   const [bankName, setBankName] = useState('Vietcombank');
   const [bankAccountNumber, setBankAccountNumber] = useState('');
   const [bankAccountName, setBankAccountName] = useState('');
@@ -21,33 +22,34 @@ export const useWalletActions = (
   const depositMutation = useMutation({
     mutationFn: (amountValue: number) => walletApi.deposit({ amount: amountValue }),
     onSuccess: (response) => {
-      if (response.data.IsSuccess && response.data.Data) {
-        // Redirect to VNPay or mock url in a new tab
-        window.open(response.data.Data, '_blank');
-        onClose();
-      } else {
-        setError(response.data.Message || 'Có lỗi xảy ra khi tạo giao dịch nạp tiền.');
+      if (response.data.success && response.data.data) {
+        // Cùng tab: chuyển thẳng sang VNPay, sau thanh toán BE redirect về /mangaka/wallet
+        window.location.assign(response.data.data);
+        return;
       }
+      setError(response.data.message || 'Có lỗi xảy ra khi tạo giao dịch nạp tiền.');
     },
     onError: (err: unknown) => {
-      setError((err as { response?: { data?: { Message?: string } } })?.response?.data?.Message || 'Đã có lỗi hệ thống xảy ra.');
-    }
+      setError(getAxiosErrorMessage(err, 'Đã có lỗi hệ thống xảy ra.'));
+    },
   });
 
   const withdrawMutation = useMutation({
     mutationFn: (data: { amount: number; bankName: string; bankAccountNumber: string; bankAccountName: string }) => walletApi.withdraw(data),
     onSuccess: (response) => {
-      if (response.data.IsSuccess) {
+      if (response.data.success) {
         queryClient.invalidateQueries({ queryKey: ['wallet'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        toast.success('Đã gửi yêu cầu rút tiền. Vui lòng chờ Admin duyệt.');
         if (onSuccess) onSuccess();
         onClose();
       } else {
-        setError(response.data.Message || 'Có lỗi xảy ra khi tạo yêu cầu rút tiền.');
+        setError(response.data.message || 'Có lỗi xảy ra khi tạo yêu cầu rút tiền.');
       }
     },
     onError: (err: unknown) => {
-      setError((err as { response?: { data?: { Message?: string } } })?.response?.data?.Message || 'Đã có lỗi hệ thống xảy ra.');
-    }
+      setError(getAxiosErrorMessage(err, 'Đã có lỗi hệ thống xảy ra.'));
+    },
   });
 
   const presetAmounts =
@@ -71,18 +73,19 @@ export const useWalletActions = (
 
     if (mode === 'deposit') {
       depositMutation.mutate(amountValue);
-    } else {
-      if (!bankAccountNumber || !bankAccountName) {
-        setError('Vui lòng nhập đầy đủ thông tin tài khoản ngân hàng.');
-        return;
-      }
-      withdrawMutation.mutate({
-        amount: amountValue,
-        bankName,
-        bankAccountNumber,
-        bankAccountName,
-      });
+      return;
     }
+
+    if (!bankAccountNumber || !bankAccountName) {
+      setError('Vui lòng nhập đầy đủ thông tin tài khoản ngân hàng.');
+      return;
+    }
+    withdrawMutation.mutate({
+      amount: amountValue,
+      bankName,
+      bankAccountNumber,
+      bankAccountName,
+    });
   };
 
   const loading = depositMutation.isPending || withdrawMutation.isPending;

@@ -71,7 +71,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
                 newPassword,
                 confirmNewPassword,
             });
-            if (response.IsSuccess) {
+            if (response.success) {
                 logout();
                 resetForm();
                 onClose();
@@ -80,13 +80,13 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
                 return;
             }
 
-            const errorMsg = response.Message || 'Mật khẩu hiện tại không đúng. Vui lòng thử lại.';
+            const errorMsg = response.message || 'Mật khẩu hiện tại không đúng. Vui lòng thử lại.';
             setLocalError(errorMsg);
             toast.error(errorMsg);
         } catch (error: unknown) {
             const axiosError = error as { response?: { data?: { Message?: string; message?: string } } };
             const errorMsg =
-                axiosError.response?.data?.Message ||
+                axiosError.response?.data?.message ||
                 axiosError.response?.data?.message ||
                 'Mật khẩu hiện tại không đúng. Vui lòng thử lại.';
             setLocalError(errorMsg);

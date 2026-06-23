@@ -9,7 +9,7 @@ export const useSchedule = (month: string) =>
   useQuery({
     queryKey: [...KEYS.schedule, month],
     queryFn: () => scheduleApi.getSchedule(month),
-    select: (res) => res.data?.Data ?? [],
+    select: (res) => res.data?.data ?? [],
   });
 
 export const useReschedule = () => {

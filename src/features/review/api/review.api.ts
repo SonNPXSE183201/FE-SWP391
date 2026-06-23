@@ -1,4 +1,5 @@
 import { axiosInstance } from '../../../api/axios';
+import { createMockApiResponse } from '../../../api/apiResponse';
 import type {
   ApiResponse,
   SeriesReviewDto,
@@ -12,14 +13,7 @@ const USE_MOCK = false;
 
 const mockDelay = (ms = 400) => new Promise(resolve => setTimeout(resolve, ms));
 
-const mockResponse = <T>(data: T, message = 'Success') => ({
-  data: {
-    IsSuccess: true,
-    success: true,
-    Message: message,
-    Data: data,
-  },
-});
+const mockResponse = createMockApiResponse;
 
 // Re-export for component usage
 export type { SeriesReviewDto };
@@ -58,6 +52,12 @@ const readWithFallback = async <T>(
 };
 
 export const reviewApi = {
+  /** GET /api/reviews/series/pending — series chờ Editor duyệt bản thảo (PA3) */
+  getPendingSeries: async () => {
+    const res = await axiosInstance.get<ApiResponse<SeriesReviewDto[]>>('/api/reviews/series/pending');
+    return res;
+  },
+
   /** GET /api/reviews/series/{id} — chi tiết series để Editor review */
   getReviewSeriesDetail: async (seriesId: string) => {
     if (USE_MOCK) {
@@ -135,7 +135,7 @@ export const reviewApi = {
     }
     const res = await axiosInstance.post<ApiResponse<boolean>>(
       `/api/reviews/chapters/${chapterId}/revision`,
-      { FeedbackComment: reason },
+      { feedbackComment: reason },
     );
     return res;
   },

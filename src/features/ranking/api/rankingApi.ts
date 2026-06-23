@@ -9,8 +9,8 @@ const mockDelay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms)
 
 const getApiErrorMessage = (error: unknown, fallback: string) => {
   if (axios.isAxiosError(error)) {
-    const data = error.response?.data as { Message?: string; message?: string } | undefined;
-    return data?.Message || data?.message || error.message || fallback;
+    const data = error.response?.data as { message?: string } | undefined;
+    return data?.message || error.message || fallback;
   }
   if (error instanceof Error && error.message) return error.message;
   return fallback;
@@ -105,7 +105,7 @@ export const rankingApi = {
       const res = await axiosInstance.get<ApiResponse<RankingRecord[]>>('/api/rankings', {
         params: { period },
       });
-      items = (res.data?.data ?? res.data?.Data ?? []).map((record, index) =>
+      items = (res.data?.data ?? []).map((record, index) =>
         mapRankingRecordToItem(record, index, period),
       );
     } catch {
@@ -136,7 +136,7 @@ export const rankingApi = {
           item.votes += 1;
         }
       }
-      return { IsSuccess: true, Message: 'Bỏ phiếu thành công' };
+      return { success: true, message: 'Bỏ phiếu thành công' };
     }
     const res = await axiosInstance.post<ApiResponse<unknown>>('/api/ranking/votes', { seriesId, action, comment });
     return res.data;
@@ -146,10 +146,9 @@ export const rankingApi = {
   submitRankingData: async (payload: components['schemas']['CreateRankingsDto']) => {
     try {
       const res = await axiosInstance.post<ApiResponse<unknown>>('/api/rankings', payload);
-      const ok = res.data?.IsSuccess ?? res.data?.success;
+      const ok = res.data?.success;
       if (ok === false) {
-        const body = res.data as ApiResponse<unknown> & { message?: string };
-        throw new Error(body.Message || body.message || 'API từ chối nhập liệu');
+        throw new Error(res.data?.message || 'API từ chối nhập liệu');
       }
       return res.data;
     } catch (error) {
@@ -157,8 +156,8 @@ export const rankingApi = {
         await mockDelay(400);
         applyDevRankingSubmit(payload);
         return {
-          IsSuccess: true,
-          Message: 'Dev mock: BE từ chối/lỗi — đã lưu ranking local để test UI',
+          success: true,
+          message: 'Dev mock: BE từ chối/lỗi — đã lưu ranking local để test UI',
         };
       }
       throw new Error(getApiErrorMessage(error, 'Nhập dữ liệu thất bại'), { cause: error });

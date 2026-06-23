@@ -62,7 +62,7 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
             setActiveTool('select');
             
             // Auto-select the newly created region (but DO NOT open task modal automatically)
-            const newRegion = res.data?.Data;
+            const newRegion = res.data?.data;
             if (newRegion && newRegion.id) {
               setSelectedRegion(newRegion.id);
             }
