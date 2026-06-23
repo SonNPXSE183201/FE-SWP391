@@ -80,18 +80,18 @@ const mockDelay = (ms: number = 300) => new Promise(resolve => setTimeout(resolv
 
 const createMockAxiosResponse = <T>(data: T, message = 'Success') => ({
   data: {
-    IsSuccess: true,
     success: true,
-    Message: message,
-    Data: data,
-  },
+    statusCode: 200,
+    message,
+    data,
+  } satisfies ApiResponse<T>,
 });
 
 // ─── Response DTOs ───────────────────────────────────────────
 export interface NotificationListResponse {
-  Items: SchemaNotificationDto[];
-  TotalCount: number;
-  UnreadCount: number;
+  items: SchemaNotificationDto[];
+  totalCount: number;
+  unreadCount: number;
 }
 
 // ─── Mappers (mock camelCase → schema PascalCase) ────────────
@@ -118,13 +118,9 @@ export const notificationApi = {
     if (USE_MOCK) {
       await mockDelay(250);
       const items = mockState.map(toSchemaNotificationDto);
-      return createMockAxiosResponse({
-        Items: items.slice((page - 1) * pageSize, page * pageSize),
-        TotalCount: items.length,
-        UnreadCount: mockState.filter(n => !n.isRead).length,
-      } as NotificationListResponse);
+      return createMockAxiosResponse(items);
     }
-    return axiosInstance.get<ApiResponse<NotificationListResponse>>('/api/notifications', {
+    return axiosInstance.get<ApiResponse<SchemaNotificationDto[]>>('/api/notifications', {
       params: { page, pageSize },
     });
   },
@@ -148,8 +144,8 @@ export const notificationApi = {
   markAsRead: async (notificationId: string) => {
     if (USE_MOCK) {
       await mockDelay(150);
-      const notif = mockState.find(n => n.id === notificationId);
-      if (notif) notif.isRead = true;
+      const notifIndex = mockState.findIndex(n => n.id === notificationId);
+      if (notifIndex >= 0) mockState.splice(notifIndex, 1);
       return createMockAxiosResponse(true, 'Đã đánh dấu đã đọc');
     }
     return axiosInstance.patch<ApiResponse<boolean>>(`/api/notifications/${notificationId}/read`);
@@ -162,7 +158,9 @@ export const notificationApi = {
   markAllAsRead: async () => {
     if (USE_MOCK) {
       await mockDelay(200);
-      mockState.forEach(n => { n.isRead = true; });
+      for (let i = mockState.length - 1; i >= 0; i -= 1) {
+        if (!mockState[i].isRead) mockState.splice(i, 1);
+      }
       return createMockAxiosResponse(true, 'Đã đánh dấu tất cả đã đọc');
     }
     return axiosInstance.post<ApiResponse<boolean>>('/api/notifications/mark-all-read');

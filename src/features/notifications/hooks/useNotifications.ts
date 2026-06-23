@@ -3,6 +3,7 @@ import { notificationApi } from '../api/notification.api';
 import { useNotificationStore } from '../../../stores/notificationStore';
 import type { NotificationItem } from '../../../stores/notificationStore';
 import type { NotificationDto } from '../../../api/generated/types';
+import { isApiSuccess, getApiMessage } from '../../../api/apiResponse';
 
 // ─── Mapper ──────────────────────────────────────────────────
 
@@ -38,19 +39,24 @@ export const useNotificationList = (page: number = 1, pageSize: number = 20) => 
       const response = await notificationApi.getAll(page, pageSize);
       const payload = response.data;
 
-      if (payload.IsSuccess && payload.Data) {
-        const items = payload.Data.Items.map(mapDtoToItem);
-        setNotifications(items, payload.Data.UnreadCount);
+      if (isApiSuccess(payload) && payload.data) {
+        const allItems = payload.data
+          .map(mapDtoToItem)
+          .filter((n) => !n.isRead);
+        const start = (page - 1) * pageSize;
+        const items = allItems.slice(start, start + pageSize);
+        const unreadCount = allItems.filter((n) => !n.isRead).length;
+        setNotifications(items, unreadCount);
         return {
           items,
-          totalCount: payload.Data.TotalCount,
-          unreadCount: payload.Data.UnreadCount,
+          totalCount: allItems.length,
+          unreadCount,
         };
       }
 
-      throw new Error(payload.Message || 'Không thể tải thông báo');
+      throw new Error(getApiMessage(payload, 'Không thể tải thông báo'));
     },
-    refetchInterval: 30_000, // Poll every 30s as fallback
+    refetchInterval: 30_000,
     staleTime: 10_000,
   });
 };
@@ -67,15 +73,15 @@ export const useUnreadCount = () => {
       const response = await notificationApi.getUnreadCount();
       const payload = response.data;
 
-      if (payload?.IsSuccess && payload?.Data !== undefined) {
-        const count = typeof payload.Data === 'number' ? payload.Data : 0;
+      if (isApiSuccess(payload) && payload.data !== undefined) {
+        const count = typeof payload.data === 'number' ? payload.data : 0;
         setUnreadCount(count);
         return count;
       }
 
       return 0;
     },
-    refetchInterval: 15_000, // Poll every 15s
+    refetchInterval: 15_000,
     staleTime: 5_000,
   });
 };
@@ -90,7 +96,6 @@ export const useMarkAsRead = () => {
   return useMutation({
     mutationFn: (notificationId: string) => notificationApi.markAsRead(notificationId),
     onMutate: (notificationId) => {
-      // Optimistic update
       markAsRead(notificationId);
     },
     onSettled: () => {
@@ -109,7 +114,6 @@ export const useMarkAllAsRead = () => {
   return useMutation({
     mutationFn: () => notificationApi.markAllAsRead(),
     onMutate: () => {
-      // Optimistic update
       markAllAsRead();
     },
     onSettled: () => {

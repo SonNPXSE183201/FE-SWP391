@@ -3,15 +3,11 @@ import type { ApiResponse } from '../../../api/generated/types';
 
 const USE_MOCK = true;
 
+import { createMockApiResponse } from '../../../api/apiResponse';
+
 const mockDelay = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const mockResponse = <T>(data: T, message = 'Success') => ({
-  data: {
-    IsSuccess: true,
-    Message: message,
-    Data: data,
-  },
-});
+const mockResponse = createMockApiResponse;
 
 export const approvalApi = {
   getPendingProposals: async () => {
@@ -59,7 +55,7 @@ export const approvalApi = {
         },
       ]);
     }
-    return axiosInstance.get<ApiResponse<any[]>>('/api/approvals/proposals');
+    return axiosInstance.get<ApiResponse<any[]>>('/api/approvals/proposals'); // eslint-disable-line @typescript-eslint/no-explicit-any
   },
 
   approveProposal: async (seriesId: string, payload: { approvedBudget: number; publishSchedule: string }) => {

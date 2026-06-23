@@ -10,11 +10,11 @@ import { WalletActionModal } from './WalletActionModal';
 import { TransactionDetailModal } from './TransactionDetailModal';
 import { useWallet } from '../hooks/useWallet';
 
-import { calculateMonthlyStats } from '../utils';
+import { calculateMonthlyStats, getTransactionAmountDisplay, formatTransactionDateTime, normalizeTransactionType } from '../utils';
 import { usePagination } from '../../../hooks/usePagination';
 import { Pagination } from '../../../components/common/Pagination';
 import { CustomSelect } from '../../../components/common/CustomSelect';
-import type { Transaction } from '../../../types/entities';
+import type { Transaction, TransactionType } from '../../../types/entities';
 
 export const AssistantWalletFeature = () => {
   const [txTypeFilter, setTxTypeFilter] = useState('');
@@ -28,7 +28,7 @@ export const AssistantWalletFeature = () => {
   const { data: response, isLoading, isError, error } = useWallet();
 
   const wallet = response?.wallet;
-  const transactions = response?.transactions || [];
+  const transactions = response?.transactions ?? [];
 
   const filteredTx = useMemo(() => {
     return transactions.filter((tx) => {
@@ -148,12 +148,11 @@ export const AssistantWalletFeature = () => {
         {/* Transaction List */}
         <div className="space-y-2">
           {pagination.paginatedData.map((tx) => {
-            const cfg = TX_TYPE_CONFIG[tx.type] || { icon: Wallet, bg: 'bg-bg-surface', color: 'text-text-muted', label: tx.type };
+            const txType = normalizeTransactionType(String(tx.type));
+            const cfg = TX_TYPE_CONFIG[txType] || TX_TYPE_CONFIG[tx.type as TransactionType] || { icon: Wallet, bg: 'bg-bg-surface', color: 'text-text-muted', label: tx.type, sign: '' as const };
             const TxIcon = cfg.icon;
-            const date = new Date(tx.createdAt).toLocaleDateString('vi-VN', {
-              day: '2-digit', month: '2-digit', year: 'numeric',
-              hour: '2-digit', minute: '2-digit',
-            });
+            const amountDisplay = getTransactionAmountDisplay(tx);
+            const date = formatTransactionDateTime(tx.createdAt);
 
             return (
               <div key={tx.id} onClick={() => setSelectedTx(tx)} className="group bg-bg-secondary border border-border-custom rounded-xl p-4 hover:border-brand/15 transition-all cursor-pointer">
@@ -173,8 +172,8 @@ export const AssistantWalletFeature = () => {
                   </div>
 
                   <div className="text-right flex-shrink-0">
-                    <div className={`text-sm font-bold ${tx.amount >= 0 ? 'text-success' : 'text-danger'}`}>
-                      {tx.amount >= 0 ? '+' : ''}{formatVND(Math.abs(tx.amount))}
+                    <div className={`text-sm font-bold ${amountDisplay.colorClass}`}>
+                      {amountDisplay.sign}{formatVND(amountDisplay.value)}
                     </div>
                     <div className="text-[10px] text-text-muted mt-0.5">{date}</div>
                   </div>

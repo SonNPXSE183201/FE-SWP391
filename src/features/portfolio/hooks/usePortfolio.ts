@@ -7,10 +7,10 @@ export const usePortfolioStats = () => {
     queryFn: async () => {
       const response = await portfolioApi.getPortfolioStats();
       const apiResponse = response.data;
-      if (!apiResponse.IsSuccess || !apiResponse.Data) {
-        throw new Error(apiResponse.Message || 'Failed to fetch portfolio stats');
+      if (!apiResponse.success || !apiResponse.data) {
+        throw new Error(apiResponse.message || 'Failed to fetch portfolio stats');
       }
-      return apiResponse.Data;
+      return apiResponse.data;
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -22,10 +22,10 @@ export const usePortfolioSamples = () => {
     queryFn: async () => {
       const response = await portfolioApi.getSamples();
       const apiResponse = response.data;
-      if (!apiResponse.IsSuccess || !apiResponse.Data) {
-        throw new Error(apiResponse.Message || 'Failed to fetch portfolio samples');
+      if (!apiResponse.success || !apiResponse.data) {
+        throw new Error(apiResponse.message || 'Failed to fetch portfolio samples');
       }
-      return apiResponse.Data;
+      return apiResponse.data;
     },
     staleTime: 5 * 60 * 1000,
   });

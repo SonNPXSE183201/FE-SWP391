@@ -5,11 +5,12 @@ import { toast } from 'react-hot-toast';
 import { Mail, Lock, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore, type UserRole } from '../../../stores/authStore';
 import { authApi } from '../api/auth.api';
+import { loadRememberedEmail, persistRememberedEmail } from '../utils/rememberCredentials';
 
 export const LoginForm: React.FC = () => {
-  const [email, setEmail] = useState(() => localStorage.getItem('inku-remembered-email') || '');
+  const [email, setEmail] = useState(() => loadRememberedEmail());
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem('inku-remembered-email'));
+  const [rememberMe, setRememberMe] = useState(() => !!loadRememberedEmail());
   const [localError, setLocalError] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -21,7 +22,6 @@ export const LoginForm: React.FC = () => {
     e.preventDefault();
     setLocalError(null);
 
-    // Basic validation
     if (!email || !password) {
       setLocalError('Username/Email và mật khẩu không được để trống');
       return;
@@ -33,30 +33,22 @@ export const LoginForm: React.FC = () => {
       const response = await authApi.login({ email, password });
 
       if (response.success && response.data && response.data.token) {
-        // Handle remember me
-        if (rememberMe) {
-          localStorage.setItem('inku-remembered-email', email);
-        } else {
-          localStorage.removeItem('inku-remembered-email');
-        }
+        persistRememberedEmail(email, rememberMe);
 
-        // Map backend role to frontend role
         let mappedRole = response.data.roleName;
         if (mappedRole === 'System Admin') mappedRole = 'Admin';
         else if (mappedRole === 'Tantou Editor') mappedRole = 'Editor';
         else if (mappedRole === 'Editorial Board') mappedRole = 'Board';
 
-        // Save to store (include RefreshToken)
         setAuth({
           id: response.data.userId?.toString() || '0',
           fullName: response.data.fullName || response.data.userName || 'User',
           email: response.data.email || email,
-          role: mappedRole as UserRole
+          role: mappedRole as UserRole,
         }, response.data.token, response.data.refreshToken || '');
 
         toast.success(response.message || 'Đăng nhập thành công');
 
-        // Wait a tick for Zustand to update its persisted state before navigating
         setTimeout(() => {
           const redirectPath = useAuthStore.getState().getRoleRedirectPath?.() || '/';
           navigate(redirectPath, { replace: true });
@@ -70,9 +62,7 @@ export const LoginForm: React.FC = () => {
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: Record<string, unknown> } };
       const data = axiosError.response?.data;
-      const errorMsg = String(
-        data?.Message ?? data?.message ?? 'Có lỗi xảy ra khi đăng nhập'
-      );
+      const errorMsg = String(data?.message ?? 'Có lỗi xảy ra khi đăng nhập');
       setLocalError(errorMsg);
       toast.error(errorMsg);
     } finally {
@@ -82,7 +72,6 @@ export const LoginForm: React.FC = () => {
 
   return (
     <div className="relative w-full max-w-md mx-auto">
-      {/* Shimmer border glow effect */}
       <div
         className="absolute -inset-[1px] rounded-2xl opacity-60 blur-[1px] animate-shimmer-border"
         style={{
@@ -91,10 +80,7 @@ export const LoginForm: React.FC = () => {
         }}
       />
 
-      {/* Card container with glow pulse */}
       <div className="relative w-full p-8 rounded-2xl bg-bg-secondary/80 backdrop-blur-xl border border-white/10 shadow-2xl animate-slide-in-up animate-glow-pulse">
-
-        {/* Header */}
         <div
           className="mb-8 text-center animate-hero-text-reveal"
           style={{ animationDelay: '0.15s' }}
@@ -110,7 +96,6 @@ export const LoginForm: React.FC = () => {
             </div>
           )}
 
-          {/* Email/Username field */}
           <div
             className="space-y-2 animate-fade-in-up"
             style={{ animationDelay: '0.25s' }}
@@ -130,25 +115,20 @@ export const LoginForm: React.FC = () => {
                 onFocus={() => setFocusedField('email')}
                 onBlur={() => setFocusedField(null)}
                 disabled={isLoading}
+                autoComplete="username"
                 className="w-full pl-10 pr-4 py-2.5 bg-bg-surface border border-border-custom rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all duration-300"
                 placeholder="mangaka1 hoặc nhap@email.com"
               />
             </div>
           </div>
 
-          {/* Password field */}
           <div
             className="space-y-2 animate-fade-in-up"
             style={{ animationDelay: '0.35s' }}
           >
-            <div className="flex justify-between items-center">
-              <label className="text-sm font-medium text-text-primary" htmlFor="password">
-                Mật khẩu
-              </label>
-              <Link to="/forgot-password" className="text-xs text-brand hover:text-brand-hover transition-colors">
-                Quên mật khẩu?
-              </Link>
-            </div>
+            <label className="text-sm font-medium text-text-primary" htmlFor="password">
+              Mật khẩu
+            </label>
             <div className={`relative group rounded-lg transition-shadow duration-300 ${focusedField === 'password' ? 'shadow-[0_0_20px_rgba(108,92,231,0.15)]' : ''}`}>
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-secondary group-focus-within:text-brand transition-colors duration-300">
                 <Lock size={18} />
@@ -161,6 +141,7 @@ export const LoginForm: React.FC = () => {
                 onFocus={() => setFocusedField('password')}
                 onBlur={() => setFocusedField(null)}
                 disabled={isLoading}
+                autoComplete="current-password"
                 className="w-full pl-10 pr-11 py-2.5 bg-bg-surface border border-border-custom rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all duration-300"
                 placeholder="••••••••"
               />
@@ -176,25 +157,29 @@ export const LoginForm: React.FC = () => {
             </div>
           </div>
 
-          {/* Remember me */}
           <div
-            className="flex items-center animate-fade-in-up"
+            className="flex items-center justify-between gap-4 animate-fade-in-up"
             style={{ animationDelay: '0.45s' }}
           >
-            <input
-              id="rememberMe"
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              disabled={isLoading}
-              className="w-4 h-4 rounded border-border-custom text-brand focus:ring-brand bg-bg-surface cursor-pointer"
-            />
-            <label htmlFor="rememberMe" className="ml-2 text-sm text-text-secondary cursor-pointer">
-              Nhớ tài khoản
+            <label htmlFor="rememberMe" className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                id="rememberMe"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                disabled={isLoading}
+                className="w-4 h-4 rounded border-border-custom text-brand focus:ring-brand bg-bg-surface cursor-pointer"
+              />
+              <span className="text-sm text-text-secondary">Nhớ tài khoản</span>
             </label>
+            <Link
+              to="/forgot-password"
+              className="text-sm text-brand hover:text-brand-hover transition-colors whitespace-nowrap"
+            >
+              Quên mật khẩu?
+            </Link>
           </div>
 
-          {/* Submit button */}
           <div
             className="animate-fade-in-up"
             style={{ animationDelay: '0.55s' }}
@@ -204,7 +189,6 @@ export const LoginForm: React.FC = () => {
               disabled={isLoading}
               className="relative w-full flex items-center justify-center py-3 px-4 bg-gradient-to-br from-brand to-brand-hover text-white rounded-lg font-medium overflow-hidden hover:shadow-lg hover:shadow-brand/25 transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none group"
             >
-              {/* Shimmer overlay on hover */}
               <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
               <span className="relative z-10 flex items-center">
@@ -221,7 +205,6 @@ export const LoginForm: React.FC = () => {
           </div>
         </form>
 
-        {/* Register link */}
         <div
           className="mt-8 pt-6 border-t border-white/10 text-center animate-fade-in-up"
           style={{ animationDelay: '0.65s' }}

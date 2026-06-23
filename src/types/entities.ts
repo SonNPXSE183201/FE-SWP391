@@ -50,6 +50,7 @@ export type TransactionType =
   | 'Transfer'
   | 'Deposit'
   | 'Withdraw'
+  | 'Withdrawal'
   | 'Genkouryo';
 
 export type AnnotationType =

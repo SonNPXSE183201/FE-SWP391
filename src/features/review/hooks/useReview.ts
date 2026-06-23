@@ -4,15 +4,23 @@ import type { ApproveChapterPayload } from '../types';
 
 const KEYS = {
   reviewSeriesDetail: (seriesId: string) => ['review', 'series', seriesId] as const,
+  pendingSeries: ['review', 'series', 'pending'] as const,
   reviewQueue: ['review', 'queue'] as const,
   chapterReview: (chapterId: string) => ['review', 'chapter', chapterId] as const,
 };
+
+export const usePendingSeriesReview = () =>
+  useQuery({
+    queryKey: KEYS.pendingSeries,
+    queryFn: () => reviewApi.getPendingSeries(),
+    select: (res) => res.data?.data ?? [],
+  });
 
 export const useReviewSeriesDetail = (seriesId: string) =>
   useQuery({
     queryKey: KEYS.reviewSeriesDetail(seriesId),
     queryFn: () => reviewApi.getReviewSeriesDetail(seriesId),
-    select: (res) => res.data?.Data ?? null,
+    select: (res) => res.data?.data ?? null,
     enabled: !!seriesId,
   });
 
@@ -33,14 +41,14 @@ export const useReviewQueue = () =>
   useQuery({
     queryKey: KEYS.reviewQueue,
     queryFn: () => reviewApi.getReviewQueue(),
-    select: (res) => res.data?.Data ?? [],
+    select: (res) => res.data?.data ?? [],
   });
 
 export const useChapterReview = (chapterId: string) =>
   useQuery({
     queryKey: KEYS.chapterReview(chapterId),
     queryFn: () => reviewApi.getChapterReview(chapterId),
-    select: (res) => res.data?.Data ?? null,
+    select: (res) => res.data?.data ?? null,
     enabled: !!chapterId,
   });
 

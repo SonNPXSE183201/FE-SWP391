@@ -1,4 +1,5 @@
 import { axiosInstance } from '../../../api/axios';
+import { createMockApiResponse } from '../../../api/apiResponse';
 import type {
   ApiResponse,
   DisputeListItemDto,
@@ -13,14 +14,7 @@ const FORCE_MOCK_READ = false;
 
 const mockDelay = (ms = 400) => new Promise(resolve => setTimeout(resolve, ms));
 
-const mockResponse = <T>(data: T, message = 'Success') => ({
-  data: {
-    IsSuccess: true,
-    success: true,
-    Message: message,
-    Data: data,
-  },
-});
+const mockResponse = createMockApiResponse;
 
 // Re-export types cho component sử dụng
 export type { DisputeListItemDto, DisputeDetailDto, DisputeEvidenceDto };

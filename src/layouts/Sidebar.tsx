@@ -15,6 +15,7 @@ import {
   Shield,
   FileSignature,
   Receipt,
+  ArrowUpFromLine,
   PanelLeftClose,
   PanelLeft,
   Palette,
@@ -146,6 +147,7 @@ const getNavSections = (role: UserRole): NavSectionConfig[] => {
             { label: 'Phân quyền RBAC', path: '/admin/roles', icon: <Shield size={20} /> },
             { label: 'Hợp đồng', path: '/admin/contracts', icon: <FileSignature size={20} /> },
             { label: 'Đối soát giao dịch', path: '/admin/reconciliation', icon: <Receipt size={20} /> },
+            { label: 'Duyệt rút tiền', path: '/admin/withdraw-approval', icon: <ArrowUpFromLine size={20} /> },
           ],
         },
       ];

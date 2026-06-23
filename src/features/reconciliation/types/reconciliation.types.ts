@@ -1,35 +1,17 @@
-// ─── Reconciliation Types ────────────────────────────────────
+import type {
+  ReconciliationRecordDto,
+  ReconciliationResponseDto,
+  ReconciliationSummaryDto,
+} from '../../../api/generated/types';
 
+/** Trạng thái đối soát — union FE để type-safe filter/badge */
 export type ReconciliationStatus = 'Matched' | 'Mismatch' | 'Missing' | 'Pending';
 
-export interface ReconciliationRecord {
-  id: string;
-  referenceCode: string;
-  vnpayTransactionId: string;
-  internalTransactionId: string;
-  vnpayAmount: number;
-  internalAmount: number;
-  vnpayDate: string;
-  internalDate: string;
-  vnpayStatus: string;
-  internalStatus: string;
-  status: ReconciliationStatus;
-  userName: string;
-  description: string;
-  discrepancyNote?: string;
-}
+export type ReconciliationRecord = ReconciliationRecordDto;
+export type ReconciliationSummary = ReconciliationSummaryDto;
+export type ReconciliationResponse = ReconciliationResponseDto;
 
-export interface ReconciliationSummary {
-  totalRecords: number;
-  matchedCount: number;
-  mismatchCount: number;
-  missingCount: number;
-  pendingCount: number;
-  totalVnpayAmount: number;
-  totalInternalAmount: number;
-  differenceAmount: number;
-}
-
+/** Query params cho GET /api/admin/reconciliation (không có trong OpenAPI) */
 export interface ReconciliationParams {
   from?: string;
   to?: string;
@@ -37,7 +19,9 @@ export interface ReconciliationParams {
   referenceCode?: string;
 }
 
-export interface ReconciliationResponse {
-  records: ReconciliationRecord[];
-  summary: ReconciliationSummary;
-}
+export const toReconciliationStatus = (status?: string | null): ReconciliationStatus => {
+  if (status === 'Matched' || status === 'Mismatch' || status === 'Missing' || status === 'Pending') {
+    return status;
+  }
+  return 'Pending';
+};

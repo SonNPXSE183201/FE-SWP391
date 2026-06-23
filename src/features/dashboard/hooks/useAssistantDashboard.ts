@@ -30,11 +30,11 @@ export const useAssistantDashboard = () => {
       const response = await dashboardApi.getAssistantDashboard();
 
       const apiResponse = response.data;
-      if (!apiResponse.IsSuccess || !apiResponse.Data) {
-        throw new Error(apiResponse.Message || 'Failed to fetch assistant dashboard');
+      if (!apiResponse.success || !apiResponse.data) {
+        throw new Error(apiResponse.message || 'Failed to fetch assistant dashboard');
       }
 
-      const data = apiResponse.Data;
+      const data = apiResponse.data;
 
       const stats: AssistantDashboardStats = { ...data.stats };
 

@@ -2,6 +2,7 @@ import { createPortal } from 'react-dom';
 import { X, Receipt, Clock, ArrowRightLeft, Shield, Banknote, Hash } from 'lucide-react';
 import { TX_TYPE_CONFIG, formatVND } from '../constants';
 import type { Transaction } from '../../../types/entities';
+import { getTransactionAmountDisplay, formatTransactionDateTime } from '../utils';
 
 interface TransactionDetailModalProps {
   transaction: Transaction;
@@ -9,14 +10,11 @@ interface TransactionDetailModalProps {
 }
 
 export const TransactionDetailModal = ({ transaction, onClose }: TransactionDetailModalProps) => {
-  const cfg = TX_TYPE_CONFIG[transaction.type] || { icon: Receipt, bg: 'bg-bg-surface', color: 'text-text-muted', label: transaction.type, sign: '' };
+  const cfg = TX_TYPE_CONFIG[transaction.type] || { icon: Receipt, bg: 'bg-bg-surface', color: 'text-text-muted', label: transaction.type, sign: '' as const };
   const TxIcon = cfg.icon;
-  const isPositive = transaction.amount >= 0;
+  const amountDisplay = getTransactionAmountDisplay(transaction);
 
-  const date = new Date(transaction.createdAt).toLocaleDateString('vi-VN', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
-  });
+  const date = formatTransactionDateTime(transaction.createdAt);
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -40,8 +38,8 @@ export const TransactionDetailModal = ({ transaction, onClose }: TransactionDeta
 
         {/* Amount */}
         <div className="px-6 py-6 text-center border-b border-border-custom">
-          <div className={`text-3xl font-bold font-mono ${isPositive ? 'text-success' : 'text-danger'}`}>
-            {isPositive ? '+' : ''}{formatVND(Math.abs(transaction.amount))}
+          <div className={`text-3xl font-bold font-mono ${amountDisplay.colorClass}`}>
+            {amountDisplay.sign}{formatVND(amountDisplay.value)}
           </div>
           <p className="text-xs text-text-muted mt-2">{transaction.description}</p>
         </div>
