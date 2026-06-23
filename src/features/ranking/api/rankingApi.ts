@@ -3,8 +3,8 @@ import { axiosInstance } from '../../../api/axios';
 import type { ApiResponse } from '../../../api/generated/types';
 import type { components } from '../../../api/generated/schema';
 
-/** Mock chỉ cho luồng Board vote maintain/cancel — chưa có endpoint BE riêng */
-const USE_MOCK_BOARD_VOTE = true;
+/** Dev fallback khi BE chưa deploy POST /api/ranking/votes */
+const USE_MOCK_BOARD_VOTE = false;
 const mockDelay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const getApiErrorMessage = (error: unknown, fallback: string) => {
@@ -124,22 +124,40 @@ export const rankingApi = {
   },
 
   submitRankingVote: async (seriesId: string, action: 'maintain' | 'cancel', comment?: string) => {
-    if (USE_MOCK_BOARD_VOTE) {
-      await mockDelay(400);
-      const item = MOCK_RANKING.find((s) => s.id === seriesId);
-      if (item) {
-        if (action === 'cancel') {
-          item.status = 'ProposedCancel';
-          item.votes -= 1;
-        } else {
-          item.status = 'Active';
-          item.votes += 1;
+    if (!USE_MOCK_BOARD_VOTE) {
+      try {
+        const res = await axiosInstance.post<ApiResponse<unknown>>('/api/ranking/votes', {
+          seriesId: Number(seriesId) || seriesId,
+          action,
+          comment,
+        });
+        const data = res.data;
+        return {
+          success: !!(data?.success ?? (data as ApiResponse<unknown> & { IsSuccess?: boolean }).IsSuccess),
+          message: data?.message ?? (data as ApiResponse<unknown> & { Message?: string }).Message ?? '',
+        };
+      } catch (error) {
+        if (!import.meta.env.DEV) {
+          throw new Error(getApiErrorMessage(error, 'Bỏ phiếu thất bại'), { cause: error });
         }
       }
-      return { success: true, message: 'Bỏ phiếu thành công' };
     }
-    const res = await axiosInstance.post<ApiResponse<unknown>>('/api/ranking/votes', { seriesId, action, comment });
-    return res.data;
+
+    await mockDelay(400);
+    const item = MOCK_RANKING.find((s) => s.id === seriesId);
+    if (item) {
+      if (action === 'cancel') {
+        item.status = 'ProposedCancel';
+        item.votes -= 1;
+      } else {
+        item.status = 'Active';
+        item.votes += 1;
+      }
+    }
+    return {
+      success: true,
+      message: import.meta.env.DEV ? 'Dev mock: BE chưa có /api/ranking/votes — đã cập nhật local' : 'Bỏ phiếu thành công',
+    };
   },
 
   /** F4.4 — Board nhập liệu vote count thủ công (ưu tiên API thật; dev fallback khi BE lỗi) */

@@ -73,7 +73,7 @@ export const BoardDashboardFeature = () => {
           value={formatVND(stats.budget)}
           icon={Coins}
           color="text-info"
-          navigateTo="/board/approvals"
+          navigateTo="/board/voting"
         />
       </div>
 

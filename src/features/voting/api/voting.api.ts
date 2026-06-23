@@ -37,6 +37,7 @@ export interface SubmitVotePayload {
   votingId: string;
   decision: VoteDecision;
   comment: string;
+  recommendedBudget?: number;
 }
 
 type VoteSeriesRequestDto = components['schemas']['VoteSeriesRequestDto'];
@@ -90,13 +91,18 @@ const extractSeriesList = (body: ApiResponse<SeriesDto[]> | undefined): SeriesDt
   return (body.data ?? (body as ApiResponse<SeriesDto[]> & { Data?: SeriesDto[] }).Data ?? []) as SeriesDto[];
 };
 
-const decisionToDto = (decision: VoteDecision, comment: string): VoteSeriesRequestDto => {
+const decisionToDto = (
+  decision: VoteDecision,
+  comment: string,
+  recommendedBudget?: number,
+): VoteSeriesRequestDto => {
   if (decision === 'Abstain') {
     return { approved: false, comment: `[Abstain] ${comment}`.trim() };
   }
   return {
     approved: decision === 'Approve',
     comment: comment || undefined,
+    recommendedBudget,
   };
 };
 
@@ -145,7 +151,7 @@ export const votingApi = {
     }
 
     const seriesId = payload.votingId;
-    const body = decisionToDto(payload.decision, payload.comment);
+    const body = decisionToDto(payload.decision, payload.comment, payload.recommendedBudget);
     const res = await axiosInstance.post<ApiResponse<unknown>>(
       `/api/series/${seriesId}/vote`,
       body,
