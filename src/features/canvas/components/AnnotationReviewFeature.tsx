@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
 import {
-  MapPin, CheckCircle2,
+  MapPin,
   ChevronLeft, ChevronRight, AlertCircle,
-  Loader2, ImageOff, Trash2, RotateCcw
+  Loader2, ImageOff, Trash2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CanvasViewer } from '../../../components/canvas/CanvasViewer';
@@ -11,7 +11,7 @@ import { MobileCanvasWarning } from '../../../components/canvas/MobileCanvasWarn
 import { useCanvasStore } from '../../../stores/canvasStore';
 import {
   useCanvasPages, useAnnotations, useRegions,
-  useCreateAnnotation, useDeleteAnnotation, useToggleAnnotationResolved
+  useCreateAnnotation, useDeleteAnnotation,
 } from '../hooks/useCanvasData';
 import type { AnnotationType, Annotation } from '../../../types/entities';
 
@@ -43,10 +43,6 @@ export const AnnotationReviewFeature = ({ chapterId = 'ch-1' }: AnnotationReview
 
   const createAnnotation = useCreateAnnotation(pageId);
   const deleteAnnotation = useDeleteAnnotation(pageId);
-  const toggleResolved = useToggleAnnotationResolved(pageId);
-
-  const unresolvedCount = annotations.filter((a: Annotation) => !a.resolved).length;
-  const resolvedCount = annotations.filter((a: Annotation) => a.resolved).length;
 
   // ─── Handlers ───
   const handleAnnotationCreated = useCallback(
@@ -78,14 +74,7 @@ export const AnnotationReviewFeature = ({ chapterId = 'ch-1' }: AnnotationReview
     });
   }, [deleteAnnotation, setSelectedAnnotation]);
 
-  const handleToggleResolved = useCallback((annoId: string) => {
-    toggleResolved.mutate(annoId, {
-      onSuccess: (res) => {
-        toast.success(res.data?.message || 'Đã cập nhật trạng thái');
-      },
-      onError: () => toast.error('Lỗi cập nhật trạng thái'),
-    });
-  }, [toggleResolved]);
+
 
   const handleZoomIn = useCallback(() => setZoomLevel(Math.min(zoomLevel * 1.2, 5)), [zoomLevel, setZoomLevel]);
   const handleZoomOut = useCallback(() => setZoomLevel(Math.max(zoomLevel / 1.2, 0.1)), [zoomLevel, setZoomLevel]);
@@ -123,11 +112,8 @@ export const AnnotationReviewFeature = ({ chapterId = 'ch-1' }: AnnotationReview
                 QC Review — Trang {currentPage.pageNumber}
               </h2>
               <div className="flex items-center gap-3 mt-0.5">
-                <span className="inline-flex items-center gap-1 text-[10px] text-red-400">
-                  <AlertCircle size={10} /> {unresolvedCount} lỗi chưa xử lý
-                </span>
-                <span className="inline-flex items-center gap-1 text-[10px] text-success">
-                  <CheckCircle2 size={10} /> {resolvedCount} đã xử lý
+                <span className="inline-flex items-center gap-1 text-[10px] text-text-muted">
+                  <AlertCircle size={10} /> {annotations.length} annotation
                 </span>
               </div>
             </div>
@@ -245,9 +231,7 @@ export const AnnotationReviewFeature = ({ chapterId = 'ch-1' }: AnnotationReview
                       className={`group p-3 rounded-lg border transition-all cursor-pointer ${
                         anno.id === selectedAnnotationId
                           ? 'border-brand/40 bg-brand/5'
-                          : anno.resolved
-                            ? 'border-border-custom/30 bg-bg-primary/50 opacity-60'
-                            : 'border-border-custom/50 bg-bg-primary hover:border-brand/20'
+                          : 'border-border-custom/50 bg-bg-primary hover:border-brand/20'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -256,13 +240,6 @@ export const AnnotationReviewFeature = ({ chapterId = 'ch-1' }: AnnotationReview
                           <span className={`text-[10px] font-medium ${cfg.color}`}>{cfg.label}</span>
                         </div>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleToggleResolved(anno.id); }}
-                            className="w-5 h-5 rounded flex items-center justify-center text-success hover:bg-success/10 transition-all cursor-pointer bg-transparent border-none"
-                            title={anno.resolved ? 'Mở lại' : 'Đánh dấu đã xử lý'}
-                          >
-                            {anno.resolved ? <RotateCcw size={10} /> : <CheckCircle2 size={10} />}
-                          </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDeleteAnnotation(anno.id); }}
                             className="w-5 h-5 rounded flex items-center justify-center text-danger hover:bg-danger/10 transition-all cursor-pointer bg-transparent border-none"
@@ -274,11 +251,6 @@ export const AnnotationReviewFeature = ({ chapterId = 'ch-1' }: AnnotationReview
                       <p className="text-[11px] text-text-secondary mt-1.5 line-clamp-2">{anno.comment}</p>
                       <div className="flex items-center justify-between mt-1.5">
                         <span className="text-[9px] text-text-muted">{anno.editorName}</span>
-                        {anno.resolved && (
-                          <span className="text-[9px] text-success flex items-center gap-0.5">
-                            <CheckCircle2 size={8} /> Đã xử lý
-                          </span>
-                        )}
                       </div>
                     </div>
                   );

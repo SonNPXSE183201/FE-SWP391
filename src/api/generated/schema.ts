@@ -508,6 +508,401 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/annotations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    pageId?: number;
+                    taskVersionId?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AnnotationDtoIEnumerableApiResponse"];
+                        "application/json": components["schemas"]["AnnotationDtoIEnumerableApiResponse"];
+                        "text/json": components["schemas"]["AnnotationDtoIEnumerableApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateAnnotationDto"];
+                    "text/json": components["schemas"]["CreateAnnotationDto"];
+                    "application/*+json": components["schemas"]["CreateAnnotationDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AnnotationDtoApiResponse"];
+                        "application/json": components["schemas"]["AnnotationDtoApiResponse"];
+                        "text/json": components["schemas"]["AnnotationDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/annotations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AnnotationDtoApiResponse"];
+                        "application/json": components["schemas"]["AnnotationDtoApiResponse"];
+                        "text/json": components["schemas"]["AnnotationDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateAnnotationDto"];
+                    "text/json": components["schemas"]["UpdateAnnotationDto"];
+                    "application/*+json": components["schemas"]["UpdateAnnotationDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AnnotationDtoApiResponse"];
+                        "application/json": components["schemas"]["AnnotationDtoApiResponse"];
+                        "text/json": components["schemas"]["AnnotationDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/assistant/portfolio/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    assistantId?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AssistantPortfolioStatsDtoApiResponse"];
+                        "application/json": components["schemas"]["AssistantPortfolioStatsDtoApiResponse"];
+                        "text/json": components["schemas"]["AssistantPortfolioStatsDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/assistant/portfolio/samples": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    assistantId?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PortfolioSampleDtoIEnumerableApiResponse"];
+                        "application/json": components["schemas"]["PortfolioSampleDtoIEnumerableApiResponse"];
+                        "text/json": components["schemas"]["PortfolioSampleDtoIEnumerableApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreatePortfolioSampleDto"];
+                    "text/json": components["schemas"]["CreatePortfolioSampleDto"];
+                    "application/*+json": components["schemas"]["CreatePortfolioSampleDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PortfolioSampleDtoApiResponse"];
+                        "application/json": components["schemas"]["PortfolioSampleDtoApiResponse"];
+                        "text/json": components["schemas"]["PortfolioSampleDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/assistant/portfolio/samples/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdatePortfolioSampleDto"];
+                    "text/json": components["schemas"]["UpdatePortfolioSampleDto"];
+                    "application/*+json": components["schemas"]["UpdatePortfolioSampleDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PortfolioSampleDtoApiResponse"];
+                        "application/json": components["schemas"]["PortfolioSampleDtoApiResponse"];
+                        "text/json": components["schemas"]["PortfolioSampleDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/assistant/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AssistantProfileDtoApiResponse"];
+                        "application/json": components["schemas"]["AssistantProfileDtoApiResponse"];
+                        "text/json": components["schemas"]["AssistantProfileDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateAssistantProfileDto"];
+                    "text/json": components["schemas"]["UpdateAssistantProfileDto"];
+                    "application/*+json": components["schemas"]["UpdateAssistantProfileDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AssistantProfileDtoApiResponse"];
+                        "application/json": components["schemas"]["AssistantProfileDtoApiResponse"];
+                        "text/json": components["schemas"]["AssistantProfileDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Assistants": {
         parameters: {
             query?: never;
@@ -1502,6 +1897,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/pages/{pageId}/regions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    pageId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RegionDtoIEnumerableApiResponse"];
+                        "application/json": components["schemas"]["RegionDtoIEnumerableApiResponse"];
+                        "text/json": components["schemas"]["RegionDtoIEnumerableApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/publishing/schedule": {
         parameters: {
             query?: never;
@@ -1691,6 +2125,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ranking/votes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["VoteRankingRequestDto"];
+                    "text/json": components["schemas"]["VoteRankingRequestDto"];
+                    "application/*+json": components["schemas"]["VoteRankingRequestDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/reconciliation/import-csv": {
         parameters: {
             query?: never;
@@ -1773,6 +2250,74 @@ export interface paths {
             };
         };
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/regions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateRegionDto"];
+                    "text/json": components["schemas"]["UpdateRegionDto"];
+                    "application/*+json": components["schemas"]["UpdateRegionDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RegionDtoApiResponse"];
+                        "application/json": components["schemas"]["RegionDtoApiResponse"];
+                        "text/json": components["schemas"]["RegionDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;
@@ -2112,6 +2657,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reviews/series/{id}/require-revision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RequireSeriesRevisionDto"];
+                    "text/json": components["schemas"]["RequireSeriesRevisionDto"];
+                    "application/*+json": components["schemas"]["RequireSeriesRevisionDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/series/{id}": {
         parameters: {
             query?: never;
@@ -2143,7 +2733,36 @@ export interface paths {
                 };
             };
         };
-        put?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateSeriesDto"];
+                    "text/json": components["schemas"]["CreateSeriesDto"];
+                    "application/*+json": components["schemas"]["CreateSeriesDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SeriesDtoApiResponse"];
+                        "application/json": components["schemas"]["SeriesDtoApiResponse"];
+                        "text/json": components["schemas"]["SeriesDtoApiResponse"];
+                    };
+                };
+            };
+        };
         post?: never;
         delete?: never;
         options?: never;
@@ -3439,6 +4058,45 @@ export interface components {
             page?: components["schemas"]["Page"];
             taskVersion?: components["schemas"]["TaskVersion"];
         };
+        AnnotationDto: {
+            /** Format: int32 */
+            id?: number;
+            /** Format: int32 */
+            createdByUserId?: number;
+            createdByUserName?: string | null;
+            createdByUserRole?: string | null;
+            /** Format: int32 */
+            pageId?: number | null;
+            /** Format: int32 */
+            taskVersionId?: number | null;
+            coordinatesJson?: string | null;
+            comment?: string | null;
+            type?: string | null;
+            /** Format: date-time */
+            createAt?: string;
+            /** Format: date-time */
+            updateAt?: string | null;
+        };
+        AnnotationDtoApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["AnnotationDto"];
+            errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
+        AnnotationDtoIEnumerableApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["AnnotationDto"][] | null;
+            errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
         ApproveAssistantRequestDto: {
             userId?: string | null;
             approved?: boolean;
@@ -3480,6 +4138,30 @@ export interface components {
                 [key: string]: string[] | null;
             } | null;
         };
+        AssistantPortfolioStatsDto: {
+            /** Format: int32 */
+            totalCompletedTasks?: number;
+            /** Format: double */
+            onTimeRate?: number;
+            /** Format: double */
+            disputeRate?: number;
+            /** Format: int32 */
+            currentActiveTasks?: number;
+            /** Format: double */
+            averageRating?: number;
+            /** Format: double */
+            totalEarnings?: number;
+        };
+        AssistantPortfolioStatsDtoApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["AssistantPortfolioStatsDto"];
+            errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
         AssistantProfile: {
             /** Format: int32 */
             id?: number;
@@ -3501,6 +4183,37 @@ export interface components {
             /** Format: double */
             averageRating?: number;
             assistant?: components["schemas"]["User"];
+        };
+        AssistantProfileDto: {
+            /** Format: int32 */
+            assistantId?: number;
+            userName?: string | null;
+            email?: string | null;
+            fullName?: string | null;
+            penName?: string | null;
+            portfolioUrl?: string | null;
+            skills?: string | null;
+            specialtyTags?: string | null;
+            /** Format: int32 */
+            totalCompletedTasks?: number;
+            /** Format: double */
+            onTimeRate?: number;
+            /** Format: double */
+            disputeRate?: number;
+            /** Format: int32 */
+            currentActiveTasks?: number;
+            /** Format: double */
+            averageRating?: number;
+        };
+        AssistantProfileDtoApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["AssistantProfileDto"];
+            errors?: {
+                [key: string]: string[] | null;
+            } | null;
         };
         AssistantProfileResponseDto: {
             id?: string | null;
@@ -3758,6 +4471,15 @@ export interface components {
                 [key: string]: string[] | null;
             } | null;
         };
+        CreateAnnotationDto: {
+            /** Format: int32 */
+            pageId?: number | null;
+            /** Format: int32 */
+            taskVersionId?: number | null;
+            coordinatesJson?: string | null;
+            comment?: string | null;
+            type?: string | null;
+        };
         CreateContractDto: {
             /** Format: int32 */
             userId?: number;
@@ -3787,6 +4509,11 @@ export interface components {
                 [key: string]: string[] | null;
             } | null;
         };
+        CreatePortfolioSampleDto: {
+            title?: string | null;
+            imageUrl?: string | null;
+            category?: string | null;
+        };
         CreateRankingsDto: {
             records?: components["schemas"]["RankingInputDto"][] | null;
             /** Format: date-time */
@@ -3803,6 +4530,7 @@ export interface components {
             genre?: string | null;
             synopsis?: string | null;
             coverArtworkUrl?: string | null;
+            resourceFolderUrl?: string | null;
             /** Format: double */
             estimatedProductionBudget?: number;
         };
@@ -4108,6 +4836,53 @@ export interface components {
                 [key: string]: string[] | null;
             } | null;
         };
+        PortfolioSample: {
+            /** Format: int32 */
+            id?: number;
+            /** Format: date-time */
+            createAt?: string;
+            /** Format: date-time */
+            updateAt?: string | null;
+            /** Format: int32 */
+            assistantId?: number;
+            title?: string | null;
+            imageUrl?: string | null;
+            category?: string | null;
+            assistant?: components["schemas"]["User"];
+        };
+        PortfolioSampleDto: {
+            /** Format: int32 */
+            id?: number;
+            /** Format: int32 */
+            assistantId?: number;
+            title?: string | null;
+            imageUrl?: string | null;
+            category?: string | null;
+            /** Format: date-time */
+            createAt?: string;
+            /** Format: date-time */
+            updateAt?: string | null;
+        };
+        PortfolioSampleDtoApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["PortfolioSampleDto"];
+            errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
+        PortfolioSampleDtoIEnumerableApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["PortfolioSampleDto"][] | null;
+            errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
         RankingInputDto: {
             /** Format: int32 */
             seriesId?: number;
@@ -4268,6 +5043,16 @@ export interface components {
                 [key: string]: string[] | null;
             } | null;
         };
+        RegionDtoIEnumerableApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["RegionDto"][] | null;
+            errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
         RegisterDto: {
             userName?: string | null;
             password?: string | null;
@@ -4320,6 +5105,9 @@ export interface components {
             /** Format: int32 */
             days?: number;
             reason?: string | null;
+        };
+        RequireSeriesRevisionDto: {
+            comment?: string | null;
         };
         ResolveDisputeDto: {
             /** Format: double */
@@ -4416,6 +5204,7 @@ export interface components {
             genre?: string | null;
             synopsis?: string | null;
             coverArtworkUrl?: string | null;
+            resourceFolderUrl?: string | null;
             /** Format: double */
             estimatedProductionBudget?: number;
             /** Format: double */
@@ -4711,6 +5500,16 @@ export interface components {
                 [key: string]: string[] | null;
             } | null;
         };
+        UpdateAnnotationDto: {
+            coordinatesJson?: string | null;
+            comment?: string | null;
+            type?: string | null;
+        };
+        UpdateAssistantProfileDto: {
+            specialtyTags?: string | null;
+            portfolioUrl?: string | null;
+            skills?: string | null;
+        };
         UpdateContractDto: {
             /** Format: double */
             baseGenkouryoPrice?: number;
@@ -4725,6 +5524,15 @@ export interface components {
         UpdateDeadlineDto: {
             /** Format: date-time */
             deadline?: string;
+        };
+        UpdatePortfolioSampleDto: {
+            title?: string | null;
+            imageUrl?: string | null;
+            category?: string | null;
+        };
+        UpdateRegionDto: {
+            coordinatesJson?: string | null;
+            name?: string | null;
         };
         UpdateUserByAdminDto: {
             email?: string | null;
@@ -4773,6 +5581,7 @@ export interface components {
             fromTransactions?: components["schemas"]["Transaction"][] | null;
             toTransactions?: components["schemas"]["Transaction"][] | null;
             refreshTokens?: components["schemas"]["RefreshToken"][] | null;
+            portfolioSamples?: components["schemas"]["PortfolioSample"][] | null;
         };
         UserListItemDto: {
             id?: string | null;
@@ -4839,6 +5648,12 @@ export interface components {
          * @enum {integer}
          */
         UserStatus: 0 | 1 | 2 | 3;
+        VoteRankingRequestDto: {
+            /** Format: int32 */
+            seriesId?: number;
+            voteType?: string | null;
+            comment?: string | null;
+        };
         VoteSeriesRequestDto: {
             approved?: boolean;
             comment?: string | null;

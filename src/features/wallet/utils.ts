@@ -1,21 +1,13 @@
 import type { Transaction } from '../../types/entities';
 import { TX_TYPE_CONFIG } from './constants';
 import type { TransactionType } from '../../types/entities';
+import { parseApiDate } from '../../utils/parseApiDate';
 
-/** BE dùng "Withdrawal", FE config dùng "Withdraw". */
+export { parseApiDate };
+
 export const normalizeTransactionType = (type: string): TransactionType => {
   if (type === 'Withdrawal') return 'Withdraw';
   return type as TransactionType;
-};
-
-/** BE lưu UTC (GETUTCDATE) nhưng JSON thường không có hậu tố Z. */
-export const parseApiDate = (iso: string): Date => {
-  if (!iso?.trim()) return new Date(NaN);
-  const value = iso.trim();
-  if (/[zZ]$/.test(value) || /[+-]\d{2}:\d{2}$/.test(value)) {
-    return new Date(value);
-  }
-  return new Date(`${value}Z`);
 };
 
 export const formatTransactionDateTime = (iso: string) =>

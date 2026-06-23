@@ -16,8 +16,8 @@ export interface AvailableTasksResult {
 export const mapTaskDtoToEntity = (dto: TasksDto): Task => {
   return {
     id: String(dto.id || ''),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: dto.createAt || new Date().toISOString(),
+    updatedAt: dto.updateAt || dto.createAt || new Date().toISOString(),
     regionId: String(dto.regionId || ''),
     pageId: '',
     chapterId: '',
@@ -25,6 +25,7 @@ export const mapTaskDtoToEntity = (dto: TasksDto): Task => {
     mangakaId: String(dto.mangakaId || ''),
     assignedAssistantId: dto.assistantId ? String(dto.assistantId) : undefined,
     assignedAssistantName: dto.assistantName || undefined,
+    description: dto.description || undefined,
     status: (dto.status as TaskStatus) || 'Pending',
     amount: dto.paymentAmount || 0,
     deadline: dto.deadline || '',
@@ -38,13 +39,12 @@ export const mapTaskDtoToEntity = (dto: TasksDto): Task => {
 
 // ─── Mangaka Tasks ───────────────────────────────────────────
 export const useMangakaTasks = (params?: { page?: number; pageSize?: number; status?: string }) => {
-  return useQuery<Task[], Error>({
+  return useQuery<TasksDto[], Error>({
     queryKey: ['tasks', 'mangaka', params],
     queryFn: async () => {
       const res = await taskApi.getMyTasks(params);
       const payload = res.data as ApiResponse<unknown>;
-      const items = unwrapPaged<TasksDto>(payload).items;
-      return items.map(mapTaskDtoToEntity);
+      return unwrapPaged<TasksDto>(payload).items;
     },
     staleTime: 1000 * 60,
     retry: 1,

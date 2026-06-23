@@ -5,6 +5,7 @@ import {
   Plus, Pencil, Check, X, Loader2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getAxiosErrorMessage } from '../../../api/axios';
 import { CanvasViewer } from '../../../components/canvas/CanvasViewer';
 import { CanvasToolbar } from '../../../components/canvas/CanvasToolbar';
 import { MobileCanvasWarning } from '../../../components/canvas/MobileCanvasWarning';
@@ -26,13 +27,14 @@ const PAGE_STATUS_COLORS: Record<string, { bg: string; text: string; label: stri
   NeedsRevision: { bg: 'bg-warning/10', text: 'text-warning', label: 'Cần sửa' },
 };
 
-export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps) => {
+export const PageCanvasFeature = ({ chapterId = '1' }: PageCanvasFeatureProps) => {
   // ─── Refs ───
   const canvasRef = useRef<CanvasViewerHandle>(null);
 
   // ─── State ───
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [regionLabel, setRegionLabel] = useState('');
+  const [regionLabelError, setRegionLabelError] = useState(false);
   const [editingRegionId, setEditingRegionId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState('');
   const [showCreateTask, setShowCreateTask] = useState(false);
@@ -52,20 +54,31 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
   // ─── Handlers ───
   const handleRegionCreated = useCallback(
     (region: Omit<Region, 'id' | 'createdAt' | 'updatedAt'>) => {
+      // Client-side validation: tên vùng là bắt buộc
+      if (!regionLabel.trim()) {
+        toast.error('Vui lòng nhập tên vùng trước khi vẽ.');
+        setRegionLabelError(true);
+        return;
+      }
+
       createRegion.mutate(
-        { pageId, x: region.x, y: region.y, width: region.width, height: region.height, label: regionLabel || undefined },
+        { pageId, x: region.x, y: region.y, width: region.width, height: region.height, label: regionLabel.trim() },
         {
           onSuccess: (res) => {
             toast.success('Đã tạo region mới');
             setRegionLabel('');
+            setRegionLabelError(false);
             // Auto-switch back to select mode after drawing
             setActiveTool('select');
             
             // Auto-select the newly created region (but DO NOT open task modal automatically)
-            const newRegion = res.data?.data;
-            if (newRegion && newRegion.id) {
-              setSelectedRegion(newRegion.id);
+            const newRegion = res.data?.data as { id?: number | string } | undefined;
+            if (newRegion?.id != null) {
+              setSelectedRegion(String(newRegion.id));
             }
+          },
+          onError: (error) => {
+            toast.error(getAxiosErrorMessage(error, 'Không thể tạo region. Vui lòng thử lại.'));
           },
         },
       );
@@ -75,17 +88,28 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
 
   const handleUpdateLabel = useCallback(
     (regionId: string, newLabel: string) => {
+      // Include current coordinates so backend doesn't reject with "coordinatesJson required"
+      const currentRegion = regions.find((r: Region) => r.id === regionId);
       updateRegion.mutate(
-        { regionId, data: { label: newLabel } },
+        {
+          regionId,
+          data: {
+            label: newLabel,
+            ...(currentRegion ? { x: currentRegion.x, y: currentRegion.y, width: currentRegion.width, height: currentRegion.height } : {}),
+          },
+        },
         {
           onSuccess: () => {
             toast.success('Đã cập nhật tên vùng');
             setEditingRegionId(null);
           },
+          onError: (error) => {
+            toast.error(getAxiosErrorMessage(error, 'Không thể cập nhật tên vùng.'));
+          },
         }
       );
     },
-    [updateRegion]
+    [updateRegion, regions]
   );
 
   const handleDeleteRegion = useCallback(
@@ -94,6 +118,9 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
         onSuccess: () => {
           toast.success('Đã xoá region');
           setSelectedRegion(null);
+        },
+        onError: (error) => {
+          toast.error(getAxiosErrorMessage(error, 'Không thể xoá region.'));
         },
       });
     },
@@ -274,14 +301,26 @@ export const PageCanvasFeature = ({ chapterId = 'ch-1' }: PageCanvasFeatureProps
               {/* Region label input (when in region or freeform mode) */}
               {(activeTool === 'region' || activeTool === 'freeform') && (
                 <div className="mt-3">
-                  <label className="text-[10px] text-text-muted mb-1 block">Tên vùng (tùy chọn)</label>
+                  <label className="text-[10px] text-text-muted mb-1 block">
+                    Tên vùng <span className="text-danger">*</span>
+                  </label>
                   <input
                     type="text"
                     value={regionLabel}
-                    onChange={(e) => setRegionLabel(e.target.value)}
+                    onChange={(e) => {
+                      setRegionLabel(e.target.value);
+                      if (e.target.value.trim()) setRegionLabelError(false);
+                    }}
                     placeholder="VD: Nền bầu trời"
-                    className="w-full px-3 py-1.5 text-xs bg-bg-primary border border-border-custom rounded-lg text-text-primary placeholder:text-text-muted/50 focus:outline-none focus:border-brand/50"
+                    className={`w-full px-3 py-1.5 text-xs bg-bg-primary border rounded-lg text-text-primary placeholder:text-text-muted/50 focus:outline-none transition-colors ${
+                      regionLabelError
+                        ? 'border-danger focus:border-danger'
+                        : 'border-border-custom focus:border-brand/50'
+                    }`}
                   />
+                  {regionLabelError && (
+                    <p className="text-[10px] text-danger mt-1">Vui lòng nhập tên vùng</p>
+                  )}
                 </div>
               )}
             </div>
