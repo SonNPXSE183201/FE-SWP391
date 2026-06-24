@@ -19,6 +19,9 @@ import {
 } from 'lucide-react';
 import { CustomSelect } from '../../../components/common/CustomSelect';
 import type { SelectOption } from '../../../components/common/CustomSelect';
+import type { SeriesDto } from '../../../api/generated/types';
+import { parseSeriesGenres, getSeriesIdString } from '../../voting/voting.utils';
+import { usePendingProposals, useApproveProposal } from '../hooks/useApproval';
 
 // ─── Schedule Options ───
 const SCHEDULE_OPTIONS: SelectOption[] = [
@@ -27,25 +30,15 @@ const SCHEDULE_OPTIONS: SelectOption[] = [
   { value: 'monthly', label: 'Hàng tháng (Monthly)' },
 ];
 
-// ─── Mock Data ───
-interface PendingProposal {
-  id: string;
-  title: string;
-  mangakaName: string;
-  submittedAt: string;
-  requestedBudget: number;
-  genres: string[];
-  editorName: string;
-  editorNote: string;
-  synopsis: string;
-  coverUrl: string;
-  nameFileName: string;
-}
-
-import { usePendingProposals, useApproveProposal } from '../hooks/useApproval';
+const getDraftFileName = (series: SeriesDto): string => {
+  const url = series.resourceFolderUrl;
+  if (!url) return '—';
+  const segment = url.split('/').filter(Boolean).pop();
+  return segment || url;
+};
 
 export const BoardApprovalFeature = () => {
-  const [selectedProposal, setSelectedProposal] = useState<PendingProposal | null>(null);
+  const [selectedProposal, setSelectedProposal] = useState<SeriesDto | null>(null);
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [approvedBudget, setApprovedBudget] = useState('');
   const [publishSchedule, setPublishSchedule] = useState('');
@@ -67,9 +60,9 @@ export const BoardApprovalFeature = () => {
     setApprovedBudget(raw);
   };
 
-  const handleOpenApproveModal = (proposal: PendingProposal) => {
+  const handleOpenApproveModal = (proposal: SeriesDto) => {
     setSelectedProposal(proposal);
-    setApprovedBudget(String(proposal.requestedBudget));
+    setApprovedBudget(String(proposal.estimatedProductionBudget ?? 0));
     setPublishSchedule('');
     setShowApproveModal(true);
   };
@@ -86,7 +79,7 @@ export const BoardApprovalFeature = () => {
     if (!selectedProposal) return;
     
     approveProposal.mutate(
-      { seriesId: selectedProposal.id, payload: { approvedBudget: Number(approvedBudget), publishSchedule } },
+      { seriesId: getSeriesIdString(selectedProposal), payload: { approvedBudget: Number(approvedBudget), publishSchedule } },
       {
         onSuccess: () => {
           toast.success(`Đã phê duyệt "${selectedProposal.title}" thành công!`);
@@ -129,8 +122,8 @@ export const BoardApprovalFeature = () => {
               </div>
               <div className="flex gap-5">
                 <div className="w-28 h-[150px] rounded-xl overflow-hidden bg-bg-surface flex-shrink-0 border border-border-custom">
-                  {selectedProposal.coverUrl ? (
-                    <img src={selectedProposal.coverUrl} alt={selectedProposal.title} className="w-full h-full object-cover" />
+                  {selectedProposal.coverArtworkUrl ? (
+                    <img src={selectedProposal.coverArtworkUrl} alt={selectedProposal.title ?? ''} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-text-muted">
                       <ImagePlus size={28} />
@@ -146,7 +139,7 @@ export const BoardApprovalFeature = () => {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                      {selectedProposal.genres.slice(0, 3).map((g: string) => (
+                      {parseSeriesGenres(selectedProposal.genre).slice(0, 3).map((g: string) => (
                       <span key={g} className="px-2 py-0.5 rounded-md bg-brand/10 text-brand text-[10px] font-medium">{g}</span>
                     ))}
                   </div>
@@ -172,13 +165,13 @@ export const BoardApprovalFeature = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-bg-surface border border-border-custom rounded-xl p-4">
                   <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">Vốn yêu cầu</p>
-                  <p className="text-xl font-bold text-text-primary">{formatCurrency(selectedProposal.requestedBudget)}</p>
+                  <p className="text-xl font-bold text-text-primary">{formatCurrency(selectedProposal.estimatedProductionBudget ?? 0)}</p>
                 </div>
                 <div className="bg-bg-surface border border-border-custom rounded-xl p-4">
                   <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">Bản phác thảo</p>
                   <div className="flex items-center gap-2 mt-1.5">
                     <FileText size={16} className="text-brand" />
-                    <span className="text-sm text-text-primary truncate flex-1">{selectedProposal.nameFileName}</span>
+                    <span className="text-sm text-text-primary truncate flex-1">{getDraftFileName(selectedProposal)}</span>
                   </div>
                   <button
                     onClick={() => toast.success('Đang tải file...')}
@@ -207,7 +200,7 @@ export const BoardApprovalFeature = () => {
                   </div>
                   <span className="text-xs font-medium text-text-primary">{selectedProposal.editorName}</span>
                 </div>
-                <p className="text-sm text-text-secondary leading-relaxed">{selectedProposal.editorNote}</p>
+                <p className="text-sm text-text-secondary leading-relaxed">{selectedProposal.synopsis ?? 'Chưa có ghi chú từ Editor.'}</p>
               </div>
             </div>
 
@@ -261,8 +254,8 @@ export const BoardApprovalFeature = () => {
             <div className="flex items-start gap-4">
               {/* Cover thumbnail */}
               <div className="w-16 h-[85px] rounded-lg overflow-hidden bg-bg-surface flex-shrink-0 border border-border-custom">
-                {proposal.coverUrl ? (
-                  <img src={proposal.coverUrl} alt={proposal.title} className="w-full h-full object-cover" />
+                {proposal.coverArtworkUrl ? (
+                  <img src={proposal.coverArtworkUrl} alt={proposal.title ?? ''} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-text-muted">
                     <ImagePlus size={18} />
@@ -285,7 +278,9 @@ export const BoardApprovalFeature = () => {
                       <div className="flex items-center gap-1.5">
                         <Clock size={11} className="text-text-muted" />
                         <span className="text-xs text-text-secondary">
-                          {new Date(proposal.submittedAt).toLocaleDateString('vi-VN')}
+                          {proposal.createAt
+                            ? new Date(proposal.createAt).toLocaleDateString('vi-VN')
+                            : '—'}
                         </span>
                       </div>
                     </div>
@@ -297,7 +292,7 @@ export const BoardApprovalFeature = () => {
 
                 {/* Genres */}
                 <div className="flex flex-wrap gap-1.5 mt-2">
-                  {proposal.genres.map((g: string) => (
+                  {parseSeriesGenres(proposal.genre).map((g: string) => (
                     <span key={g} className="px-2 py-0.5 rounded-md bg-brand/10 text-brand text-[10px] font-medium">
                       {g}
                     </span>
@@ -310,7 +305,7 @@ export const BoardApprovalFeature = () => {
                     <div className="flex items-center gap-1.5">
                       <Banknote size={13} className="text-text-muted" />
                       <span className="text-sm font-semibold text-text-primary">
-                        {formatCurrency(proposal.requestedBudget)}
+                        {formatCurrency(proposal.estimatedProductionBudget ?? 0)}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -380,7 +375,7 @@ export const BoardApprovalFeature = () => {
                       Vốn Mangaka yêu cầu
                     </p>
                     <p className="text-lg font-bold text-text-primary mt-1">
-                      {formatCurrency(selectedProposal.requestedBudget)}
+                      {formatCurrency(selectedProposal.estimatedProductionBudget ?? 0)}
                     </p>
                   </div>
                   <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">

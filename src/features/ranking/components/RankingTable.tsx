@@ -1,6 +1,7 @@
 import { BarChart3 } from 'lucide-react';
 import { useRankingList } from '../hooks/useRanking';
 import { PageScaffold } from '../../../components/common/PageScaffold';
+import { getRankingRecordTitle } from '../ranking.utils';
 
 export const RankingTable = () => {
   const { data: list = [], isLoading } = useRankingList();
@@ -21,10 +22,10 @@ export const RankingTable = () => {
             </thead>
             <tbody>
               {list.map((r, i) => (
-                <tr key={r.id} className="border-t border-border-custom">
-                  <td className="py-3 w-10">{i + 1}</td>
-                  <td className="py-3">{r.title}</td>
-                  <td className="py-3 font-semibold">{r.votes}</td>
+                <tr key={r.id ?? r.seriesId ?? i} className="border-t border-border-custom">
+                  <td className="py-3 w-10">{r.rankPosition ?? i + 1}</td>
+                  <td className="py-3">{getRankingRecordTitle(r)}</td>
+                  <td className="py-3 font-semibold">{r.voteCount ?? 0}</td>
                 </tr>
               ))}
             </tbody>
