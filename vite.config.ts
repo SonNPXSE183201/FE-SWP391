@@ -27,6 +27,16 @@ export default defineConfig(({ mode }) => {
           ws: true,
           secure: false,
         },
+        // MinIO public bucket — same-origin cho canvas / ảnh bìa
+        '/manga-publishing': {
+          target: 'http://localhost:9000',
+          changeOrigin: true,
+        },
+        // Local fallback khi StorageSettings:Provider = Local
+        '/uploads': {
+          target: 'http://localhost:5010',
+          changeOrigin: true,
+        },
       },
     },
   }
