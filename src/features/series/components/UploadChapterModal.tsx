@@ -1,19 +1,38 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
-import { Upload, X, ImagePlus } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Upload, X, ImagePlus, BookOpen, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { seriesApi } from '../api/series.api';
+import { useMySeries } from '../hooks/useSeries';
+import { isApiSuccess, getAxiosErrorMessage } from '../../../api/axios';
+import type { ApiResponse, ChapterDto } from '../../../api/generated/types';
 
 interface UploadChapterModalProps {
   onClose: () => void;
+  /** Optional — pre-select a series (e.g. from SeriesDetail page) */
+  seriesId?: string;
 }
 
-export const UploadChapterModal = ({ onClose }: UploadChapterModalProps) => {
+export const UploadChapterModal = ({ onClose, seriesId: preselectedSeriesId }: UploadChapterModalProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
+
+  const [selectedSeriesId, setSelectedSeriesId] = useState(preselectedSeriesId ?? '');
   const [title, setTitle] = useState('');
   const [chapterNum, setChapterNum] = useState('');
   const [pages, setPages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  // Fetch series list for the selector dropdown
+  const { data: seriesList = [], isLoading: seriesLoading } = useMySeries({ pageSize: 100 });
+
+  // Only show series that are in production-eligible statuses
+  const eligibleSeries = seriesList.filter(
+    (s) => s.status === 'Draft' || s.status === 'PendingApproval' || s.status === 'Approved' || s.status === 'Published',
+  );
 
   const handleFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -28,27 +47,71 @@ export const UploadChapterModal = ({ onClose }: UploadChapterModalProps) => {
   };
 
   const removePage = (index: number) => {
+    // Revoke the object URL to free memory
+    URL.revokeObjectURL(previews[index]);
     setPages((prev) => prev.filter((_, i) => i !== index));
     setPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async () => {
-    if (!title.trim() || !chapterNum || pages.length === 0) {
-      toast.error('Vui lòng điền đầy đủ thông tin và upload ít nhất 1 trang');
+  const handleSubmit = useCallback(async () => {
+    if (!selectedSeriesId) {
+      toast.error('Vui lòng chọn Series');
       return;
     }
+    if (!title.trim()) {
+      toast.error('Vui lòng nhập tiêu đề Chapter');
+      return;
+    }
+    if (!chapterNum || parseInt(chapterNum) < 1) {
+      toast.error('Số Chapter phải lớn hơn 0');
+      return;
+    }
+    if (pages.length === 0) {
+      toast.error('Vui lòng upload ít nhất 1 trang bản thảo');
+      return;
+    }
+
     setUploading(true);
+    setUploadProgress(0);
+
     try {
-      // TODO: Replace with real API
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      toast.success(`Đã nộp Chapter ${chapterNum}: ${title} (${pages.length} trang)`);
-      onClose();
-    } catch {
-      toast.error('Upload thất bại. Vui lòng thử lại.');
+      // Build the request using the existing seriesApi.submitChapter
+      const res = await seriesApi.submitChapter(selectedSeriesId, {
+        chapterNumber: parseInt(chapterNum),
+        title: title.trim(),
+        pages,
+      });
+
+      const apiData = res.data as ApiResponse<ChapterDto>;
+
+      if (isApiSuccess(apiData)) {
+        toast.success(
+          `Đã nộp Chapter ${chapterNum}: ${title} (${pages.length} trang)`,
+          { icon: <CheckCircle2 size={18} className="text-success" />, duration: 4000 },
+        );
+
+        // Invalidate React Query caches so lists refresh automatically
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['chapters', 'all'] }),
+          queryClient.invalidateQueries({ queryKey: ['chapters', selectedSeriesId] }),
+          queryClient.invalidateQueries({ queryKey: ['series'] }),
+        ]);
+
+        onClose();
+      } else {
+        toast.error(apiData.message || 'Nộp chapter thất bại');
+      }
+    } catch (err) {
+      const msg = getAxiosErrorMessage(err, 'Upload thất bại. Vui lòng thử lại.');
+      toast.error(msg);
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
-  };
+  }, [selectedSeriesId, title, chapterNum, pages, queryClient, onClose]);
+
+  // Compute total file size for display
+  const totalSizeMB = (pages.reduce((acc, f) => acc + f.size, 0) / (1024 * 1024)).toFixed(1);
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -74,6 +137,39 @@ export const UploadChapterModal = ({ onClose }: UploadChapterModalProps) => {
         </div>
 
         <div className="p-6 space-y-5">
+          {/* Series selector — only show if no preselected seriesId */}
+          {!preselectedSeriesId && (
+            <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                Series <span className="text-danger">*</span>
+              </label>
+              <div className="relative">
+                <BookOpen size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+                <select
+                  value={selectedSeriesId}
+                  onChange={(e) => setSelectedSeriesId(e.target.value)}
+                  disabled={seriesLoading}
+                  className="w-full pl-9 pr-3 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">
+                    {seriesLoading ? 'Đang tải...' : '— Chọn Series —'}
+                  </option>
+                  {eligibleSeries.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {eligibleSeries.length === 0 && !seriesLoading && (
+                <p className="text-[11px] text-warning mt-1 flex items-center gap-1">
+                  <AlertCircle size={11} />
+                  Không có Series nào khả dụng. Hãy tạo Series trước.
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Chapter info */}
           <div className="grid grid-cols-3 gap-4">
             <div>
@@ -107,7 +203,7 @@ export const UploadChapterModal = ({ onClose }: UploadChapterModalProps) => {
           <div>
             <label className="block text-xs font-medium text-text-secondary mb-2">
               Trang bản thảo <span className="text-danger">*</span>
-              <span className="text-text-muted font-normal ml-1">({pages.length} trang đã chọn)</span>
+              <span className="text-text-muted font-normal ml-1">({pages.length} trang đã chọn{pages.length > 0 ? ` — ${totalSizeMB} MB` : ''})</span>
             </label>
             <div
               onClick={() => fileInputRef.current?.click()}
@@ -153,21 +249,38 @@ export const UploadChapterModal = ({ onClose }: UploadChapterModalProps) => {
               </div>
             </div>
           )}
+
+          {/* Upload progress bar */}
+          {uploading && uploadProgress > 0 && (
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-text-muted">Đang upload...</span>
+                <span className="text-brand font-medium">{Math.round(uploadProgress)}%</span>
+              </div>
+              <div className="h-1.5 bg-bg-surface rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-brand rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
         <div className="sticky bottom-0 bg-bg-secondary border-t border-border-custom px-6 py-4 flex items-center justify-end gap-3 rounded-b-2xl">
           <button
             onClick={onClose}
+            disabled={uploading}
             className="px-4 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
           >
             Hủy
           </button>
           <button
             onClick={handleSubmit}
-            disabled={uploading}
+            disabled={uploading || !selectedSeriesId}
             className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium border-none cursor-pointer transition-all ${
-              uploading
+              uploading || !selectedSeriesId
                 ? 'bg-brand/50 text-white/70 cursor-not-allowed'
                 : 'bg-brand hover:bg-brand-hover text-white shadow-brand hover:shadow-brand-hover'
             }`}

@@ -15,10 +15,10 @@ async function login(identifier, password) {
     body: JSON.stringify({ Identifier: identifier, Password: password }),
   });
   const data = await res.json();
-  if (!res.ok || !data?.Data?.Token) {
-    throw new Error(data?.Message || `Login failed: ${identifier}`);
+  if (!res.ok || !data?.data?.token) {
+    throw new Error(data?.message || `Login failed: ${identifier}`);
   }
-  return data.Data.Token;
+  return data.data.token;
 }
 
 async function request(token, method, path, body) {
@@ -47,8 +47,8 @@ async function main() {
 
     // ─── A: Extension approval (seed task 6 = Pending extension) ───
     const mangakaTasks = await request(mangakaToken, 'GET', '/tasks/mangaka-list');
-    const tasks = mangakaTasks.data?.Data ?? [];
-    const pendingExt = tasks.find((t) => t.ExtensionStatus === 'Pending');
+    const tasks = mangakaTasks.data?.data ?? [];
+    const pendingExt = tasks.find((t) => (t.ExtensionStatus === 'Pending' || t.extensionStatus === 'Pending'));
     results.push(
       ok(
         'A GET mangaka-list has extension fields',
@@ -74,13 +74,13 @@ async function main() {
       ok(
         'A POST /extension-approval route',
         extApproveRoute.status === 200 || extApproveRoute.status === 400,
-        `HTTP ${extApproveRoute.status} ${extApproveRoute.data?.Message ?? ''}`,
+        `HTTP ${extApproveRoute.status} ${extApproveRoute.data?.message ?? ''}`,
       ),
     );
 
     // ─── B: Review Chapter ───────────────────────────────────────
     const queue = await request(editorToken, 'GET', '/reviews/chapters');
-    const chapters = queue.data?.Data ?? [];
+    const chapters = queue.data?.data ?? [];
     results.push(
       ok('B GET /reviews/chapters', queue.status === 200, `HTTP ${queue.status}, queue=${chapters.length}`),
     );
@@ -120,7 +120,7 @@ async function main() {
       ok(
         'B POST /revision (chapter 2 Draft→Rejected)',
         revision.status === 200 || revision.status === 400,
-        `HTTP ${revision.status} ${revision.data?.Message ?? ''}`,
+        `HTTP ${revision.status} ${revision.data?.message ?? ''}`,
       ),
     );
 
@@ -140,9 +140,9 @@ async function main() {
     const disputeGet = await request(editorToken, 'GET', '/disputes');
     results.push(
       ok(
-        'C GET /disputes (BE chưa có → 404 expected)',
-        disputeGet.status === 404 || disputeGet.status === 200,
-        `HTTP ${disputeGet.status} — FE dùng FORCE_MOCK_READ fallback`,
+        'C GET /disputes',
+        disputeGet.status === 200,
+        `HTTP ${disputeGet.status}`,
       ),
     );
 

@@ -26,6 +26,7 @@ const MOCK_SERIES_REVIEW: SeriesReviewDto = {
   genre: 'Shōnen, Action, Historical',
   synopsis: 'Trong thời đại Edo đầy biến động, một samurai trẻ tên Kenji phải tìm lại thanh kiếm bị đánh cắp của gia tộc trước khi thế lực bóng tối thống trị thiên hạ.',
   coverArtworkUrl: '',
+  resourceFolderUrl: null,
   estimatedProductionBudget: 2500000,
   approvedProductionBudget: 0,
   status: 'Pending_Approval',
@@ -141,14 +142,12 @@ export const reviewApi = {
     return axiosInstance.post<ApiResponse<boolean>>(`/api/reviews/series/${seriesId}/submit-to-board`, body);
   },
 
-  /** POST require-revision — chưa có BE endpoint, giữ mock */
-   
+  /** POST /api/reviews/series/{id}/require-revision — Editor yêu cầu Mangaka chỉnh sửa */
   requireRevision: async (seriesId: string, reason: string) => {
-    // TODO: BE chưa có endpoint require-revision cho Series — giữ mock
-    // Khi BE ready: return axiosInstance.post(`/api/reviews/series/${seriesId}/require-revision`, { reason });
-    console.info('[review.api] requireRevision mock called for series:', seriesId, 'reason:', reason);
-    await mockDelay(600);
-    return mockResponse(true, 'Đã yêu cầu tác giả chỉnh sửa lại Bản thảo');
+    return axiosInstance.post<ApiResponse<unknown>>(
+      `/api/reviews/series/${seriesId}/require-revision`,
+      { comment: reason },
+    );
   },
 
   // ─── Chapter QC Review (F3.1, F3.2, F3.6) ──────────────────

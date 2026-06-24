@@ -4,6 +4,7 @@ import { useNotificationStore } from '../../../stores/notificationStore';
 import type { NotificationItem } from '../../../stores/notificationStore';
 import type { NotificationDto } from '../../../api/generated/types';
 import { isApiSuccess, getApiMessage } from '../../../api/apiResponse';
+import { toApiDateIso } from '../../../utils/parseApiDate';
 
 // ─── Mapper ──────────────────────────────────────────────────
 
@@ -14,7 +15,7 @@ const mapDtoToItem = (dto: NotificationDto): NotificationItem => ({
   isRead: dto.isRead ?? false,
   link: dto.link ?? undefined,
   type: (dto.type as NotificationItem['type']) ?? 'SystemAlert',
-  createdAt: dto.createAt ?? new Date().toISOString(),
+  createdAt: toApiDateIso(dto.createAt),
 });
 
 // ─── Query Keys ──────────────────────────────────────────────

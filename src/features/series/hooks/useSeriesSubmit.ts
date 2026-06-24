@@ -8,11 +8,17 @@ import type { SeriesStatus } from '../../../types/entities';
 
 interface UseSeriesSubmitOptions {
   seriesId?: string;
-  nameFile: File | null;
+  hasNameManuscript: boolean;
+  nameFileName?: string;
   onStatusChange: (status: SeriesStatus) => void;
 }
 
-export const useSeriesSubmit = ({ seriesId, nameFile, onStatusChange }: UseSeriesSubmitOptions) => {
+export const useSeriesSubmit = ({
+  seriesId,
+  hasNameManuscript,
+  nameFileName,
+  onStatusChange,
+}: UseSeriesSubmitOptions) => {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -22,15 +28,16 @@ export const useSeriesSubmit = ({ seriesId, nameFile, onStatusChange }: UseSerie
       return;
     }
 
-    if (!nameFile) {
+    if (!hasNameManuscript) {
       toast.error('Vui lòng upload bản phác thảo (Name) trước khi submit.');
       return;
     }
 
     setIsSubmitting(true);
     try {
+      const noteSuffix = nameFileName ? ` File: ${nameFileName}.` : '';
       const res = await seriesApi.submitReview(seriesId, {
-        submissionNotes: `Bản phác thảo (Name): ${nameFile.name}`,
+        submissionNotes: `Bản phác thảo (Name) đã được nộp.${noteSuffix}`,
       });
       const apiData = res.data as ApiResponse<null>;
 
@@ -49,7 +56,7 @@ export const useSeriesSubmit = ({ seriesId, nameFile, onStatusChange }: UseSerie
     } finally {
       setIsSubmitting(false);
     }
-  }, [seriesId, nameFile, onStatusChange, queryClient]);
+  }, [seriesId, hasNameManuscript, nameFileName, onStatusChange, queryClient]);
 
   return {
     isSubmitting,

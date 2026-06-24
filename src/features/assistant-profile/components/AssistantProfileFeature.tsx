@@ -2,27 +2,32 @@ import React, { useState, useEffect } from 'react';
 import { BriefcaseBusiness, Save, ExternalLink, Star, Award, TrendingUp, CheckCircle, Tag, Link as LinkIcon, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useAssistantProfile, useUpdateAssistantProfile } from '../hooks/useProfile';
+import { usePortfolioStats } from '../../portfolio/hooks/usePortfolio';
 
 export const AssistantProfileFeature = () => {
   const [portfolioUrl, setPortfolioUrl] = useState('');
   const [skills, setSkills] = useState<string[]>([]);
   const [newSkill, setNewSkill] = useState('');
 
-  const { data: profile, isLoading } = useAssistantProfile();
+  const { data: profile, isLoading: isProfileLoading } = useAssistantProfile();
+  const { data: portfolioStats, isLoading: isStatsLoading } = usePortfolioStats();
   const updateProfile = useUpdateAssistantProfile();
 
   useEffect(() => {
     if (profile) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPortfolioUrl(profile.portfolioUrl || '');
-      setSkills(profile.skills || []);
+      const parsedSkills = profile.skills ? profile.skills.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+       
+      setSkills(parsedSkills);
     }
   }, [profile]);
 
-  const stats = profile?.stats || {
-    rating: 0,
-    tasksCompleted: 0,
-    completionRate: 0,
-    totalIncome: 0,
+  const stats = {
+    rating: portfolioStats?.averageRating || 0,
+    tasksCompleted: portfolioStats?.totalCompletedTasks || 0,
+    completionRate: portfolioStats?.onTimeRate || 0, // Using onTimeRate as completionRate
+    totalIncome: portfolioStats?.totalEarnings || 0,
   };
 
   const handleSave = () => {
@@ -49,7 +54,7 @@ export const AssistantProfileFeature = () => {
     setSkills(skills.filter(s => s !== skillToRemove));
   };
 
-  if (isLoading) {
+  if (isProfileLoading || isStatsLoading) {
     return (
       <div className="flex justify-center items-center py-20">
         <Loader2 className="animate-spin text-brand" size={32} />

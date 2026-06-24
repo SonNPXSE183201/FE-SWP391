@@ -76,17 +76,18 @@ export const MangakaTasksFeature = () => {
   const filtered = useMemo(() => {
     const result = tasks.filter((t) => {
       const matchesSearch = !searchQuery ||
-        t.regionId.toString().includes(searchQuery.toLowerCase()) ||
-        t.mangakaId.toString().includes(searchQuery.toLowerCase()) ||
-        (t.assignedAssistantName || '').toLowerCase().includes(searchQuery.toLowerCase());
+        (t.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.regionId?.toString().includes(searchQuery.toLowerCase()) ||
+        t.mangakaId?.toString().includes(searchQuery.toLowerCase()) ||
+        (t.assistantName || '').toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = !statusFilter || t.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
 
     result.sort((a, b) => {
-      if (sortBy === 'deadline') return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
-      if (sortBy === 'amount') return b.amount - a.amount;
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (sortBy === 'deadline') return new Date(a.deadline || '').getTime() - new Date(b.deadline || '').getTime();
+      if (sortBy === 'amount') return (b.paymentAmount || 0) - (a.paymentAmount || 0);
+      return new Date(b.createAt || '').getTime() - new Date(a.createAt || '').getTime();
     });
 
     return result;
@@ -106,8 +107,8 @@ export const MangakaTasksFeature = () => {
     total: tasks.length,
     inProgress: tasks.filter((t) => t.status === 'In_Progress').length,
     pendingReview: tasks.filter((t) => t.status === 'Pending_Review').length,
-    totalLocked: tasks.filter((t) => ['Pending', 'In_Progress', 'Pending_Review', 'Revision'].includes(t.status))
-      .reduce((sum, t) => sum + t.amount, 0),
+    totalLocked: tasks.filter((t) => t.status && ['Pending', 'In_Progress', 'Pending_Review', 'Revision'].includes(t.status))
+      .reduce((sum, t) => sum + (t.paymentAmount || 0), 0),
   }), [tasks]);
 
   if (isLoading) {
@@ -204,9 +205,9 @@ export const MangakaTasksFeature = () => {
       {/* Task List */}
       <div className="space-y-3 mt-3">
         {pagination.paginatedData.map((task) => {
-          const statusCfg = TASK_STATUS_CONFIG[task.status] || { label: String(task.status), bg: 'bg-bg-surface', color: 'text-text-muted', icon: Eye };
+          const statusCfg = TASK_STATUS_CONFIG[task.status as keyof typeof TASK_STATUS_CONFIG] || { label: String(task.status), bg: 'bg-bg-surface', color: 'text-text-muted', icon: Eye };
           const StatusIcon = statusCfg.icon;
-          const dl = formatDeadline(task.deadline);
+          const dl = formatDeadline(task.deadline || '');
 
           return (
             <div key={task.id} className="group bg-bg-secondary border border-border-custom rounded-xl p-4 hover:border-brand/20 transition-all cursor-pointer">
@@ -219,19 +220,19 @@ export const MangakaTasksFeature = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-sm font-semibold text-text-primary group-hover:text-brand transition-colors">
-                      Task {task.id} - Region {task.regionId}
+                      {task.description || `Task ${task.id} - Region ${task.regionId}`}
                     </h3>
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusCfg.bg} ${statusCfg.color}`}>
                       {statusCfg.label}
                     </span>
-                    {task.extensionUsed && (
+                    {!!task.extensionRequestDays && (
                       <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-warning/10 text-warning text-[9px] font-medium">
                         Đã gia hạn
                       </span>
                     )}
                   </div>
                   <p className="text-xs text-text-muted mt-1">
-                    {[`Vùng ${task.regionId}`, `Trang ${task.pageId}`, task.mangakaId ? 'Mangaka ' + task.mangakaId : ''].filter(Boolean).join(' · ')}
+                    {[`Vùng ${task.regionId}`, `Trang ${task.pageNumber || '?'}`, task.mangakaId ? 'Mangaka ' + task.mangakaId : ''].filter(Boolean).join(' · ')}
                   </p>
 
                   {/* Bottom row */}
@@ -239,13 +240,13 @@ export const MangakaTasksFeature = () => {
                     {/* Assistant */}
                     <span className="inline-flex items-center gap-1 text-[11px] text-text-secondary">
                       <UserCheck size={12} />
-                      {task.assignedAssistantName || <span className="text-text-muted italic">Chờ Trợ lý nhận việc</span>}
+                      {task.assistantName || <span className="text-text-muted italic">Chờ Trợ lý nhận việc</span>}
                     </span>
 
                     {/* Amount */}
                     <span className="inline-flex items-center gap-1 text-[11px] font-medium text-text-primary">
                       <DollarSign size={12} className="text-text-muted" />
-                      {formatVND(task.amount)}
+                      {formatVND(task.paymentAmount || 0)}
                     </span>
 
                     {/* Deadline */}
@@ -268,14 +269,14 @@ export const MangakaTasksFeature = () => {
                         </div>
                         <div className="flex gap-1.5 flex-shrink-0">
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleApproveExtension(task.id, true); }}
+                            onClick={(e) => { e.stopPropagation(); handleApproveExtension(String(task.id), true); }}
                             disabled={extensionMutation.isPending}
                             className="px-2.5 py-1 rounded-lg bg-success/10 text-success text-[10px] font-medium hover:bg-success/20 transition-colors border-none cursor-pointer disabled:opacity-50"
                           >
                             Duyệt GH
                           </button>
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleApproveExtension(task.id, false); }}
+                            onClick={(e) => { e.stopPropagation(); handleApproveExtension(String(task.id), false); }}
                             disabled={extensionMutation.isPending}
                             className="px-2.5 py-1 rounded-lg bg-danger/10 text-danger text-[10px] font-medium hover:bg-danger/20 transition-colors border-none cursor-pointer disabled:opacity-50"
                           >
@@ -293,7 +294,7 @@ export const MangakaTasksFeature = () => {
                 {task.status === 'Pending_Review' && (
                   <div className="flex gap-1.5 flex-shrink-0">
                     <button 
-                      onClick={() => handleApprove(task.id)}
+                      onClick={() => handleApprove(String(task.id))}
                       disabled={approveMutation.isPending}
                       className="px-3 py-1.5 rounded-lg bg-success/10 text-success text-[11px] font-medium hover:bg-success/20 transition-colors border-none cursor-pointer disabled:opacity-50"
                     >
@@ -301,7 +302,7 @@ export const MangakaTasksFeature = () => {
                     </button>
                     <button 
                       onClick={() => {
-                        setRevisionTaskId(task.id);
+                        setRevisionTaskId(String(task.id));
                         setRevisionComment('');
                         setExtensionHours(24);
                       }}
