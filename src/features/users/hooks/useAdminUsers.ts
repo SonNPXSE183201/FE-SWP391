@@ -3,6 +3,12 @@ import { toast } from "react-hot-toast";
 import { adminApi } from "../../admin";
 import type { UpdateUserByAdminDto } from "../../../api/generated/types";
 
+const invalidateAdminUserRelatedQueries = (queryClient: ReturnType<typeof useQueryClient>) => {
+  queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+  queryClient.invalidateQueries({ queryKey: ["admin-editors"] });
+  queryClient.invalidateQueries({ queryKey: ["dashboard", "admin"] });
+};
+
 interface UseAdminUsersOptions {
   filterRole: string;
   filterStatus: string;
@@ -39,7 +45,7 @@ export const useApproveUser = () => {
     mutationFn: (userId: number) => adminApi.approveUser(userId),
     onSuccess: () => {
       toast.success("Đã duyệt tài khoản thành công");
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      invalidateAdminUserRelatedQueries(queryClient);
     },
     onError: () => toast.error("Có lỗi xảy ra khi duyệt tài khoản"),
   });
@@ -51,7 +57,7 @@ export const useRejectUser = () => {
     mutationFn: (userId: number) => adminApi.rejectUser(userId),
     onSuccess: () => {
       toast.success("Đã từ chối tài khoản");
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      invalidateAdminUserRelatedQueries(queryClient);
     },
     onError: () => toast.error("Có lỗi xảy ra khi từ chối tài khoản"),
   });
@@ -63,7 +69,7 @@ export const useLockUser = () => {
     mutationFn: (userId: number) => adminApi.lockUser(userId),
     onSuccess: () => {
       toast.success("Đã khóa tài khoản thành công");
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      invalidateAdminUserRelatedQueries(queryClient);
     },
     onError: () => toast.error("Có lỗi xảy ra khi khóa tài khoản"),
   });
@@ -75,7 +81,7 @@ export const useUnlockUser = () => {
     mutationFn: (userId: number) => adminApi.unlockUser(userId),
     onSuccess: () => {
       toast.success("Đã mở khóa tài khoản thành công");
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      invalidateAdminUserRelatedQueries(queryClient);
     },
     onError: () => toast.error("Có lỗi xảy ra khi mở khóa tài khoản"),
   });
@@ -90,7 +96,7 @@ export const useUpdateUser = () => {
       const responseData = res.data;
       if (responseData.success) {
         toast.success(responseData.message || "Cập nhật tài khoản thành công");
-        queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+        invalidateAdminUserRelatedQueries(queryClient);
       } else {
         toast.error(responseData.message || "Có lỗi xảy ra");
       }

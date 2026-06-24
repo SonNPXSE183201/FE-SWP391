@@ -1,8 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { canvasApi } from '../api/canvas.api';
-import type { Annotation, AnnotationType, Page, Region } from '../../../types/entities';
+import type { AnnotationDto, PageDto, RegionDto } from '../../../api/generated/types';
+import type { AnnotationType, Page, Region } from '../../../types/entities';
+import { mapPageDtoToEntity } from '../../series/hooks/useSeries';
+import {
+  mapAnnotationDtoToEntity,
+  mapRegionDtoToEntity,
+  resolvePageImageUrl,
+} from '../utils/canvas.utils';
 
-// ─── Query Keys ──────────────────────────────────────────────
 const KEYS = {
   pages: (chapterId: string) => ['canvas', 'pages', chapterId] as const,
   page: (pageId: string) => ['canvas', 'page', pageId] as const,
@@ -10,12 +16,29 @@ const KEYS = {
   annotations: (pageId: string) => ['canvas', 'annotations', pageId] as const,
 };
 
-// ─── Pages ───────────────────────────────────────────────────
+const mapPagesResponse = (res: { data?: { data?: unknown } }): Page[] => {
+  const raw = res.data?.data;
+  if (!Array.isArray(raw)) return [];
+  if (raw.length > 0 && typeof raw[0] === 'object' && raw[0] !== null && 'pageNumber' in raw[0]) {
+    return (raw as PageDto[]).map((dto) => {
+      const page = mapPageDtoToEntity(dto);
+      return {
+        ...page,
+        imageUrl: resolvePageImageUrl(page.imageUrl),
+        compositeImageUrl: page.compositeImageUrl
+          ? resolvePageImageUrl(page.compositeImageUrl)
+          : undefined,
+      };
+    });
+  }
+  return raw as Page[];
+};
+
 export const useCanvasPages = (chapterId: string) =>
   useQuery({
     queryKey: KEYS.pages(chapterId),
     queryFn: () => canvasApi.getPagesByChapterId(chapterId),
-    select: (res) => (res.data?.data ?? []) as Page[],
+    select: mapPagesResponse,
     enabled: !!chapterId,
   });
 
@@ -27,12 +50,15 @@ export const useCanvasPage = (pageId: string) =>
     enabled: !!pageId,
   });
 
-// ─── Regions ─────────────────────────────────────────────────
 export const useRegions = (pageId: string) =>
   useQuery({
     queryKey: KEYS.regions(pageId),
     queryFn: () => canvasApi.getRegionsByPageId(pageId),
-    select: (res) => (res.data?.data ?? []) as Region[],
+    select: (res) => {
+      const items = res.data?.data ?? [];
+      if (!Array.isArray(items)) return [];
+      return (items as RegionDto[]).map(mapRegionDtoToEntity);
+    },
     enabled: !!pageId,
   });
 
@@ -48,7 +74,7 @@ export const useCreateRegion = (pageId: string) => {
 export const useUpdateRegion = (pageId: string) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ regionId, data }: { regionId: string; data: Record<string, unknown> }) =>
+    mutationFn: ({ regionId, data }: { regionId: string; data: Partial<Region> }) =>
       canvasApi.updateRegion(regionId, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.regions(pageId) }),
   });
@@ -62,12 +88,15 @@ export const useDeleteRegion = (pageId: string) => {
   });
 };
 
-// ─── Annotations ─────────────────────────────────────────────
 export const useAnnotations = (pageId: string) =>
   useQuery({
     queryKey: KEYS.annotations(pageId),
     queryFn: () => canvasApi.getAnnotationsByPageId(pageId),
-    select: (res) => (res.data?.data ?? []) as Annotation[],
+    select: (res) => {
+      const items = res.data?.data ?? [];
+      if (!Array.isArray(items)) return [];
+      return (items as AnnotationDto[]).map(mapAnnotationDtoToEntity);
+    },
     enabled: !!pageId,
   });
 
@@ -88,10 +117,3 @@ export const useDeleteAnnotation = (pageId: string) => {
   });
 };
 
-export const useToggleAnnotationResolved = (pageId: string) => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (annotationId: string) => canvasApi.toggleAnnotationResolved(annotationId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.annotations(pageId) }),
-  });
-};

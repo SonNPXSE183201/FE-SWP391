@@ -17,12 +17,15 @@ import {
   SeriesInfoCard,
   NameUploader,
   SubmitChecklist,
+  AcceptFundPanel,
   useNameUpload,
   useSeriesSubmit,
+  useAcceptFund,
   useSeriesDetail,
   useChapters,
 } from '../index';
 import type { SeriesStatus } from '../../../types/entities';
+import type { SeriesNameUpdateSnapshot } from '../api/series.api';
 
 export const SeriesDetailFeature = () => {
   const { seriesId } = useParams<{ seriesId: string }>();
@@ -37,11 +40,30 @@ export const SeriesDetailFeature = () => {
   const [statusOverride, setStatusOverride] = useState<SeriesStatus | null>(null);
   const currentStatus = statusOverride ?? series?.status ?? 'Draft';
 
-  // Feature hooks
-  const nameUpload = useNameUpload();
+  const seriesSnapshot: SeriesNameUpdateSnapshot | undefined = series
+    ? {
+        title: series.title,
+        synopsis: series.synopsis,
+        genre: series.genre,
+        coverImageUrl: series.coverImageUrl,
+        estimatedProductionBudget: series.estimatedProductionBudget ?? 0,
+      }
+    : undefined;
+
+  // Feature hooks — F1.2 Name upload
+  const nameUpload = useNameUpload({
+    seriesId,
+    initialResourceFolderUrl: series?.resourceFolderUrl,
+    seriesSnapshot,
+  });
   const seriesSubmit = useSeriesSubmit({
     seriesId,
-    nameFile: nameUpload.nameFile,
+    hasNameManuscript: nameUpload.hasNameManuscript,
+    nameFileName: nameUpload.nameFileName,
+    onStatusChange: useCallback((status: SeriesStatus) => setStatusOverride(status), []),
+  });
+  const acceptFund = useAcceptFund({
+    seriesId,
     onStatusChange: useCallback((status: SeriesStatus) => setStatusOverride(status), []),
   });
 
@@ -77,13 +99,14 @@ export const SeriesDetailFeature = () => {
 
   const isDraft = series.status === 'Draft' && currentStatus === 'Draft';
   const isPendingReview = currentStatus === 'PendingApproval' || series.status === 'PendingApproval';
+  const isFundPending = currentStatus === 'Approved';
   const statusConfig = SERIES_STATUS_CONFIG[currentStatus];
 
   // Build checklist items for SubmitChecklist
   const checklistItems = [
     { label: 'Ảnh bìa', completed: !!series.coverImageUrl },
     { label: 'Tóm tắt nội dung', completed: !!series.synopsis },
-    { label: 'Bản phác thảo (Name)', completed: !!nameUpload.nameFile },
+    { label: 'Bản phác thảo (Name)', completed: nameUpload.hasNameManuscript },
   ];
 
   return (
@@ -141,8 +164,10 @@ export const SeriesDetailFeature = () => {
           {/* Upload Name — Draft only (Feature Component) */}
           {isDraft && (
             <NameUploader
-              nameFile={nameUpload.nameFile}
+              nameFileUrl={nameUpload.nameFileUrl}
               nameFileName={nameUpload.nameFileName}
+              isUploading={nameUpload.isUploading}
+              isRemoving={nameUpload.isRemoving}
               fileInputRef={nameUpload.fileInputRef}
               onFileChange={nameUpload.handleFileChange}
               onRemoveFile={nameUpload.removeFile}
@@ -155,13 +180,33 @@ export const SeriesDetailFeature = () => {
             <SubmitChecklist
               items={checklistItems}
               isSubmitting={seriesSubmit.isSubmitting}
-              canSubmit={!!nameUpload.nameFile}
+              canSubmit={nameUpload.hasNameManuscript && !nameUpload.isUploading && !nameUpload.isRemoving}
               onSubmit={seriesSubmit.submitForApproval}
             />
           )}
 
           {/* After Submit: Pending Message */}
           {isPendingReview && (
+            <div className="space-y-4">
+              {series.resourceFolderUrl && (
+                <div className="bg-bg-secondary border border-border-custom rounded-xl p-4 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <FileText size={18} className="text-brand flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-text-primary">Bản phác thảo (Name)</p>
+                      <p className="text-xs text-text-muted truncate">Đã nộp kèm hồ sơ xét duyệt</p>
+                    </div>
+                  </div>
+                  <a
+                    href={series.resourceFolderUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-medium text-brand hover:underline flex-shrink-0"
+                  >
+                    Xem PDF
+                  </a>
+                </div>
+              )}
             <div className="bg-warning/5 border border-warning/20 rounded-xl p-5 animate-fade-in">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center flex-shrink-0">
@@ -176,6 +221,16 @@ export const SeriesDetailFeature = () => {
                 </div>
               </div>
             </div>
+            </div>
+          )}
+
+          {/* F02 — Chấp nhận vốn sau Board duyệt (Fund_Pending) */}
+          {isFundPending && (
+            <AcceptFundPanel
+              approvedBudget={series.approvedProductionBudget ?? series.estimatedProductionBudget ?? 0}
+              isAccepting={acceptFund.isAccepting}
+              onAccept={acceptFund.acceptFund}
+            />
           )}
         </div>
       </div>

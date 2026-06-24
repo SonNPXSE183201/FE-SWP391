@@ -3,8 +3,10 @@ import { seriesApi } from '../api/series.api';
 import type { Series, Chapter, Page, SeriesStatus } from '../../../types/entities';
 import { components } from '../../../api/generated/schema';
 
-import type { ApiResponse, SeriesDto, PageDto, PagedResult } from '../../../api/generated/types';
+import type { ApiResponse, SeriesDto, PageDto, ChapterDto, PagedResult } from '../../../api/generated/types';
 import { getPagedItems, isApiSuccess } from '../../../api/apiResponse';
+import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
+import { parseApiDate } from '../../../utils/parseApiDate';
 
 // ─── Mapper ──────────────────────────────────────────────────
 const BE_STATUS_MAP: Record<string, SeriesStatus> = {
@@ -13,6 +15,8 @@ const BE_STATUS_MAP: Record<string, SeriesStatus> = {
   Pending_Board_Vote: 'PendingApproval',
   Fund_Pending: 'Approved',
   Active: 'Published',
+  'In Production': 'Published',
+  In_Production: 'Published',
   Rejected: 'Cancelled',
 };
 
@@ -32,7 +36,10 @@ export const mapSeriesDtoToEntity = (dto: components['schemas']['SeriesDto']): S
   title: dto.title || '',
   synopsis: dto.synopsis || '',
   genre: dto.genre ? dto.genre.split(',') : [],
-  coverImageUrl: dto.coverArtworkUrl || '',
+  coverImageUrl: resolveMediaUrl(dto.coverArtworkUrl || ''),
+  resourceFolderUrl: dto.resourceFolderUrl ?? undefined,
+  estimatedProductionBudget: dto.estimatedProductionBudget ?? 0,
+  approvedProductionBudget: dto.approvedProductionBudget ?? 0,
   mangakaId: dto.mangakaId?.toString() || '',
   mangakaName: dto.mangakaName || '',
   status: mapSeriesStatus(dto.status),
@@ -40,6 +47,41 @@ export const mapSeriesDtoToEntity = (dto: components['schemas']['SeriesDto']): S
   createdAt: dto.createAt || new Date().toISOString(),
   updatedAt: dto.updateAt || new Date().toISOString(),
 });
+
+const CHAPTER_STATUS_MAP: Record<string, Chapter['status']> = {
+  Draft: 'Draft',
+  Submitted: 'Submitted',
+  UnderReview: 'UnderReview',
+  Approved: 'Approved',
+  Revision: 'Revision',
+  Published: 'Published',
+};
+
+const mapChapterStatus = (status: unknown): Chapter['status'] => {
+  if (typeof status === 'string' && CHAPTER_STATUS_MAP[status]) return CHAPTER_STATUS_MAP[status];
+  return 'Draft';
+};
+
+export const mapChapterDtoToEntity = (dto: ChapterDto, seriesTitle = ''): Chapter => ({
+  id: dto.id?.toString() || '',
+  seriesId: dto.seriesId?.toString() || '',
+  seriesTitle,
+  chapterNumber: dto.chapterNumber ?? 0,
+  title: dto.title || '',
+  status: mapChapterStatus(dto.status),
+  pageCount: dto.validPageCount ?? 0,
+  validPageCount: dto.validPageCount ?? 0,
+  createdAt: dto.createAt || new Date().toISOString(),
+  updatedAt: dto.updateAt || dto.createAt || new Date().toISOString(),
+  submittedAt: dto.updateAt ?? undefined,
+});
+
+export const formatChapterDate = (chapter: Chapter): string => {
+  const raw = chapter.submittedAt || chapter.createdAt;
+  const parsed = parseApiDate(raw);
+  if (Number.isNaN(parsed.getTime())) return '—';
+  return parsed.toLocaleDateString('vi-VN');
+};
 
 export const mapPageStatus = (status: unknown): Page['status'] => {
   if (status === 0 || status === '0') return 'Pending';
@@ -112,8 +154,9 @@ export const useChapters = (seriesId?: string, params?: { page?: number; pageSiz
     queryKey: ['chapters', seriesId, params],
     queryFn: async () => {
       const res = await seriesApi.getChapters(seriesId as string, params);
-      const apiData = res.data as ApiResponse<Chapter[] | PagedResult<Chapter>>;
-      return getPagedItems(apiData.data) as Chapter[];
+      const apiData = res.data as ApiResponse<ChapterDto[] | PagedResult<ChapterDto>>;
+      const dtoList = getPagedItems(apiData.data);
+      return dtoList.map((dto) => mapChapterDtoToEntity(dto as ChapterDto));
     },
     enabled: !!seriesId,
     staleTime: 1000 * 60,
@@ -137,14 +180,13 @@ export const useAllChapters = () => {
       for (const series of seriesData) {
         if (!series.id) continue;
         const chapRes = await seriesApi.getChapters(series.id.toString(), { pageSize: 100 });
-        const chapResData = chapRes.data as ApiResponse<Chapter[] | PagedResult<Chapter>>;
-        const chapData = getPagedItems(chapResData.data) as Chapter[];
+        const chapResData = chapRes.data as ApiResponse<ChapterDto[] | PagedResult<ChapterDto>>;
+        const chapData = getPagedItems(chapResData.data);
 
-        for (const ch of chapData) {
-          allChapters.push({
-            ...ch,
-            seriesTitle: ch.seriesTitle || series.title || '',
-          });
+        for (const dto of chapData) {
+          allChapters.push(
+            mapChapterDtoToEntity(dto as ChapterDto, series.title || ''),
+          );
         }
       }
       return allChapters;
@@ -160,9 +202,9 @@ export const useChapterDetail = (chapterId?: string) => {
     queryKey: ['chapter', chapterId],
     queryFn: async () => {
       const res = await seriesApi.getChapterById(chapterId as string);
-      const apiData = res.data as ApiResponse<Chapter & { seriesTitle: string }>;
-      if (!isApiSuccess(apiData)) return null;
-      return apiData.data ?? null;
+      const apiData = res.data as ApiResponse<ChapterDto>;
+      if (!isApiSuccess(apiData) || !apiData.data) return null;
+      return mapChapterDtoToEntity(apiData.data);
     },
     enabled: !!chapterId,
     retry: 1,
