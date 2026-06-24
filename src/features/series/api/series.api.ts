@@ -5,6 +5,7 @@ import type {
   ChapterDto,
   PageDto,
   PagedApiResponse,
+  CreateSeriesDto,
 } from '../../../api/generated/types';
 import { MOCK_SERIES, MOCK_CHAPTERS } from '../data/mockData';
 import { getPagesByChapterId } from '../data/mockPages';
@@ -78,9 +79,60 @@ const readWithFallback = async <T>(
   }
 };
 
+const uploadFile = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await axiosInstance.post<ApiResponse<string>>('/api/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  const url = res.data.data;
+  if (!url) {
+    throw new Error('Upload file thất bại');
+  }
+  return url;
+};
+
+const buildSeriesUpdatePayload = (
+  snapshot: {
+    title: string;
+    synopsis: string;
+    genre: string[];
+    coverImageUrl: string;
+    estimatedProductionBudget: number;
+  },
+  resourceFolderUrl: string | null,
+): CreateSeriesDto => ({
+  title: snapshot.title,
+  synopsis: snapshot.synopsis,
+  genre: snapshot.genre.join(','),
+  coverArtworkUrl: snapshot.coverImageUrl,
+  estimatedProductionBudget: snapshot.estimatedProductionBudget,
+  resourceFolderUrl,
+});
+
 // ─── API Functions ───────────────────────────────────────────
 
 export const seriesApi = {
+  /** POST /api/upload — dùng chung cho ảnh bìa, Name PDF, … */
+  uploadSeriesFile: uploadFile,
+
+  /**
+   * F1.2 — Upload Name đã có URL → lưu vào Series.ResourceFolderUrl qua PUT.
+   */
+  saveNameManuscript: (
+    seriesId: string,
+    snapshot: {
+      title: string;
+      synopsis: string;
+      genre: string[];
+      coverImageUrl: string;
+      estimatedProductionBudget: number;
+    },
+    resourceFolderUrl: string | null,
+  ) => axiosInstance.put<ApiResponse<SeriesDto>>(
+    `/api/series/${seriesId}`,
+    buildSeriesUpdatePayload(snapshot, resourceFolderUrl),
+  ),
   // Series CRUD
   getAll: async (params?: { page?: number; pageSize?: number; status?: string }) => {
     if (USE_MOCK) {
@@ -143,30 +195,45 @@ export const seriesApi = {
       return createMockAxiosResponse(newSeries, 'Tạo Series thành công!');
     }
 
+    if (!data.coverImage) {
+      throw new Error('Ảnh bìa là bắt buộc');
+    }
+
+    const coverArtworkUrl = await uploadFile(data.coverImage);
+
     const payload = {
-      Title: data.title,
-      Synopsis: data.synopsis,
-      Genre: data.genre,
-      EstimatedProductionBudget: data.estimatedProductionBudget,
-      CoverArtworkUrl: 'https://placehold.co/400x600/1A1A24/E2E8F0?text=New+Series', // Mock URL since upload API is not ready
+      title: data.title,
+      synopsis: data.synopsis,
+      genre: data.genre,
+      estimatedProductionBudget: data.estimatedProductionBudget,
+      coverArtworkUrl,
     };
     return axiosInstance.post<ApiResponse<SeriesDto>>('/api/series', payload);
   },
 
-  update: (seriesId: string, data: UpdateSeriesRequest) => {
-    const formData = new FormData();
-    if (data.title) formData.append('title', data.title);
-    if (data.synopsis) formData.append('synopsis', data.synopsis);
-    if (data.genre) data.genre.forEach((g) => formData.append('genre', g));
-    if (data.coverImage) formData.append('coverImage', data.coverImage);
-    return axiosInstance.put<ApiResponse<SeriesDto>>(`/api/series/${seriesId}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+  update: async (seriesId: string, data: UpdateSeriesRequest) => {
+    let coverArtworkUrl: string | undefined;
+    if (data.coverImage) {
+      coverArtworkUrl = await uploadFile(data.coverImage);
+    }
+
+    const payload = {
+      ...(data.title !== undefined && { title: data.title }),
+      ...(data.synopsis !== undefined && { synopsis: data.synopsis }),
+      ...(data.genre !== undefined && { genre: data.genre.join(',') }),
+      ...(coverArtworkUrl !== undefined && { coverArtworkUrl }),
+    };
+
+    return axiosInstance.put<ApiResponse<SeriesDto>>(`/api/series/${seriesId}`, payload);
   },
 
   // Series review and absence
   submitReview: (seriesId: string, data: SubmitSeriesReviewRequest) =>
     axiosInstance.post<ApiResponse<null>>(`/api/series/${seriesId}/submit-review`, data),
+
+  /** F02 — Mangaka xác nhận nhận vốn sau khi Board duyệt (Fund_Pending → Active) */
+  acceptFund: (seriesId: string) =>
+    axiosInstance.post<ApiResponse<null>>(`/api/series/${seriesId}/accept-fund`),
 
   toggleOnLeave: (onLeave: boolean) =>
     axiosInstance.post<ApiResponse<null>>(`/api/series/absence?onLeave=${onLeave}`),
@@ -247,3 +314,5 @@ export const seriesApi = {
   requestRevision: (seriesId: string, chapterId: string, comment: string) =>
     axiosInstance.put<ApiResponse<ChapterDto>>(`/api/series/${seriesId}/chapters/${chapterId}/revision`, { comment }),
 };
+
+export type SeriesNameUpdateSnapshot = Parameters<typeof seriesApi.saveNameManuscript>[1];

@@ -57,7 +57,24 @@ export function unwrapApiData<T>(
 }
 
 export function getAxiosErrorMessage(error: unknown, fallback: string): string {
-  const err = error as { response?: { data?: { message?: string } } };
+  const err = error as {
+    response?: {
+      data?: {
+        message?: string;
+        errors?: Record<string, string[]>;
+      };
+    };
+  };
+
+  // Try to extract specific field-level validation errors first
+  const errors = err.response?.data?.errors;
+  if (errors && typeof errors === 'object') {
+    const messages = Object.values(errors).flat().filter(Boolean);
+    if (messages.length > 0) {
+      return messages.join('. ');
+    }
+  }
+
   return err.response?.data?.message || fallback;
 }
 

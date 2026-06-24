@@ -15,7 +15,6 @@ export {
   useAnnotations,
   useCreateAnnotation,
   useDeleteAnnotation,
-  useToggleAnnotationResolved,
 } from './hooks/useCanvasData';
 
 // API
@@ -28,5 +27,4 @@ export {
   MOCK_ANNOTATIONS,
   getRegionsByPageId,
   getAnnotationsByPageId,
-  getUnresolvedAnnotationCount,
 } from './data/mockData';
