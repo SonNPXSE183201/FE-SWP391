@@ -117,6 +117,9 @@ export interface Series extends BaseEntity {
   synopsis: string;
   genre: string[];
   coverImageUrl: string;
+  resourceFolderUrl?: string;
+  estimatedProductionBudget?: number;
+  approvedProductionBudget?: number;
   mangakaId: string;
   mangakaName: string;
   status: SeriesStatus;
@@ -179,6 +182,7 @@ export interface Task extends BaseEntity {
   mangakaId: string;
   assignedAssistantId?: string;
   assignedAssistantName?: string;
+  description?: string;            // Task name / description
   status: TaskStatus;
   amount: number;               // Lock amount (VND)
   deadline: string;

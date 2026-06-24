@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '../stores/authStore';
 import { useNotificationStore } from '../stores/notificationStore';
 import type { NotificationItem } from '../stores/notificationStore';
+import { toApiDateIso } from '../utils/parseApiDate';
 
 // Emoji icon per notification type for realtime toasts.
 const TYPE_ICON: Record<NotificationItem['type'], string> = {
@@ -57,7 +58,7 @@ const mapSignalRPayload = (payload: any): NotificationItem => ({
   isRead: false,
   link: payload.Link || payload.link,
   type: normalizeNotificationType(payload.Type || payload.type || 'SystemAlert'),
-  createdAt: payload.CreateAt || payload.createdAt || new Date().toISOString(),
+  createdAt: toApiDateIso(payload.CreateAt || payload.createAt),
 });
 
 const normalizeNotificationType = (type: string): NotificationItem['type'] => {
@@ -92,6 +93,16 @@ const WALLET_NOTIFICATION_TYPES_SKIP_TOAST = new Set([
   'Wallet_Withdrawal_Approve',
   'Wallet_Withdrawal_Reject',
 ]);
+
+/** Hành động user vừa thực hiện — UI đã có toast inline, tránh hiện 2 lần qua SignalR. */
+const SELF_ACTION_NOTIFICATION_TYPES_SKIP_TOAST = new Set([
+  'Series_Submitted',
+  'Wallet_Fund_Accepted',
+]);
+
+const shouldShowNotificationToast = (rawType: string) =>
+  !WALLET_NOTIFICATION_TYPES_SKIP_TOAST.has(rawType)
+  && !SELF_ACTION_NOTIFICATION_TYPES_SKIP_TOAST.has(rawType);
 
 const refreshEditorReviewQueries = (queryClient: QueryClient) => {
   queryClient.invalidateQueries({ queryKey: ['review'] });
@@ -136,7 +147,7 @@ export const useSignalR = () => {
       const rawType = payload.Type || payload.type || 'SystemAlert';
       const item = mapSignalRPayload(payload);
       addNotification(item);
-      if (!WALLET_NOTIFICATION_TYPES_SKIP_TOAST.has(rawType)) {
+      if (shouldShowNotificationToast(rawType)) {
         notifyToast(item);
       }
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -149,6 +160,8 @@ export const useSignalR = () => {
 
       if (shouldRefreshAdminUsers(item.type, item.link)) {
         queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-editors'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard', 'admin'] });
       }
       if (shouldRefreshEditorReview(item.type, item.link)) {
         refreshEditorReviewQueries(queryClient);
@@ -172,26 +185,17 @@ export const useSignalR = () => {
 
       if (shouldRefreshAdminUsers(item.type)) {
         queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-editors'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard', 'admin'] });
       }
       if (shouldRefreshEditorReview(type)) {
         refreshEditorReviewQueries(queryClient);
       }
     });
 
-    // TaskStatusChanged: task status update → notify + refresh task data (F1.6)
+    // TaskStatusChanged: task status update → refresh task data (F1.6)
     connection.on('TaskStatusChanged', (payload: any) => {
-      console.log('[SignalR] TaskStatusChanged received:', payload);
-      const item: NotificationItem = {
-        id: crypto.randomUUID(),
-        title: 'Cập nhật Task',
-        message: payload.message || `Task "${payload.taskName || ''}" đã chuyển sang ${payload.newStatus || 'trạng thái mới'}`,
-        isRead: false,
-        link: payload.Link || payload.link || '/mangaka/tasks',
-        type: 'TaskUpdate',
-        createdAt: new Date().toISOString(),
-      };
-      addNotification(item);
-      notifyToast(item);
+      console.log('[SignalR] TaskStatusChanged received (refreshing queries):', payload);
       // Refresh any task list/detail so the new status shows immediately.
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     });

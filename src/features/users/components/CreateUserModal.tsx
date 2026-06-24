@@ -31,6 +31,8 @@ export const CreateUserModal = ({ onClose }: CreateUserModalProps) => {
       if (responseData.success) {
         toast.success(responseData.message || 'Tạo người dùng thành công');
         queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-editors'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard', 'admin'] });
         onClose();
       } else {
         toast.error(responseData.message || 'Có lỗi xảy ra');

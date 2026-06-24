@@ -153,8 +153,11 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
     onSuccess: () => {
       setSuccess(true);
       toast.success(`Đã đăng Task "${formData.taskName}" lên Bảng việc làm & Lock ${formatVND(amountNum)}`, { duration: 4000 });
-      queryClient.invalidateQueries({ queryKey: ['tasks', 'mangaka'] });
+      // Invalidate all task-related queries so every page sees the new task
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      // Invalidate canvas regions so the "Đã gán task" badge updates
+      queryClient.invalidateQueries({ queryKey: ['canvas', 'regions'] });
       setTimeout(() => { onTaskCreated?.(); onClose(); }, 800);
     },
     onError: (err: Error) => {

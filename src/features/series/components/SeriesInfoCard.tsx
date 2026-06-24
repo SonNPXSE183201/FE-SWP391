@@ -52,7 +52,17 @@ export const SeriesInfoCard = ({ series }: SeriesInfoCardProps) => {
             </div>
             <div>
               <p className="text-[10px] text-text-muted">Vốn sản xuất</p>
-              <p className="text-sm font-semibold text-text-primary">Chờ Board duyệt</p>
+              <p className="text-sm font-semibold text-text-primary">
+                {series.status === 'Approved' && (series.approvedProductionBudget ?? 0) > 0
+                  ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
+                      series.approvedProductionBudget ?? 0,
+                    )
+                  : series.status === 'Published'
+                    ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
+                        series.approvedProductionBudget ?? series.estimatedProductionBudget ?? 0,
+                      )
+                    : 'Chờ Board duyệt'}
+              </p>
             </div>
           </div>
           <div className="bg-bg-surface border border-border-custom rounded-xl px-4 py-3 flex items-center gap-3">
