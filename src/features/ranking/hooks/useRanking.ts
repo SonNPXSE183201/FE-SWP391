@@ -13,7 +13,11 @@ export const useSubmitRankingVote = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ seriesId, action, comment }: { seriesId: string; action: 'maintain' | 'cancel'; comment?: string }) =>
-      rankingApi.submitRankingVote(seriesId, action, comment),
+      rankingApi.submitRankingVote({
+        seriesId: Number(seriesId) || undefined,
+        voteType: action === 'cancel' ? 'Cancel' : 'Maintain',
+        comment,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ranking', 'list'] });
     },
