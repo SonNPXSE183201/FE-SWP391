@@ -238,7 +238,12 @@ export const useSignalR = () => {
         console.log('[SignalR] Đã kết nối thành công với Hub!');
       })
       .catch((err) => {
-        console.error('[SignalR] Lỗi kết nối:', err);
+        const msg = err.message || '';
+        if (err.name === 'AbortError' || msg.includes('stopped during negotiation') || msg.includes('stop() was called')) {
+          console.log('[SignalR] Kết nối bị hủy sớm (thường do React Strict Mode unmount).');
+        } else {
+          console.error('[SignalR] Lỗi kết nối:', err);
+        }
       });
 
     // ─── Cleanup ──────────────────────────────────────────────
