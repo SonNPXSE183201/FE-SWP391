@@ -11,10 +11,10 @@ async function login(identifier, password) {
     body: JSON.stringify({ Identifier: identifier, Password: password }),
   });
   const data = await res.json();
-  if (!res.ok || !data?.Data?.Token) {
-    throw new Error(data?.Message || `Login failed for ${identifier}`);
+  if (!res.ok || !(data?.Data?.Token || data?.data?.token)) {
+    throw new Error(data?.Message || data?.message || `Login failed for ${identifier}`);
   }
-  return data.Data.Token;
+  return data?.Data?.Token || data?.data?.token;
 }
 
 async function authedGet(token, path) {
@@ -55,7 +55,7 @@ async function main() {
     // 5. Mangaka Wallet
     const mangakaToken = await login('mangaka1', '12345');
     const wallet = await authedGet(mangakaToken, '/wallets/me');
-    const walletOk = wallet.status === 200 && wallet.data?.Data;
+    const walletOk = wallet.status === 200 && (wallet.data?.Data || wallet.data?.data);
     results.push(result('Wallet API', !!walletOk, `HTTP ${wallet.status}`));
 
     // 6. Flow 0 - pending assistants endpoint

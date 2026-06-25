@@ -52,7 +52,6 @@ import {
   RankingPage,
   PublishSchedulePage,
   BoardSettingsPage,
-  BoardApprovalPage,
 } from './pages/board';
 
 // ─── Admin Pages ───
@@ -196,7 +195,6 @@ function App() {
         <Route element={<RoleGuard allowedRoles={['Board']} />}>
           <Route element={<MainLayout />}>
             <Route path="/board" element={<BoardDashboardPage />} />
-            <Route path="/board/approvals" element={<BoardApprovalPage />} />
             <Route path="/board/voting" element={<VotingPage />} />
             <Route path="/board/ranking" element={<RankingPage />} />
             <Route path="/board/schedule" element={<PublishSchedulePage />} />
