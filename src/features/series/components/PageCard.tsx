@@ -9,7 +9,12 @@ interface PageCardProps {
 }
 
 export const PageCard = ({ page, onClick }: PageCardProps) => {
-  const statusCfg = PAGE_STATUS_CONFIG[page.status];
+  const statusCfg = PAGE_STATUS_CONFIG[page.status] || { 
+    bg: 'bg-gray-100', 
+    color: 'text-gray-500', 
+    dotColor: 'bg-gray-400', 
+    label: page.status || 'Unknown' 
+  };
 
   return (
     <div
