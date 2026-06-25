@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { ChevronDown, Check } from 'lucide-react';
+import { ChevronDown, Check, Search } from 'lucide-react';
 
 // ─── Types ───────────────────────────────────────────────────
 export interface SelectOption {
@@ -20,6 +20,7 @@ interface CustomSelectProps {
   className?: string;
   menuAlign?: 'left' | 'right';
   size?: 'sm' | 'md';
+  searchable?: boolean;
 }
 
 // ─── Component ───────────────────────────────────────────────
@@ -34,19 +35,27 @@ export const CustomSelect = ({
   className = '',
   menuAlign = 'left',
   size = 'md',
+  searchable = false,
 }: CustomSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState(-1);
+  const [searchTerm, setSearchTerm] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const selected = options.find((o) => o.value === value);
+
+  const filteredOptions = searchable 
+    ? options.filter(opt => opt.label.toLowerCase().includes(searchTerm.toLowerCase()))
+    : options;
 
   // Close on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsOpen(false);
+        setSearchTerm('');
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -61,34 +70,48 @@ export const CustomSelect = ({
     }
   }, [highlightIndex, isOpen]);
 
+  const handleSelect = useCallback((optValue: string) => {
+    onChange(optValue);
+    setIsOpen(false);
+    setSearchTerm('');
+  }, [onChange]);
+
   // Keyboard navigation
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (disabled) return;
 
-    const enabledOptions = options.filter((o) => !o.disabled);
+    const enabledOptions = filteredOptions.filter((o) => !o.disabled);
 
     switch (e.key) {
       case 'Enter':
-      case ' ':
         e.preventDefault();
         if (!isOpen) {
           setIsOpen(true);
-          setHighlightIndex(options.findIndex((o) => o.value === value));
-        } else if (highlightIndex >= 0 && !options[highlightIndex]?.disabled) {
-          onChange(options[highlightIndex].value);
-          setIsOpen(false);
+          setHighlightIndex(filteredOptions.findIndex((o) => o.value === value));
+        } else if (highlightIndex >= 0 && !filteredOptions[highlightIndex]?.disabled) {
+          handleSelect(filteredOptions[highlightIndex].value);
+        }
+        break;
+      case ' ':
+        if (!isOpen) {
+          e.preventDefault();
+          setIsOpen(true);
+          setHighlightIndex(filteredOptions.findIndex((o) => o.value === value));
+        } else if (!searchable && highlightIndex >= 0 && !filteredOptions[highlightIndex]?.disabled) {
+          e.preventDefault();
+          handleSelect(filteredOptions[highlightIndex].value);
         }
         break;
       case 'ArrowDown':
         e.preventDefault();
         if (!isOpen) {
           setIsOpen(true);
-          setHighlightIndex(options.findIndex((o) => o.value === value));
+          setHighlightIndex(filteredOptions.findIndex((o) => o.value === value));
         } else {
           setHighlightIndex((prev) => {
             let next = prev + 1;
-            while (next < options.length && options[next].disabled) next++;
-            return next < options.length ? next : prev;
+            while (next < filteredOptions.length && filteredOptions[next].disabled) next++;
+            return next < filteredOptions.length ? next : prev;
           });
         }
         break;
@@ -96,32 +119,35 @@ export const CustomSelect = ({
         e.preventDefault();
         setHighlightIndex((prev) => {
           let next = prev - 1;
-          while (next >= 0 && options[next].disabled) next--;
+          while (next >= 0 && filteredOptions[next].disabled) next--;
           return next >= 0 ? next : prev;
         });
         break;
       case 'Escape':
         setIsOpen(false);
+        setSearchTerm('');
         break;
       default:
         // Type-ahead: jump to first option starting with pressed key
-        if (e.key.length === 1) {
+        if (!searchable && e.key.length === 1) {
           const idx = enabledOptions.findIndex((o) =>
             o.label.toLowerCase().startsWith(e.key.toLowerCase()),
           );
           if (idx >= 0) {
-            const realIdx = options.indexOf(enabledOptions[idx]);
+            const realIdx = filteredOptions.indexOf(enabledOptions[idx]);
             setHighlightIndex(realIdx);
             if (!isOpen) setIsOpen(true);
           }
         }
     }
-  }, [disabled, isOpen, highlightIndex, options, value, onChange]);
+  }, [disabled, isOpen, highlightIndex, filteredOptions, value, searchable, handleSelect]);
 
-  const handleSelect = (optValue: string) => {
-    onChange(optValue);
-    setIsOpen(false);
-  };
+  useEffect(() => {
+    if (isOpen && searchable && searchInputRef.current) {
+      // Small timeout to ensure menu is rendered before focus
+      setTimeout(() => searchInputRef.current?.focus(), 50);
+    }
+  }, [isOpen, searchable]);
 
   const sizeClasses = size === 'sm'
     ? 'px-2.5 py-2 text-xs'
@@ -166,26 +192,52 @@ export const CustomSelect = ({
           className={`
             absolute z-50 mt-1.5 w-full min-w-[180px]
             bg-bg-secondary border border-border-custom rounded-xl
-            shadow-lg-custom overflow-hidden
+            shadow-lg-custom overflow-hidden flex flex-col
             animate-dropdown-enter
             ${menuAlign === 'right' ? 'right-0' : 'left-0'}
           `}
-          style={{ maxHeight: '240px', overflowY: 'auto' }}
+          style={{ maxHeight: '260px' }}
         >
-          <div className="py-1">
-            {options.map((opt, idx) => {
-              const isSelected = opt.value === value;
-              const isHighlighted = idx === highlightIndex;
+          {searchable && (
+            <div className="p-2 border-b border-border-custom sticky top-0 bg-bg-secondary z-10">
+              <div className="relative">
+                <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Tìm kiếm ngân hàng..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={(e) => {
+                    // Let ArrowUp/Down and Enter bubble up to parent's onKeyDown
+                    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Enter') {
+                      e.stopPropagation();
+                    }
+                  }}
+                  className="w-full pl-8 pr-3 py-1.5 bg-bg-surface border border-border-custom rounded-lg text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 transition-all"
+                />
+              </div>
+            </div>
+          )}
+          <div className="py-1 overflow-y-auto flex-1">
+            {filteredOptions.length === 0 ? (
+              <div className="px-3 py-3 text-center text-xs text-text-muted">
+                Không tìm thấy kết quả
+              </div>
+            ) : (
+              filteredOptions.map((opt, idx) => {
+                const isSelected = opt.value === value;
+                const isHighlighted = idx === highlightIndex;
 
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  data-option
-                  onClick={() => !opt.disabled && handleSelect(opt.value)}
-                  onMouseEnter={() => setHighlightIndex(idx)}
-                  disabled={opt.disabled}
-                  className={`
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    data-option
+                    onClick={() => !opt.disabled && handleSelect(opt.value)}
+                    onMouseEnter={() => setHighlightIndex(idx)}
+                    disabled={opt.disabled}
+                    className={`
                     w-full px-3 py-2 text-left flex items-center gap-2 text-sm
                     transition-colors duration-100 border-none cursor-pointer outline-none
                     ${opt.disabled
@@ -204,7 +256,8 @@ export const CustomSelect = ({
                   )}
                 </button>
               );
-            })}
+            })
+          )}
           </div>
         </div>
       )}
