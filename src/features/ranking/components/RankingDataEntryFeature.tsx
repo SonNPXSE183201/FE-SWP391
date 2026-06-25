@@ -2,7 +2,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Plus, Trash2, Upload, Loader2, Database } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { rankingApi } from '../api/rankingApi';
+import { rankingApi } from '../api/ranking.api';
 import type { components } from '../../../api/generated/schema';
 
 type RankingInputRow = {

@@ -307,9 +307,6 @@ export const seriesApi = {
     });
   },
 
-  // Editor approve/reject chapter (F3.6)
-  approveChapter: (seriesId: string, chapterId: string) =>
-    axiosInstance.put<ApiResponse<ChapterDto>>(`/api/series/${seriesId}/chapters/${chapterId}/approve`),
 
   requestRevision: (seriesId: string, chapterId: string, comment: string) =>
     axiosInstance.put<ApiResponse<ChapterDto>>(`/api/series/${seriesId}/chapters/${chapterId}/revision`, { comment }),

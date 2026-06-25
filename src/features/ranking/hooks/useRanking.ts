@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { rankingApi } from '../api/rankingApi';
+import { rankingApi } from '../api/ranking.api';
 
 export const useRankingList = (params?: { period?: string; genre?: string }) => {
   return useQuery({
