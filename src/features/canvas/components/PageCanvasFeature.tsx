@@ -65,7 +65,7 @@ export const PageCanvasFeature = ({ chapterId = '1' }: PageCanvasFeatureProps) =
         { pageId, x: region.x, y: region.y, width: region.width, height: region.height, label: regionLabel.trim() },
         {
           onSuccess: (res) => {
-            toast.success('Đã tạo region mới');
+            toast.success('✨ Vùng chọn đã được tạo thành công!');
             setRegionLabel('');
             setRegionLabelError(false);
             // Auto-switch back to select mode after drawing
@@ -100,7 +100,7 @@ export const PageCanvasFeature = ({ chapterId = '1' }: PageCanvasFeatureProps) =
         },
         {
           onSuccess: () => {
-            toast.success('Đã cập nhật tên vùng');
+            toast.success('📝 Cập nhật tên vùng thành công!');
             setEditingRegionId(null);
           },
           onError: (error) => {
@@ -116,7 +116,7 @@ export const PageCanvasFeature = ({ chapterId = '1' }: PageCanvasFeatureProps) =
     (regionId: string) => {
       deleteRegion.mutate(regionId, {
         onSuccess: () => {
-          toast.success('Đã xoá region');
+          toast.success('🗑️ Đã xoá vùng chọn!');
           setSelectedRegion(null);
         },
         onError: (error) => {
@@ -192,8 +192,44 @@ export const PageCanvasFeature = ({ chapterId = '1' }: PageCanvasFeatureProps) =
 
   if (pagesLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 size={32} className="animate-spin text-brand" />
+      <div className="hidden md:flex flex-col gap-3 h-[calc(100vh-120px)] animate-pulse mt-4">
+        {/* Skeleton Top Bar */}
+        <div className="flex items-center justify-between flex-shrink-0 bg-bg-secondary border border-border-custom rounded-xl px-4 py-2.5">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-gray-200 dark:bg-gray-700/50"></div>
+            <div className="space-y-2">
+              <div className="w-32 h-4 rounded bg-gray-200 dark:bg-gray-700/50"></div>
+              <div className="w-24 h-3 rounded bg-gray-200 dark:bg-gray-700/50"></div>
+            </div>
+          </div>
+          <div className="w-72 h-8 rounded-lg bg-gray-200 dark:bg-gray-700/50"></div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-700/50"></div>
+            <div className="w-12 h-4 rounded bg-gray-200 dark:bg-gray-700/50"></div>
+            <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-700/50"></div>
+          </div>
+        </div>
+        {/* Skeleton Main Area */}
+        <div className="flex gap-4 flex-1 min-h-0">
+          <div className="flex-1 bg-bg-secondary border border-border-custom rounded-xl flex flex-col items-center justify-center">
+            <Loader2 size={40} className="animate-spin text-brand opacity-60 mb-4" />
+            <span className="text-sm font-medium text-text-muted">Đang tải cấu trúc Canvas & dữ liệu trang...</span>
+          </div>
+          <div className="w-72 flex-shrink-0 bg-bg-secondary border border-border-custom rounded-xl p-4 space-y-4">
+            <div className="w-32 h-5 rounded bg-gray-200 dark:bg-gray-700/50"></div>
+            <div className="space-y-3 mt-6">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="w-full h-16 rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-100 dark:bg-gray-800/30 p-3 flex gap-3">
+                   <div className="w-5 h-5 rounded bg-gray-200 dark:bg-gray-700/50"></div>
+                   <div className="flex-1 space-y-2 mt-1">
+                      <div className="w-3/4 h-3 rounded bg-gray-200 dark:bg-gray-700/50"></div>
+                      <div className="w-1/2 h-2 rounded bg-gray-200 dark:bg-gray-700/50"></div>
+                   </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -440,7 +476,7 @@ export const PageCanvasFeature = ({ chapterId = '1' }: PageCanvasFeatureProps) =
           onClose={() => setShowCreateTask(false)}
           onTaskCreated={() => {
             setShowCreateTask(false);
-            toast.success('Task đã được tạo từ Region!');
+            toast.success('🎯 Task đã được tạo thành công từ Vùng chọn!');
           }}
           initialContext={
             chapterDetail && currentPage
