@@ -182,6 +182,7 @@ async function main() {
 
   const reportPath = new URL('../test-reports/week-abc-check.txt', import.meta.url);
   const fs = await import('fs');
+  fs.mkdirSync(new URL('./', reportPath), { recursive: true });
   const lines = results.map((r) => `${r.pass ? 'PASS' : 'FAIL'} | ${r.name} — ${r.detail}`);
   fs.writeFileSync(
     reportPath,
