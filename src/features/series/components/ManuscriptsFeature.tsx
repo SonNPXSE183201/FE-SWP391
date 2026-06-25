@@ -110,14 +110,6 @@ export const ManuscriptsFeature = () => {
             <p className="text-xs text-text-muted mt-0.5">Upload và theo dõi chapters theo từng series</p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => openUploadModal()}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition-all duration-200 border-none cursor-pointer shadow-brand hover:shadow-brand-hover hover:-translate-y-0.5"
-        >
-          <Upload size={16} />
-          Nộp bản thảo mới
-        </button>
       </div>
 
       {/* Status filter */}
