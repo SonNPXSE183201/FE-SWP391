@@ -13,8 +13,16 @@ export {
   createMockApiResponse,
 } from './apiResponse';
 
+const resolveApiBaseUrl = (): string => {
+  const configured = import.meta.env.VITE_API_URL
+  if (configured) return configured
+  // Dev: same-origin requests → Vite proxy → Gateway (avoids CORS)
+  if (import.meta.env.DEV) return ''
+  return 'http://localhost:5000'
+}
+
 export const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
+  baseURL: resolveApiBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },

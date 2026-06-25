@@ -21,10 +21,22 @@ import {
   ImagePlus,
   BarChart3,
 } from 'lucide-react';
+import { useAuthStore } from '../../../stores/authStore';
 import { useVotingList, useSubmitBoardVote } from '../hooks/useVoting';
-import type { VotingSeriesItem, VoteDecision, VotingStatus } from '../api/voting.api';
+import type { VotingSeriesDto } from '../api/voting.api';
+import {
+  boardVoteToUiChoice,
+  findMyBoardVote,
+  getSeriesIdString,
+  getVotingUiStatus,
+  parseSeriesGenres,
+  summarizeBoardVotes,
+  uiChoiceToVoteSeriesRequest,
+  type VoteUiChoice,
+  type VotingListFilter,
+} from '../voting.utils';
 
-const FILTER_TABS: { value: VotingStatus | 'All'; label: string }[] = [
+const FILTER_TABS: { value: VotingListFilter; label: string }[] = [
   { value: 'All', label: 'Tất cả' },
   { value: 'Pending', label: 'Chờ biểu quyết' },
   { value: 'Voted', label: 'Đã bỏ phiếu' },
@@ -34,7 +46,7 @@ const FILTER_TABS: { value: VotingStatus | 'All'; label: string }[] = [
 const formatCurrency = (value: number): string =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 
-const getVoteDecisionConfig = (decision: VoteDecision) => {
+const getVoteDecisionConfig = (decision: VoteUiChoice) => {
   switch (decision) {
     case 'Approve':
       return { label: 'Phê duyệt', color: 'text-success', bg: 'bg-success/10', icon: CheckCircle };
@@ -45,7 +57,9 @@ const getVoteDecisionConfig = (decision: VoteDecision) => {
   }
 };
 
-const getStatusBadge = (status: VotingStatus, myVote?: VoteDecision) => {
+const getStatusBadge = (series: VotingSeriesDto, boardMemberId?: number | string | null) => {
+  const status = getVotingUiStatus(series, boardMemberId);
+  const myVote = boardVoteToUiChoice(findMyBoardVote(series.boardVotes, boardMemberId));
   if (status === 'Voted' && myVote) {
     const cfg = getVoteDecisionConfig(myVote);
     return (
@@ -66,25 +80,26 @@ const getStatusBadge = (status: VotingStatus, myVote?: VoteDecision) => {
 };
 
 export const VotingFeature = () => {
-  const [filter, setFilter] = useState<VotingStatus | 'All'>('All');
+  const boardMemberId = useAuthStore((s) => s.user?.id);
+  const [filter, setFilter] = useState<VotingListFilter>('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedItem, setSelectedItem] = useState<VotingSeriesItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<VotingSeriesDto | null>(null);
 
   // Vote modal
   const [showVoteModal, setShowVoteModal] = useState(false);
-  const [voteTarget, setVoteTarget] = useState<VotingSeriesItem | null>(null);
-  const [voteDecision, setVoteDecision] = useState<VoteDecision>('Approve');
+  const [voteTarget, setVoteTarget] = useState<VotingSeriesDto | null>(null);
+  const [voteDecision, setVoteDecision] = useState<VoteUiChoice>('Approve');
   const [voteComment, setVoteComment] = useState('');
 
   const { data: votingList = [], isLoading } = useVotingList(filter);
   const submitVoteMutation = useSubmitBoardVote();
 
   const filteredList = votingList.filter((item) =>
-    item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.mangakaName.toLowerCase().includes(searchQuery.toLowerCase())
+    (item.title ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (item.mangakaName ?? '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleOpenVoteModal = (item: VotingSeriesItem) => {
+  const handleOpenVoteModal = (item: VotingSeriesDto) => {
     setVoteTarget(item);
     setVoteDecision('Approve');
     setVoteComment('');
@@ -97,9 +112,8 @@ export const VotingFeature = () => {
 
     try {
       await submitVoteMutation.mutateAsync({
-        votingId: voteTarget.id,
-        decision: voteDecision,
-        comment: voteComment,
+        seriesId: getSeriesIdString(voteTarget),
+        body: uiChoiceToVoteSeriesRequest(voteDecision, voteComment),
       });
       toast.success(`Bỏ phiếu "${getVoteDecisionConfig(voteDecision).label}" cho "${voteTarget.title}" thành công!`);
       setShowVoteModal(false);
@@ -109,8 +123,12 @@ export const VotingFeature = () => {
     }
   };
 
-  const getTotalVotes = (item: VotingSeriesItem) =>
-    item.voteResults.approve + item.voteResults.reject + item.voteResults.abstain;
+  const getVoteResults = (item: VotingSeriesDto) => summarizeBoardVotes(item.boardVotes);
+
+  const getTotalVotes = (item: VotingSeriesDto) => {
+    const r = getVoteResults(item);
+    return r.approve + r.reject + r.abstain;
+  };
 
   const getPercentage = (count: number, total: number) =>
     total === 0 ? 0 : Math.round((count / total) * 100);
@@ -118,6 +136,9 @@ export const VotingFeature = () => {
   // ── Detail View ──
   if (selectedItem) {
     const totalVotes = getTotalVotes(selectedItem);
+    const voteResults = getVoteResults(selectedItem);
+    const genres = parseSeriesGenres(selectedItem.genre);
+    const uiStatus = getVotingUiStatus(selectedItem, boardMemberId);
     return (
       <div className="animate-fade-in">
         {/* Header */}
@@ -132,7 +153,7 @@ export const VotingFeature = () => {
             <h1 className="text-xl font-bold text-text-primary">{selectedItem.title}</h1>
             <p className="text-xs text-text-muted mt-0.5">Chi tiết đề xuất và kết quả biểu quyết</p>
           </div>
-          {getStatusBadge(selectedItem.status, selectedItem.myVote)}
+          {getStatusBadge(selectedItem, boardMemberId)}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -146,8 +167,8 @@ export const VotingFeature = () => {
               </div>
               <div className="flex gap-5">
                 <div className="w-28 h-[160px] rounded-xl overflow-hidden bg-bg-surface flex-shrink-0 border border-border-custom">
-                  {selectedItem.coverImageUrl ? (
-                    <img src={selectedItem.coverImageUrl} alt={selectedItem.title} className="w-full h-full object-cover" />
+                  {selectedItem.coverArtworkUrl ? (
+                    <img src={selectedItem.coverArtworkUrl} alt={selectedItem.title ?? ''} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-text-muted">
                       <ImagePlus size={28} />
@@ -163,18 +184,18 @@ export const VotingFeature = () => {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {selectedItem.genres.map((g) => (
+                    {genres.map((g) => (
                       <span key={g} className="px-2 py-0.5 rounded-md bg-brand/10 text-brand text-[10px] font-medium">{g}</span>
                     ))}
                   </div>
                   <div className="flex items-center gap-4 text-xs text-text-muted">
                     <div className="flex items-center gap-1">
                       <Calendar size={11} />
-                      <span>Gửi: {new Date(selectedItem.submittedAt).toLocaleDateString('vi-VN')}</span>
+                      <span>Gửi: {selectedItem.createAt ? new Date(selectedItem.createAt).toLocaleDateString('vi-VN') : '—'}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock size={11} />
-                      <span>Hạn: {new Date(selectedItem.deadline).toLocaleDateString('vi-VN')}</span>
+                      <span>Hạn: {selectedItem.updateAt ? new Date(selectedItem.updateAt).toLocaleDateString('vi-VN') : '—'}</span>
                     </div>
                   </div>
                 </div>
@@ -198,7 +219,7 @@ export const VotingFeature = () => {
               </div>
               <div className="bg-bg-surface border border-border-custom rounded-xl p-4">
                 <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">Vốn yêu cầu</p>
-                <p className="text-2xl font-bold text-text-primary">{formatCurrency(selectedItem.requestedBudget)}</p>
+                <p className="text-2xl font-bold text-text-primary">{formatCurrency(selectedItem.estimatedProductionBudget ?? 0)}</p>
               </div>
             </div>
           </div>
@@ -218,7 +239,7 @@ export const VotingFeature = () => {
                   </div>
                   <span className="text-xs font-medium text-text-primary">{selectedItem.editorName}</span>
                 </div>
-                <p className="text-sm text-text-secondary leading-relaxed">{selectedItem.editorRecommendation}</p>
+                <p className="text-sm text-text-secondary leading-relaxed">—</p>
               </div>
             </div>
 
@@ -227,7 +248,7 @@ export const VotingFeature = () => {
               <div className="flex items-center gap-2 mb-4">
                 <BarChart3 size={16} className="text-brand" />
                 <h2 className="text-sm font-semibold text-text-primary">Kết quả biểu quyết</h2>
-                <span className="ml-auto text-xs text-text-muted">{totalVotes}/{selectedItem.voteResults.total} phiếu</span>
+                <span className="ml-auto text-xs text-text-muted">{totalVotes}/{voteResults.total} phiếu</span>
               </div>
               <div className="space-y-3">
                 {/* Approve bar */}
@@ -237,12 +258,12 @@ export const VotingFeature = () => {
                       <CheckCircle size={12} />
                       Phê duyệt
                     </div>
-                    <span className="text-xs font-bold text-success">{selectedItem.voteResults.approve} ({getPercentage(selectedItem.voteResults.approve, totalVotes)}%)</span>
+                    <span className="text-xs font-bold text-success">{voteResults.approve} ({getPercentage(voteResults.approve, totalVotes)}%)</span>
                   </div>
                   <div className="w-full h-2.5 bg-bg-surface rounded-full overflow-hidden">
                     <div
                       className="h-full bg-success rounded-full transition-all duration-500"
-                      style={{ width: `${getPercentage(selectedItem.voteResults.approve, totalVotes)}%` }}
+                      style={{ width: `${getPercentage(voteResults.approve, totalVotes)}%` }}
                     />
                   </div>
                 </div>
@@ -253,12 +274,12 @@ export const VotingFeature = () => {
                       <XCircle size={12} />
                       Từ chối
                     </div>
-                    <span className="text-xs font-bold text-danger">{selectedItem.voteResults.reject} ({getPercentage(selectedItem.voteResults.reject, totalVotes)}%)</span>
+                    <span className="text-xs font-bold text-danger">{voteResults.reject} ({getPercentage(voteResults.reject, totalVotes)}%)</span>
                   </div>
                   <div className="w-full h-2.5 bg-bg-surface rounded-full overflow-hidden">
                     <div
                       className="h-full bg-danger rounded-full transition-all duration-500"
-                      style={{ width: `${getPercentage(selectedItem.voteResults.reject, totalVotes)}%` }}
+                      style={{ width: `${getPercentage(voteResults.reject, totalVotes)}%` }}
                     />
                   </div>
                 </div>
@@ -269,12 +290,12 @@ export const VotingFeature = () => {
                       <MinusCircle size={12} />
                       Bỏ qua
                     </div>
-                    <span className="text-xs font-bold text-text-muted">{selectedItem.voteResults.abstain} ({getPercentage(selectedItem.voteResults.abstain, totalVotes)}%)</span>
+                    <span className="text-xs font-bold text-text-muted">{voteResults.abstain} ({getPercentage(voteResults.abstain, totalVotes)}%)</span>
                   </div>
                   <div className="w-full h-2.5 bg-bg-surface rounded-full overflow-hidden">
                     <div
                       className="h-full bg-text-muted/40 rounded-full transition-all duration-500"
-                      style={{ width: `${getPercentage(selectedItem.voteResults.abstain, totalVotes)}%` }}
+                      style={{ width: `${getPercentage(voteResults.abstain, totalVotes)}%` }}
                     />
                   </div>
                 </div>
@@ -282,7 +303,7 @@ export const VotingFeature = () => {
             </div>
 
             {/* Action */}
-            {selectedItem.status === 'Pending' && (
+            {uiStatus === 'Pending' && (
               <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
                 <button
                   onClick={() => handleOpenVoteModal(selectedItem)}
@@ -363,8 +384,11 @@ export const VotingFeature = () => {
         <div className="space-y-4">
           {filteredList.map((item) => {
             const totalVotes = getTotalVotes(item);
-            const approvePercent = getPercentage(item.voteResults.approve, totalVotes);
-            const rejectPercent = getPercentage(item.voteResults.reject, totalVotes);
+            const voteResults = getVoteResults(item);
+            const genres = parseSeriesGenres(item.genre);
+            const uiStatus = getVotingUiStatus(item, boardMemberId);
+            const approvePercent = getPercentage(voteResults.approve, totalVotes);
+            const rejectPercent = getPercentage(voteResults.reject, totalVotes);
 
             return (
               <div
@@ -374,8 +398,8 @@ export const VotingFeature = () => {
                 <div className="flex items-start gap-4">
                   {/* Cover thumbnail */}
                   <div className="w-16 h-[85px] rounded-lg overflow-hidden bg-bg-surface flex-shrink-0 border border-border-custom">
-                    {item.coverImageUrl ? (
-                      <img src={item.coverImageUrl} alt={item.title} className="w-full h-full object-cover" />
+                    {item.coverArtworkUrl ? (
+                      <img src={item.coverArtworkUrl} alt={item.title ?? ''} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-text-muted">
                         <ImagePlus size={18} />
@@ -398,17 +422,17 @@ export const VotingFeature = () => {
                           <div className="flex items-center gap-1.5">
                             <Clock size={11} className="text-text-muted" />
                             <span className="text-xs text-text-secondary">
-                              Hạn: {new Date(item.deadline).toLocaleDateString('vi-VN')}
+                              Hạn: {item.updateAt ? new Date(item.updateAt).toLocaleDateString('vi-VN') : '—'}
                             </span>
                           </div>
                         </div>
                       </div>
-                      {getStatusBadge(item.status, item.myVote)}
+                      {getStatusBadge(item, boardMemberId)}
                     </div>
 
                     {/* Genres */}
                     <div className="flex flex-wrap gap-1.5 mt-2">
-                      {item.genres.map((g) => (
+                      {genres.map((g) => (
                         <span key={g} className="px-2 py-0.5 rounded-md bg-brand/10 text-brand text-[10px] font-medium">
                           {g}
                         </span>
@@ -421,7 +445,7 @@ export const VotingFeature = () => {
                         <div className="flex items-center gap-1.5">
                           <Banknote size={13} className="text-text-muted" />
                           <span className="text-sm font-semibold text-text-primary">
-                            {formatCurrency(item.requestedBudget)}
+                            {formatCurrency(item.estimatedProductionBudget ?? 0)}
                           </span>
                         </div>
                         {/* Mini vote bar */}
@@ -430,7 +454,7 @@ export const VotingFeature = () => {
                             <div className="h-full bg-success transition-all" style={{ width: `${approvePercent}%` }} />
                             <div className="h-full bg-danger transition-all" style={{ width: `${rejectPercent}%` }} />
                           </div>
-                          <span className="text-[10px] text-text-muted">{totalVotes}/{item.voteResults.total}</span>
+                          <span className="text-[10px] text-text-muted">{totalVotes}/{voteResults.total}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -441,7 +465,7 @@ export const VotingFeature = () => {
                           <Eye size={12} />
                           Chi tiết
                         </button>
-                        {item.status === 'Pending' && (
+                        {uiStatus === 'Pending' && (
                           <button
                             onClick={() => handleOpenVoteModal(item)}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand/10 hover:bg-brand/15 text-brand rounded-lg text-xs font-medium transition-colors border-none cursor-pointer"
@@ -492,7 +516,7 @@ export const VotingFeature = () => {
                   Quyết định biểu quyết <span className="text-danger">*</span>
                 </label>
                 <div className="grid grid-cols-3 gap-2">
-                  {(['Approve', 'Reject', 'Abstain'] as VoteDecision[]).map((decision) => {
+                  {(['Approve', 'Reject', 'Abstain'] as VoteUiChoice[]).map((decision) => {
                     const cfg = getVoteDecisionConfig(decision);
                     const isSelected = voteDecision === decision;
                     return (
@@ -518,7 +542,7 @@ export const VotingFeature = () => {
               <div className="bg-bg-surface border border-border-custom rounded-xl p-4 flex items-center justify-between">
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Ngân sách yêu cầu</p>
-                  <p className="text-base font-bold text-text-primary mt-0.5">{formatCurrency(voteTarget.requestedBudget)}</p>
+                  <p className="text-base font-bold text-text-primary mt-0.5">{formatCurrency(voteTarget.estimatedProductionBudget ?? 0)}</p>
                 </div>
                 <Banknote size={20} className="text-brand" />
               </div>
@@ -542,23 +566,28 @@ export const VotingFeature = () => {
               {/* Current vote distribution */}
               <div className="bg-bg-surface border border-border-custom rounded-xl p-3">
                 <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-2">Phân bố phiếu hiện tại</p>
+                {(() => {
+                  const modalVotes = summarizeBoardVotes(voteTarget.boardVotes);
+                  return (
                 <div className="flex items-center gap-3 text-xs">
                   <span className="flex items-center gap-1 text-success font-medium">
                     <CheckCircle size={11} />
-                    {voteTarget.voteResults.approve}
+                    {modalVotes.approve}
                   </span>
                   <span className="flex items-center gap-1 text-danger font-medium">
                     <XCircle size={11} />
-                    {voteTarget.voteResults.reject}
+                    {modalVotes.reject}
                   </span>
                   <span className="flex items-center gap-1 text-text-muted font-medium">
                     <MinusCircle size={11} />
-                    {voteTarget.voteResults.abstain}
+                    {modalVotes.abstain}
                   </span>
                   <span className="ml-auto text-text-muted">
-                    Tổng: {getTotalVotes(voteTarget)}/{voteTarget.voteResults.total}
+                    Tổng: {getTotalVotes(voteTarget)}/{modalVotes.total}
                   </span>
                 </div>
+                  );
+                })()}
               </div>
 
               {/* Footer */}

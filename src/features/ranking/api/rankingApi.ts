@@ -1,10 +1,20 @@
 import axios from 'axios';
 import { axiosInstance } from '../../../api/axios';
-import type { ApiResponse } from '../../../api/generated/types';
+import type { ApiResponse, RankingRecord } from '../../../api/generated/types';
 import type { components } from '../../../api/generated/schema';
+import { filterRankingByGenre, sortRankingByPosition } from '../ranking.utils';
 
-/** Mock chỉ cho luồng Board vote maintain/cancel — chưa có endpoint BE riêng */
-const USE_MOCK_BOARD_VOTE = true;
+/** BE VoteRankingRequestDto — field voteType (not action) */
+type VoteRankingRequestDto = components['schemas'] extends { VoteRankingRequestDto: infer T }
+  ? T
+  : {
+      seriesId?: number;
+      voteType?: string | null;
+      comment?: string | null;
+    };
+
+/** Dev fallback khi BE chưa deploy POST /api/ranking/votes */
+const USE_MOCK_BOARD_VOTE = false;
 const mockDelay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const getApiErrorMessage = (error: unknown, fallback: string) => {
@@ -16,130 +26,151 @@ const getApiErrorMessage = (error: unknown, fallback: string) => {
   return fallback;
 };
 
-export interface RankingItem {
-  id: string;
-  rank: number;
-  title: string;
-  coverImageUrl: string;
-  views: number;
-  votes: number;
-  genre: string[];
-  period: string;
-  status: 'Active' | 'UnderReview' | 'ProposedCancel';
-}
-
-type RankingRecord = components['schemas']['RankingRecord'];
-
-const MOCK_RANKING: RankingItem[] = [
-  { id: '1', rank: 1, title: 'Huyền Thoại Samurai', coverImageUrl: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=150&auto=format&fit=crop&q=60', views: 125000, votes: 94, genre: ['Action', 'Adventure'], period: 'month', status: 'Active' },
-  { id: '2', rank: 2, title: 'Lạc Giữa Ngân Hà', coverImageUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=150&auto=format&fit=crop&q=60', views: 98000, votes: 88, genre: ['Sci-Fi', 'Mystery'], period: 'month', status: 'Active' },
-  { id: '3', rank: 3, title: 'Vườn Hoa Mùa Đông', coverImageUrl: 'https://images.unsplash.com/photo-1560942485-b2a11cc13456?w=150&auto=format&fit=crop&q=60', views: 45000, votes: 52, genre: ['Romance', 'Drama'], period: 'month', status: 'UnderReview' },
-  { id: '4', rank: 4, title: 'Bóng Đêm Đô Thị', coverImageUrl: 'https://images.unsplash.com/photo-1560942485-b2a11cc13456?w=150&auto=format&fit=crop&q=60', views: 32000, votes: 35, genre: ['Action', 'Thriller'], period: 'month', status: 'ProposedCancel' },
+const MOCK_RANKING: RankingRecord[] = [
+  {
+    id: 1,
+    seriesId: 1,
+    rankPosition: 1,
+    voteCount: 94,
+    series: {
+      title: 'Huyền Thoại Samurai',
+      coverArtworkUrl:
+        'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=150&auto=format&fit=crop&q=60',
+      genre: 'Action, Adventure',
+      status: 'In Production',
+    },
+  },
+  {
+    id: 2,
+    seriesId: 2,
+    rankPosition: 2,
+    voteCount: 88,
+    series: {
+      title: 'Lạc Giữa Ngân Hà',
+      coverArtworkUrl:
+        'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=150&auto=format&fit=crop&q=60',
+      genre: 'Sci-Fi, Mystery',
+      status: 'In Production',
+    },
+  },
+  {
+    id: 3,
+    seriesId: 3,
+    rankPosition: 3,
+    voteCount: 52,
+    series: {
+      title: 'Vườn Hoa Mùa Đông',
+      coverArtworkUrl:
+        'https://images.unsplash.com/photo-1560942485-b2a11cc13456?w=150&auto=format&fit=crop&q=60',
+      genre: 'Romance, Drama',
+      status: 'UnderReview',
+    },
+  },
+  {
+    id: 4,
+    seriesId: 4,
+    rankPosition: 4,
+    voteCount: 35,
+    series: {
+      title: 'Bóng Đêm Đô Thị',
+      coverArtworkUrl:
+        'https://images.unsplash.com/photo-1560942485-b2a11cc13456?w=150&auto=format&fit=crop&q=60',
+      genre: 'Action, Thriller',
+      status: 'ProposedCancel',
+    },
+  },
 ];
 
 const applyDevRankingSubmit = (payload: components['schemas']['CreateRankingsDto']) => {
   payload.records?.forEach((record) => {
-    const id = String(record.seriesId ?? '');
+    const id = record.seriesId;
     if (!id) return;
-    const existing = MOCK_RANKING.find((item) => item.id === id);
+    const existing = MOCK_RANKING.find((item) => item.seriesId === id);
     if (existing) {
-      existing.votes = record.voteCount ?? existing.votes;
+      existing.voteCount = record.voteCount ?? existing.voteCount;
     } else {
       MOCK_RANKING.push({
-        id,
-        rank: MOCK_RANKING.length + 1,
-        title: `Series #${id}`,
-        coverImageUrl: '',
-        views: 0,
-        votes: record.voteCount ?? 0,
-        genre: [],
-        period: 'month',
-        status: 'Active',
+        id: MOCK_RANKING.length + 1,
+        seriesId: id,
+        rankPosition: MOCK_RANKING.length + 1,
+        voteCount: record.voteCount ?? 0,
+        series: { title: `Series #${id}`, genre: '', status: 'In Production' },
       });
     }
   });
 };
 
-const getDevMockRanking = (period: string, genre?: string): RankingItem[] => {
-  let items = MOCK_RANKING.map((item, index) => ({ ...item, period, rank: index + 1 }));
-  if (genre && genre !== 'All') {
-    items = items.filter((item) => item.genre.includes(genre));
-  }
-  return items.map((item, index) => ({ ...item, rank: index + 1 }));
-};
-const mapSeriesStatus = (status?: string | null): RankingItem['status'] => {
-  if (status === 'ProposedCancel' || status === 'Cancelled') return 'ProposedCancel';
-  if (status === 'UnderReview' || status === 'Pending_Approval') return 'UnderReview';
-  return 'Active';
+const getDevMockRanking = (genre?: string): RankingRecord[] => {
+  const items = sortRankingByPosition(MOCK_RANKING);
+  return filterRankingByGenre(items, genre).map((item, index) => ({
+    ...item,
+    rankPosition: index + 1,
+  }));
 };
 
-const mapRankingRecordToItem = (
-  record: RankingRecord,
-  index: number,
-  period: string,
-): RankingItem => {
-  const series = record.series;
-  const genres = series?.genre
-    ? series.genre.split(/[,;]/).map((g: string) => g.trim()).filter(Boolean)
-    : [];
+const toRankingVoteType = (action: 'maintain' | 'cancel'): string =>
+  action === 'cancel' ? 'Cancel' : 'Maintain';
 
-  return {
-    id: String(record.seriesId ?? record.id ?? index),
-    rank: record.rankPosition ?? index + 1,
-    title: series?.title ?? `Series #${record.seriesId ?? '—'}`,
-    coverImageUrl: series?.coverArtworkUrl ?? '',
-    views: 0,
-    votes: record.voteCount ?? 0,
-    genre: genres,
-    period,
-    status: mapSeriesStatus(series?.status),
-  };
-};
+export type { RankingRecord, VoteRankingRequestDto };
 
 export const rankingApi = {
-  fetchRanking: async (params?: { period?: string; genre?: string }): Promise<RankingItem[]> => {
+  fetchRanking: async (params?: { period?: string; genre?: string }): Promise<RankingRecord[]> => {
     const period = params?.period ?? 'month';
-    let items: RankingItem[] = [];
+    let items: RankingRecord[] = [];
 
     try {
       const res = await axiosInstance.get<ApiResponse<RankingRecord[]>>('/api/rankings', {
         params: { period },
       });
-      items = (res.data?.data ?? []).map((record, index) =>
-        mapRankingRecordToItem(record, index, period),
-      );
+      items = sortRankingByPosition(res.data?.data ?? []);
     } catch {
       if (!import.meta.env.DEV) throw new Error('Không tải được bảng xếp hạng');
     }
 
     if (items.length === 0 && import.meta.env.DEV) {
-      items = getDevMockRanking(period, params?.genre);
+      items = getDevMockRanking(params?.genre);
+    } else if (params?.genre) {
+      items = filterRankingByGenre(items, params.genre);
     }
 
-    if (params?.genre && params.genre !== 'All') {
-      items = items.filter((item) => item.genre.includes(params.genre!));
-    }
-
-    return items.map((item, index) => ({ ...item, rank: index + 1 }));
+    return items.map((item, index) => ({ ...item, rankPosition: index + 1 }));
   },
 
-  submitRankingVote: async (seriesId: string, action: 'maintain' | 'cancel', comment?: string) => {
-    if (USE_MOCK_BOARD_VOTE) {
-      await mockDelay(400);
-      const item = MOCK_RANKING.find((s) => s.id === seriesId);
-      if (item) {
-        if (action === 'cancel') {
-          item.status = 'ProposedCancel';
-          item.votes -= 1;
-        } else {
-          item.status = 'Active';
-          item.votes += 1;
+  submitRankingVote: async (payload: VoteRankingRequestDto) => {
+    if (!USE_MOCK_BOARD_VOTE) {
+      try {
+        const res = await axiosInstance.post<ApiResponse<unknown>>('/api/ranking/votes', payload);
+        const data = res.data;
+        return {
+          success: !!(data?.success ?? (data as ApiResponse<unknown> & { IsSuccess?: boolean }).IsSuccess),
+          message: data?.message ?? (data as ApiResponse<unknown> & { Message?: string }).Message ?? '',
+        };
+      } catch (error) {
+        if (!import.meta.env.DEV) {
+          throw new Error(getApiErrorMessage(error, 'Bỏ phiếu thất bại'), { cause: error });
         }
       }
-      return { success: true, message: 'Bỏ phiếu thành công' };
     }
-    const res = await axiosInstance.post<ApiResponse<unknown>>('/api/ranking/votes', { seriesId, action, comment });
-    return res.data;
+
+    await mockDelay(400);
+    const seriesId = payload.seriesId;
+    const item = MOCK_RANKING.find((s) => s.seriesId === seriesId);
+    if (item?.series) {
+      const voteType = (payload.voteType ?? '').toLowerCase();
+      if (voteType === 'cancel') {
+        item.series.status = 'ProposedCancel';
+        item.voteCount = Math.max(0, (item.voteCount ?? 0) - 1);
+      } else {
+        item.series.status = 'In Production';
+        item.voteCount = (item.voteCount ?? 0) + 1;
+      }
+    }
+    return {
+      success: true,
+      message: import.meta.env.DEV
+        ? 'Dev mock: BE chưa có /api/ranking/votes — đã cập nhật local'
+        : 'Bỏ phiếu thành công',
+    };
   },
 
   /** F4.4 — Board nhập liệu vote count thủ công (ưu tiên API thật; dev fallback khi BE lỗi) */
@@ -164,5 +195,17 @@ export const rankingApi = {
     }
   },
 };
+
+/** @deprecated Use submitRankingVote with VoteRankingRequestDto */
+export const submitRankingVoteByAction = (
+  seriesId: string,
+  action: 'maintain' | 'cancel',
+  comment?: string,
+) =>
+  rankingApi.submitRankingVote({
+    seriesId: Number(seriesId) || undefined,
+    voteType: toRankingVoteType(action),
+    comment,
+  });
 
 export { rankingApi as default };

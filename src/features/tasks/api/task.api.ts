@@ -337,7 +337,7 @@ export const taskApi = {
     return axiosInstance.post<ApiResponse<unknown>>(`/api/tasks/${taskId}/reject`, payload);
   },
 
-  // Extension (F2.12) — BE: POST /api/tasks/{id}/request-extension { Days, Reason }
+  // Extension (F2.12) — POST /api/tasks/{id}/request-extension
   requestExtension: async (data: RequestExtensionRequest) => {
     if (USE_MOCK) {
       await mockDelay(400);
@@ -349,9 +349,13 @@ export const taskApi = {
       }
       return createMockAxiosResponse(task as unknown as TasksDto, 'Xin gia hạn thành công');
     }
+    const payload: components['schemas']['RequestExtensionDto'] = {
+      days: data.days,
+      reason: data.reason,
+    };
     return axiosInstance.post<ApiResponse<unknown>>(
       `/api/tasks/${data.taskId}/request-extension`,
-      { Days: data.days, Reason: data.reason },
+      payload,
     );
   },
 
