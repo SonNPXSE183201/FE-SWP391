@@ -3,6 +3,8 @@ import {
   ClipboardList, Clock, Download, Loader2, Search, User,
   Image as ImageIcon,
   DollarSign,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -103,8 +105,13 @@ export const TaskQueueFeature = () => {
   const [selectedFiles, setSelectedFiles] = useState<Record<number, File>>({});
   const [extendingTaskId, setExtendingTaskId] = useState<number | null>(null);
   const [extensionReason, setExtensionReason] = useState('');
+  const [expandedImageTasks, setExpandedImageTasks] = useState<Record<number, boolean>>({});
   const queryClient = useQueryClient();
   const extensionMutation = useRequestExtension();
+
+  const toggleImage = (taskId: number) => {
+    setExpandedImageTasks((prev) => ({ ...prev, [taskId]: !prev[taskId] }));
+  };
 
   const handleFileChange = (taskId: number, file: File | null) => {
     if (file) {
@@ -345,13 +352,25 @@ export const TaskQueueFeature = () => {
 
                   {/* Page image preview */}
                   {task.pageImageUrl && (
-                    <div className="mt-4 overflow-hidden rounded-xl border border-border-custom w-fit bg-black/20">
-                      <img
-                        src={task.pageImageUrl}
-                        alt={`Trang ${task.pageNumber}`}
-                        className="h-24 w-auto object-cover hover:scale-105 transition-transform duration-500 cursor-zoom-in opacity-80 hover:opacity-100"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                      />
+                    <div className="mt-4">
+                      <button
+                        onClick={() => toggleImage(task.id!)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-bg-surface hover:bg-bg-secondary border border-border-custom rounded-lg text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+                      >
+                        <ImageIcon size={14} />
+                        {expandedImageTasks[task.id!] ? 'Ẩn ảnh tham khảo' : 'Xem ảnh tham khảo'}
+                        {expandedImageTasks[task.id!] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                      </button>
+                      {expandedImageTasks[task.id!] && (
+                        <div className="mt-3 overflow-hidden rounded-xl border border-border-custom w-fit bg-black/20 animate-fade-in">
+                          <img
+                            src={task.pageImageUrl}
+                            alt={`Trang ${task.pageNumber}`}
+                            className="h-24 w-auto object-cover hover:scale-105 transition-transform duration-500 cursor-zoom-in opacity-80 hover:opacity-100"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

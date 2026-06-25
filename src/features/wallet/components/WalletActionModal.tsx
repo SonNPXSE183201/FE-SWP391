@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom';
 import {
   ArrowDownToLine, ArrowUpFromLine, CreditCard, ExternalLink,
 } from 'lucide-react';
-import { formatVND } from '../constants';
+import { formatVND, VIETNAM_BANKS } from '../constants';
 import { CustomSelect } from '../../../components/common/CustomSelect';
 import { useWalletActions } from '../hooks/useWalletActions';
 
@@ -84,15 +84,11 @@ export const WalletActionModal = ({ mode, maxWithdrawAmount, onClose, onSuccess 
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">Ngân hàng</label>
                 <CustomSelect
-                  options={[
-                    { value: 'Vietcombank', label: 'Vietcombank' },
-                    { value: 'Techcombank', label: 'Techcombank' },
-                    { value: 'MB Bank', label: 'MB Bank' },
-                    { value: 'BIDV', label: 'BIDV' },
-                  ]}
+                  options={VIETNAM_BANKS.map((bank) => ({ value: bank, label: bank }))}
                   value={bankName}
                   onChange={setBankName}
                   icon={<CreditCard size={14} />}
+                  searchable
                 />
               </div>
               <div>
