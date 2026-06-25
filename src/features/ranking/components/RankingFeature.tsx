@@ -9,8 +9,15 @@ import {
   X,
   Loader2,
 } from 'lucide-react';
+import type { RankingRecord } from '../../../api/generated/types';
 import { useRankingList, useSubmitRankingVote } from '../hooks/useRanking';
-import type { RankingItem } from '../api/rankingApi';
+import {
+  getRankingCoverUrl,
+  getRankingGenres,
+  getRankingRecordId,
+  getRankingRecordTitle,
+  getRankingUiStatus,
+} from '../ranking.utils';
 
 const GENRES = ['All', 'Action', 'Adventure', 'Sci-Fi', 'Mystery', 'Romance', 'Drama', 'Thriller'];
 const PERIODS = [
@@ -24,17 +31,16 @@ export const RankingFeature = () => {
   const [genre, setGenre] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Vote Modal States
   const [showVoteModal, setShowVoteModal] = useState(false);
-  const [selectedSeries, setSelectedSeries] = useState<RankingItem | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<RankingRecord | null>(null);
   const [voteAction, setVoteAction] = useState<'maintain' | 'cancel'>('maintain');
   const [comment, setComment] = useState('');
 
   const { data: rankingList = [], isLoading } = useRankingList({ period, genre });
   const submitVoteMutation = useSubmitRankingVote();
 
-  const handleOpenVote = (series: RankingItem, action: 'maintain' | 'cancel') => {
-    setSelectedSeries(series);
+  const handleOpenVote = (record: RankingRecord, action: 'maintain' | 'cancel') => {
+    setSelectedRecord(record);
     setVoteAction(action);
     setComment('');
     setShowVoteModal(true);
@@ -42,28 +48,27 @@ export const RankingFeature = () => {
 
   const handleVoteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedSeries) return;
+    if (!selectedRecord) return;
 
     try {
       await submitVoteMutation.mutateAsync({
-        seriesId: selectedSeries.id,
+        seriesId: getRankingRecordId(selectedRecord),
         action: voteAction,
         comment,
       });
-      toast.success(`Bỏ phiếu thành công cho "${selectedSeries.title}"!`);
+      toast.success(`Bỏ phiếu thành công cho "${getRankingRecordTitle(selectedRecord)}"!`);
       setShowVoteModal(false);
     } catch {
       toast.error('Gửi phiếu thất bại. Vui lòng thử lại.');
     }
   };
 
-  const filteredRanking = rankingList.filter((item: RankingItem) =>
-    item.title.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredRanking = rankingList.filter((record) =>
+    getRankingRecordTitle(record).toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
     <div className="animate-fade-in space-y-6">
-      {/* Page Header */}
       <div className="page-header">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
@@ -76,9 +81,7 @@ export const RankingFeature = () => {
         </div>
       </div>
 
-      {/* Toolbar & Filters */}
       <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
-        {/* Search */}
         <div className="relative flex-1 max-w-md">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
           <input
@@ -90,9 +93,7 @@ export const RankingFeature = () => {
           />
         </div>
 
-        {/* Filters Grid */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Period Selection */}
           <div className="flex items-center gap-2 bg-bg-secondary border border-border-custom rounded-xl p-1">
             {PERIODS.map((p) => (
               <button
@@ -109,7 +110,6 @@ export const RankingFeature = () => {
             ))}
           </div>
 
-          {/* Genre Selection */}
           <select
             value={genre}
             onChange={(e) => setGenre(e.target.value)}
@@ -124,7 +124,6 @@ export const RankingFeature = () => {
         </div>
       </div>
 
-      {/* Table Container */}
       <div className="bg-bg-secondary border border-border-custom rounded-xl overflow-hidden shadow-sm">
         {isLoading ? (
           <div className="flex justify-center items-center py-20">
@@ -146,82 +145,86 @@ export const RankingFeature = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-custom">
-                {filteredRanking.map((item: RankingItem) => (
-                  <tr key={item.id} className="hover:bg-bg-surface/30 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg font-bold text-xs ${
-                        item.rank === 1 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
-                        item.rank === 2 ? 'bg-slate-400/20 text-slate-300 border border-slate-400/30' :
-                        item.rank === 3 ? 'bg-amber-700/20 text-amber-600 border border-amber-700/30' :
-                        'bg-bg-surface text-text-muted'
-                      }`}>
-                        {item.rank}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-14 rounded-lg overflow-hidden bg-bg-surface border border-border-custom flex-shrink-0">
-                          <img src={item.coverImageUrl} alt={item.title} className="w-full h-full object-cover" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-text-primary text-sm hover:text-brand transition-colors cursor-pointer">
-                            {item.title}
-                          </h3>
-                          <div className="flex gap-1.5 mt-1">
-                            {item.genre.map((g: string) => (
-                              <span key={g} className="px-1.5 py-0.2 bg-brand/8 text-brand text-[9px] rounded font-medium">
-                                {g}
-                              </span>
-                            ))}
+                {filteredRanking.map((record, index) => {
+                  const rank = record.rankPosition ?? index + 1;
+                  const title = getRankingRecordTitle(record);
+                  const genres = getRankingGenres(record);
+                  const status = getRankingUiStatus(record);
+
+                  return (
+                    <tr key={getRankingRecordId(record, index)} className="hover:bg-bg-surface/30 transition-colors">
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg font-bold text-xs ${
+                          rank === 1 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                          rank === 2 ? 'bg-slate-400/20 text-slate-300 border border-slate-400/30' :
+                          rank === 3 ? 'bg-amber-700/20 text-amber-600 border border-amber-700/30' :
+                          'bg-bg-surface text-text-muted'
+                        }`}>
+                          {rank}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-14 rounded-lg overflow-hidden bg-bg-surface border border-border-custom flex-shrink-0">
+                            <img src={getRankingCoverUrl(record)} alt={title} className="w-full h-full object-cover" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-text-primary text-sm hover:text-brand transition-colors cursor-pointer">
+                              {title}
+                            </h3>
+                            <div className="flex gap-1.5 mt-1">
+                              {genres.map((g) => (
+                                <span key={g} className="px-1.5 py-0.2 bg-brand/8 text-brand text-[9px] rounded font-medium">
+                                  {g}
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 font-mono font-medium text-text-primary">
-                      {new Intl.NumberFormat('vi-VN').format(item.views)}
-                    </td>
-                    <td className="px-6 py-4 font-semibold text-text-primary">
-                      {item.votes} phiếu
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
-                        item.status === 'Active' ? 'bg-success/10 text-success' :
-                        item.status === 'UnderReview' ? 'bg-warning/10 text-warning' :
-                        'bg-danger/10 text-danger'
-                      }`}>
-                        {item.status === 'Active' ? 'Hoạt động tốt' :
-                         item.status === 'UnderReview' ? 'Đang xem xét' :
-                         'Đề xuất hủy'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleOpenVote(item, 'maintain')}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-success/10 hover:bg-success/15 text-success rounded-lg text-xs font-semibold cursor-pointer border-none transition-all"
-                        >
-                          <ThumbsUp size={12} />
-                          Duy trì
-                        </button>
-                        <button
-                          onClick={() => handleOpenVote(item, 'cancel')}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-danger/10 hover:bg-danger/15 text-danger rounded-lg text-xs font-semibold cursor-pointer border-none transition-all"
-                        >
-                          <ThumbsDown size={12} />
-                          Đề xuất hủy
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-6 py-4 font-mono font-medium text-text-primary">0</td>
+                      <td className="px-6 py-4 font-semibold text-text-primary">
+                        {record.voteCount ?? 0} phiếu
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
+                          status === 'Active' ? 'bg-success/10 text-success' :
+                          status === 'UnderReview' ? 'bg-warning/10 text-warning' :
+                          'bg-danger/10 text-danger'
+                        }`}>
+                          {status === 'Active' ? 'Hoạt động tốt' :
+                           status === 'UnderReview' ? 'Đang xem xét' :
+                           'Đề xuất hủy'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleOpenVote(record, 'maintain')}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-success/10 hover:bg-success/15 text-success rounded-lg text-xs font-semibold cursor-pointer border-none transition-all"
+                          >
+                            <ThumbsUp size={12} />
+                            Duy trì
+                          </button>
+                          <button
+                            onClick={() => handleOpenVote(record, 'cancel')}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-danger/10 hover:bg-danger/15 text-danger rounded-lg text-xs font-semibold cursor-pointer border-none transition-all"
+                          >
+                            <ThumbsDown size={12} />
+                            Đề xuất hủy
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
       </div>
 
-      {/* ─── Vote Comment Modal ─── */}
-      {showVoteModal && selectedSeries && createPortal(
+      {showVoteModal && selectedRecord && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowVoteModal(false)} />
           <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-md p-6 shadow-xl animate-fade-in">
@@ -230,7 +233,7 @@ export const RankingFeature = () => {
                 <h3 className="text-base font-bold text-text-primary flex items-center gap-2">
                   Bỏ phiếu xét duyệt
                 </h3>
-                <p className="text-[10px] text-text-muted mt-0.5">{selectedSeries.title}</p>
+                <p className="text-[10px] text-text-muted mt-0.5">{getRankingRecordTitle(selectedRecord)}</p>
               </div>
               <button
                 onClick={() => setShowVoteModal(false)}

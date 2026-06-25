@@ -39,12 +39,17 @@ const getHubUrl = () => {
   if (import.meta.env.VITE_SIGNALR_URL) {
     return import.meta.env.VITE_SIGNALR_URL;
   }
-  const base = import.meta.env.VITE_API_URL || 'http://localhost:5010';
-  // If routing through Gateway (port 5000), upstream expects /api/v1/ prefix
-  if (base.includes('5000') || base.includes('5001')) {
-    return `${base}/api/v1/hubs/notification`;
+  const base = import.meta.env.VITE_API_URL;
+  // Dev proxy: relative URL → Vite → Gateway
+  if (import.meta.env.DEV && !base) {
+    return '/api/v1/hubs/notification';
   }
-  return `${base}/hubs/notification`;
+  const resolvedBase = base || 'http://localhost:5010';
+  // If routing through Gateway (port 5000), upstream expects /api/v1/ prefix
+  if (resolvedBase.includes('5000') || resolvedBase.includes('5001')) {
+    return `${resolvedBase}/api/v1/hubs/notification`;
+  }
+  return `${resolvedBase}/hubs/notification`;
 };
 
 /**

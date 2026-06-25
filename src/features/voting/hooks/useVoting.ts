@@ -1,18 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { votingApi, type VotingStatus, type SubmitVotePayload } from '../api/voting.api';
+import { votingApi, type VotingListFilter, type VoteSeriesRequestDto } from '../api/voting.api';
+import { useAuthStore } from '../../../stores/authStore';
 
-export const useVotingList = (filter?: VotingStatus | 'All') => {
+export const useVotingList = (filter?: VotingListFilter) => {
+  const userId = useAuthStore((s) => s.user?.id);
   return useQuery({
-    queryKey: ['voting', 'list', filter],
-    queryFn: () => votingApi.fetchVotingList(filter),
+    queryKey: ['voting', 'list', filter, userId],
+    queryFn: () => votingApi.fetchVotingList(filter, userId),
     staleTime: 1000 * 60,
   });
 };
 
 export const useVotingDetail = (votingId: string | null) => {
+  const userId = useAuthStore((s) => s.user?.id);
   return useQuery({
-    queryKey: ['voting', 'detail', votingId],
-    queryFn: () => votingApi.fetchVotingDetail(votingId!),
+    queryKey: ['voting', 'detail', votingId, userId],
+    queryFn: () => votingApi.fetchVotingDetail(votingId!, userId),
     enabled: !!votingId,
     staleTime: 1000 * 30,
   });
@@ -21,7 +24,8 @@ export const useVotingDetail = (votingId: string | null) => {
 export const useSubmitBoardVote = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: SubmitVotePayload) => votingApi.submitVote(payload),
+    mutationFn: ({ seriesId, body }: { seriesId: string; body: VoteSeriesRequestDto }) =>
+      votingApi.submitVote(seriesId, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['voting'] });
     },

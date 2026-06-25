@@ -5,6 +5,7 @@ import type {
   SeriesReviewDto,
   SubmitToBoardDto,
 } from '../../../api/generated/types';
+import type { components } from '../../../api/generated/schema';
 import type { ApproveChapterPayload, ChapterReviewDetail, ReviewQueueItem } from '../types';
 import { MOCK_REVIEW_QUEUE, buildChapterReviewDetail } from '../data/mockData';
 import { isAxiosError } from 'axios';
@@ -52,11 +53,68 @@ const readWithFallback = async <T>(
   }
 };
 
+const PENDING_SERIES_STATUSES = new Set(['Pending_Approval', 'Pending_Board_Vote']);
+
+/** BE chưa có GET /api/reviews/series/pending (route bị nuốt bởi series/{id}). Fallback: gom từ chapter queue + probe id khi dev. */
+const fetchPendingSeriesForEditor = async (): Promise<SeriesReviewDto[]> => {
+  try {
+    const res = await axiosInstance.get<ApiResponse<SeriesReviewDto[]>>('/api/reviews/series/pending');
+    if (res.data?.success && res.data.data?.length) return res.data.data;
+  } catch (err) {
+    if (!isAxiosError(err) || (err.response?.status !== 400 && err.response?.status !== 404)) {
+      throw err;
+    }
+  }
+
+  const seriesIds = new Set<number>();
+
+  const chaptersRes = await axiosInstance.get<ApiResponse<ReviewQueueItem[]>>('/api/reviews/chapters');
+  for (const ch of chaptersRes.data?.data ?? []) {
+    const sid = ch.seriesId;
+    if (sid != null) seriesIds.add(Number(sid));
+  }
+
+  const statsRes = await axiosInstance.get<ApiResponse<components['schemas']['DashboardStatsResponseDto']>>(
+    '/api/dashboard/stats',
+  );
+  const pendingCount = statsRes.data?.data?.pendingSeries ?? 0;
+
+  if (seriesIds.size === 0 && pendingCount > 0 && import.meta.env.DEV) {
+    for (let id = 1; id <= 20; id++) {
+      try {
+        const r = await axiosInstance.get<ApiResponse<SeriesReviewDto>>(`/api/reviews/series/${id}`);
+        const row = r.data?.data;
+        if (row?.status && PENDING_SERIES_STATUSES.has(row.status)) {
+          seriesIds.add(id);
+        }
+      } catch {
+        // skip missing ids
+      }
+    }
+  }
+
+  const reviews = await Promise.all(
+    [...seriesIds].map(async (id) => {
+      const r = await axiosInstance.get<ApiResponse<SeriesReviewDto>>(`/api/reviews/series/${id}`);
+      return r.data?.data ?? null;
+    }),
+  );
+
+  return reviews.filter((row): row is SeriesReviewDto => row != null);
+};
+
 export const reviewApi = {
   /** GET /api/reviews/series/pending — series chờ Editor duyệt bản thảo (PA3) */
   getPendingSeries: async () => {
-    const res = await axiosInstance.get<ApiResponse<SeriesReviewDto[]>>('/api/reviews/series/pending');
-    return res;
+    const data = await fetchPendingSeriesForEditor();
+    return {
+      data: {
+        success: true,
+        statusCode: 200,
+        message: 'Lấy danh sách series chờ duyệt thành công.',
+        data,
+      } satisfies ApiResponse<SeriesReviewDto[]>,
+    };
   },
 
   /** GET /api/reviews/series/{id} — chi tiết series để Editor review */
@@ -119,7 +177,10 @@ export const reviewApi = {
     }
     const res = await axiosInstance.post<ApiResponse<boolean>>(
       `/api/reviews/chapters/${payload.chapterId}/approve`,
-      { validPageCount: payload.validPageCount, qcChecklistData: '{}' },
+      {
+        validPageCount: payload.validPageCount,
+        qcChecklistData: JSON.stringify(payload.qcChecklist ?? {}),
+      },
     );
     return res;
   },
