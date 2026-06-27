@@ -249,7 +249,7 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
       if (!canvas) return;
 
       const handleMouseDown = (opt: TPointerEventInfo) => {
-        const evt = opt.e;
+        const evt = opt.e as MouseEvent;
 
         // Alt+drag OR Middle-click OR pan mode -> panning
         if (evt.altKey || evt.button === 1 || (mode === 'pan' && evt.button === 0)) {
@@ -306,7 +306,7 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
       };
 
       const handleMouseMove = (opt: TPointerEventInfo) => {
-        const evt = opt.e;
+        const evt = opt.e as MouseEvent;
 
         // Panning
         if (isPanningRef.current) {

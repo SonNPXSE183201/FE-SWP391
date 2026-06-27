@@ -303,7 +303,7 @@ export const SeriesDetailFeature = () => {
           {isFundPending && (
             <div className="mt-8">
               <AcceptFundPanel
-                approvedBudget={series.approvedProductionBudget}
+                approvedBudget={series.approvedProductionBudget ?? 0}
                 hasContract={series.hasContract || false}
                 isAccepting={acceptFund.isAccepting}
                 onAccept={acceptFund.acceptFund}
