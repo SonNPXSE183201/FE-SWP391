@@ -8,6 +8,7 @@ export interface NotificationItem {
   message: string;
   isRead: boolean;
   link?: string;
+  rawType?: string;
   type: 'TaskUpdate' | 'WalletUpdate' | 'SystemAlert' | 'Review';
   createdAt: string;
 }

@@ -1,6 +1,5 @@
 import React from 'react';
 import { LoginForm, LoginBackground } from '../index';
-import { Logo } from '../../../components/common/Logo';
 
 export const LoginPageLayout: React.FC = () => {
   return (
@@ -25,10 +24,7 @@ export const LoginPageLayout: React.FC = () => {
 
           {/* Content over image */}
           <div className="relative z-20">
-            <div className="animate-fade-in-down" style={{ animationDelay: '0.1s' }}>
-              <Logo size="lg" />
-            </div>
-            <div className="mt-12 space-y-6 animate-text-float" style={{ animationDelay: '1.5s' }}>
+            <div className="space-y-6 animate-text-float" style={{ animationDelay: '1.5s' }}>
               <h1 className="text-4xl xl:text-5xl font-bold leading-snug pb-2 overflow-visible drop-shadow-lg">
                 <span
                   className="inline-block animate-hero-text-reveal"

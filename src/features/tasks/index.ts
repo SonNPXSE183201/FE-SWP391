@@ -19,7 +19,12 @@ export {
   useApproveTask,
   useRequestRevisionTask,
   useTaskDetail,
+  useTaskVersions,
+  useTaskVersionAnnotations,
+  useCompositedPageUrl,
   useRequestExtension,
   useApproveExtension,
 } from './hooks/useTasks';
 export type { AvailableTaskDto } from './hooks/useTasks';
+export { TaskReviewModal } from './components/TaskReviewModal';
+export { AssistantTaskDetailModal } from './components/AssistantTaskDetailModal';

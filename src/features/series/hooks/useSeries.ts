@@ -12,7 +12,7 @@ import { parseApiDate } from '../../../utils/parseApiDate';
 const BE_STATUS_MAP: Record<string, SeriesStatus> = {
   Draft: 'Draft',
   Pending_Approval: 'PendingApproval',
-  Pending_Board_Vote: 'PendingApproval',
+  Pending_Board_Vote: 'PendingBoardVote',
   Fund_Pending: 'Approved',
   Active: 'Published',
   'In Production': 'Published',
@@ -46,6 +46,9 @@ export const mapSeriesDtoToEntity = (dto: components['schemas']['SeriesDto']): S
   chapterCount: 0,
   createdAt: dto.createAt || new Date().toISOString(),
   updatedAt: dto.updateAt || new Date().toISOString(),
+  hasContract: dto.hasContract,
+  editorNote: dto.editorNote ?? undefined,
+  mangakaSubmissionNote: dto.mangakaSubmissionNote ?? undefined,
 });
 
 const CHAPTER_STATUS_MAP: Record<string, Chapter['status']> = {
@@ -96,6 +99,7 @@ export const mapPageDtoToEntity = (dto: PageDto): Page => ({
   chapterId: dto.chapterId?.toString() || '',
   pageNumber: dto.pageNumber || 1,
   imageUrl: dto.rawImageUrl || dto.compositeImageUrl || '',
+  compositeImageUrl: dto.compositeImageUrl || undefined,
   status: mapPageStatus(dto.status),
   regionCount: 0,
   createdAt: dto.createAt || new Date().toISOString(),
@@ -130,6 +134,13 @@ export const useSeriesDetail = (id?: string) => {
     },
     enabled: !!id,
     retry: 1,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      if (status === 'PendingApproval' || status === 'PendingBoardVote') {
+        return 15_000;
+      }
+      return false;
+    },
   });
 };
 

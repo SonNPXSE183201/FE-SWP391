@@ -107,7 +107,7 @@ const getNavSections = (role: UserRole): NavSectionConfig[] => {
         {
           title: 'Biên tập',
           items: [
-            { label: 'Review bản thảo', path: '/editor/review', icon: <FileText size={20} /> },
+            { label: 'Duyệt bản thảo', path: '/editor/review', icon: <FileText size={20} /> },
             { label: 'Annotation', path: '/editor/annotations', icon: <Sparkles size={20} /> },
             { label: 'Phân xử tranh chấp', path: '/editor/disputes', icon: <Shield size={20} /> },
           ],
@@ -144,10 +144,10 @@ const getNavSections = (role: UserRole): NavSectionConfig[] => {
           title: 'Quản trị',
           items: [
             { label: 'Quản lý người dùng', path: '/admin/users', icon: <Users size={20} /> },
-            { label: 'Phân quyền RBAC', path: '/admin/roles', icon: <Shield size={20} /> },
             { label: 'Hợp đồng', path: '/admin/contracts', icon: <FileSignature size={20} /> },
             { label: 'Đối soát giao dịch', path: '/admin/reconciliation', icon: <Receipt size={20} /> },
             { label: 'Duyệt rút tiền', path: '/admin/withdraw-approval', icon: <ArrowUpFromLine size={20} /> },
+            { label: 'Biểu quyết HĐ', path: '/admin/board-voting', icon: <Vote size={20} /> },
           ],
         },
       ];

@@ -37,24 +37,5 @@ export interface ChapterFormErrors {
   pages?: string;
 }
 
-// Genre options used across Series UI
-export const GENRE_OPTIONS = [
-  'Shōnen',
-  'Shōjo',
-  'Seinen',
-  'Josei',
-  'Kodomo',
-  'Mecha',
-  'Isekai',
-  'Slice of Life',
-  'Horror',
-  'Romance',
-  'Fantasy',
-  'Sci-Fi',
-  'Comedy',
-  'Action',
-  'Mystery',
-  'Sports',
-  'Historical',
-  'Thriller',
-] as const;
+// Genre options — re-export from constants (grouped + flat list)
+export { GENRE_OPTIONS, GENRE_GROUPS, getGenreLabel } from '../constants/genres';

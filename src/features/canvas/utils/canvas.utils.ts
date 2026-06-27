@@ -6,6 +6,10 @@ import type {
   UpdateRegionDto,
 } from '../../../api/generated/types';
 import type { Annotation, AnnotationType, Region } from '../../../types/entities';
+import { Point, util } from 'fabric';
+import type { FabricImage } from 'fabric';
+
+const ANNOTATION_TYPES: AnnotationType[] = ['Technical', 'Art', 'Content'];
 
 interface Coordinates {
   top?: number;
@@ -30,6 +34,33 @@ export const parseCoordinatesJson = (
     };
   } catch {
     return { x: 0, y: 0, width: 0, height: 0 };
+  }
+};
+
+/** Parse điểm ghim từ coordinatesJson khi Mangaka yêu cầu sửa Task (mảng [{x,y,type,comment}]). */
+export const parseTaskRevisionPins = (
+  json?: string | null,
+): Array<{ x: number; y: number; type: AnnotationType; comment: string }> => {
+  if (!json || json === '[]') return [];
+  try {
+    const parsed = JSON.parse(json) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((item) => {
+        const p = item as { x?: number; y?: number; type?: string; comment?: string };
+        const type = ANNOTATION_TYPES.includes(p.type as AnnotationType)
+          ? (p.type as AnnotationType)
+          : 'Technical';
+        return {
+          x: p.x ?? 0,
+          y: p.y ?? 0,
+          type,
+          comment: p.comment ?? '',
+        };
+      })
+      .filter((p) => p.comment || p.x || p.y);
+  } catch {
+    return [];
   }
 };
 
@@ -90,8 +121,6 @@ export const toUpdateRegionDto = (data: Partial<Region>): UpdateRegionDto => {
   return result;
 };
 
-const ANNOTATION_TYPES: AnnotationType[] = ['Technical', 'Art', 'Content'];
-
 export const mapAnnotationDtoToEntity = (dto: AnnotationDto): Annotation => {
   const coords = parseCoordinatesJson(dto.coordinatesJson);
   const type = ANNOTATION_TYPES.includes(dto.type as AnnotationType)
@@ -125,6 +154,25 @@ export const toCreateAnnotationDto = (data: {
   comment: data.comment,
   type: data.type,
 });
+
+/** Chuyển rect (scene/canvas space) → toạ độ pixel trên ảnh gốc (0,0 = góc trên-trái ảnh). */
+export const sceneRectToImagePixels = (
+  img: FabricImage,
+  left: number,
+  top: number,
+  width: number,
+  height: number,
+) => {
+  const inv = util.invertTransform(img.calcTransformMatrix());
+  const tl = util.transformPoint(new Point(left, top), inv);
+  const br = util.transformPoint(new Point(left + width, top + height), inv);
+  return {
+    x: Math.round(Math.min(tl.x, br.x)),
+    y: Math.round(Math.min(tl.y, br.y)),
+    width: Math.max(1, Math.round(Math.abs(br.x - tl.x))),
+    height: Math.max(1, Math.round(Math.abs(br.y - tl.y))),
+  };
+};
 
 /** @deprecated Dùng resolveMediaUrl từ utils — giữ alias cho canvas feature */
 export { resolveMediaUrl as resolvePageImageUrl } from '../../../utils/resolveMediaUrl';

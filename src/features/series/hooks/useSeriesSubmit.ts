@@ -22,7 +22,7 @@ export const useSeriesSubmit = ({
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const submitForApproval = useCallback(async () => {
+  const submitForApproval = useCallback(async (mangakaNote?: string) => {
     if (!seriesId) {
       toast.error('Không xác định được series. Vui lòng tải lại trang.');
       return;
@@ -35,9 +35,14 @@ export const useSeriesSubmit = ({
 
     setIsSubmitting(true);
     try {
-      const noteSuffix = nameFileName ? ` File: ${nameFileName}.` : '';
+      const noteSuffix = nameFileName ? ` (File: ${nameFileName})` : '';
+      const trimmedNote = mangakaNote?.trim();
+      const submissionNotes = trimmedNote
+        ? `${trimmedNote}${noteSuffix}`
+        : `Bản phác thảo (Name) đã được nộp.${noteSuffix ? ` File: ${nameFileName}.` : ''}`;
+
       const res = await seriesApi.submitReview(seriesId, {
-        submissionNotes: `Bản phác thảo (Name) đã được nộp.${noteSuffix}`,
+        submissionNotes,
       });
       const apiData = res.data as ApiResponse<null>;
 

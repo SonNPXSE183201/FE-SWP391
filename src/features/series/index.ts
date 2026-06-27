@@ -1,8 +1,10 @@
-// Series feature barrel
+export { getGenreLabel, GENRE_OPTIONS, GENRE_GROUPS } from './constants/genres';
 export { SERIES_STATUS_CONFIG, SERIES_STATUS_FILTER_OPTIONS } from './constants';
 export { CHAPTER_STATUS_CONFIG, CHAPTER_STATUS_FILTER_OPTIONS, PAGE_STATUS_FILTER_OPTIONS } from './constants';
 export { MOCK_SERIES, MOCK_CHAPTERS } from './data/mockData';
 export { getPagesByChapterId } from './data/mockPages';
+export { EditorRevisionPanel } from './components/EditorRevisionPanel';
+export { useSeriesBudgetEdit } from './hooks/useSeriesBudgetEdit';
 export { SeriesCard, SeriesRow } from './components/SeriesCard';
 export { CreateSeriesForm } from './components/CreateSeriesForm';
 export { StatusTimeline } from './components/StatusTimeline';
@@ -16,6 +18,7 @@ export { useAcceptFund } from './hooks/useAcceptFund';
 export * from './hooks/useSeries';
 export { formatChapterDate } from './hooks/useSeries';
 export { UploadChapterModal } from './components/UploadChapterModal';
+export { AddPagesModal } from './components/AddPagesModal';
 export { PageCard } from './components/PageCard';
 export { PageLightbox } from './components/PageLightbox';
 export { SeriesListFeature } from './components/SeriesListFeature';

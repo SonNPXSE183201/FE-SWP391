@@ -12,6 +12,7 @@
 export type SeriesStatus =
   | 'Draft'
   | 'PendingApproval'
+  | 'PendingBoardVote'
   | 'Approved'
   | 'Published'
   | 'OnHold'
@@ -43,6 +44,8 @@ export type TaskStatus =
 
 export type TransactionType =
   | 'Funding'
+  | 'Production_Funding'
+  | 'Platform_TopUp'
   | 'Lock'
   | 'Unlock'
   | 'Escrow_Lock'
@@ -125,6 +128,9 @@ export interface Series extends BaseEntity {
   status: SeriesStatus;
   chapterCount: number;
   scheduledPublishDate?: string;
+  hasContract?: boolean;
+  editorNote?: string;
+  mangakaSubmissionNote?: string;
 }
 
 export interface Chapter extends BaseEntity {

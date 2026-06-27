@@ -1,13 +1,23 @@
 import { useNavigate } from 'react-router-dom';
 import { FileText, Clock, Eye } from 'lucide-react';
 import type { Series } from '../../../types/entities';
+import { getGenreLabel } from '../constants/genres';
 import { SERIES_STATUS_CONFIG } from '../constants';
 import { CoverPlaceholder } from './CoverPlaceholder';
+
+const resolveSeriesStatusBadge = (series: Series) =>
+  series.editorNote && series.status === 'Draft'
+    ? { label: 'Cần chỉnh sửa', color: 'text-amber-400', bg: 'bg-amber-500/10' }
+    : SERIES_STATUS_CONFIG[series.status] || {
+        label: String(series.status),
+        color: 'text-text-muted',
+        bg: 'bg-bg-surface',
+      };
 
 // ─── Grid Card ───────────────────────────────────────────────
 export const SeriesCard = ({ series, index }: { series: Series; index: number }) => {
   const navigate = useNavigate();
-  const status = SERIES_STATUS_CONFIG[series.status] || { label: String(series.status), color: 'text-text-muted', bg: 'bg-bg-surface' };
+  const status = resolveSeriesStatusBadge(series);
   const updatedDate = new Date(series.updatedAt).toLocaleDateString('vi-VN', {
     day: '2-digit', month: '2-digit', year: 'numeric',
   });
@@ -53,7 +63,7 @@ export const SeriesCard = ({ series, index }: { series: Series; index: number })
         <div className="flex flex-wrap gap-1.5 mt-3">
           {series.genre.slice(0, 3).map((g) => (
             <span key={g} className="px-2 py-0.5 rounded-md bg-brand/8 text-brand/80 text-[10px] font-medium border border-brand/10">
-              {g}
+              {getGenreLabel(g)}
             </span>
           ))}
           {series.genre.length > 3 && (
@@ -75,7 +85,7 @@ export const SeriesCard = ({ series, index }: { series: Series; index: number })
 // ─── List Row ────────────────────────────────────────────────
 export const SeriesRow = ({ series, index }: { series: Series; index: number }) => {
   const navigate = useNavigate();
-  const status = SERIES_STATUS_CONFIG[series.status] || { label: String(series.status), color: 'text-text-muted', bg: 'bg-bg-surface' };
+  const status = resolveSeriesStatusBadge(series);
   const updatedDate = new Date(series.updatedAt).toLocaleDateString('vi-VN', {
     day: '2-digit', month: '2-digit', year: 'numeric',
   });
@@ -106,7 +116,7 @@ export const SeriesRow = ({ series, index }: { series: Series; index: number }) 
         <p className="text-xs text-text-muted mt-1 line-clamp-1">{series.synopsis}</p>
         <div className="flex items-center gap-3 mt-2">
           {series.genre.slice(0, 3).map((g) => (
-            <span key={g} className="text-[10px] text-brand/70 font-medium">{g}</span>
+            <span key={g} className="text-[10px] text-brand/70 font-medium">{getGenreLabel(g)}</span>
           ))}
         </div>
       </div>

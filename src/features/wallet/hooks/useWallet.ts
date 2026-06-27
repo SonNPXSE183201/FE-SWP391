@@ -5,6 +5,7 @@ import type { ApiResponse, WalletDetailsDto, TransactionDto } from '../../../api
 import { isApiSuccess, getApiMessage } from '../../../api/apiResponse';
 import { useAuthStore } from '../../../stores/authStore';
 import { normalizeTransactionType } from '../utils';
+import { NEMU_FUNDING_LABEL } from '../../series/constants/seriesCopy';
 
 export const useWallet = () => {
   const user = useAuthStore(state => state.user);
@@ -46,6 +47,8 @@ export const useWallet = () => {
           'Escrow_Unlock': 'Hoàn trả quỹ',
           'Transfer': 'Thanh toán',
           'Funding': 'Cấp vốn',
+          'Production_Funding': NEMU_FUNDING_LABEL,
+          'Platform_TopUp': 'Nạp quỹ NXB',
           'Genkouryo': 'Nhuận bút',
         }[txType as string] || txType;
 
