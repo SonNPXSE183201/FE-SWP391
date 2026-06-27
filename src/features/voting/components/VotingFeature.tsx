@@ -369,18 +369,19 @@ export const VotingFeature = () => {
         
         {/* Modal Needs to be here too for Detail View */}
         {showVoteModal && voteTarget && createPortal(
-          <VoteModalContent 
-            voteTarget={voteTarget} 
-            voteDecision={voteDecision} 
-            setVoteDecision={setVoteDecision} 
-            voteComment={voteComment} 
-            setVoteComment={setVoteComment} 
+          <VoteModal
+            voteTarget={voteTarget}
+            voteDecision={voteDecision}
+            setVoteDecision={setVoteDecision}
+            voteComment={voteComment}
+            setVoteComment={setVoteComment}
             voteBudget={voteBudget}
             setVoteBudget={setVoteBudget}
-            handleVoteSubmit={handleVoteSubmit} 
-            setShowVoteModal={setShowVoteModal} 
+            boardTotal={boardTotal || 6}
+            approveRequired={votingRules?.approveRequired}
+            onClose={() => setShowVoteModal(false)}
+            onSubmit={handleVoteSubmit}
             submitVoteMutation={submitVoteMutation}
-            getTotalVotes={getTotalVotes}
           />,
           document.body
         )}
