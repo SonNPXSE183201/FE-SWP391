@@ -1,5 +1,7 @@
 import { BookOpen, AlignLeft, Tags, Banknote, FileText } from 'lucide-react';
 import type { Series } from '../../../types/entities';
+import { getGenreLabel } from '../constants/genres';
+import { MANGAKA_PROPOSED_LABEL, NEMU_BUDGET_LABEL_SHORT } from '../constants/seriesCopy';
 
 interface SeriesInfoCardProps {
   series: Series;
@@ -38,7 +40,7 @@ export const SeriesInfoCard = ({ series }: SeriesInfoCardProps) => {
           <div className="flex flex-wrap gap-1.5">
             {series.genre.map((g) => (
               <span key={g} className="px-2.5 py-1 rounded-lg bg-brand/10 text-brand text-[11px] font-medium border border-brand/15">
-                {g}
+                {getGenreLabel(g)}
               </span>
             ))}
           </div>
@@ -51,7 +53,7 @@ export const SeriesInfoCard = ({ series }: SeriesInfoCardProps) => {
               <Banknote size={16} className="text-brand" />
             </div>
             <div>
-              <p className="text-[10px] text-text-muted">Vốn sản xuất</p>
+              <p className="text-[10px] text-text-muted">{NEMU_BUDGET_LABEL_SHORT}</p>
               <p className="text-sm font-semibold text-text-primary">
                 {series.status === 'Approved' && (series.approvedProductionBudget ?? 0) > 0
                   ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
@@ -61,8 +63,15 @@ export const SeriesInfoCard = ({ series }: SeriesInfoCardProps) => {
                     ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
                         series.approvedProductionBudget ?? series.estimatedProductionBudget ?? 0,
                       )
-                    : 'Chờ Board duyệt'}
+                    : (series.estimatedProductionBudget ?? 0) > 0
+                      ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
+                          series.estimatedProductionBudget ?? 0,
+                        )
+                      : 'Chưa đề xuất'}
               </p>
+              {series.status === 'Draft' && (series.estimatedProductionBudget ?? 0) > 0 && (
+                <p className="text-[10px] text-text-muted mt-0.5">{MANGAKA_PROPOSED_LABEL}</p>
+              )}
             </div>
           </div>
           <div className="bg-bg-surface border border-border-custom rounded-xl px-4 py-3 flex items-center gap-3">

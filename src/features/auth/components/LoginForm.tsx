@@ -117,7 +117,7 @@ export const LoginForm: React.FC = () => {
                 disabled={isLoading}
                 autoComplete="username"
                 className="w-full pl-10 pr-4 py-2.5 bg-bg-surface border border-border-custom rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all duration-300"
-                placeholder="mangaka1 hoặc nhap@email.com"
+                placeholder="Nhập email hoặc tên đăng nhập"
               />
             </div>
           </div>

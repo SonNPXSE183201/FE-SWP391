@@ -7,7 +7,6 @@ import {
   Clock,
   ChevronRight,
   FileText,
-  Layers,
   Loader2,
 } from 'lucide-react';
 
@@ -18,26 +17,27 @@ import {
   NameUploader,
   SubmitChecklist,
   AcceptFundPanel,
+  EditorRevisionPanel,
   useNameUpload,
   useSeriesSubmit,
   useAcceptFund,
+  useSeriesBudgetEdit,
   useSeriesDetail,
-  useChapters,
 } from '../index';
 import type { SeriesStatus } from '../../../types/entities';
 import type { SeriesNameUpdateSnapshot } from '../api/series.api';
+import { NEMU_BUDGET_LABEL_SHORT, NEMU_MANUSCRIPT_LABEL } from '../constants/seriesCopy';
+import { parseEditorRevisionNote } from '../utils/editorRevision.utils';
 
 export const SeriesDetailFeature = () => {
   const { seriesId } = useParams<{ seriesId: string }>();
   const navigate = useNavigate();
 
-  // Fetch series and chapters via hooks (USE_MOCK handled in API layer)
-  const { data: series, isLoading: seriesLoading } = useSeriesDetail(seriesId);
-  const { data: chapters = [], isLoading: chaptersLoading } = useChapters(seriesId);
-
-  const isLoading = seriesLoading || chaptersLoading;
+  // Fetch series via hook (USE_MOCK handled in API layer)
+  const { data: series, isLoading } = useSeriesDetail(seriesId);
 
   const [statusOverride, setStatusOverride] = useState<SeriesStatus | null>(null);
+  const [resubmitNote, setResubmitNote] = useState('');
   const currentStatus = statusOverride ?? series?.status ?? 'Draft';
 
   const seriesSnapshot: SeriesNameUpdateSnapshot | undefined = series
@@ -66,6 +66,14 @@ export const SeriesDetailFeature = () => {
     seriesId,
     onStatusChange: useCallback((status: SeriesStatus) => setStatusOverride(status), []),
   });
+  const budgetEdit = useSeriesBudgetEdit({
+    seriesId,
+    seriesSnapshot,
+    resourceFolderUrl: series?.resourceFolderUrl ?? nameUpload.nameFileUrl,
+  });
+  const scrollToSubmit = useCallback(() => {
+    document.getElementById('submit-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
 
   // ─── Loading ───
   if (isLoading) {
@@ -98,15 +106,47 @@ export const SeriesDetailFeature = () => {
   }
 
   const isDraft = series.status === 'Draft' && currentStatus === 'Draft';
-  const isPendingReview = currentStatus === 'PendingApproval' || series.status === 'PendingApproval';
+  const hasRevisionRequest = isDraft && !!series.editorNote?.trim();
+  const isPendingEditorReview =
+    currentStatus === 'PendingApproval' || series.status === 'PendingApproval';
+  const isPendingBoardVote =
+    currentStatus === 'PendingBoardVote' || series.status === 'PendingBoardVote';
   const isFundPending = currentStatus === 'Approved';
-  const statusConfig = SERIES_STATUS_CONFIG[currentStatus];
+  const statusConfig = hasRevisionRequest
+    ? { label: 'Cần chỉnh sửa', color: 'text-amber-400', bg: 'bg-amber-500/10' }
+    : SERIES_STATUS_CONFIG[currentStatus];
+
+  const revisionParsed = hasRevisionRequest ? parseEditorRevisionNote(series.editorNote!) : null;
+
+  const needsFieldRevision = (field: 'synopsis' | 'genre' | 'name' | 'budget' | 'cover') =>
+    revisionParsed?.checklistIds.includes(field as 'synopsis' | 'genre' | 'name' | 'budget') ?? false;
 
   // Build checklist items for SubmitChecklist
   const checklistItems = [
-    { label: 'Ảnh bìa', completed: !!series.coverImageUrl },
-    { label: 'Tóm tắt nội dung', completed: !!series.synopsis },
-    { label: 'Bản phác thảo (Name)', completed: nameUpload.hasNameManuscript },
+    {
+      label: 'Ảnh bìa',
+      completed: !!series.coverImageUrl,
+      needsRevision: needsFieldRevision('cover'),
+    },
+    {
+      label: 'Tóm tắt nội dung',
+      completed: !!series.synopsis,
+      needsRevision: needsFieldRevision('synopsis'),
+    },
+    {
+      label: NEMU_MANUSCRIPT_LABEL,
+      completed: nameUpload.hasNameManuscript,
+      needsRevision: needsFieldRevision('name'),
+    },
+    ...(needsFieldRevision('budget')
+      ? [
+          {
+            label: NEMU_BUDGET_LABEL_SHORT,
+            completed: (series.estimatedProductionBudget ?? 0) > 0,
+            needsRevision: true,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -132,8 +172,8 @@ export const SeriesDetailFeature = () => {
         </span>
       </div>
 
-      {/* ─── Status Timeline (Feature Component) ─── */}
-      <StatusTimeline currentStatus={currentStatus} />
+      {/* ─── Status Timeline ─── */}
+      {!hasRevisionRequest && <StatusTimeline currentStatus={currentStatus} />}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* ─── Left: Cover Image ─── */}
@@ -158,6 +198,15 @@ export const SeriesDetailFeature = () => {
 
         {/* ─── Right: Info & Actions ─── */}
         <div className="lg:col-span-2 space-y-5">
+          {hasRevisionRequest && (
+            <EditorRevisionPanel
+              editorNote={series.editorNote!}
+              estimatedBudget={series.estimatedProductionBudget ?? 0}
+              onSaveBudget={budgetEdit.saveBudget}
+              onScrollToSubmit={scrollToSubmit}
+            />
+          )}
+
           {/* Series Info (Feature Component) */}
           <SeriesInfoCard series={series} />
 
@@ -175,25 +224,28 @@ export const SeriesDetailFeature = () => {
             />
           )}
 
-          {/* Submit Checklist — Draft only (Feature Component) */}
+          {/* Submit Checklist — Draft only */}
           {isDraft && (
             <SubmitChecklist
-              items={checklistItems}
-              isSubmitting={seriesSubmit.isSubmitting}
-              canSubmit={nameUpload.hasNameManuscript && !nameUpload.isUploading && !nameUpload.isRemoving}
-              onSubmit={seriesSubmit.submitForApproval}
+                items={checklistItems}
+                isSubmitting={seriesSubmit.isSubmitting}
+                canSubmit={nameUpload.hasNameManuscript && !nameUpload.isUploading && !nameUpload.isRemoving}
+                onSubmit={() => seriesSubmit.submitForApproval(hasRevisionRequest ? resubmitNote : undefined)}
+                isRevisionResubmit={hasRevisionRequest}
+                resubmitNote={resubmitNote}
+                onResubmitNoteChange={hasRevisionRequest ? setResubmitNote : undefined}
             />
           )}
 
-          {/* After Submit: Pending Message */}
-          {isPendingReview && (
+          {/* After Submit: Pending Editor */}
+          {isPendingEditorReview && (
             <div className="space-y-4">
               {series.resourceFolderUrl && (
                 <div className="bg-bg-secondary border border-border-custom rounded-xl p-4 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <FileText size={18} className="text-brand flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-text-primary">Bản phác thảo (Name)</p>
+                      <p className="text-sm font-medium text-text-primary">{NEMU_MANUSCRIPT_LABEL}</p>
                       <p className="text-xs text-text-muted truncate">Đã nộp kèm hồ sơ xét duyệt</p>
                     </div>
                   </div>
@@ -207,89 +259,58 @@ export const SeriesDetailFeature = () => {
                   </a>
                 </div>
               )}
-            <div className="bg-warning/5 border border-warning/20 rounded-xl p-5 animate-fade-in">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center flex-shrink-0">
-                  <Clock size={20} className="text-warning" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-text-primary">Đang chờ xét duyệt</h3>
-                  <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                    Series đã được gửi cho Editor phụ trách đánh giá. Bạn sẽ nhận được thông báo khi có kết quả.
-                    Trong thời gian chờ, bạn không thể chỉnh sửa nội dung Series.
-                  </p>
+              <div className="bg-warning/5 border border-warning/20 rounded-xl p-5 animate-fade-in">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center flex-shrink-0">
+                    <Clock size={20} className="text-warning" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-text-primary">Đang chờ Editor duyệt</h3>
+                    <p className="text-xs text-text-muted mt-1 leading-relaxed">
+                      Series đã được gửi cho Editor phụ trách đánh giá. Bạn sẽ nhận thông báo khi có kết quả.
+                      Trong thời gian chờ, bạn không thể chỉnh sửa nội dung Series.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Editor đã trình Hội đồng */}
+          {isPendingBoardVote && (
+            <div className="bg-brand/5 border border-brand/20 rounded-xl p-5 animate-fade-in">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center flex-shrink-0">
+                  <Clock size={20} className="text-brand" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-text-primary">Đang chờ Hội đồng thẩm định</h3>
+                  <p className="text-xs text-text-muted mt-1 leading-relaxed">
+                    Editor đã trình hồ sơ lên Hội đồng. Bạn sẽ nhận thông báo khi có kết quả biểu quyết.
+                    Trong thời gian chờ, bạn không thể chỉnh sửa nội dung Series.
+                  </p>
+                  {series.editorNote?.trim() && (
+                    <p className="text-xs text-text-secondary mt-2 leading-relaxed">
+                      Ghi chú Editor: {series.editorNote}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
           {/* F02 — Chấp nhận vốn sau Board duyệt (Fund_Pending) */}
           {isFundPending && (
-            <AcceptFundPanel
-              approvedBudget={series.approvedProductionBudget ?? series.estimatedProductionBudget ?? 0}
-              isAccepting={acceptFund.isAccepting}
-              onAccept={acceptFund.acceptFund}
-            />
+            <div className="mt-8">
+              <AcceptFundPanel
+                approvedBudget={series.approvedProductionBudget}
+                hasContract={series.hasContract || false}
+                isAccepting={acceptFund.isAccepting}
+                onAccept={acceptFund.acceptFund}
+              />
+            </div>
           )}
         </div>
-      </div>
-
-      {/* ─── Chapters List ─── */}
-      <div className="mt-6 bg-bg-secondary border border-border-custom rounded-xl p-5">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Layers size={16} className="text-brand" />
-            <h2 className="text-sm font-semibold text-text-primary">Danh sách Chapter</h2>
-            <span className="text-[10px] text-text-muted bg-bg-surface px-2 py-0.5 rounded-full">{chapters.length}</span>
-          </div>
-        </div>
-
-        {chapters.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 gap-2 text-text-muted">
-            <FileText size={28} />
-            <p className="text-xs">Chưa có chapter nào trong series này</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {chapters.map((ch) => (
-              <div
-                key={ch.id}
-                onClick={() => navigate(`/mangaka/manuscripts/${ch.id}`)}
-                className="group flex items-center gap-4 p-3.5 rounded-xl border border-border-custom/50 bg-bg-primary hover:border-brand/30 hover:bg-brand/[0.03] transition-all cursor-pointer"
-              >
-                {/* Chapter number */}
-                <div className="w-10 h-10 rounded-lg bg-brand/10 flex items-center justify-center text-sm font-bold text-brand flex-shrink-0">
-                  {ch.chapterNumber}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-text-primary truncate">
-                    Ch.{ch.chapterNumber}: {ch.title}
-                  </p>
-                    {/* Chapter metadata could go here */}
-                </div>
-
-                {/* Status badge */}
-                <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-medium flex-shrink-0 ${
-                  ch.status === 'Published' ? 'bg-success/10 text-success' :
-                  ch.status === 'UnderReview' ? 'bg-info/10 text-info' :
-                  ch.status === 'Submitted' ? 'bg-warning/10 text-warning' :
-                  'bg-bg-surface text-text-muted'
-                }`}>
-                  {ch.status === 'Published' ? 'Đã duyệt' :
-                   ch.status === 'UnderReview' ? 'Đang làm' :
-                   ch.status === 'Submitted' ? 'Chờ duyệt' :
-                   'Nháp'}
-                </span>
-
-                {/* Arrow */}
-                <ChevronRight size={16} className="text-text-muted group-hover:text-brand transition-colors flex-shrink-0" />
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

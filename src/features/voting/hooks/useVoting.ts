@@ -24,10 +24,16 @@ export const useVotingDetail = (votingId: string | null) => {
 export const useSubmitBoardVote = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ seriesId, body }: { seriesId: string; body: VoteSeriesRequestDto }) =>
-      votingApi.submitVote(seriesId, body),
+    mutationFn: ({
+      seriesId,
+      body,
+    }: {
+      seriesId: string;
+      body: VoteSeriesRequestDto & { voteChoice?: string };
+    }) => votingApi.submitVote(seriesId, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['voting'] });
+      queryClient.invalidateQueries({ queryKey: ['series'] });
     },
   });
 };

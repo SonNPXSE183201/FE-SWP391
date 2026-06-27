@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { SeriesFormData, SeriesFormErrors } from '../types/series.types';
+import { NEMU_BUDGET_REQUIRED } from '../constants/seriesCopy';
 
 const INITIAL_FORM_DATA: SeriesFormData = {
   title: '',
@@ -77,7 +78,7 @@ export const useSeriesForm = () => {
     }
 
     if (!formData.requestedBudget || Number(formData.requestedBudget) <= 0) {
-      newErrors.requestedBudget = 'Vốn sản xuất Chapter 1 là bắt buộc';
+      newErrors.requestedBudget = NEMU_BUDGET_REQUIRED;
     }
 
     setErrors(newErrors);

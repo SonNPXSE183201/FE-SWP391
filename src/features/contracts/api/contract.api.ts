@@ -90,18 +90,12 @@ export const contractApi = {
       const res = await axiosInstance.get<ApiResponse<ApprovedSeriesContractDto[]>>(
         '/api/admin/contracts/series',
       );
-      const items = (res.data?.data ?? []).map(mapApprovedSeriesContractDto);
-      if (items.length > 0) return items;
+      return (res.data?.data ?? []).map(mapApprovedSeriesContractDto);
     } catch (err) {
       if (!import.meta.env.DEV) throw err;
       console.warn('[contracts] API lỗi — dùng mock dev để test UI', err);
       return getDevMockSeries();
     }
-    if (import.meta.env.DEV) {
-      console.warn('[contracts] API trả rỗng — dùng mock dev để test UI');
-      return getDevMockSeries();
-    }
-    return [];
   },
 
   createContract: async (seriesId: string, baseGenkouryoPrice: number) => {

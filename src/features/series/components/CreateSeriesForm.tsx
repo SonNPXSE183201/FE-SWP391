@@ -7,20 +7,44 @@ import {
   X,
   ImagePlus,
   BookOpen,
-  AlignLeft,
-  Tags,
-  Sparkles,
   Save,
   Eye,
-  Banknote,
+  FileText,
+  ChevronRight,
+  ListChecks,
 } from 'lucide-react';
 
 import { useSeriesForm } from '../hooks/useSeriesForm';
-import { GENRE_OPTIONS } from '../types/series.types';
+import { HelpTip } from '../../../components/common/HelpTip';
+import { GenrePicker } from './GenrePicker';
+import {
+  CREATE_SERIES_WORKFLOW_HELP,
+  NEMU_BUDGET_HELP,
+  NEMU_BUDGET_LABEL,
+  NEMU_MANUSCRIPT_LABEL,
+  CREATE_SERIES_DRAFT_NOTE,
+  BUDGET_BOARD_SUBTITLE,
+  SERIES_DRAFT_STATUS_LABEL,
+  COVER_UPLOAD_LABEL,
+} from '../constants/seriesCopy';
 import { SeriesPreviewModal } from './SeriesPreviewModal';
 import { seriesApi } from '../api/series.api';
 import type { ApiResponse } from '../../../api/axios';
 import type { SeriesDto } from '../../../api/generated/types';
+import { formatVND } from '../../wallet/constants';
+
+const QUICK_BUDGETS = [
+  { label: '5M', value: 5_000_000 },
+  { label: '10M', value: 10_000_000 },
+  { label: '50M', value: 50_000_000 },
+  { label: '100M', value: 100_000_000 },
+];
+
+const WORKFLOW_STEPS = [
+  { step: 1, title: 'Hồ sơ & ngân sách', desc: 'Thông tin series và ngân sách đề xuất', active: true },
+  { step: 2, title: 'Tải bản phác thảo', desc: 'File PDF trên trang chi tiết series', active: false },
+  { step: 3, title: 'Gửi & biểu quyết', desc: 'Biên tập thẩm định → Hội đồng cấp vốn', active: false },
+];
 
 export const CreateSeriesForm = () => {
   const navigate = useNavigate();
@@ -38,6 +62,7 @@ export const CreateSeriesForm = () => {
   } = useSeriesForm();
 
   const [showPreview, setShowPreview] = useState(false);
+  const parsedBudget = Number(formData.requestedBudget.replace(/\D/g, '') || 0);
 
   const handleCreateSeries = async () => {
     if (!validate()) return;
@@ -48,11 +73,11 @@ export const CreateSeriesForm = () => {
         title: formData.title,
         synopsis: formData.synopsis,
         genre: formData.genre.join(','),
-        estimatedProductionBudget: Number(formData.requestedBudget.replace(/[^0-9]/g, '')) || 0,
+        estimatedProductionBudget: parsedBudget,
         coverImage: formData.coverImage || undefined,
       });
       const payload = response.data as ApiResponse<SeriesDto> & { Message?: string; Data?: SeriesDto };
-      toast.success(payload.message || 'Tạo Series thành công! Trạng thái: Bản nháp (Draft)');
+      toast.success(payload.message || `Tạo Series thành công! Trạng thái: ${SERIES_DRAFT_STATUS_LABEL}`);
       const createdData = payload.data;
       navigate(`/mangaka/series/${createdData?.id || 'new'}`);
     } catch {
@@ -77,7 +102,6 @@ export const CreateSeriesForm = () => {
     }
   };
 
-  // Currency formatting helpers
   const formatCurrency = (value: string): string => {
     const numericValue = value.replace(/[^0-9]/g, '');
     if (!numericValue) return '';
@@ -90,54 +114,102 @@ export const CreateSeriesForm = () => {
   };
 
   return (
-    <div className="animate-fade-in">
-      {/* ─── Header ─── */}
-      <div className="flex items-center gap-3 mb-8">
+    <div className="animate-fade-in max-w-5xl mx-auto">
+      <div className="flex items-center gap-3 mb-6">
         <button
+          type="button"
           onClick={() => navigate('/mangaka/series')}
           className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-surface transition-colors bg-transparent border-none cursor-pointer"
         >
           <ArrowLeft size={20} />
         </button>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <h1 className="text-xl font-bold text-text-primary">Tạo Series mới</h1>
-          <p className="text-xs text-text-muted mt-0.5">Điền thông tin hồ sơ cho series manga của bạn</p>
-        </div>
-      </div>
-
-      {/* ─── Draft Workflow Info ─── */}
-      <div className="mb-6 px-4 py-3 bg-brand/5 border border-brand/15 rounded-xl flex items-start gap-3">
-        <div className="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-          <Save size={16} className="text-brand" />
-        </div>
-        <div>
-          <p className="text-sm font-medium text-text-primary">Quy trình tạo Series</p>
           <p className="text-xs text-text-muted mt-0.5">
-            Series được lưu ở trạng thái <strong className="text-amber-500">Bản nháp (Draft)</strong>.
-            Sau khi tạo, bạn có thể upload bản phác thảo (Name) và submit xét duyệt trên trang chi tiết Series.
+            Bước 1 — lưu hồ sơ bản nháp, sau đó tải lên {NEMU_MANUSCRIPT_LABEL.toLowerCase()} trên trang chi tiết
           </p>
         </div>
       </div>
 
+      <div className="mb-6 rounded-xl border border-border-custom bg-bg-secondary p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <ListChecks size={15} className="text-brand" />
+          <p className="text-xs font-semibold text-text-primary">Quy trình xin cấp vốn</p>
+          <HelpTip
+            title="Quy trình tạo series"
+            ariaLabel="Hướng dẫn quy trình tạo series"
+            placement="bottom-start"
+            width="20rem"
+            autoCloseMs={0}
+            size="sm"
+            content={
+              <ul className="list-disc pl-4 space-y-1">
+                {CREATE_SERIES_WORKFLOW_HELP.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            }
+          />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {WORKFLOW_STEPS.map((item, idx) => (
+            <div
+              key={item.step}
+              className={`relative rounded-lg px-3 py-2.5 border ${
+                item.active
+                  ? 'border-brand/30 bg-brand/5'
+                  : 'border-border-custom bg-bg-primary/50'
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <span
+                  className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center ${
+                    item.active ? 'bg-brand text-white' : 'bg-bg-surface text-text-muted'
+                  }`}
+                >
+                  {item.step}
+                </span>
+                <span className={`text-xs font-semibold ${item.active ? 'text-brand' : 'text-text-secondary'}`}>
+                  {item.title}
+                </span>
+              </div>
+              <p className="text-[10px] text-text-muted leading-relaxed pl-7">{item.desc}</p>
+              {idx < WORKFLOW_STEPS.length - 1 && (
+                <ChevronRight
+                  size={14}
+                  className="hidden sm:block absolute -right-2 top-1/2 -translate-y-1/2 text-text-muted/40 z-10"
+                />
+              )}
+            </div>
+          ))}
+        </div>
+        <p className="text-[10px] text-text-muted mt-3 pl-0.5">{CREATE_SERIES_DRAFT_NOTE}</p>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* ─── Left Column: Cover Image ─── */}
         <div className="lg:col-span-1">
-          <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 sticky top-6">
+          <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 lg:sticky lg:top-6">
             <div className="flex items-center gap-2 mb-4">
               <ImagePlus size={16} className="text-brand" />
-              <h2 className="text-sm font-semibold text-text-primary">Ảnh bìa <span className="text-danger">*</span></h2>
+              <h2 className="text-sm font-semibold text-text-primary">
+                Ảnh bìa <span className="text-danger">*</span>
+              </h2>
             </div>
 
             <div
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current?.click()}
               onClick={() => fileInputRef.current?.click()}
               className={`
                 relative aspect-[3/4] rounded-xl overflow-hidden cursor-pointer group transition-all duration-300
                 border-2 border-dashed
-                ${formData.coverPreviewUrl
-                  ? 'border-transparent hover:border-brand/30'
-                  : errors.coverImage
-                    ? 'border-danger/30 hover:border-danger/50'
-                    : 'border-border-custom hover:border-brand/30'
+                ${
+                  formData.coverPreviewUrl
+                    ? 'border-transparent hover:border-brand/30'
+                    : errors.coverImage
+                      ? 'border-danger/30 hover:border-danger/50'
+                      : 'border-border-custom hover:border-brand/30'
                 }
               `}
             >
@@ -157,19 +229,13 @@ export const CreateSeriesForm = () => {
                     <ImagePlus size={24} />
                   </div>
                   <div className="text-center px-4">
-                    <p className="text-xs font-medium">Click để upload ảnh bìa</p>
-                    <p className="text-[10px] mt-0.5 text-text-muted">PNG, JPG, WebP (tối đa 5MB)</p>
+                    <p className="text-xs font-medium">Bấm để {COVER_UPLOAD_LABEL}</p>
+                    <p className="text-[10px] mt-0.5 text-text-muted">PNG, JPG, WebP · tối đa 5MB</p>
                   </div>
                 </div>
               )}
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="hidden"
-            />
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
             {errors.coverImage && (
               <p className="text-[11px] text-danger mt-2 flex items-center gap-1">
                 <span className="w-1 h-1 rounded-full bg-danger" />
@@ -179,6 +245,7 @@ export const CreateSeriesForm = () => {
 
             {formData.coverPreviewUrl && (
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleCoverImage(null as unknown as File);
@@ -193,113 +260,146 @@ export const CreateSeriesForm = () => {
           </div>
         </div>
 
-        {/* ─── Right Column: Form Fields ─── */}
         <div className="lg:col-span-2 space-y-5">
-          {/* Title */}
-          <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
-            <div className="flex items-center gap-2 mb-4">
+          <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 space-y-5">
+            <div className="flex items-center gap-2 pb-1 border-b border-border-custom/60">
               <BookOpen size={16} className="text-brand" />
-              <h2 className="text-sm font-semibold text-text-primary">Tiêu đề Series <span className="text-danger">*</span></h2>
+              <h2 className="text-sm font-semibold text-text-primary">Thông tin cơ bản</h2>
             </div>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => updateField('title', e.target.value)}
-              placeholder="VD: Huyền Thoại Samurai"
-              maxLength={100}
-              className={`w-full px-4 py-3 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-all ${errors.title ? 'border-danger/50 focus:border-danger focus:ring-1 focus:ring-danger/20' : 'border-border-custom focus:border-brand/50 focus:ring-1 focus:ring-brand/20'
+
+            <div>
+              <label htmlFor="series-title" className="text-xs font-medium text-text-secondary mb-1.5 block">
+                Tiêu đề Series <span className="text-danger">*</span>
+              </label>
+              <input
+                id="series-title"
+                type="text"
+                value={formData.title}
+                onChange={(e) => updateField('title', e.target.value)}
+                placeholder="VD: Huyền Thoại Samurai"
+                maxLength={100}
+                className={`w-full px-4 py-3 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-all ${
+                  errors.title
+                    ? 'border-danger/50 focus:border-danger focus:ring-1 focus:ring-danger/20'
+                    : 'border-border-custom focus:border-brand/50 focus:ring-1 focus:ring-brand/20'
                 }`}
-            />
-            <div className="flex items-center justify-between mt-2">
-              {errors.title
-                ? <p className="text-[11px] text-danger flex items-center gap-1"><span className="w-1 h-1 rounded-full bg-danger" />{errors.title}</p>
-                : <span />
-              }
-              <span className="text-[10px] text-text-muted">{formData.title.length}/100</span>
+              />
+              <div className="flex items-center justify-between mt-1.5">
+                {errors.title ? (
+                  <p className="text-[11px] text-danger flex items-center gap-1">
+                    <span className="w-1 h-1 rounded-full bg-danger" />
+                    {errors.title}
+                  </p>
+                ) : (
+                  <span />
+                )}
+                <span className="text-[10px] text-text-muted">{formData.title.length}/100</span>
+              </div>
             </div>
-          </div>
 
-          {/* Synopsis */}
-          <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <AlignLeft size={16} className="text-brand" />
-              <h2 className="text-sm font-semibold text-text-primary">Tóm tắt nội dung <span className="text-danger">*</span></h2>
-            </div>
-            <textarea
-              value={formData.synopsis}
-              onChange={(e) => updateField('synopsis', e.target.value)}
-              placeholder="Mô tả ngắn gọn nội dung, bối cảnh và nhân vật chính của series..."
-              rows={4}
-              maxLength={500}
-              className={`w-full px-4 py-3 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-all resize-none ${errors.synopsis ? 'border-danger/50 focus:border-danger focus:ring-1 focus:ring-danger/20' : 'border-border-custom focus:border-brand/50 focus:ring-1 focus:ring-brand/20'
+            <div>
+              <label htmlFor="series-synopsis" className="text-xs font-medium text-text-secondary mb-1.5 block">
+                Tóm tắt nội dung <span className="text-danger">*</span>
+              </label>
+              <textarea
+                id="series-synopsis"
+                value={formData.synopsis}
+                onChange={(e) => updateField('synopsis', e.target.value)}
+                placeholder="Mô tả ngắn gọn nội dung, bối cảnh và nhân vật chính..."
+                rows={4}
+                maxLength={500}
+                className={`w-full px-4 py-3 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-all resize-none ${
+                  errors.synopsis
+                    ? 'border-danger/50 focus:border-danger focus:ring-1 focus:ring-danger/20'
+                    : 'border-border-custom focus:border-brand/50 focus:ring-1 focus:ring-brand/20'
                 }`}
+              />
+              <div className="flex items-center justify-between mt-1.5">
+                {errors.synopsis ? (
+                  <p className="text-[11px] text-danger flex items-center gap-1">
+                    <span className="w-1 h-1 rounded-full bg-danger" />
+                    {errors.synopsis}
+                  </p>
+                ) : (
+                  <span />
+                )}
+                <span className="text-[10px] text-text-muted">{formData.synopsis.length}/500</span>
+              </div>
+            </div>
+
+            <GenrePicker
+              selected={formData.genre}
+              onToggle={toggleGenre}
+              onClear={() => updateField('genre', [])}
+              error={errors.genre}
             />
-            <div className="flex items-center justify-between mt-2">
-              {errors.synopsis
-                ? <p className="text-[11px] text-danger flex items-center gap-1"><span className="w-1 h-1 rounded-full bg-danger" />{errors.synopsis}</p>
-                : <span />
-              }
-              <span className="text-[10px] text-text-muted">{formData.synopsis.length}/500</span>
-            </div>
           </div>
 
-          {/* Genre */}
-          <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
-            <div className="flex items-center gap-2 mb-1">
-              <Tags size={16} className="text-brand" />
-              <h2 className="text-sm font-semibold text-text-primary">Thể loại <span className="text-danger">*</span></h2>
+          <div className="bg-bg-secondary border border-brand/20 rounded-xl p-5">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-9 h-9 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">
+                <FileText size={18} className="text-brand" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-sm font-semibold text-text-primary">
+                    {NEMU_BUDGET_LABEL} <span className="text-danger">*</span>
+                  </h2>
+                  <HelpTip
+                    title={NEMU_BUDGET_LABEL}
+                    ariaLabel="Hướng dẫn ngân sách bản phác thảo"
+                    placement="bottom-start"
+                    width="22rem"
+                    autoCloseMs={0}
+                    size="sm"
+                    content={
+                      <ul className="list-disc pl-4 space-y-1">
+                        {NEMU_BUDGET_HELP.map((line) => (
+                          <li key={line}>{line}</li>
+                        ))}
+                      </ul>
+                    }
+                  />
+                </div>
+                <p className="text-[11px] text-text-muted mt-1">{BUDGET_BOARD_SUBTITLE}</p>
+              </div>
             </div>
-            <p className="text-xs text-text-muted mb-4">Chọn ít nhất 1 thể loại phù hợp</p>
-            <div className="flex flex-wrap gap-2">
-              {GENRE_OPTIONS.map((genre) => {
-                const isSelected = formData.genre.includes(genre);
-                return (
-                  <button
-                    key={genre}
-                    type="button"
-                    onClick={() => toggleGenre(genre)}
-                    className={`
-                      px-3 py-1.5 rounded-xl text-xs font-medium border transition-all duration-200 cursor-pointer
-                      ${isSelected
-                        ? 'bg-brand/15 text-brand border-brand/30 shadow-sm'
-                        : 'bg-bg-surface text-text-secondary border-border-custom hover:border-brand/20 hover:text-text-primary'
-                      }
-                    `}
-                  >
-                    {isSelected && <Sparkles size={10} className="inline mr-1" />}
-                    {genre}
-                  </button>
-                );
-              })}
-            </div>
-            {errors.genre && (
-              <p className="text-[11px] text-danger mt-2 flex items-center gap-1">
-                <span className="w-1 h-1 rounded-full bg-danger" />
-                {errors.genre}
-              </p>
-            )}
-          </div>
 
-          {/* Budget */}
-          <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
-            <div className="flex items-center gap-2 mb-1">
-              <Banknote size={16} className="text-brand" />
-              <h2 className="text-sm font-semibold text-text-primary">Vốn sản xuất Chapter 1 <span className="text-danger">*</span></h2>
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {QUICK_BUDGETS.map((qa) => (
+                <button
+                  key={qa.value}
+                  type="button"
+                  onClick={() => updateField('requestedBudget', String(qa.value))}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border cursor-pointer transition-colors ${
+                    parsedBudget === qa.value
+                      ? 'bg-brand text-white border-brand'
+                      : 'bg-bg-surface border-border-custom text-text-secondary hover:border-brand/30'
+                  }`}
+                >
+                  {qa.label}
+                </button>
+              ))}
             </div>
-            <p className="text-xs text-text-muted mb-4">
-              Đề xuất ngân sách (Board sẽ quyết định số tiền thực tế khi duyệt)
-            </p>
+
             <div className="relative">
               <input
                 type="text"
+                inputMode="numeric"
                 value={formatCurrency(formData.requestedBudget)}
                 onChange={handleBudgetChange}
-                placeholder="VD: 5,000,000"
-                className={`w-full px-4 py-3 pr-16 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-all ${errors.requestedBudget ? 'border-danger/50 focus:border-danger focus:ring-1 focus:ring-danger/20' : 'border-border-custom focus:border-brand/50 focus:ring-1 focus:ring-brand/20'
-                  }`}
+                placeholder="VD: 5.000.000"
+                className={`w-full px-4 py-3 pr-16 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-all ${
+                  errors.requestedBudget
+                    ? 'border-danger/50 focus:border-danger focus:ring-1 focus:ring-danger/20'
+                    : 'border-border-custom focus:border-brand/50 focus:ring-1 focus:ring-brand/20'
+                }`}
               />
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-text-muted font-medium">VND</span>
             </div>
+            {parsedBudget > 0 && !errors.requestedBudget && (
+              <p className="text-[11px] text-brand font-medium mt-1.5">{formatVND(parsedBudget)} · đề xuất</p>
+            )}
             {errors.requestedBudget && (
               <p className="text-[11px] text-danger mt-2 flex items-center gap-1">
                 <span className="w-1 h-1 rounded-full bg-danger" />
@@ -308,19 +408,21 @@ export const CreateSeriesForm = () => {
             )}
           </div>
 
-          {/* ─── Action Buttons ─── */}
-          <div className="flex items-center justify-end gap-3 pt-2">
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 pt-1">
             <button
               type="button"
-              onClick={() => { reset(); navigate('/mangaka/series'); }}
-              className="px-5 py-2.5 bg-bg-secondary border border-border-custom rounded-xl text-sm text-text-secondary hover:text-text-primary hover:border-border-custom transition-all cursor-pointer"
+              onClick={() => {
+                reset();
+                navigate('/mangaka/series');
+              }}
+              className="px-5 py-2.5 bg-bg-secondary border border-border-custom rounded-xl text-sm text-text-secondary hover:text-text-primary transition-all cursor-pointer"
             >
               Hủy bỏ
             </button>
             <button
               type="button"
               onClick={() => setShowPreview(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-bg-secondary border border-border-custom rounded-xl text-sm text-text-secondary hover:text-text-primary hover:border-brand/30 transition-all cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-bg-secondary border border-border-custom rounded-xl text-sm text-text-secondary hover:text-text-primary hover:border-brand/30 transition-all cursor-pointer"
             >
               <Eye size={16} />
               Xem trước
@@ -330,10 +432,11 @@ export const CreateSeriesForm = () => {
               onClick={handleCreateSeries}
               disabled={isSubmitting}
               className={`
-                inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-medium border-none cursor-pointer transition-all duration-200
-                ${isSubmitting
-                  ? 'bg-brand/50 text-white/70 cursor-not-allowed'
-                  : 'bg-brand hover:bg-brand-hover text-white shadow-brand hover:shadow-brand-hover hover:-translate-y-0.5 active:translate-y-0'
+                inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-medium border-none cursor-pointer transition-all duration-200
+                ${
+                  isSubmitting
+                    ? 'bg-brand/50 text-white/70 cursor-not-allowed'
+                    : 'bg-brand hover:bg-brand-hover text-white shadow-brand hover:shadow-brand-hover hover:-translate-y-0.5 active:translate-y-0'
                 }
               `}
             >
@@ -353,13 +456,7 @@ export const CreateSeriesForm = () => {
         </div>
       </div>
 
-      {/* ─── Preview Modal (Feature Component) ─── */}
-      {showPreview && (
-        <SeriesPreviewModal
-          formData={formData}
-          onClose={() => setShowPreview(false)}
-        />
-      )}
+      {showPreview && <SeriesPreviewModal formData={formData} onClose={() => setShowPreview(false)} />}
     </div>
   );
 };

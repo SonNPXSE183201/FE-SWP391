@@ -1,6 +1,7 @@
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { taskApi } from '../api/task.api';
-import type { ApiResponse, TasksDto } from '../../../api/generated/types';
+import type { ApiResponse, TasksDto, TaskVersionDto, AnnotationDto } from '../../../api/generated/types';
 import type { Task, TaskStatus } from '../../../types/entities';
 import { unwrapPaged } from '../../../api/apiResponse';
 
@@ -12,6 +13,18 @@ export interface AvailableTasksResult {
   totalItems: number;
   pageNumber: number;
 }
+
+/**
+ * Backend dùng "Submitted" cho trạng thái "Assistant đã nộp bài, chờ tác giả duyệt",
+ * trong khi frontend (TaskStatus, UI, filter) dùng "Pending_Review". Chuẩn hóa tại đây
+ * để mọi màn hình hiển thị badge/đếm/nút Duyệt-Sửa đổi nhất quán.
+ */
+export const normalizeTaskStatus = (status?: string | null): TaskStatus =>
+  (status === 'Submitted' ? 'Pending_Review' : (status as TaskStatus)) || 'Pending';
+
+/** Trả về bản sao DTO với status đã chuẩn hóa về union TaskStatus của frontend. */
+export const normalizeTaskDto = (dto: TasksDto): TasksDto =>
+  ({ ...dto, status: normalizeTaskStatus(dto.status) as TasksDto['status'] });
 
 export const mapTaskDtoToEntity = (dto: TasksDto): Task => {
   return {
@@ -26,7 +39,7 @@ export const mapTaskDtoToEntity = (dto: TasksDto): Task => {
     assignedAssistantId: dto.assistantId ? String(dto.assistantId) : undefined,
     assignedAssistantName: dto.assistantName || undefined,
     description: dto.description || undefined,
-    status: (dto.status as TaskStatus) || 'Pending',
+    status: normalizeTaskStatus(dto.status),
     amount: dto.paymentAmount || 0,
     deadline: dto.deadline || '',
     extensionUsed: !!dto.extensionRequestDays,
@@ -44,7 +57,7 @@ export const useMangakaTasks = (params?: { page?: number; pageSize?: number; sta
     queryFn: async () => {
       const res = await taskApi.getMyTasks(params);
       const payload = res.data as ApiResponse<unknown>;
-      return unwrapPaged<TasksDto>(payload).items;
+      return unwrapPaged<TasksDto>(payload).items.map(normalizeTaskDto);
     },
     staleTime: 1000 * 60,
     retry: 1,
@@ -58,7 +71,8 @@ export const useAvailableTasks = (params?: { page?: number; pageSize?: number; s
     queryFn: async () => {
       const res = await taskApi.getAvailableTasks(params);
       const payload = res.data as ApiResponse<unknown>;
-      return unwrapPaged<TasksDto>(payload);
+      const result = unwrapPaged<TasksDto>(payload);
+      return { ...result, items: result.items.map(normalizeTaskDto) };
     },
     staleTime: 1000 * 30,
     retry: 1,
@@ -71,7 +85,8 @@ export const useAssistantMyTasks = (params?: { page?: number; pageSize?: number 
     queryFn: async () => {
       const res = await taskApi.getAssistantMyTasks(params);
       const payload = res.data as ApiResponse<unknown>;
-      return unwrapPaged<TasksDto>(payload);
+      const result = unwrapPaged<TasksDto>(payload);
+      return { ...result, items: result.items.map(normalizeTaskDto) };
     },
     staleTime: 1000 * 30,
     retry: 1,
@@ -90,6 +105,47 @@ export const useAcceptTask = () => {
   });
 };
 
+// ─── Composited page image (sau khi duyệt Task) ─────────────
+export const useCompositedPageUrl = (pageId?: string) => {
+  const query = useQuery<string | null, Error>({
+    queryKey: ['canvas', 'composite', pageId],
+    queryFn: async () => {
+      try {
+        const res = await taskApi.getCompositePage(pageId as string);
+        return URL.createObjectURL(res.data);
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!pageId,
+    staleTime: 0,
+    retry: false,
+  });
+
+  // Giải phóng blob URL khi unmount / đổi trang
+  useEffect(() => {
+    const url = query.data;
+    return () => {
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [query.data]);
+
+  return query;
+};
+
+// ─── Làm mới ảnh gộp trang (sau khi sửa Region / duyệt Task) ─
+export const useRefreshPageComposite = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (pageId: string) => taskApi.refreshCompositePage(pageId),
+    onSuccess: (_res, pageId) => {
+      queryClient.invalidateQueries({ queryKey: ['canvas', 'composite', pageId] });
+      queryClient.invalidateQueries({ queryKey: ['canvas', 'pages'] });
+      queryClient.invalidateQueries({ queryKey: ['chapters'] });
+    },
+  });
+};
+
 // ─── Approve Task (Mangaka duyệt bài) ──────────────────────────
 export const useApproveTask = () => {
   const queryClient = useQueryClient();
@@ -99,6 +155,9 @@ export const useApproveTask = () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', 'mangaka'] });
       queryClient.invalidateQueries({ queryKey: ['tasks', 'assistant-my'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      queryClient.invalidateQueries({ queryKey: ['canvas'] });
+      queryClient.invalidateQueries({ queryKey: ['canvas', 'composite'] });
+      queryClient.invalidateQueries({ queryKey: ['chapters'] });
     },
   });
 };
@@ -107,15 +166,21 @@ export const useApproveTask = () => {
 export const useRequestRevisionTask = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ taskId, comment, extensionHours }: { taskId: string; comment: string; extensionHours: 24 | 48 }) =>
+    mutationFn: ({ taskId, comment, extensionHours, coordinatesJson }: {
+      taskId: string;
+      comment: string;
+      extensionHours: 24 | 48;
+      coordinatesJson?: string;
+    }) =>
       taskApi.requestRevision(taskId, {
         feedbackComment: comment,
         revisionExtensionHours: extensionHours,
-        coordinatesJson: '[]',
+        coordinatesJson: coordinatesJson ?? '[]',
       }),
-    onSuccess: () => {
+    onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: ['tasks', 'mangaka'] });
       queryClient.invalidateQueries({ queryKey: ['tasks', 'assistant-my'] });
+      queryClient.invalidateQueries({ queryKey: ['task', vars.taskId, 'versions'] });
     },
   });
 };
@@ -145,6 +210,21 @@ export const useApproveExtension = () => {
   });
 };
 
+// ─── Task Version Annotations (điểm ghim khi Mangaka yêu cầu sửa) ───
+export const useTaskVersionAnnotations = (taskVersionId?: string) => {
+  return useQuery<AnnotationDto[], Error>({
+    queryKey: ['task-version', taskVersionId, 'annotations'],
+    queryFn: async () => {
+      const res = await taskApi.getAnnotationsByTaskVersion(taskVersionId as string);
+      const payload = res.data as ApiResponse<AnnotationDto[]>;
+      if (!payload.success || !payload.data) return [];
+      return payload.data;
+    },
+    enabled: !!taskVersionId,
+    retry: 1,
+  });
+};
+
 // ─── Task Detail ─────────────────────────────────────────────
 export const useTaskDetail = (taskId?: string) => {
   return useQuery<Task | null, Error>({
@@ -156,6 +236,24 @@ export const useTaskDetail = (taskId?: string) => {
       const data = payload.data;
       if (!data) return null;
       return mapTaskDtoToEntity(data);
+    },
+    enabled: !!taskId,
+    retry: 1,
+  });
+};
+
+// ─── Task Versions (T07 — lịch sử bài nộp của Assistant) ──────
+export const useTaskVersions = (taskId?: string) => {
+  return useQuery<TaskVersionDto[], Error>({
+    queryKey: ['task', taskId, 'versions'],
+    queryFn: async () => {
+      const res = await taskApi.getVersions(taskId as string);
+      const payload = res.data as ApiResponse<TaskVersionDto[]>;
+      if (!payload.success || !payload.data) return [];
+      // Mới nhất lên đầu
+      return [...payload.data].sort(
+        (a, b) => (b.versionNumber ?? 0) - (a.versionNumber ?? 0),
+      );
     },
     enabled: !!taskId,
     retry: 1,

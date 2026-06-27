@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
+import { ToastProvider } from './components/common/ToastProvider';
 import { RoleGuard } from './routes/RoleGuard';
 import { MainLayout } from './layouts/MainLayout';
 import { AuthLayout } from './layouts/AuthLayout';
@@ -63,6 +63,7 @@ import {
   AdminReconciliationPage,
   AdminWithdrawApprovalPage,
   AdminSettingsPage,
+  AdminBoardVotingPage,
 } from './pages/admin';
 
 // Unauthorized page
@@ -92,43 +93,7 @@ const UnauthorizedPage = () => (
 function App() {
   return (
     <BrowserRouter>
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          className: 'premium-toast',
-          style: {
-            background: 'var(--bg-secondary, #1A1A24)',
-            color: 'var(--text-primary, #F0F0F5)',
-            border: '1px solid var(--border-custom, #2E2E3A)',
-            borderRadius: '12px',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-            fontSize: '14px',
-            fontWeight: 500,
-            padding: '16px 20px',
-            letterSpacing: '0.2px',
-          },
-          success: {
-            iconTheme: {
-              primary: 'var(--success, #10B981)',
-              secondary: '#1A1A24',
-            },
-            style: {
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              background: 'linear-gradient(to right, rgba(16, 185, 129, 0.05), var(--bg-secondary, #1A1A24))',
-            },
-          },
-          error: {
-            iconTheme: {
-              primary: 'var(--danger, #EF4444)',
-              secondary: '#1A1A24',
-            },
-            style: {
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              background: 'linear-gradient(to right, rgba(239, 68, 68, 0.05), var(--bg-secondary, #1A1A24))',
-            },
-          },
-        }}
-      />
+      <ToastProvider />
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
@@ -145,10 +110,8 @@ function App() {
           <Route path="/reset-password" element={<ResetPasswordPage />} />
         </Route>
 
-        {/* ─── Shared Protected Routes ─── */}
-        <Route element={<RoleGuard allowedRoles={['Mangaka', 'Assistant']} />}>
-          <Route path="/wallet/deposit/callback" element={<DepositCallbackPage />} />
-        </Route>
+        {/* VNPay redirect — không yêu cầu đăng nhập (user quay về từ cổng thanh toán ngoài) */}
+        <Route path="/wallet/deposit/callback" element={<DepositCallbackPage />} />
 
         {/* ─── Mangaka Routes ─── */}
         <Route element={<RoleGuard allowedRoles={['Mangaka']} />}>
@@ -214,6 +177,7 @@ function App() {
             <Route path="/admin/contracts" element={<AdminContractsPage />} />
             <Route path="/admin/reconciliation" element={<AdminReconciliationPage />} />
             <Route path="/admin/withdraw-approval" element={<AdminWithdrawApprovalPage />} />
+            <Route path="/admin/board-voting" element={<AdminBoardVotingPage />} />
             <Route path="/admin/settings" element={<AdminSettingsPage />} />
           </Route>
         </Route>

@@ -74,21 +74,8 @@ export const RegisterHeroPanel = ({ currentStep }: RegisterHeroPanelProps) => {
 
       {/* Content overlay */}
       <div className="relative z-20 flex flex-col justify-between p-10 xl:p-12 w-full h-full">
-        {/* Top branding — fade in */}
-        <div className="flex items-center gap-3.5 animate-fade-in-down" style={{ animationDelay: '0.1s' }}>
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-brand to-brand-hover flex items-center justify-center shadow-brand ring-1 ring-white/10">
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-            </svg>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-white font-bold text-[15px] tracking-wide leading-tight">Manga Studio</span>
-            <span className="text-white/30 text-[10px] font-medium tracking-[0.15em] uppercase leading-tight">Xưởng vẽ Manga</span>
-          </div>
-        </div>
-
         {/* Center — Main content */}
-        <div className="space-y-7 -mt-4">
+        <div className="space-y-7">
           {/* Headline */}
           <div className="space-y-5">
             <div className="flex items-center gap-3 animate-slide-in-left" style={{ animationDelay: '0.2s' }}>
