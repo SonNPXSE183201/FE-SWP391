@@ -44,7 +44,7 @@ export const getTransactionAmountDisplay = (tx: Transaction) => {
 };
 
 // Transaction types that count as income
-const INCOME_TYPES = ['Deposit', 'Unlock', 'Genkouryo', 'Funding'];
+const INCOME_TYPES = ['Deposit', 'Unlock', 'Genkouryo', 'Funding', 'Production_Funding', 'Platform_TopUp'];
 
 export const calculateMonthlyStats = (transactions: Transaction[]) => {
   const now = new Date();

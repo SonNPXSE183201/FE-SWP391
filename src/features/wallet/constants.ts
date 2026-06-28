@@ -1,4 +1,5 @@
 import type { TransactionType } from '../../types/entities';
+import { NEMU_FUNDING_LABEL } from '../series/constants/seriesCopy';
 import {
   Wallet,
   ArrowDownToLine,
@@ -21,6 +22,8 @@ export const TX_TYPE_CONFIG: Record<TransactionType, { label: string; color: str
   Escrow_Unlock: { label: 'Hoàn trả quỹ', color: 'text-info', bg: 'bg-info/10', icon: Unlock, sign: '+' },
   Transfer: { label: 'Thanh toán', color: 'text-danger', bg: 'bg-danger/10', icon: ArrowRightLeft, sign: '-' },
   Funding: { label: 'Cấp vốn', color: 'text-brand', bg: 'bg-brand/10', icon: Shield, sign: '+' },
+  Production_Funding: { label: NEMU_FUNDING_LABEL, color: 'text-brand', bg: 'bg-brand/10', icon: Shield, sign: '+' },
+  Platform_TopUp: { label: 'Nạp quỹ NXB', color: 'text-info', bg: 'bg-info/10', icon: ArrowDownToLine, sign: '+' },
   Genkouryo: { label: 'Nhuận bút', color: 'text-success', bg: 'bg-success/10', icon: Banknote, sign: '+' },
 };
 
@@ -34,6 +37,8 @@ export const TX_FILTER_OPTIONS = [
   { value: 'Escrow_Unlock', label: 'Hoàn trả quỹ' },
   { value: 'Transfer', label: 'Thanh toán' },
   { value: 'Funding', label: 'Cấp vốn' },
+  { value: 'Production_Funding', label: NEMU_FUNDING_LABEL },
+  { value: 'Platform_TopUp', label: 'Nạp quỹ NXB' },
   { value: 'Genkouryo', label: 'Nhuận bút' },
 ];
 

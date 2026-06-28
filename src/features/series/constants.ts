@@ -3,7 +3,8 @@ import type { SeriesStatus, ChapterStatus } from '../../types/entities';
 // ─── Series Status Config ────────────────────────────────────
 export const SERIES_STATUS_CONFIG: Record<SeriesStatus, { label: string; color: string; bg: string }> = {
   Draft: { label: 'Bản nháp', color: 'text-text-secondary', bg: 'bg-bg-surface' },
-  PendingApproval: { label: 'Chờ duyệt', color: 'text-warning', bg: 'bg-warning/10' },
+  PendingApproval: { label: 'Chờ Editor duyệt', color: 'text-warning', bg: 'bg-warning/10' },
+  PendingBoardVote: { label: 'Chờ Hội đồng', color: 'text-brand', bg: 'bg-brand/10' },
   Approved: { label: 'Đã duyệt', color: 'text-info', bg: 'bg-info/10' },
   Published: { label: 'Đang xuất bản', color: 'text-success', bg: 'bg-success/10' },
   OnHold: { label: 'Tạm dừng', color: 'text-text-muted', bg: 'bg-bg-surface' },
@@ -13,7 +14,8 @@ export const SERIES_STATUS_CONFIG: Record<SeriesStatus, { label: string; color: 
 export const SERIES_STATUS_FILTER_OPTIONS: { value: string; label: string }[] = [
   { value: '', label: 'Tất cả trạng thái' },
   { value: 'Draft', label: 'Bản nháp' },
-  { value: 'PendingApproval', label: 'Chờ duyệt' },
+  { value: 'PendingApproval', label: 'Chờ Editor duyệt' },
+  { value: 'PendingBoardVote', label: 'Chờ Hội đồng' },
   { value: 'Approved', label: 'Đã duyệt' },
   { value: 'Published', label: 'Đang xuất bản' },
   { value: 'OnHold', label: 'Tạm dừng' },
@@ -65,7 +67,8 @@ export const COVER_GRADIENTS = [
 // ─── Series Status Timeline ─────────────────────────────────
 export const SERIES_STATUS_STEPS: { key: SeriesStatus; label: string }[] = [
   { key: 'Draft', label: 'Bản nháp' },
-  { key: 'PendingApproval', label: 'Chờ duyệt' },
+  { key: 'PendingApproval', label: 'Chờ Editor' },
+  { key: 'PendingBoardVote', label: 'Hội đồng' },
   { key: 'Approved', label: 'Đã duyệt' },
   { key: 'Published', label: 'Đang xuất bản' },
 ];

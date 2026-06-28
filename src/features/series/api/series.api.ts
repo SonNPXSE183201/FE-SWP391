@@ -307,6 +307,15 @@ export const seriesApi = {
     });
   },
 
+  /** Nối thêm trang vào chapter đã tồn tại — POST /api/chapters/{id}/pages */
+  addChapterPages: (chapterId: string, pages: File[]) => {
+    const formData = new FormData();
+    pages.forEach((p) => formData.append('pages', p));
+    return axiosInstance.post<ApiResponse<PageDto[]>>(`/api/chapters/${chapterId}/pages`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
 
   requestRevision: (seriesId: string, chapterId: string, comment: string) =>
     axiosInstance.put<ApiResponse<ChapterDto>>(`/api/series/${seriesId}/chapters/${chapterId}/revision`, { comment }),

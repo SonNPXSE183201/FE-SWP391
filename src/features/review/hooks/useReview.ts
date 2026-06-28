@@ -32,8 +32,17 @@ export const useSubmitToBoard = () =>
 
 export const useRequireRevision = () =>
   useMutation({
-    mutationFn: ({ seriesId, reason }: { seriesId: string; reason: string }) =>
-      reviewApi.requireRevision(seriesId, reason),
+    mutationFn: ({
+      seriesId,
+      comment,
+      suggestedBudget,
+      failedChecklistItems,
+    }: {
+      seriesId: string;
+      comment: string;
+      suggestedBudget?: number;
+      failedChecklistItems?: string[];
+    }) => reviewApi.requireRevision(seriesId, { comment, suggestedBudget, failedChecklistItems }),
   });
 
 // ─── Chapter QC Review hooks ─────────────────────────────────

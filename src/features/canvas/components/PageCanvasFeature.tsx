@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Layers, SquareDashedBottom, Trash2,
   Tag, ChevronLeft, ChevronRight, ImageOff,
-  Plus, Pencil, Check, X, Loader2
+  Plus, Pencil, Check, X, Loader2, Download,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getAxiosErrorMessage } from '../../../api/axios';
@@ -11,6 +11,7 @@ import { CanvasToolbar } from '../../../components/canvas/CanvasToolbar';
 import { MobileCanvasWarning } from '../../../components/canvas/MobileCanvasWarning';
 import { useCanvasStore } from '../../../stores/canvasStore';
 import { useRegions, useCreateRegion, useDeleteRegion, useUpdateRegion, useCanvasPages } from '../hooks/useCanvasData';
+import { useCompositedPageUrl, useRefreshPageComposite } from '../../tasks/hooks/useTasks';
 import { useChapterDetail } from '../../series';
 import { CreateTaskModal } from '../../tasks';
 import type { Region } from '../../../types/entities';
@@ -47,6 +48,21 @@ export const PageCanvasFeature = ({ chapterId = '1' }: PageCanvasFeatureProps) =
   const pageId = currentPage?.id ?? '';
 
   const { data: regions = [] } = useRegions(pageId);
+  const { data: compositedUrl, refetch: refetchComposite, isFetching: isCompositeLoading } = useCompositedPageUrl(pageId);
+  const refreshComposite = useRefreshPageComposite();
+  // Luôn ưu tiên ảnh gộp live từ API — compositeImageUrl trong DB có thể cũ/sai
+  const canvasImageUrl = compositedUrl || currentPage?.imageUrl || '';
+  const hasCompositeOverlay = !!compositedUrl && canvasImageUrl !== currentPage?.imageUrl;
+  const handleRefreshComposite = useCallback(() => {
+    if (!pageId) return;
+    refreshComposite.mutate(pageId, {
+      onSuccess: () => {
+        toast.success('Đã làm mới ảnh gộp trang');
+        void refetchComposite();
+      },
+      onError: (err) => toast.error(getAxiosErrorMessage(err, 'Không thể làm mới ảnh gộp')),
+    });
+  }, [pageId, refreshComposite, refetchComposite]);
   const createRegion = useCreateRegion(pageId);
   const updateRegion = useUpdateRegion(pageId);
   const deleteRegion = useDeleteRegion(pageId);
@@ -287,8 +303,35 @@ export const PageCanvasFeature = ({ chapterId = '1' }: PageCanvasFeatureProps) =
             onDelete={() => selectedRegionId && handleDeleteRegion(selectedRegionId)}
           />
 
-          {/* Right: Page Navigation */}
+          {/* Right: Page Navigation + Tải ảnh đã gộp */}
           <div className="flex items-center gap-2">
+            {hasCompositeOverlay && (
+              <a
+                href={canvasImageUrl}
+                download={`trang-${currentPage.pageNumber}-composite.png`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand/10 border border-brand/20 text-[11px] font-semibold text-brand hover:bg-brand/20 transition-colors no-underline"
+                title="Tải file PNG trang đã gộp lớp Assistant (xem ngoài Canvas)"
+              >
+                <Download size={14} />
+                Tải ảnh trang
+              </a>
+            )}
+            <button
+              type="button"
+              onClick={handleRefreshComposite}
+              disabled={!pageId || refreshComposite.isPending || isCompositeLoading}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-bg-primary border border-border-custom text-[11px] font-semibold text-text-secondary hover:text-text-primary hover:border-brand/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              title="Tạo lại ảnh gộp từ các Task đã duyệt (dùng sau khi vẽ lại Region)"
+            >
+              {(refreshComposite.isPending || isCompositeLoading) ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Layers size={14} />
+              )}
+              Làm mới ảnh gộp
+            </button>
             <button
               onClick={() => setCurrentPageIndex(Math.max(0, currentPageIndex - 1))}
               disabled={currentPageIndex === 0}
@@ -315,7 +358,7 @@ export const PageCanvasFeature = ({ chapterId = '1' }: PageCanvasFeatureProps) =
           <div className="flex-1 relative bg-bg-secondary border border-border-custom rounded-xl overflow-hidden">
             <CanvasViewer
               ref={canvasRef}
-              imageUrl={currentPage.imageUrl}
+              imageUrl={canvasImageUrl}
               regions={regions}
               mode={activeTool === 'select' ? 'view' : activeTool}
               onRegionCreated={handleRegionCreated}

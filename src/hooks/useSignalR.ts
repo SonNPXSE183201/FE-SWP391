@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/refs */
-import React, { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import {
   HubConnectionBuilder,
   HubConnection,
@@ -8,28 +8,12 @@ import {
   HubConnectionState,
 } from '@microsoft/signalr';
 import { useQueryClient, type QueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
 import { useAuthStore } from '../stores/authStore';
 import { useNotificationStore } from '../stores/notificationStore';
 import type { NotificationItem } from '../stores/notificationStore';
 import { toApiDateIso } from '../utils/parseApiDate';
-
-// Emoji icon per notification type for realtime toasts.
-const TYPE_ICON: Record<NotificationItem['type'], string> = {
-  TaskUpdate: '📋',
-  WalletUpdate: '💰',
-  Review: '✅',
-  SystemAlert: '🔔',
-};
-
-const notifyToast = (item: NotificationItem) =>
-  toast(
-    () => React.createElement('div', { className: 'flex flex-col gap-1' },
-      React.createElement('span', { className: 'font-semibold text-sm text-text-primary leading-tight' }, item.title),
-      item.message ? React.createElement('span', { className: 'text-xs text-text-secondary leading-snug break-words' }, item.message) : null
-    ),
-    { icon: TYPE_ICON[item.type] ?? '🔔', duration: 5000 }
-  );
+import { getNotificationTitle, stripSeriesIdPrefix } from '../utils/notificationLink';
+import { showNotificationToast } from '../utils/appToast';
 
 /**
  * SignalR hub URL — connects to ASP.NET Core Notification Hub.
@@ -56,15 +40,20 @@ const getHubUrl = () => {
  * Maps a SignalR notification event payload to our NotificationItem type.
  * Backend sends PascalCase properties.
  */
-const mapSignalRPayload = (payload: any): NotificationItem => ({
-  id: payload.Id || payload.id || crypto.randomUUID(),
-  title: payload.Title || payload.title || 'Thông báo mới',
-  message: payload.Message || payload.message || '',
-  isRead: false,
-  link: payload.Link || payload.link,
-  type: normalizeNotificationType(payload.Type || payload.type || 'SystemAlert'),
-  createdAt: toApiDateIso(payload.CreateAt || payload.createAt),
-});
+const mapSignalRPayload = (payload: any): NotificationItem => {
+  const rawType = payload.Type || payload.type || 'SystemAlert';
+  const rawMessage = payload.Message || payload.message || payload.Content || payload.content || '';
+  return {
+    id: String(payload.Id || payload.id || crypto.randomUUID()),
+    title: payload.Title || payload.title || getNotificationTitle(rawType),
+    message: stripSeriesIdPrefix(rawMessage),
+    isRead: false,
+    link: payload.Link || payload.link,
+    rawType,
+    type: normalizeNotificationType(rawType),
+    createdAt: toApiDateIso(payload.CreateAt || payload.createAt),
+  };
+};
 
 const normalizeNotificationType = (type: string): NotificationItem['type'] => {
   if (
@@ -89,6 +78,19 @@ const shouldRefreshAdminUsers = (type: string, link?: string) =>
 
 const shouldRefreshEditorReview = (type: string, link?: string) =>
   type === 'Series_Pending_Review' || type === 'Review' || link?.includes('/editor/review');
+
+const SERIES_DATA_REFRESH_TYPES = new Set([
+  'Series_Submitted',
+  'Series_Submitted_To_Board',
+  'Series_Revision_Required',
+  'Series_Approved',
+  'Series_Rejected',
+  'Series_Pending_Review',
+]);
+
+const refreshSeriesQueries = (queryClient: QueryClient) => {
+  queryClient.invalidateQueries({ queryKey: ['series'] });
+};
 
 const WITHDRAW_ADMIN_PENDING = 'Wallet_Withdrawal_Admin_Pending';
 
@@ -153,14 +155,20 @@ export const useSignalR = () => {
       const item = mapSignalRPayload(payload);
       addNotification(item);
       if (shouldShowNotificationToast(rawType)) {
-        notifyToast(item);
+        showNotificationToast(item.title, item.message);
       }
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      if (SERIES_DATA_REFRESH_TYPES.has(rawType)) {
+        refreshSeriesQueries(queryClient);
+      }
       if (rawType === WITHDRAW_ADMIN_PENDING) {
         queryClient.invalidateQueries({ queryKey: ['admin', 'withdraw-pending'] });
       }
       if (item.type === 'WalletUpdate') {
         queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      }
+      if (rawType === 'Contract_Created') {
+        queryClient.invalidateQueries({ queryKey: ['series'] });
       }
 
       if (shouldRefreshAdminUsers(item.type, item.link)) {
@@ -179,14 +187,21 @@ export const useSignalR = () => {
       const normalizedType = normalizeNotificationType(type);
       const item: NotificationItem = {
         id: crypto.randomUUID(),
-        title: normalizedType === 'Review' ? 'Series chờ duyệt' : 'Thông báo',
-        message: content || '',
+        title: getNotificationTitle(type),
+        message: stripSeriesIdPrefix(content || ''),
         isRead: false,
+        rawType: type,
         type: normalizedType,
         createdAt: new Date().toISOString(),
       };
       addNotification(item);
-      notifyToast(item);
+      if (shouldShowNotificationToast(type)) {
+        showNotificationToast(item.title, item.message);
+      }
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      if (SERIES_DATA_REFRESH_TYPES.has(type)) {
+        refreshSeriesQueries(queryClient);
+      }
 
       if (shouldRefreshAdminUsers(item.type)) {
         queryClient.invalidateQueries({ queryKey: ['admin-users'] });
@@ -216,6 +231,12 @@ export const useSignalR = () => {
       console.log('[SignalR] UnreadCountUpdated received:', payload);
       const newCount = payload.Count ?? payload.count ?? 0;
       setUnreadCount(newCount);
+    });
+
+    // BoardDataChanged: server notifies that Board Voting data has changed (someone voted or new series submitted)
+    connection.on('BoardDataChanged', () => {
+      console.log('[SignalR] BoardDataChanged received (refreshing queries)');
+      queryClient.invalidateQueries({ queryKey: ['voting'] });
     });
 
     // ─── Lifecycle logging ────────────────────────────────────
