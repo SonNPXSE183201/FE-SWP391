@@ -1,7 +1,7 @@
-import type { BoardVote, SeriesDto } from '../../api/generated/types';
+import type { BoardVoteDto, SeriesDto } from '../../api/generated/types';
 
 /** Series pending vote — may include boardVotes when BE expands SeriesDto */
-export type VotingSeriesDto = SeriesDto & { boardVotes?: BoardVote[] | null };
+export type VotingSeriesDto = SeriesDto & { boardVotes?: BoardVoteDto[] | null };
 
 export type VotingListFilter = 'All' | 'Pending' | 'Voted' | 'Closed';
 
@@ -15,12 +15,12 @@ export type VoteResultSummary = {
   total: number;
 };
 
-const PENDING_STATUSES = new Set(['Pending_Approval', 'Pending_Board_Vote', 'Fund_Pending']);
+const PENDING_STATUSES = new Set(['Pending_Board_Vote']);
 
 export const parseSeriesGenres = (genre?: string | null): string[] =>
   genre ? genre.split(/[,;]/).map((g) => g.trim()).filter(Boolean) : [];
 
-export const summarizeBoardVotes = (boardVotes?: BoardVote[] | null): VoteResultSummary => {
+export const summarizeBoardVotes = (boardVotes?: BoardVoteDto[] | null): VoteResultSummary => {
   const votes = boardVotes ?? [];
   let approve = 0;
   let reject = 0;
@@ -37,15 +37,15 @@ export const summarizeBoardVotes = (boardVotes?: BoardVote[] | null): VoteResult
 };
 
 export const findMyBoardVote = (
-  boardVotes: BoardVote[] | null | undefined,
+  boardVotes: BoardVoteDto[] | null | undefined,
   boardMemberId?: number | string | null,
-): BoardVote | undefined => {
+): BoardVoteDto | undefined => {
   if (!boardMemberId || !boardVotes?.length) return undefined;
   const id = Number(boardMemberId);
   return boardVotes.find((v) => v.boardMemberId === id);
 };
 
-export const boardVoteToUiChoice = (vote?: BoardVote): VoteUiChoice | undefined => {
+export const boardVoteToUiChoice = (vote?: BoardVoteDto): VoteUiChoice | undefined => {
   if (!vote?.voteType) return undefined;
   const type = vote.voteType.toLowerCase();
   if (type === 'approve' || type === 'approved') return 'Approve';
@@ -83,15 +83,50 @@ export const uiChoiceToVoteSeriesRequest = (
   choice: VoteUiChoice,
   comment: string,
   recommendedBudget?: number,
-) => {
-  if (choice === 'Abstain') {
-    return { approved: false, comment: `[Abstain] ${comment}`.trim() };
-  }
-  return {
-    approved: choice === 'Approve',
-    comment: comment || undefined,
-    recommendedBudget,
-  };
-};
+) => ({
+  voteChoice: choice,
+  approved: choice === 'Approve',
+  comment: comment || undefined,
+  recommendedBudget,
+});
 
 export const getSeriesIdString = (series: SeriesDto): string => String(series.id ?? '');
+
+/** ceil(N × % / 100) — phép nguyên, tránh lỗi float (6×67% → 5, không phải 4). */
+export const calcBoardVotesRequired = (memberCount: number, percent: number): number => {
+  const n = Math.max(memberCount, 1);
+  const p = Math.min(100, Math.max(1, percent));
+  return Math.max(1, Math.floor((n * p + 99) / 100));
+};
+
+/** % thực tế tối thiểu khi đạt đủ số phiếu yêu cầu */
+export const calcEffectiveThresholdPercent = (required: number, memberCount: number): number => {
+  const n = Math.max(memberCount, 1);
+  return Math.round((required * 100) / n);
+};
+
+export const getTiePolicyShortLabel = (policy?: string | null): string => {
+  switch (policy) {
+    case 'Reject':
+      return 'Hòa → Từ chối';
+    case 'ChairDecides':
+      return 'Hòa → Chủ tịch';
+    case 'Escalate':
+    default:
+      return 'Hòa → Admin';
+  }
+};
+
+export const getTiePolicyDetail = (policy?: string | null, chairName?: string | null): string => {
+  switch (policy) {
+    case 'Reject':
+      return 'Khi số phiếu Đồng ý bằng Từ chối và tất cả TV đã vote, series bị từ chối tự động.';
+    case 'ChairDecides':
+      return chairName
+        ? `Khi hòa phiếu, hệ thống theo vote Đồng ý/Từ chối của Chủ tịch HĐ (${chairName}).`
+        : 'Khi hòa phiếu, hệ thống theo vote Đồng ý/Từ chối của Chủ tịch HĐ đã chỉ định.';
+    case 'Escalate':
+    default:
+      return 'Khi hòa phiếu hoặc không đạt ngưỡng, chuyển Quản trị viên quyết định thủ công.';
+  }
+};

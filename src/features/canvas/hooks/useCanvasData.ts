@@ -22,12 +22,14 @@ const mapPagesResponse = (res: { data?: { data?: unknown } }): Page[] => {
   if (raw.length > 0 && typeof raw[0] === 'object' && raw[0] !== null && 'pageNumber' in raw[0]) {
     return (raw as PageDto[]).map((dto) => {
       const page = mapPageDtoToEntity(dto);
+      const rawUrl = resolvePageImageUrl(page.imageUrl);
+      const compositeUrl = page.compositeImageUrl
+        ? resolvePageImageUrl(page.compositeImageUrl)
+        : undefined;
       return {
         ...page,
-        imageUrl: resolvePageImageUrl(page.imageUrl),
-        compositeImageUrl: page.compositeImageUrl
-          ? resolvePageImageUrl(page.compositeImageUrl)
-          : undefined,
+        imageUrl: rawUrl,
+        compositeImageUrl: compositeUrl,
       };
     });
   }

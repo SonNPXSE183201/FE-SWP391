@@ -3,6 +3,7 @@ import type {
   ApiResponse,
   TasksDto,
   TaskVersionDto,
+  AnnotationDto,
   PagedApiResponse,
 } from '../../../api/generated/types';
 import { MOCK_TASKS } from '../data/mockData';
@@ -371,4 +372,20 @@ export const taskApi = {
   // Task versions (T07)
   getVersions: (taskId: string) =>
     axiosInstance.get<ApiResponse<TaskVersionDto[]>>(`/api/tasks/${taskId}/versions`),
+
+  getAnnotationsByTaskVersion: (taskVersionId: string) =>
+    axiosInstance.get<ApiResponse<AnnotationDto[]>>(
+      '/api/annotations',
+      { params: { taskVersionId } },
+    ),
+
+  /** Ảnh trang đã gộp các lớp Task Approved (auto-composite) */
+  getCompositePage: (pageId: string) =>
+    axiosInstance.get<Blob>(`/api/tasks/pages/${pageId}/composite`, {
+      responseType: 'blob',
+    }),
+
+  /** Tạo lại ảnh gộp và cập nhật CompositeImageUrl trên server */
+  refreshCompositePage: (pageId: string) =>
+    axiosInstance.post<ApiResponse<string>>(`/api/tasks/pages/${pageId}/refresh-composite`),
 };

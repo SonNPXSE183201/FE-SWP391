@@ -1,6 +1,8 @@
 import { createPortal } from 'react-dom';
 import { Eye, X, ImagePlus, Banknote } from 'lucide-react';
 import type { SeriesFormData } from '../types/series.types';
+import { getGenreLabel } from '../constants/genres';
+import { NEMU_BUDGET_LABEL, PREVIEW_AFTER_CREATE_HINT, PREVIEW_WAIT_BOARD_LABEL, SERIES_DRAFT_STATUS_LABEL } from '../constants/seriesCopy';
 import { formatVND } from '../../wallet';
 
 interface SeriesPreviewModalProps {
@@ -29,7 +31,7 @@ export const SeriesPreviewModal = ({ formData, onClose }: SeriesPreviewModalProp
             <Eye size={16} className="text-brand" />
             <h2 className="text-sm font-semibold text-text-primary">Xem trước Series</h2>
             <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/10 text-[10px] text-amber-500 font-semibold">
-              ● Draft
+              ● {SERIES_DRAFT_STATUS_LABEL}
             </span>
           </div>
           <button
@@ -82,7 +84,7 @@ export const SeriesPreviewModal = ({ formData, onClose }: SeriesPreviewModalProp
                   {formData.genre.length > 0
                     ? formData.genre.map((g) => (
                         <span key={g} className="px-2.5 py-1 rounded-lg bg-brand/10 text-brand text-[11px] font-medium border border-brand/15">
-                          {g}
+                          {getGenreLabel(g)}
                         </span>
                       ))
                     : <span className="text-xs text-text-muted italic">Chưa chọn thể loại</span>
@@ -97,7 +99,7 @@ export const SeriesPreviewModal = ({ formData, onClose }: SeriesPreviewModalProp
                     <Banknote size={16} className="text-brand" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-text-muted">Vốn sản xuất Chapter 1</p>
+                    <p className="text-[10px] text-text-muted">{NEMU_BUDGET_LABEL}</p>
                     <p className="text-sm font-semibold text-text-primary">
                       {formData.requestedBudget
                         ? formatVND(Number(formData.requestedBudget))
@@ -105,7 +107,7 @@ export const SeriesPreviewModal = ({ formData, onClose }: SeriesPreviewModalProp
                     </p>
                   </div>
                 </div>
-                <span className="text-[10px] text-text-muted">Chờ Board duyệt</span>
+                <span className="text-[10px] text-text-muted">{PREVIEW_WAIT_BOARD_LABEL}</span>
               </div>
             </div>
           </div>
@@ -114,7 +116,7 @@ export const SeriesPreviewModal = ({ formData, onClose }: SeriesPreviewModalProp
         {/* Modal Footer */}
         <div className="px-6 py-4 border-t border-border-custom flex items-center justify-between">
           <p className="text-[10px] text-text-muted">
-            Sau khi tạo, bạn có thể upload bản phác thảo và submit xét duyệt.
+            {PREVIEW_AFTER_CREATE_HINT}
           </p>
           <button
             onClick={onClose}

@@ -4,11 +4,12 @@ import {
   Image as ImageIcon,
   DollarSign,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  RotateCcw,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-import { TASK_STATUS_CONFIG, formatDeadline, useAvailableTasks, useAssistantMyTasks, useAcceptTask, useRequestExtension } from '../index';
+import { TASK_STATUS_CONFIG, formatDeadline, useAvailableTasks, useAssistantMyTasks, useAcceptTask, useRequestExtension, AssistantTaskDetailModal } from '../index';
 import { formatVND } from '../../wallet';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { Pagination } from '../../../components/common/Pagination';
@@ -106,6 +107,7 @@ export const TaskQueueFeature = () => {
   const [extendingTaskId, setExtendingTaskId] = useState<number | null>(null);
   const [extensionReason, setExtensionReason] = useState('');
   const [expandedImageTasks, setExpandedImageTasks] = useState<Record<number, boolean>>({});
+  const [detailTask, setDetailTask] = useState<AvailableTaskDto | null>(null);
   const queryClient = useQueryClient();
   const extensionMutation = useRequestExtension();
 
@@ -335,23 +337,27 @@ export const TaskQueueFeature = () => {
                     )}
                   </div>
 
-                  {/* Feedback Comment (For Revision) */}
-                  {task.feedbackComment && task.status === 'Revision' && (
-                    <div className="mt-3 p-3 bg-danger/5 border border-danger/20 rounded-lg flex items-start gap-2">
-                      <div className="w-5 h-5 rounded-full bg-danger/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-[10px] text-danger font-bold">!</span>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-[11px] font-semibold text-danger mb-0.5">Mangaka yêu cầu sửa đổi:</p>
-                        <p className="text-xs text-text-primary leading-relaxed whitespace-pre-wrap">
+                  {/* Feedback ngắn + mở chi tiết (Revision) */}
+                  {task.status === 'Revision' && (
+                    <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2">
+                      {task.feedbackComment && (
+                        <p className="text-[11px] text-text-secondary flex-1 line-clamp-1">
+                          <span className="text-danger font-semibold">Mangaka: </span>
                           {task.feedbackComment}
                         </p>
-                      </div>
+                      )}
+                      <button
+                        onClick={() => setDetailTask(task)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-danger/10 hover:bg-danger/20 text-danger rounded-lg text-[11px] font-bold border-none cursor-pointer flex-shrink-0"
+                      >
+                        <RotateCcw size={13} />
+                        Xem chi tiết yêu cầu sửa
+                      </button>
                     </div>
                   )}
 
-                  {/* Page image preview */}
-                  {task.pageImageUrl && (
+                  {/* Page image preview (ẩn khi Revision — xem trong modal) */}
+                  {task.pageImageUrl && task.status !== 'Revision' && (
                     <div className="mt-4">
                       <button
                         onClick={() => toggleImage(task.id!)}
@@ -389,8 +395,8 @@ export const TaskQueueFeature = () => {
                   </div>
                 )}
 
-                {/* Right: Submit button & Extension */}
-                {activeTab === 'MyTasks' && ['In_Progress', 'Revision'].includes(task.status || '') && (
+                {/* Right: Submit — In_Progress; Revision dùng modal chi tiết */}
+                {activeTab === 'MyTasks' && task.status === 'In_Progress' && (
                   <div className="flex-shrink-0 ml-auto flex flex-col gap-3 items-end pt-1">
                     <label className="cursor-pointer px-4 py-2 bg-bg-surface hover:bg-bg-secondary border border-border-custom rounded-xl text-xs font-semibold hover:border-brand/30 transition-all text-text-primary shadow-sm flex items-center gap-2">
                       <ImageIcon size={14} className="text-text-muted" />
@@ -488,6 +494,13 @@ export const TaskQueueFeature = () => {
         onPrevPage={() => setCurrentPage((p) => Math.max(1, p - 1))}
         itemLabel="tasks"
       />
+
+      {detailTask && (
+        <AssistantTaskDetailModal
+          task={detailTask}
+          onClose={() => setDetailTask(null)}
+        />
+      )}
     </div>
   );
 };

@@ -5,18 +5,31 @@ import type { NotificationItem } from '../../../stores/notificationStore';
 import type { NotificationDto } from '../../../api/generated/types';
 import { isApiSuccess, getApiMessage } from '../../../api/apiResponse';
 import { toApiDateIso } from '../../../utils/parseApiDate';
+import { stripSeriesIdPrefix, getNotificationTitle } from '../../../utils/notificationLink';
 
 // ─── Mapper ──────────────────────────────────────────────────
 
-const mapDtoToItem = (dto: NotificationDto): NotificationItem => ({
-  id: String(dto.id ?? 0),
-  title: dto.title ?? '',
-  message: dto.content ?? '',
-  isRead: dto.isRead ?? false,
-  link: dto.link ?? undefined,
-  type: (dto.type as NotificationItem['type']) ?? 'SystemAlert',
-  createdAt: toApiDateIso(dto.createAt),
-});
+const mapDtoToItem = (dto: NotificationDto): NotificationItem => {
+  const rawContent = dto.content ?? '';
+  const rawType = dto.type ?? 'SystemAlert';
+  const message = stripSeriesIdPrefix(rawContent);
+
+  return {
+    id: String(dto.id ?? 0),
+    title: dto.title ?? getNotificationTitle(rawType),
+    message,
+    isRead: dto.isRead ?? false,
+    link: dto.link ?? undefined,
+    rawType,
+    type:
+      rawType === 'Series_Revision_Required'
+      || rawType === 'Series_Pending_Review'
+      || rawType === 'Series_Submitted_To_Board'
+        ? 'Review'
+        : ((dto.type as NotificationItem['type']) ?? 'SystemAlert'),
+    createdAt: toApiDateIso(dto.createAt),
+  };
+};
 
 // ─── Query Keys ──────────────────────────────────────────────
 

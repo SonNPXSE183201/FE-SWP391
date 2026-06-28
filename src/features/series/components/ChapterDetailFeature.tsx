@@ -10,18 +10,21 @@ import {
   PAGE_STATUS_FILTER_OPTIONS,
   PageCard,
   PageLightbox,
+  AddPagesModal,
   useChapterDetail,
   useChapterPages,
 } from '../index';
 import { usePagination } from '../../../hooks/usePagination';
 import { Pagination } from '../../../components/common/Pagination';
 import { CustomSelect } from '../../../components/common/CustomSelect';
+import type { Page } from '../../../types/entities';
 
 export const ChapterDetailFeature = () => {
   const { chapterId } = useParams<{ chapterId: string }>();
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState('');
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [showAddPages, setShowAddPages] = useState(false);
 
   const { data: chapter, isLoading: chapterLoading, error: chapterError } = useChapterDetail(chapterId);
   const { data: allPages = [], isLoading: pagesLoading, error: pagesError } = useChapterPages(chapterId);
@@ -31,7 +34,7 @@ export const ChapterDetailFeature = () => {
 
   // Filter
   const filteredPages = useMemo(
-    () => allPages.filter((p: any) => !statusFilter || p.status === statusFilter),
+    () => allPages.filter((p: Page) => !statusFilter || p.status === statusFilter),
     [allPages, statusFilter],
   );
 
@@ -45,10 +48,10 @@ export const ChapterDetailFeature = () => {
   // Stats
   const stats = useMemo(() => ({
     total: allPages.length,
-    completed: allPages.filter((p: any) => p.status === 'Completed').length,
-    inProgress: allPages.filter((p: any) => p.status === 'InProgress').length,
-    pending: allPages.filter((p: any) => p.status === 'Pending').length,
-    revision: allPages.filter((p: any) => p.status === 'NeedsRevision').length,
+    completed: allPages.filter((p: Page) => p.status === 'Completed').length,
+    inProgress: allPages.filter((p: Page) => p.status === 'InProgress').length,
+    pending: allPages.filter((p: Page) => p.status === 'Pending').length,
+    revision: allPages.filter((p: Page) => p.status === 'NeedsRevision').length,
   }), [allPages]);
 
   if (isLoading) {
@@ -122,6 +125,7 @@ export const ChapterDetailFeature = () => {
               Mở Canvas
             </button>
             <button
+              onClick={() => setShowAddPages(true)}
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition-all duration-200 border-none cursor-pointer shadow-brand hover:shadow-brand-hover hover:-translate-y-0.5"
             >
               <ImagePlus size={16} />
@@ -186,8 +190,8 @@ export const ChapterDetailFeature = () => {
       {/* Page Grid (Feature Components) */}
       {filteredPages.length > 0 ? (
         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 mt-4">
-          {pagination.paginatedData.map((page: any) => {
-            const globalIdx = filteredPages.findIndex((p: any) => p.id === page.id);
+          {pagination.paginatedData.map((page: Page) => {
+            const globalIdx = filteredPages.findIndex((p: Page) => p.id === page.id);
             return (
               <PageCard
                 key={page.id}
@@ -228,6 +232,11 @@ export const ChapterDetailFeature = () => {
           onClose={() => setLightboxIndex(null)}
           onNav={(idx) => setLightboxIndex(idx)}
         />
+      )}
+
+      {/* Add pages modal */}
+      {showAddPages && chapterId && (
+        <AddPagesModal chapterId={chapterId} onClose={() => setShowAddPages(false)} />
       )}
     </div>
   );

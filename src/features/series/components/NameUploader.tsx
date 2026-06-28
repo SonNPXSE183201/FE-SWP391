@@ -1,4 +1,5 @@
 import { Upload, FileText, X, Loader2, ExternalLink } from 'lucide-react';
+import { NEMU_MANUSCRIPT_LABEL, NEMU_MANUSCRIPT_UPLOAD_HINT, MANUSCRIPT_DROP_HINT, MANUSCRIPT_UPLOADING_LABEL } from '../constants/seriesCopy';
 
 interface NameUploaderProps {
   nameFileUrl: string | null;
@@ -28,11 +29,9 @@ export const NameUploader = ({
     <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 animate-fade-in">
       <div className="flex items-center gap-2 mb-1">
         <FileText size={16} className="text-brand" />
-        <h2 className="text-sm font-semibold text-text-primary">Bản phác thảo (Name) <span className="text-danger">*</span></h2>
+        <h2 className="text-sm font-semibold text-text-primary">{NEMU_MANUSCRIPT_LABEL} <span className="text-danger">*</span></h2>
       </div>
-      <p className="text-xs text-text-muted mb-4">
-        Upload bản phác thảo storyboard (PDF). File được lưu trên hệ thống trước khi bạn submit xét duyệt (F1.2).
-      </p>
+      <p className="text-xs text-text-muted mb-4">{NEMU_MANUSCRIPT_UPLOAD_HINT}</p>
 
       <div
         onClick={isBusy ? undefined : onOpenFilePicker}
@@ -49,7 +48,7 @@ export const NameUploader = ({
         {isUploading ? (
           <div className="px-5 py-8 flex flex-col items-center justify-center gap-3 text-text-muted">
             <Loader2 size={28} className="animate-spin text-brand" />
-            <p className="text-sm font-medium">Đang upload và lưu bản phác thảo…</p>
+            <p className="text-sm font-medium">{MANUSCRIPT_UPLOADING_LABEL}</p>
           </div>
         ) : hasFile ? (
           <div className="px-5 py-4 flex items-center gap-4">
@@ -95,7 +94,7 @@ export const NameUploader = ({
               <Upload size={22} />
             </div>
             <div className="text-center">
-              <p className="text-sm font-medium">Kéo thả hoặc click để upload file PDF</p>
+              <p className="text-sm font-medium">{MANUSCRIPT_DROP_HINT}</p>
               <p className="text-xs mt-1 text-text-muted">Chỉ chấp nhận PDF (tối đa 20MB)</p>
             </div>
           </div>

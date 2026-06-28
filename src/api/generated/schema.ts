@@ -1349,7 +1349,36 @@ export interface paths {
             };
         };
         put?: never;
-        post?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        Pages?: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PageDtoIEnumerableApiResponse"];
+                        "application/json": components["schemas"]["PageDtoIEnumerableApiResponse"];
+                        "text/json": components["schemas"]["PageDtoIEnumerableApiResponse"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -3663,6 +3692,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tasks/pages/{pageId}/refresh-composite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    pageId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["StringApiResponse"];
+                        "application/json": components["schemas"]["StringApiResponse"];
+                        "text/json": components["schemas"]["StringApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/upload": {
         parameters: {
             query?: never;
@@ -4297,6 +4365,20 @@ export interface components {
             voteAt?: string;
             series?: components["schemas"]["Series"];
             boardMember?: components["schemas"]["User"];
+        };
+        BoardVoteDto: {
+            /** Format: int32 */
+            id?: number;
+            /** Format: int32 */
+            seriesId?: number;
+            /** Format: int32 */
+            boardMemberId?: number;
+            voteType?: string | null;
+            /** Format: double */
+            recommendedBudget?: number;
+            comment?: string | null;
+            /** Format: date-time */
+            voteAt?: string;
         };
         ChangePasswordDto: {
             currentPassword?: string | null;
@@ -5108,6 +5190,9 @@ export interface components {
         };
         RequireSeriesRevisionDto: {
             comment?: string | null;
+            /** Format: double */
+            suggestedBudget?: number | null;
+            failedChecklistItems?: string[] | null;
         };
         ResolveDisputeDto: {
             /** Format: double */
@@ -5134,6 +5219,7 @@ export interface components {
             mangakaId?: number;
             /** Format: int32 */
             editorId?: number | null;
+            editorNote?: string | null;
             title?: string | null;
             genre?: string | null;
             synopsis?: string | null;
@@ -5172,10 +5258,14 @@ export interface components {
             resourceFolderUrl?: string | null;
             mangakaName?: string | null;
             editorName?: string | null;
+            editorNote?: string | null;
+            mangakaSubmissionNote?: string | null;
             /** Format: date-time */
             createAt?: string;
             /** Format: date-time */
             updateAt?: string | null;
+            boardVotes?: components["schemas"]["BoardVoteDto"][] | null;
+            hasContract?: boolean;
         };
         SeriesDtoApiResponse: {
             success?: boolean;
@@ -5216,6 +5306,8 @@ export interface components {
             /** Format: int32 */
             editorId?: number | null;
             editorName?: string | null;
+            editorNote?: string | null;
+            mangakaSubmissionNote?: string | null;
             /** Format: int32 */
             chapterCount?: number;
             chapters?: components["schemas"]["ChapterSummaryDto"][] | null;

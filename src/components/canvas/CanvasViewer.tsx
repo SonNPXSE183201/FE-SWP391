@@ -6,9 +6,10 @@ import {
   useRef,
   useState,
 } from 'react';
-import { Canvas, FabricImage, Rect, Circle, Point, PencilBrush } from 'fabric';
+import { Canvas, FabricImage, Rect, Circle, Point, PencilBrush, Shadow, type TPointerEventInfo } from 'fabric';
 import { Loader2 } from 'lucide-react';
 import type { Region, Annotation, AnnotationType } from '../../types/entities';
+import { sceneRectToImagePixels } from '../../features/canvas/utils/canvas.utils';
 
 // ─── Constants ───────────────────────────────────────────────
 
@@ -247,8 +248,8 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
       const canvas = fabricRef.current;
       if (!canvas) return;
 
-      const handleMouseDown = (opt: any) => {
-        const evt = opt.e;
+      const handleMouseDown = (opt: TPointerEventInfo) => {
+        const evt = opt.e as MouseEvent;
 
         // Alt+drag OR Middle-click OR pan mode -> panning
         if (evt.altKey || evt.button === 1 || (mode === 'pan' && evt.button === 0)) {
@@ -304,8 +305,8 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
         }
       };
 
-      const handleMouseMove = (opt: any) => {
-        const evt = opt.e;
+      const handleMouseMove = (opt: TPointerEventInfo) => {
+        const evt = opt.e as MouseEvent;
 
         // Panning
         if (isPanningRef.current) {
@@ -353,12 +354,13 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
 
           // Only create if region is large enough (avoid accidental clicks)
           if (w > 5 && h > 5 && onRegionCreated) {
+            const img = imageRef.current;
+            const coords = img
+              ? sceneRectToImagePixels(img, rect.left ?? 0, rect.top ?? 0, w, h)
+              : { x: Math.round(rect.left ?? 0), y: Math.round(rect.top ?? 0), width: Math.round(w), height: Math.round(h) };
             onRegionCreated({
               pageId: '',
-              x: Math.round(rect.left ?? 0),
-              y: Math.round(rect.top ?? 0),
-              width: Math.round(w),
-              height: Math.round(h),
+              ...coords,
             });
           }
 
@@ -398,19 +400,20 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
         canvas.freeDrawingBrush.color = REGION_STROKE;
         canvas.freeDrawingBrush.width = 2; // Match region stroke width
         // Make the brush dashed like the Region tool
-        (canvas.freeDrawingBrush as any).strokeDashArray = [6, 3];
+        (canvas.freeDrawingBrush as PencilBrush & { strokeDashArray?: number[] }).strokeDashArray = [6, 3];
 
         const handlePathCreated = (opt: { path: import('fabric').FabricObject }) => {
           const path = opt.path;
           const rect = path.getBoundingRect();
           
           if (rect.width > 5 && rect.height > 5 && onRegionCreated) {
+            const img = imageRef.current;
+            const coords = img
+              ? sceneRectToImagePixels(img, rect.left, rect.top, rect.width, rect.height)
+              : { x: Math.round(rect.left), y: Math.round(rect.top), width: Math.round(rect.width), height: Math.round(rect.height) };
             onRegionCreated({
               pageId: '',
-              x: Math.round(rect.left),
-              y: Math.round(rect.top),
-              width: Math.round(rect.width),
-              height: Math.round(rect.height),
+              ...coords,
             });
           }
           
@@ -474,14 +477,16 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
         // Modify handler for updates
         rect.on('modified', () => {
           if (onRegionUpdated) {
+            const w = Math.round((rect.width ?? region.width) * (rect.scaleX ?? 1));
+            const h = Math.round((rect.height ?? region.height) * (rect.scaleY ?? 1));
+            const img = imageRef.current;
+            const coords = img
+              ? sceneRectToImagePixels(img, rect.left ?? region.x, rect.top ?? region.y, w, h)
+              : { x: Math.round(rect.left ?? region.x), y: Math.round(rect.top ?? region.y), width: w, height: h };
             onRegionUpdated({
               ...region,
-              x: Math.round(rect.left ?? region.x),
-              y: Math.round(rect.top ?? region.y),
-              width: Math.round((rect.width ?? region.width) * (rect.scaleX ?? 1)),
-              height: Math.round((rect.height ?? region.height) * (rect.scaleY ?? 1)),
+              ...coords,
             });
-            // Reset scale after applying
             rect.set({ scaleX: 1, scaleY: 1 });
           }
         });
@@ -517,7 +522,7 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
           selectable: false,
           evented: true,
           shadow: isSelected
-            ? { color: 'rgba(0,0,0,0.4)', blur: 8, offsetX: 0, offsetY: 2 } as any
+            ? new Shadow({ color: 'rgba(0,0,0,0.4)', blur: 8, offsetX: 0, offsetY: 2 })
             : undefined,
         });
 

@@ -53,7 +53,7 @@ const readWithFallback = async <T>(
   }
 };
 
-const PENDING_SERIES_STATUSES = new Set(['Pending_Approval', 'Pending_Board_Vote']);
+const PENDING_SERIES_STATUSES = new Set(['Pending_Approval']);
 
 /** BE chưa có GET /api/reviews/series/pending (route bị nuốt bởi series/{id}). Fallback: gom từ chapter queue + probe id khi dev. */
 const fetchPendingSeriesForEditor = async (): Promise<SeriesReviewDto[]> => {
@@ -143,10 +143,17 @@ export const reviewApi = {
   },
 
   /** POST /api/reviews/series/{id}/require-revision — Editor yêu cầu Mangaka chỉnh sửa */
-  requireRevision: async (seriesId: string, reason: string) => {
+  requireRevision: async (
+    seriesId: string,
+    payload: { comment: string; suggestedBudget?: number; failedChecklistItems?: string[] },
+  ) => {
     return axiosInstance.post<ApiResponse<unknown>>(
       `/api/reviews/series/${seriesId}/require-revision`,
-      { comment: reason },
+      {
+        comment: payload.comment,
+        suggestedBudget: payload.suggestedBudget,
+        failedChecklistItems: payload.failedChecklistItems,
+      },
     );
   },
 

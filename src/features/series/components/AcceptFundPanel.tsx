@@ -5,12 +5,14 @@ const formatVnd = (value: number) =>
 
 interface AcceptFundPanelProps {
   approvedBudget: number;
+  hasContract: boolean;
   isAccepting: boolean;
   onAccept: () => void;
 }
 
 export const AcceptFundPanel = ({
   approvedBudget,
+  hasContract,
   isAccepting,
   onAccept,
 }: AcceptFundPanelProps) => (
@@ -39,31 +41,38 @@ export const AcceptFundPanel = ({
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={onAccept}
-        disabled={isAccepting}
-        className={`
-          w-full sm:w-auto flex-shrink-0 inline-flex items-center justify-center gap-2
-          px-6 py-3 rounded-xl text-sm font-medium border-none transition-all duration-200
-          ${isAccepting
-            ? 'bg-success/50 text-white cursor-not-allowed'
-            : 'bg-success text-white cursor-pointer hover:opacity-90 shadow-sm hover:-translate-y-0.5 active:translate-y-0'
-          }
-        `}
-      >
-        {isAccepting ? (
-          <>
-            <Loader2 size={16} className="animate-spin" />
-            Đang xử lý...
-          </>
-        ) : (
-          <>
-            <CheckCircle2 size={16} />
-            Chấp nhận vốn
-          </>
+      <div className="w-full sm:w-auto flex flex-col items-end gap-2 shrink-0">
+        <button
+          type="button"
+          onClick={onAccept}
+          disabled={isAccepting || !hasContract}
+          className={`
+            w-full sm:w-auto flex-shrink-0 inline-flex items-center justify-center gap-2
+            px-6 py-3 rounded-xl text-sm font-medium border-none transition-all duration-200
+            ${(isAccepting || !hasContract)
+              ? 'bg-success/50 text-white cursor-not-allowed'
+              : 'bg-success text-white cursor-pointer hover:opacity-90 shadow-sm hover:-translate-y-0.5 active:translate-y-0'
+            }
+          `}
+        >
+          {isAccepting ? (
+            <>
+              <Loader2 size={16} className="animate-spin" />
+              Đang xử lý...
+            </>
+          ) : (
+            <>
+              <CheckCircle2 size={16} />
+              Chấp nhận vốn
+            </>
+          )}
+        </button>
+        {!hasContract && (
+          <p className="text-[11px] text-danger font-medium m-0 max-w-[200px] text-right">
+            Vui lòng đợi Admin tạo Hợp đồng trước khi nhận vốn.
+          </p>
         )}
-      </button>
+      </div>
     </div>
   </div>
 );

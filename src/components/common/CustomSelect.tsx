@@ -153,6 +153,8 @@ export const CustomSelect = ({
     ? 'px-2.5 py-2 text-xs'
     : 'px-3 py-2.5 text-sm';
 
+  const triggerIcon = selected?.icon ?? icon;
+
   return (
     <div ref={containerRef} className={`relative ${className}`}>
       {/* Trigger */}
@@ -174,9 +176,8 @@ export const CustomSelect = ({
           ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
         `}
       >
-        {icon && <span className="text-text-muted flex-shrink-0">{icon}</span>}
+        {triggerIcon && <span className="text-text-muted flex-shrink-0">{triggerIcon}</span>}
         <span className={`flex-1 truncate ${selected ? 'text-text-primary' : 'text-text-muted'}`}>
-          {selected?.icon && <span className="mr-1.5">{selected.icon}</span>}
           {selected ? selected.label : placeholder}
         </span>
         <ChevronDown
