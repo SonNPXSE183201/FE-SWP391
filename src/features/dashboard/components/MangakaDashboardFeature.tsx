@@ -16,12 +16,14 @@ import { SERIES_STATUS_CONFIG } from '../../series';
 import { formatVND } from '../../wallet';
 import { StatCard } from '../index';
 import { useMangakaDashboard, getGreeting } from '../hooks/useMangakaDashboard';
+import { ChartCard, TrendAreaChart, DonutChart, CHART_COLORS, formatCompactVND } from './charts';
+import { TrendingUp, PieChart } from 'lucide-react';
 
 export const MangakaDashboardFeature = () => {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const greeting = getGreeting();
-  const { stats, activities, seriesOverview, isLoading, error } = useMangakaDashboard();
+  const { stats, activities, seriesOverview, charts, isLoading, error } = useMangakaDashboard();
 
   if (isLoading) {
     return (
@@ -112,6 +114,42 @@ export const MangakaDashboardFeature = () => {
         />
       </div>
 
+      {/* ─── Charts ─── */}
+      {charts && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <ChartCard
+            title="Nhuận bút 6 tháng gần đây"
+            subtitle="Tổng genkouryo nhận theo tháng"
+            icon={TrendingUp}
+            className="lg:col-span-2"
+            action={
+              <span className="text-sm font-bold text-success">{formatVND(stats.monthlyGenkouryo)}</span>
+            }
+          >
+            <TrendAreaChart
+              data={charts.revenueTrend}
+              color={CHART_COLORS.success}
+              name="Nhuận bút"
+              valueFormatter={formatCompactVND}
+            />
+          </ChartCard>
+
+          <ChartCard title="Trạng thái Series" subtitle="Phân bố theo tình trạng" icon={PieChart}>
+            {charts.seriesStatus.length > 0 ? (
+              <DonutChart
+                data={charts.seriesStatus}
+                centerValue={stats.activeSeries}
+                centerLabel="Series"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-[200px] text-xs text-text-muted">
+                Chưa có series nào
+              </div>
+            )}
+          </ChartCard>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* ─── Recent Activity ─── */}
         <div className="lg:col-span-3">
@@ -123,6 +161,11 @@ export const MangakaDashboardFeature = () => {
               </h2>
             </div>
             <div className="divide-y divide-border-custom">
+              {activities.length === 0 && (
+                <div className="px-5 py-10 text-center text-xs text-text-muted">
+                  Chưa có hoạt động nào gần đây
+                </div>
+              )}
               {activities.map((activity) => {
                 const Icon = activity.icon;
                 return (
@@ -165,6 +208,11 @@ export const MangakaDashboardFeature = () => {
               </button>
             </div>
             <div className="divide-y divide-border-custom">
+              {seriesOverview.length === 0 && (
+                <div className="px-5 py-10 text-center text-xs text-text-muted">
+                  Chưa có series nào
+                </div>
+              )}
               {seriesOverview.map((series) => {
                 const statusCfg = SERIES_STATUS_CONFIG[series.status] || {
                   label: series.status,

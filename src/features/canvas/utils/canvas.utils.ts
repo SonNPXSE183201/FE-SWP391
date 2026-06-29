@@ -6,7 +6,6 @@ import type {
   UpdateRegionDto,
 } from '../../../api/generated/types';
 import type { Annotation, AnnotationType, Region } from '../../../types/entities';
-import { Point, util } from 'fabric';
 import type { FabricImage } from 'fabric';
 
 const ANNOTATION_TYPES: AnnotationType[] = ['Technical', 'Art', 'Content'];
@@ -155,7 +154,15 @@ export const toCreateAnnotationDto = (data: {
   type: data.type,
 });
 
-/** Chuyển rect (scene/canvas space) → toạ độ pixel trên ảnh gốc (0,0 = góc trên-trái ảnh). */
+/**
+ * Chuyển rect (scene/canvas space) → toạ độ pixel trên ảnh gốc (0,0 = góc trên-trái ảnh).
+ *
+ * Lưu ý: KHÔNG dùng `img.calcTransformMatrix()` vì ma trận của Fabric quy chiếu theo
+ * TÂM của object (center-origin), trong khi region được render bằng góc trên-trái
+ * (`region.x`/`region.y` trong scene space). Dùng ma trận sẽ làm toạ độ lệch đúng
+ * bằng nửa kích thước ảnh. Ảnh luôn được đặt với originX/originY = top-left nên ta
+ * quy đổi trực tiếp theo góc trên-trái + scale của ảnh.
+ */
 export const sceneRectToImagePixels = (
   img: FabricImage,
   left: number,
@@ -163,14 +170,15 @@ export const sceneRectToImagePixels = (
   width: number,
   height: number,
 ) => {
-  const inv = util.invertTransform(img.calcTransformMatrix());
-  const tl = util.transformPoint(new Point(left, top), inv);
-  const br = util.transformPoint(new Point(left + width, top + height), inv);
+  const scaleX = img.scaleX || 1;
+  const scaleY = img.scaleY || 1;
+  const originX = img.left ?? 0;
+  const originY = img.top ?? 0;
   return {
-    x: Math.round(Math.min(tl.x, br.x)),
-    y: Math.round(Math.min(tl.y, br.y)),
-    width: Math.max(1, Math.round(Math.abs(br.x - tl.x))),
-    height: Math.max(1, Math.round(Math.abs(br.y - tl.y))),
+    x: Math.round((left - originX) / scaleX),
+    y: Math.round((top - originY) / scaleY),
+    width: Math.max(1, Math.round(width / scaleX)),
+    height: Math.max(1, Math.round(height / scaleY)),
   };
 };
 

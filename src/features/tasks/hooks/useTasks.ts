@@ -74,7 +74,8 @@ export const useAvailableTasks = (params?: { page?: number; pageSize?: number; s
       const result = unwrapPaged<TasksDto>(payload);
       return { ...result, items: result.items.map(normalizeTaskDto) };
     },
-    staleTime: 1000 * 30,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
     retry: 1,
   });
 };
@@ -88,7 +89,8 @@ export const useAssistantMyTasks = (params?: { page?: number; pageSize?: number 
       const result = unwrapPaged<TasksDto>(payload);
       return { ...result, items: result.items.map(normalizeTaskDto) };
     },
-    staleTime: 1000 * 30,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
     retry: 1,
   });
 };
@@ -142,6 +144,7 @@ export const useRefreshPageComposite = () => {
       queryClient.invalidateQueries({ queryKey: ['canvas', 'composite', pageId] });
       queryClient.invalidateQueries({ queryKey: ['canvas', 'pages'] });
       queryClient.invalidateQueries({ queryKey: ['chapters'] });
+      queryClient.invalidateQueries({ queryKey: ['pages'] });
     },
   });
 };
@@ -158,6 +161,9 @@ export const useApproveTask = () => {
       queryClient.invalidateQueries({ queryKey: ['canvas'] });
       queryClient.invalidateQueries({ queryKey: ['canvas', 'composite'] });
       queryClient.invalidateQueries({ queryKey: ['chapters'] });
+      // Trang bản thảo (ChapterDetailFeature) dùng key ['pages', chapterId] —
+      // phải invalidate để ảnh composite mới hiện ngay sau khi duyệt.
+      queryClient.invalidateQueries({ queryKey: ['pages'] });
     },
   });
 };

@@ -5,13 +5,16 @@ import {
   ArrowUpDown,
   Loader2,
   LayoutDashboard,
+  TrendingUp,
+  PieChart,
 } from 'lucide-react';
 import { StatCard } from './StatCard';
 import { useAdminDashboard } from '../hooks/useAdminDashboard';
 import type { AdminRecentActivityDto } from '../api/dashboard.api';
+import { ChartCard, TrendAreaChart, TrendBarChart, DonutChart, CHART_COLORS } from './charts';
 
 export const AdminDashboardFeature = () => {
-  const { stats, recentActivities, isLoading, error } = useAdminDashboard();
+  const { stats, recentActivities, charts, isLoading, error } = useAdminDashboard();
 
   if (isLoading) {
     return (
@@ -76,12 +79,51 @@ export const AdminDashboardFeature = () => {
         />
       </div>
 
+      {/* Charts */}
+      {charts && (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <ChartCard
+              title="Tăng trưởng người dùng"
+              subtitle="Tổng người dùng 6 tháng gần đây"
+              icon={TrendingUp}
+              className="lg:col-span-2"
+              action={<span className="text-sm font-bold text-brand">{stats.users} người dùng</span>}
+            >
+              <TrendAreaChart data={charts.userGrowth} color={CHART_COLORS.brand} name="Người dùng" />
+            </ChartCard>
+
+            <ChartCard title="Phân bổ nội dung" subtitle="Series & hồ sơ" icon={PieChart}>
+              {charts.contentBreakdown.length > 0 ? (
+                <DonutChart data={charts.contentBreakdown} centerValue={stats.series} centerLabel="Series" />
+              ) : (
+                <div className="flex items-center justify-center h-[200px] text-xs text-text-muted">
+                  Chưa có dữ liệu
+                </div>
+              )}
+            </ChartCard>
+          </div>
+
+          <ChartCard
+            title="Giao dịch theo tháng"
+            subtitle="Số lượng giao dịch 6 tháng gần đây"
+            icon={ArrowUpDown}
+            action={<span className="text-sm font-bold text-success">{stats.transactions} giao dịch</span>}
+          >
+            <TrendBarChart data={charts.transactionTrend} color={CHART_COLORS.success} name="Giao dịch" />
+          </ChartCard>
+        </>
+      )}
+
       {/* Recent Activity List */}
       <div className="bg-bg-secondary border border-border-custom rounded-xl overflow-hidden">
         <div className="p-5 border-b border-border-custom flex items-center justify-between">
           <h2 className="text-sm font-semibold text-text-primary">Hoạt động hệ thống gần đây</h2>
         </div>
         <div className="divide-y divide-border-custom">
+          {recentActivities.length === 0 && (
+            <div className="px-5 py-10 text-center text-xs text-text-muted">Chưa có hoạt động nào gần đây</div>
+          )}
           {recentActivities.map((act: AdminRecentActivityDto) => (
             <div key={act.id} className="p-4 flex items-center justify-between hover:bg-bg-surface/30 transition-colors">
               <div className="flex items-center gap-3">

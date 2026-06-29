@@ -18,6 +18,7 @@ import {
   ImagePlus,
   BarChart3,
   Inbox,
+  FileText,
 } from 'lucide-react';
 import { useAuthStore } from '../../../stores/authStore';
 import { useVotingList, useSubmitBoardVote } from '../hooks/useVoting';
@@ -30,6 +31,8 @@ import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
 import { VoteProgressBar } from './VoteProgressBar';
 import { VotingRulesBanner } from './VotingRulesBanner';
 import { VoteModal } from './VoteModal';
+import { BoardSeriesDossier } from './BoardSeriesDossier';
+import { hasBoardSeriesDossier } from '../utils/boardSeriesDossier';
 import {
   boardVoteToUiChoice,
   findMyBoardVote,
@@ -250,29 +253,25 @@ export const VotingFeature = () => {
                 <p className="text-2xl font-bold text-text-primary">{formatCurrency(selectedItem.estimatedProductionBudget ?? 0)}</p>
               </div>
             </div>
+
+            {/* Hồ sơ trình Hội đồng — bản phác thảo + nhận xét */}
+            <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <FileText size={16} className="text-brand" />
+                <h2 className="text-sm font-semibold text-text-primary">Hồ sơ trình Hội đồng</h2>
+                <HelpTip
+                  content="Gồm file bản phác thảo Mangaka nộp và nhận xét Editor khi trình lên Hội đồng. Nên đọc trước khi bỏ phiếu."
+                  title="Hồ sơ biểu quyết"
+                  ariaLabel="Giải thích hồ sơ trình Hội đồng"
+                  size="sm"
+                />
+              </div>
+              <BoardSeriesDossier series={selectedItem} />
+            </div>
           </div>
 
-          {/* RIGHT: Editor + Vote Results + Actions */}
+          {/* RIGHT: Vote Results + Actions */}
           <div className="lg:col-span-2 space-y-5">
-            {/* Editor Recommendation */}
-            <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <User size={16} className="text-brand" />
-                <h2 className="text-sm font-semibold text-text-primary">Đánh giá của Editor</h2>
-              </div>
-              <div className="bg-bg-surface border border-border-custom rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-6 h-6 rounded-full bg-brand/10 flex items-center justify-center">
-                    <User size={12} className="text-brand" />
-                  </div>
-                  <span className="text-xs font-medium text-text-primary">{selectedItem.editorName}</span>
-                </div>
-                <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">
-                  {selectedItem.editorNote || '—'}
-                </p>
-              </div>
-            </div>
-
             {/* Vote Distribution */}
             <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
               <div className="flex items-center gap-2 mb-4">
@@ -539,6 +538,13 @@ export const VotingFeature = () => {
                               {getGenreLabel(g)}
                             </span>
                           ))}
+                        </div>
+                      )}
+
+                      {hasBoardSeriesDossier(item) && (
+                        <div className="flex items-center gap-1.5 mt-2 text-[10px] text-brand font-medium">
+                          <FileText size={11} />
+                          Có bản phác thảo / nhận xét Editor
                         </div>
                       )}
 

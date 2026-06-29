@@ -170,6 +170,9 @@ export const useSignalR = () => {
       if (rawType === 'Contract_Created') {
         queryClient.invalidateQueries({ queryKey: ['series'] });
       }
+      if (rawType.startsWith('Task_')) {
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      }
 
       if (shouldRefreshAdminUsers(item.type, item.link)) {
         queryClient.invalidateQueries({ queryKey: ['admin-users'] });
@@ -216,8 +219,8 @@ export const useSignalR = () => {
     // TaskStatusChanged: task status update → refresh task data (F1.6)
     connection.on('TaskStatusChanged', (payload: any) => {
       console.log('[SignalR] TaskStatusChanged received (refreshing queries):', payload);
-      // Refresh any task list/detail so the new status shows immediately.
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['canvas'] });
     });
 
     // WalletUpdated: wallet balance change → notify + refresh wallet data (F1.6)

@@ -1,31 +1,55 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
-  ClipboardList, Clock, Download, Loader2, Search, User,
-  Image as ImageIcon,
-  DollarSign,
-  ChevronDown,
-  ChevronUp,
+  CheckCircle2,
+  ClipboardList,
+  Clock,
+  Filter,
+  ListChecks,
+  Loader2,
   RotateCcw,
+  Search,
+  Unlock,
+  X,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-import { TASK_STATUS_CONFIG, formatDeadline, useAvailableTasks, useAssistantMyTasks, useAcceptTask, useRequestExtension, AssistantTaskDetailModal } from '../index';
-import { formatVND } from '../../wallet';
+import {
+  useAvailableTasks,
+  useAssistantMyTasks,
+  useAcceptTask,
+  AssistantTaskDetailModal,
+} from '../index';
+import { AssistantTaskCard } from './AssistantTaskCard';
+import { TaskRegionPreviewModal } from './TaskRegionPreviewModal';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { Pagination } from '../../../components/common/Pagination';
+import { CustomSelect } from '../../../components/common/CustomSelect';
+import { HelpTip } from '../../../components/common/HelpTip';
 import type { AvailableTaskDto } from '../hooks/useTasks';
 import type { TaskStatus } from '../../../types/entities';
-import { useQueryClient } from '@tanstack/react-query';
-import { validatePngTransparent } from '../../../utils/validatePngTransparent';
 
-// ─── Server-side pagination state ────────────────────────────
-interface PaginationState {
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
-  pageRange: (number | 'ellipsis')[];
-}
+// ─── Types & constants ───────────────────────────────────────
+type TabKey = 'Available' | 'MyTasks';
+type MyStatusFilter = '' | TaskStatus | 'active';
 
+const PAGE_SIZE = 10;
+const ACTIVE_STATUSES: TaskStatus[] = ['In_Progress', 'Revision'];
+
+const MY_TASK_FILTERS: { value: '' | TaskStatus | 'active'; label: string }[] = [
+  { value: '', label: 'Tất cả' },
+  { value: 'active', label: 'Cần làm' },
+  { value: 'In_Progress', label: 'Đang làm' },
+  { value: 'Pending_Review', label: 'Chờ duyệt' },
+  { value: 'Revision', label: 'Cần sửa' },
+  { value: 'Approved', label: 'Hoàn thành' },
+];
+
+const MY_TASK_FILTER_OPTIONS = MY_TASK_FILTERS.map(({ value, label }) => ({
+  value: value || 'all',
+  label,
+}));
+
+// ─── Pagination helpers ──────────────────────────────────────
 const buildPageRange = (current: number, total: number): (number | 'ellipsis')[] => {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
   const left = Math.max(current - 1, 2);
@@ -38,27 +62,60 @@ const buildPageRange = (current: number, total: number): (number | 'ellipsis')[]
   return range;
 };
 
+// ─── Filtering (My Tasks is filtered client-side) ────────────
+const matchesSearch = (task: AvailableTaskDto, query: string) => {
+  const q = query.toLowerCase().trim();
+  if (!q) return true;
+  return (
+    (task.description || '').toLowerCase().includes(q) ||
+    (task.mangakaName || '').toLowerCase().includes(q) ||
+    String(task.pageNumber ?? '').includes(q) ||
+    String(task.paymentAmount ?? '').includes(q.replace(/\D/g, ''))
+  );
+};
+
+const filterMyTasks = (items: AvailableTaskDto[], statusFilter: MyStatusFilter, search: string) => {
+  let list = items;
+  if (search.trim()) list = list.filter((t) => matchesSearch(t, search));
+  if (!statusFilter) return list;
+  if (statusFilter === 'active') {
+    return list.filter((t) => ACTIVE_STATUSES.includes(t.status as TaskStatus));
+  }
+  return list.filter((t) => t.status === statusFilter);
+};
+
 // ─── Component ───────────────────────────────────────────────
-
-const PAGE_SIZE = 10;
-
 export const TaskQueueFeature = () => {
-  const [activeTab, setActiveTab] = useState<'Available' | 'MyTasks'>('Available');
-  const [skillSearch, setSkillSearch] = useState('');
+  const [activeTab, setActiveTab] = useState<TabKey>('Available');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [myStatusFilter, setMyStatusFilter] = useState<MyStatusFilter>('');
   const [currentPage, setCurrentPage] = useState(1);
-  const debouncedSkill = useDebounce(skillSearch, 400);
+  const [detailTask, setDetailTask] = useState<AvailableTaskDto | null>(null);
+  const [previewTask, setPreviewTask] = useState<AvailableTaskDto | null>(null);
+  const debouncedSearch = useDebounce(searchQuery, 400);
 
-  const handleTabChange = (tab: 'Available' | 'MyTasks') => {
+  const isMyTasksTab = activeTab === 'MyTasks';
+  const hasActiveFilters = !!searchQuery || !!myStatusFilter;
+
+  const handleTabChange = (tab: TabKey) => {
     setActiveTab(tab);
     setCurrentPage(1);
+    setMyStatusFilter('');
+    setSearchQuery('');
   };
 
-  const handleSkillSearchChange = (value: string) => {
-    setSkillSearch(value);
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
     setCurrentPage(1);
   };
 
-  // ─── React Query: available tasks (server-side pagination) ───
+  const clearFilters = () => {
+    setSearchQuery('');
+    setMyStatusFilter('');
+    setCurrentPage(1);
+  };
+
+  // ─── Data ──────────────────────────────────────────────────
   const {
     data: availableData,
     isLoading: isAvailableLoading,
@@ -67,7 +124,7 @@ export const TaskQueueFeature = () => {
   } = useAvailableTasks({
     page: currentPage,
     pageSize: PAGE_SIZE,
-    skill: debouncedSkill || undefined,
+    skill: !isMyTasksTab && debouncedSearch ? debouncedSearch : undefined,
   });
 
   const {
@@ -75,430 +132,310 @@ export const TaskQueueFeature = () => {
     isLoading: isMyLoading,
     isError: isMyError,
     error: myError,
-  } = useAssistantMyTasks({
-    page: currentPage,
-    pageSize: PAGE_SIZE,
-  });
+  } = useAssistantMyTasks({ page: currentPage, pageSize: 50 });
 
-  const isMyTasksTab = activeTab === 'MyTasks';
   const isLoading = isMyTasksTab ? isMyLoading : isAvailableLoading;
   const isError = isMyTasksTab ? isMyError : isAvailableError;
   const error = isMyTasksTab ? myError : availableError;
   const activeData = isMyTasksTab ? myData : availableData;
 
-  const tasks = activeData?.items ?? [];
+  const rawTasks = activeData?.items ?? [];
   const totalPages = activeData?.totalPages ?? 1;
   const totalItems = activeData?.totalItems ?? 0;
 
-  // ─── Mutation: nhận việc ───
-  const acceptMutation = useAcceptTask();
+  const tasks = useMemo(
+    () => (isMyTasksTab ? filterMyTasks(rawTasks, myStatusFilter, debouncedSearch) : rawTasks),
+    [rawTasks, isMyTasksTab, myStatusFilter, debouncedSearch],
+  );
 
+  // Quick at-a-glance counts for the "Việc của tôi" tab (from loaded items)
+  const myStats = useMemo(() => {
+    const all = myData?.items ?? [];
+    return {
+      active: all.filter((t) => ACTIVE_STATUSES.includes(t.status as TaskStatus)).length,
+      review: all.filter((t) => t.status === 'Pending_Review').length,
+      done: all.filter((t) => t.status === 'Approved').length,
+    };
+  }, [myData]);
+
+  const isFilteredView = isMyTasksTab && hasActiveFilters;
+
+  // ─── Mutations ─────────────────────────────────────────────
+  const acceptMutation = useAcceptTask();
   const handleAcceptTask = async (taskId: number) => {
     try {
       await acceptMutation.mutateAsync(taskId);
+      setPreviewTask(null);
       toast.success('Nhận việc thành công!');
     } catch {
       toast.error('Lỗi khi nhận việc');
     }
   };
 
-  // ─── Mutation: nộp bài & gia hạn ───
-  const [selectedFiles, setSelectedFiles] = useState<Record<number, File>>({});
-  const [extendingTaskId, setExtendingTaskId] = useState<number | null>(null);
-  const [extensionReason, setExtensionReason] = useState('');
-  const [expandedImageTasks, setExpandedImageTasks] = useState<Record<number, boolean>>({});
-  const [detailTask, setDetailTask] = useState<AvailableTaskDto | null>(null);
-  const queryClient = useQueryClient();
-  const extensionMutation = useRequestExtension();
-
-  const toggleImage = (taskId: number) => {
-    setExpandedImageTasks((prev) => ({ ...prev, [taskId]: !prev[taskId] }));
-  };
-
-  const handleFileChange = (taskId: number, file: File | null) => {
-    if (file) {
-      setSelectedFiles((prev) => ({ ...prev, [taskId]: file }));
-    } else {
-      setSelectedFiles((prev) => {
-        const newFiles = { ...prev };
-        delete newFiles[taskId];
-        return newFiles;
-      });
-    }
-  };
-
-  const handleSubmitResult = async (taskId: number) => {
-    const file = selectedFiles[taskId];
-    if (!file) {
-      toast.error('Vui lòng chọn file kết quả trước khi nộp!');
-      return;
-    }
-
-    const validation = await validatePngTransparent(file);
-    if (!validation.valid) {
-      toast.error(validation.message || 'File PNG không hợp lệ');
-      return;
-    }
-
-    try {
-      const { taskApi } = await import('../api/task.api');
-      await taskApi.submitResult(String(taskId), { taskId: String(taskId), image: file, comment: '' });
-      toast.success('Nộp kết quả thành công!');
-      queryClient.invalidateQueries({ queryKey: ['tasks', 'assistant-my'] });
-      queryClient.invalidateQueries({ queryKey: ['tasks', 'mangaka'] });
-      // clear file
-      handleFileChange(taskId, null);
-    } catch {
-      toast.error('Lỗi khi nộp bài');
-    }
-  };
-
-  const handleRequestExtension = async (taskId: number, days: 1 | 2) => {
-    if (!extensionReason.trim()) {
-      toast.error('Vui lòng nhập lý do xin gia hạn');
-      return;
-    }
-    try {
-      await extensionMutation.mutateAsync({ taskId: String(taskId), days, reason: extensionReason.trim() });
-      toast.success(`Đã xin gia hạn thêm ${days * 24}h thành công!`);
-      setExtendingTaskId(null);
-      setExtensionReason('');
-    } catch {
-      toast.error('Lỗi khi xin gia hạn');
-    }
-  };
-
-  // ─── Server-side pagination state for <Pagination> ───
-  const paginationState: PaginationState = {
-    currentPage,
-    totalPages,
-    totalItems,
-    pageRange: buildPageRange(currentPage, totalPages),
-  };
-
+  // ─── Derived pagination ────────────────────────────────────
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
   const endItem = Math.min(currentPage * PAGE_SIZE, totalItems);
+  const showPagination = !(isMyTasksTab && isFilteredView) && totalPages > 1;
 
   // ─── Render ────────────────────────────────────────────────
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 size={32} className="animate-spin text-brand" />
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-text-muted">{error?.message || 'Không thể tải danh sách tasks. Vui lòng thử lại.'}</p>
-      </div>
-    );
-  }
-
   return (
     <div className="animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-4 bg-gradient-to-r from-bg-secondary to-transparent p-6 rounded-2xl border border-border-custom">
-        <div className="w-14 h-14 rounded-2xl bg-brand/10 flex items-center justify-center shadow-[0_0_15px_rgba(var(--brand),0.15)] border border-brand/20">
-          <ClipboardList size={26} className="text-brand" />
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand/10">
+            <ClipboardList size={22} className="text-brand" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-text-primary">Danh sách công việc</h1>
+              <HelpTip
+                title="Cách nhận & nộp việc"
+                ariaLabel="Hướng dẫn nhận và nộp việc"
+                placement="bottom-start"
+                width="22rem"
+                autoCloseMs={0}
+                content={
+                  <div className="space-y-2">
+                    <div>
+                      <p className="mb-0.5 font-medium text-text-primary">Quy trình</p>
+                      <ol className="m-0 list-decimal space-y-0.5 pl-4">
+                        <li>
+                          Tab <strong className="text-brand">Việc có sẵn</strong> → xem{' '}
+                          <strong>vùng cần vẽ</strong> trên ảnh trang, rồi bấm{' '}
+                          <strong>Nhận việc</strong> nếu phù hợp kỹ năng.
+                        </li>
+                        <li>
+                          Tab <strong className="text-brand">Việc của tôi</strong> → làm và{' '}
+                          <strong>nộp bài</strong>.
+                        </li>
+                        <li>Mangaka duyệt → tiền tự động vào ví của bạn.</li>
+                      </ol>
+                    </div>
+                    <div>
+                      <p className="mb-0.5 font-medium text-text-primary">Trạng thái</p>
+                      <ul className="m-0 list-none space-y-0.5 p-0">
+                        <li><span className="font-medium text-info">Đang làm</span> — cần nộp bài.</li>
+                        <li><span className="font-medium text-danger">Cần sửa</span> — xem góp ý & nộp lại.</li>
+                        <li><span className="font-medium text-warning">Chờ duyệt</span> — đợi Mangaka kiểm tra.</li>
+                        <li><span className="font-medium text-success">Hoàn thành</span> — đã nhận tiền.</li>
+                      </ul>
+                    </div>
+                    <p className="text-text-muted">
+                      Chip <strong className="text-danger">deadline đỏ</strong> = task sắp hoặc đã quá hạn.
+                    </p>
+                  </div>
+                }
+              />
+            </div>
+            <p className="mt-0.5 text-xs text-text-muted">
+              {isMyTasksTab ? 'Theo dõi và nộp bài các task đã nhận' : 'Tìm và nhận task phù hợp kỹ năng'}
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-black text-text-primary tracking-tight">Danh sách công việc</h1>
-          <p className="text-sm text-text-muted mt-1">{totalItems} task hiện có</p>
-        </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="flex gap-4 border-b border-border-custom mt-8 relative">
-        {(['Available', 'MyTasks'] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => handleTabChange(tab)}
-            className={`px-6 py-3.5 text-sm font-bold transition-all duration-300 relative border-none bg-transparent cursor-pointer ${activeTab === tab
-                ? 'text-brand'
-                : 'text-text-secondary hover:text-text-primary'
+        {/* Quick stats */}
+        <div className="flex flex-wrap gap-2">
+          {(isMyTasksTab
+            ? [
+                { label: 'Cần làm', value: myStats.active, icon: ListChecks, color: 'text-info', bg: 'bg-info/10' },
+                { label: 'Chờ duyệt', value: myStats.review, icon: Clock, color: 'text-warning', bg: 'bg-warning/10' },
+                { label: 'Hoàn thành', value: myStats.done, icon: CheckCircle2, color: 'text-success', bg: 'bg-success/10' },
+              ]
+            : [
+                { label: 'Đang chờ nhận', value: totalItems, icon: Unlock, color: 'text-brand', bg: 'bg-brand/10' },
+              ]
+          ).map((s) => (
+            <div
+              key={s.label}
+              className="flex items-center gap-2.5 rounded-xl border border-border-custom bg-bg-secondary px-3 py-2"
+            >
+              <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${s.bg}`}>
+                <s.icon size={15} className={s.color} />
+              </span>
+              <div>
+                <p className={`text-lg font-bold leading-none tabular-nums ${s.color}`}>{s.value}</p>
+                <p className="mt-1 text-[10px] text-text-muted">{s.label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </header>
+
+      {/* Toolbar: tabs + search + filter */}
+      <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center">
+        {/* Tabs */}
+        <div className="flex w-fit shrink-0 gap-1 rounded-xl border border-border-custom bg-bg-secondary p-1">
+          {(
+            [
+              { key: 'Available' as const, label: 'Việc có sẵn', icon: Unlock },
+              { key: 'MyTasks' as const, label: 'Việc của tôi', icon: ListChecks },
+            ]
+          ).map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => handleTabChange(key)}
+              className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border-none px-4 py-2 text-sm font-semibold transition-all ${
+                activeTab === key
+                  ? 'bg-brand text-white shadow-sm'
+                  : 'bg-transparent text-text-secondary hover:text-text-primary'
               }`}
-          >
-            <span className="relative z-10 flex items-center gap-2">
-              {tab === 'Available' ? '🔓 Việc có sẵn' : '📋 Việc của tôi'}
-            </span>
-            {activeTab === tab && (
-              <div className="absolute bottom-0 left-0 w-full h-[3px] bg-brand rounded-t-full shadow-[0_-2px_10px_rgba(var(--brand),0.5)] z-20"></div>
-            )}
-            {activeTab === tab && (
-              <div className="absolute bottom-0 left-0 w-full h-full bg-gradient-to-t from-brand/10 to-transparent z-0"></div>
-            )}
-          </button>
-        ))}
-      </div>
+            >
+              <Icon size={15} />
+              {label}
+            </button>
+          ))}
+        </div>
 
-      {/* Search bar — tab Available only */}
-      {activeTab === 'Available' && (
-        <div className="relative mt-4">
-          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+        <div className="relative min-w-0 flex-1">
+          <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
           <input
             type="text"
-            value={skillSearch}
-            onChange={(e) => handleSkillSearchChange(e.target.value)}
-            placeholder="Tìm theo kỹ năng (ví dụ: coloring, background, shading...)"
-            className="w-full pl-10 pr-10 py-2.5 bg-bg-secondary border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all"
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder={
+              isMyTasksTab
+                ? 'Tìm theo tên task, mangaka, trang, số tiền…'
+                : 'Tìm theo kỹ năng (coloring, background, shading…)'
+            }
+            className="w-full rounded-xl border border-border-custom bg-bg-secondary py-2.5 pl-10 pr-10 text-sm text-text-primary transition-all placeholder:text-text-muted focus:border-brand/50 focus:outline-none focus:ring-1 focus:ring-brand/20"
           />
-          {skillSearch && (
+          {searchQuery && (
             <button
-              onClick={() => handleSkillSearchChange('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary text-xs border-none bg-transparent cursor-pointer"
+              type="button"
+              onClick={() => handleSearchChange('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer border-none bg-transparent p-0.5 text-text-muted hover:text-text-primary"
+              aria-label="Xóa tìm kiếm"
             >
-              ✕
+              <X size={14} />
             </button>
           )}
         </div>
-      )}
 
-      {/* Results count */}
-      <p className="text-xs text-text-muted mt-4">
-        Tìm thấy <span className="text-text-primary font-medium">{totalItems}</span> tasks
-        {debouncedSkill && (
-          <> khớp "<span className="text-brand font-medium">{debouncedSkill}</span>"</>
+        {isMyTasksTab && (
+          <div className="w-full shrink-0 lg:w-[190px]">
+            <CustomSelect
+              options={MY_TASK_FILTER_OPTIONS}
+              value={myStatusFilter || 'all'}
+              onChange={(v) => {
+                setMyStatusFilter(v === 'all' ? '' : (v as MyStatusFilter));
+                setCurrentPage(1);
+              }}
+              placeholder="Trạng thái"
+              icon={<Filter size={14} />}
+              size="sm"
+            />
+          </div>
         )}
-      </p>
-
-      {/* Task List */}
-      <div className="space-y-3 mt-3">
-        {tasks.map((task: AvailableTaskDto) => {
-          const statusKey = task.status as TaskStatus;
-          const statusCfg = TASK_STATUS_CONFIG[statusKey] || {
-            label: task.status,
-            color: 'text-text-muted',
-            bg: 'bg-bg-surface',
-            icon: Clock,
-          };
-          const StatusIcon = statusCfg.icon;
-          const dl = task.deadline ? formatDeadline(task.deadline) : null;
-
-          return (
-            <div
-              key={task.id}
-              className="group relative bg-bg-secondary border border-border-custom rounded-2xl p-5 hover:border-brand/40 hover:shadow-lg-custom hover:-translate-y-1 transition-all duration-300 overflow-hidden"
-            >
-              {/* Optional background glow for Pending tasks */}
-              {activeTab === 'Available' && task.status === 'Pending' && (
-                <div className="absolute -top-10 -right-10 w-40 h-40 bg-brand/5 blur-3xl rounded-full z-0 transition-all group-hover:bg-brand/10"></div>
-              )}
-
-              <div className="flex items-start gap-5 relative z-10">
-                {/* Left: Status icon */}
-                <div className={`w-12 h-12 rounded-2xl ${statusCfg.bg} flex items-center justify-center flex-shrink-0 shadow-sm border border-black/5`}>
-                  <StatusIcon size={22} className={statusCfg.color} />
-                </div>
-
-                {/* Middle: Task info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <h3 className="text-base font-bold text-text-primary group-hover:text-brand transition-colors line-clamp-1">
-                      {task.description || 'Untitled Task'}
-                    </h3>
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${statusCfg.bg} ${statusCfg.color}`}>
-                      {statusCfg.label}
-                    </span>
-                  </div>
-
-                  {/* Meta info row */}
-                  <div className="flex items-center gap-5 mt-3 flex-wrap">
-                    {/* Payment */}
-                    <span className="inline-flex items-center gap-1.5 text-sm font-bold text-brand bg-brand/10 px-3 py-1.5 rounded-lg border border-brand/20">
-                      <DollarSign size={14} />
-                      {formatVND(task.paymentAmount ?? 0)}
-                    </span>
-
-                    {/* Mangaka */}
-                    {task.mangakaName && (
-                      <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-text-secondary bg-bg-surface px-2.5 py-1 rounded-lg">
-                        <User size={13} />
-                        {task.mangakaName}
-                      </span>
-                    )}
-
-                    {/* Page number */}
-                    {(task.pageNumber ?? 0) > 0 && (
-                      <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-text-secondary bg-bg-surface px-2.5 py-1 rounded-lg">
-                        <ImageIcon size={13} />
-                        Trang {task.pageNumber}
-                      </span>
-                    )}
-
-                    {/* Deadline */}
-                    {dl && (
-                      <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-lg ${dl.urgent ? 'text-danger bg-danger/10 border border-danger/20' : 'text-text-muted bg-bg-surface'}`}>
-                        <Clock size={13} />
-                        {dl.text}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Feedback ngắn + mở chi tiết (Revision) */}
-                  {task.status === 'Revision' && (
-                    <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2">
-                      {task.feedbackComment && (
-                        <p className="text-[11px] text-text-secondary flex-1 line-clamp-1">
-                          <span className="text-danger font-semibold">Mangaka: </span>
-                          {task.feedbackComment}
-                        </p>
-                      )}
-                      <button
-                        onClick={() => setDetailTask(task)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-danger/10 hover:bg-danger/20 text-danger rounded-lg text-[11px] font-bold border-none cursor-pointer flex-shrink-0"
-                      >
-                        <RotateCcw size={13} />
-                        Xem chi tiết yêu cầu sửa
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Page image preview (ẩn khi Revision — xem trong modal) */}
-                  {task.pageImageUrl && task.status !== 'Revision' && (
-                    <div className="mt-4">
-                      <button
-                        onClick={() => toggleImage(task.id!)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-bg-surface hover:bg-bg-secondary border border-border-custom rounded-lg text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
-                      >
-                        <ImageIcon size={14} />
-                        {expandedImageTasks[task.id!] ? 'Ẩn ảnh tham khảo' : 'Xem ảnh tham khảo'}
-                        {expandedImageTasks[task.id!] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                      </button>
-                      {expandedImageTasks[task.id!] && (
-                        <div className="mt-3 overflow-hidden rounded-xl border border-border-custom w-fit bg-black/20 animate-fade-in">
-                          <img
-                            src={task.pageImageUrl}
-                            alt={`Trang ${task.pageNumber}`}
-                            className="h-24 w-auto object-cover hover:scale-105 transition-transform duration-500 cursor-zoom-in opacity-80 hover:opacity-100"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Right: Accept button */}
-                {activeTab === 'Available' && task.status === 'Pending' && (
-                  <div className="flex-shrink-0 ml-auto flex items-center justify-center pt-2">
-                    <button
-                      onClick={() => handleAcceptTask(task.id!)}
-                      disabled={acceptMutation.isPending}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-bold transition-all border-none cursor-pointer shadow-brand hover:shadow-brand-hover hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Download size={16} />
-                      Nhận việc ngay
-                    </button>
-                  </div>
-                )}
-
-                {/* Right: Submit — In_Progress; Revision dùng modal chi tiết */}
-                {activeTab === 'MyTasks' && task.status === 'In_Progress' && (
-                  <div className="flex-shrink-0 ml-auto flex flex-col gap-3 items-end pt-1">
-                    <label className="cursor-pointer px-4 py-2 bg-bg-surface hover:bg-bg-secondary border border-border-custom rounded-xl text-xs font-semibold hover:border-brand/30 transition-all text-text-primary shadow-sm flex items-center gap-2">
-                      <ImageIcon size={14} className="text-text-muted" />
-                      {selectedFiles[task.id!] ? selectedFiles[task.id!].name : 'Chọn File PNG'}
-                      <input
-                        type="file"
-                        accept="image/png,.png"
-                        className="hidden"
-                        onChange={(e) => handleFileChange(task.id!, e.target.files?.[0] || null)}
-                      />
-                    </label>
-                    <div className="flex items-center gap-2">
-                      {extendingTaskId === task.id ? (
-                        <div className="flex flex-col items-end gap-2 animate-fade-in min-w-[220px] bg-bg-surface p-3 rounded-xl border border-border-custom">
-                          <textarea
-                            value={extensionReason}
-                            onChange={(e) => setExtensionReason(e.target.value)}
-                            placeholder="Lý do xin gia hạn..."
-                            className="w-full px-3 py-2 bg-bg-secondary border border-border-custom rounded-lg text-[11px] text-text-primary resize-none h-16 focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all"
-                          />
-                          <div className="flex items-center gap-1.5 w-full">
-                            <button
-                              onClick={() => handleRequestExtension(task.id!, 1)}
-                              disabled={extensionMutation.isPending || !!task.extensionRequestDays}
-                              className="flex-1 py-1.5 bg-brand/10 hover:bg-brand/20 text-brand rounded-lg text-[11px] font-bold border-none cursor-pointer disabled:opacity-50 transition-colors"
-                            >
-                              +24h
-                            </button>
-                            <button
-                              onClick={() => handleRequestExtension(task.id!, 2)}
-                              disabled={extensionMutation.isPending || !!task.extensionRequestDays}
-                              className="flex-1 py-1.5 bg-brand/10 hover:bg-brand/20 text-brand rounded-lg text-[11px] font-bold border-none cursor-pointer disabled:opacity-50 transition-colors"
-                            >
-                              +48h
-                            </button>
-                            <button
-                              onClick={() => { setExtendingTaskId(null); setExtensionReason(''); }}
-                              className="px-3 py-1.5 bg-bg-secondary hover:bg-border-custom text-text-secondary rounded-lg text-[11px] font-medium border-none cursor-pointer transition-colors"
-                            >
-                              Hủy
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setExtendingTaskId(task.id!)}
-                          disabled={!!task.extensionRequestDays}
-                          className="px-4 py-2 bg-bg-surface hover:bg-bg-secondary border border-border-custom text-text-secondary rounded-xl text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
-                          title={task.extensionRequestDays ? 'Task đã xin gia hạn' : undefined}
-                        >
-                          {task.extensionRequestDays ? 'Đã gia hạn' : 'Xin gia hạn'}
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleSubmitResult(task.id!)}
-                        disabled={!task.id || !selectedFiles[task.id]}
-                        className="inline-flex items-center gap-2 px-5 py-2 bg-success hover:bg-green-600 text-white rounded-xl text-sm font-bold transition-all border-none cursor-pointer shadow-success hover:shadow-success-hover hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Download size={16} />
-                        Nộp bài
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
       </div>
 
-      {/* Empty state */}
-      {tasks.length === 0 && (
-        <div className="mt-6 bg-bg-secondary border border-border-custom rounded-xl p-12 flex flex-col items-center gap-4">
-          <ClipboardList size={40} className="text-text-muted" />
+      {/* Result summary */}
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <p className="text-xs text-text-muted">
+          <span className="font-semibold text-text-primary">
+            {isMyTasksTab ? tasks.length : totalItems}
+          </span>{' '}
+          task
+          {isFilteredView && tasks.length !== rawTasks.length && (
+            <span className="text-text-muted"> / {rawTasks.length}</span>
+          )}
+          {debouncedSearch && (
+            <>
+              {' '}
+              khớp “<span className="font-medium text-brand">{debouncedSearch}</span>”
+            </>
+          )}
+        </p>
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="inline-flex shrink-0 cursor-pointer items-center gap-1 border-none bg-transparent text-xs font-medium text-brand hover:text-brand-hover"
+          >
+            <RotateCcw size={12} />
+            Xóa bộ lọc
+          </button>
+        )}
+      </div>
+
+      {/* Content */}
+      {isLoading ? (
+        <div className="flex min-h-[320px] items-center justify-center">
+          <Loader2 size={30} className="animate-spin text-brand" />
+        </div>
+      ) : isError ? (
+        <div className="mt-4 flex min-h-[280px] flex-col items-center justify-center gap-3 rounded-2xl border border-danger/20 bg-danger/5 p-10 text-center">
+          <X size={32} className="text-danger" />
           <p className="text-sm text-text-secondary">
-            {debouncedSkill
-              ? `Không tìm thấy công việc nào khớp "${debouncedSkill}"`
-              : 'Hiện tại không có công việc nào đang chờ nhận'}
+            {error?.message || 'Không thể tải danh sách tasks. Vui lòng thử lại.'}
           </p>
+        </div>
+      ) : tasks.length === 0 ? (
+        <div className="mt-4 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border-custom bg-bg-secondary/50 p-12 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-bg-surface">
+            <ClipboardList size={28} className="text-text-muted" />
+          </div>
+          <p className="max-w-xs text-sm text-text-secondary">
+            {hasActiveFilters
+              ? 'Không có task nào khớp bộ lọc hiện tại.'
+              : isMyTasksTab
+                ? 'Bạn chưa nhận task nào. Hãy xem tab “Việc có sẵn”.'
+                : 'Hiện không có công việc nào đang chờ nhận.'}
+          </p>
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="cursor-pointer rounded-lg border-none bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-hover"
+            >
+              Xóa bộ lọc
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-3">
+          {tasks.map((task: AvailableTaskDto) => (
+            <AssistantTaskCard
+              key={task.id}
+              task={task}
+              variant={isMyTasksTab ? 'my' : 'available'}
+              acceptPending={acceptMutation.isPending}
+              onAccept={() => task.id && handleAcceptTask(task.id)}
+              onOpenDetail={isMyTasksTab ? () => setDetailTask(task) : undefined}
+              onOpenRegionPreview={!isMyTasksTab ? () => setPreviewTask(task) : undefined}
+            />
+          ))}
         </div>
       )}
 
-      {/* Pagination — reuse shared component */}
-      <Pagination
-        currentPage={paginationState.currentPage}
-        totalPages={paginationState.totalPages}
-        pageRange={paginationState.pageRange}
-        totalItems={paginationState.totalItems}
-        startItem={startItem}
-        endItem={endItem}
-        canGoNext={currentPage < totalPages}
-        canGoPrev={currentPage > 1}
-        onPageChange={setCurrentPage}
-        onNextPage={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-        onPrevPage={() => setCurrentPage((p) => Math.max(1, p - 1))}
-        itemLabel="tasks"
-      />
+      {showPagination && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageRange={buildPageRange(currentPage, totalPages)}
+          totalItems={totalItems}
+          startItem={startItem}
+          endItem={endItem}
+          canGoNext={currentPage < totalPages}
+          canGoPrev={currentPage > 1}
+          onPageChange={setCurrentPage}
+          onNextPage={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+          onPrevPage={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          itemLabel="tasks"
+        />
+      )}
 
       {detailTask && (
-        <AssistantTaskDetailModal
-          task={detailTask}
-          onClose={() => setDetailTask(null)}
+        <AssistantTaskDetailModal task={detailTask} onClose={() => setDetailTask(null)} />
+      )}
+
+      {previewTask && (
+        <TaskRegionPreviewModal
+          task={previewTask}
+          acceptPending={acceptMutation.isPending}
+          onAccept={() => previewTask.id && handleAcceptTask(previewTask.id)}
+          onClose={() => setPreviewTask(null)}
         />
       )}
     </div>

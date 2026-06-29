@@ -5,14 +5,16 @@ import {
   Coins,
   Loader2,
   LayoutDashboard,
+  PieChart,
 } from 'lucide-react';
 import { StatCard } from './StatCard';
 import { useBoardDashboard } from '../hooks/useBoardDashboard';
 import { formatVND } from '../../wallet';
 import type { BoardRecentActivityDto } from '../api/dashboard.api';
+import { ChartCard, TrendBarChart, DonutChart, CHART_COLORS } from './charts';
 
 export const BoardDashboardFeature = () => {
-  const { stats, recentActivities, isLoading, error } = useBoardDashboard();
+  const { stats, recentActivities, charts, isLoading, error } = useBoardDashboard();
 
   if (isLoading) {
     return (
@@ -77,12 +79,40 @@ export const BoardDashboardFeature = () => {
         />
       </div>
 
+      {/* Charts */}
+      {charts && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <ChartCard
+            title="Hoạt động bỏ phiếu"
+            subtitle="Số đề xuất xét duyệt 6 tháng gần đây"
+            icon={Vote}
+            className="lg:col-span-2"
+            action={<span className="text-sm font-bold text-brand">{stats.votes} đề xuất</span>}
+          >
+            <TrendBarChart data={charts.votingTrend} color={CHART_COLORS.brand} name="Đề xuất" />
+          </ChartCard>
+
+          <ChartCard title="Tình trạng Series" subtitle="Phân bố sản xuất" icon={PieChart}>
+            {charts.seriesStatus.length > 0 ? (
+              <DonutChart data={charts.seriesStatus} centerValue={stats.active} centerLabel="Hoạt động" />
+            ) : (
+              <div className="flex items-center justify-center h-[200px] text-xs text-text-muted">
+                Chưa có dữ liệu
+              </div>
+            )}
+          </ChartCard>
+        </div>
+      )}
+
       {/* Recent Activity List */}
       <div className="bg-bg-secondary border border-border-custom rounded-xl overflow-hidden">
         <div className="p-5 border-b border-border-custom flex items-center justify-between">
           <h2 className="text-sm font-semibold text-text-primary">Hoạt động xét duyệt gần đây</h2>
         </div>
         <div className="divide-y divide-border-custom">
+          {recentActivities.length === 0 && (
+            <div className="px-5 py-10 text-center text-xs text-text-muted">Chưa có hoạt động nào gần đây</div>
+          )}
           {recentActivities.map((act: BoardRecentActivityDto) => (
             <div key={act.id} className="p-4 flex items-center justify-between hover:bg-bg-surface/30 transition-colors">
               <div className="flex items-center gap-3">

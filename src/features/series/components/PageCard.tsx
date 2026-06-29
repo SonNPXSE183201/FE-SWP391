@@ -1,7 +1,8 @@
-import { ZoomIn, Layers } from 'lucide-react';
+import { ZoomIn, Layers, Loader2 } from 'lucide-react';
 import type { Page } from '../../../types/entities';
-import { PAGE_STATUS_CONFIG } from '../data/mockPages';
+import { getPageStatusConfig } from '../data/mockPages';
 import { PagePlaceholder } from './PagePlaceholder';
+import { usePagePreviewUrl } from '../hooks/usePagePreviewUrl';
 
 interface PageCardProps {
   page: Page;
@@ -9,12 +10,9 @@ interface PageCardProps {
 }
 
 export const PageCard = ({ page, onClick }: PageCardProps) => {
-  const statusCfg = PAGE_STATUS_CONFIG[page.status] || { 
-    bg: 'bg-gray-100', 
-    color: 'text-gray-500', 
-    dotColor: 'bg-gray-400', 
-    label: page.status || 'Unknown' 
-  };
+  const statusCfg = getPageStatusConfig(page.status);
+  const { displayUrl, isLoading, hasLiveComposite } = usePagePreviewUrl(page);
+  const hasComposite = !!page.compositeImageUrl || hasLiveComposite;
 
   return (
     <div
@@ -23,14 +21,27 @@ export const PageCard = ({ page, onClick }: PageCardProps) => {
     >
       {/* Image / Placeholder */}
       <div className="relative aspect-[3/4] overflow-hidden">
-        {page.imageUrl ? (
+        {isLoading ? (
+          <div className="flex h-full w-full items-center justify-center bg-bg-surface">
+            <Loader2 size={22} className="animate-spin text-brand" />
+          </div>
+        ) : displayUrl ? (
           <img
-            src={page.imageUrl}
+            src={displayUrl}
             alt={`Trang ${page.pageNumber}`}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
           <PagePlaceholder pageNumber={page.pageNumber} />
+        )}
+
+        {hasComposite && (
+          <div className="absolute bottom-2 left-2">
+            <span className="inline-flex items-center gap-1 bg-success/80 backdrop-blur-sm text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-md">
+              <Layers size={10} />
+              Đã gộp
+            </span>
+          </div>
         )}
 
         {/* Hover overlay */}
