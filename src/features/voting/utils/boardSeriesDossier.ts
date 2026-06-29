@@ -1,8 +1,8 @@
-import type { VotingSeriesDto } from '../../../api/generated/types';
-
-export const hasBoardSeriesDossier = (
-  series: Pick<VotingSeriesDto, 'resourceFolderUrl' | 'editorNote' | 'mangakaSubmissionNote'>,
-): boolean =>
+export const hasBoardSeriesDossier = (series: {
+  resourceFolderUrl?: string | null;
+  editorNote?: string | null;
+  mangakaSubmissionNote?: string | null;
+}): boolean =>
   Boolean(
     series.resourceFolderUrl?.trim() ||
       series.editorNote?.trim() ||
