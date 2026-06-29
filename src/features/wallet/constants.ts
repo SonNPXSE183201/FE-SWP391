@@ -42,9 +42,8 @@ export const TX_FILTER_OPTIONS = [
   { value: 'Genkouryo', label: 'Nhuận bút' },
 ];
 
-// ─── VND Formatter ───────────────────────────────────────────
-export const formatVND = (amount: number) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+// ─── VND Formatter (nguồn dùng chung: src/utils/currency) ─────
+export { formatVND, formatVNDNumber, parseVND, formatVNDInput } from '../../utils/currency';
 
 // ─── Vietnam Banks ───────────────────────────────────────────
 export const VIETNAM_BANKS = [

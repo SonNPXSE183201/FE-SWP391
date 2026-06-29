@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { dashboardApi } from '../api/dashboard.api';
-import type { AssistantRecentTaskDto } from '../api/dashboard.api';
+import type { AssistantRecentTaskDto, AssistantDashboardCharts } from '../api/dashboard.api';
 
 // ─── Hook return types ───────────────────────────────────────
 
@@ -22,19 +22,12 @@ export interface AssistantRecentTask {
 // ─── Hook ────────────────────────────────────────────────────
 export const useAssistantDashboard = () => {
   const query = useQuery<
-    { stats: AssistantDashboardStats; recentTasks: AssistantRecentTask[] },
+    { stats: AssistantDashboardStats; recentTasks: AssistantRecentTask[]; charts: AssistantDashboardCharts },
     Error
   >({
     queryKey: ['dashboard', 'assistant'],
     queryFn: async () => {
-      const response = await dashboardApi.getAssistantDashboard();
-
-      const apiResponse = response.data;
-      if (!apiResponse.success || !apiResponse.data) {
-        throw new Error(apiResponse.message || 'Failed to fetch assistant dashboard');
-      }
-
-      const data = apiResponse.data;
+      const data = await dashboardApi.getAssistantDashboard();
 
       const stats: AssistantDashboardStats = { ...data.stats };
 
@@ -42,7 +35,7 @@ export const useAssistantDashboard = () => {
         (task: AssistantRecentTaskDto) => ({ ...task })
       );
 
-      return { stats, recentTasks };
+      return { stats, recentTasks, charts: data.charts };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,
@@ -51,6 +44,7 @@ export const useAssistantDashboard = () => {
   return {
     stats: query.data?.stats ?? null,
     recentTasks: query.data?.recentTasks ?? [],
+    charts: query.data?.charts ?? null,
     isLoading: query.isLoading,
     error: query.error,
   };

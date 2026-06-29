@@ -8,6 +8,8 @@ import type {
 } from '../../../api/generated/types';
 import { MOCK_TASKS } from '../data/mockData';
 import type { MockTask } from '../data/mockData';
+import { MOCK_REGIONS, MOCK_CANVAS_PAGES } from '../../canvas/data/mockData';
+import { toCoordinatesJson } from '../../canvas/utils/canvas.utils';
 import { MOCK_WALLET, MOCK_TRANSACTIONS } from '../../wallet/data/mockData';
 
 // ─── Mock ──────────────────────────────────────────────────
@@ -100,6 +102,9 @@ const mapMockTaskToTasksDto = (t: MockTask): components['schemas']['TasksDto'] =
     return Number.isNaN(parsed) ? fallback : parsed;
   };
 
+  const region = MOCK_REGIONS.find((r) => r.id === t.regionId);
+  const page = MOCK_CANVAS_PAGES.find((p) => p.id === t.pageId);
+
   return {
     id: parseMockNumericId(t.id),
     description: t.taskName,
@@ -109,6 +114,12 @@ const mapMockTaskToTasksDto = (t: MockTask): components['schemas']['TasksDto'] =
     deadline: t.deadline,
     assistantName: t.assignedAssistantName ?? undefined,
     pageNumber: parseInt(t.pageName.replace(/[^0-9]/g, '') || '1', 10),
+    pageId: parseMockNumericId(t.pageId),
+    pageImageUrl: page?.imageUrl,
+    regionName: region?.label ?? t.regionLabel,
+    regionCoordinatesJson: region
+      ? toCoordinatesJson({ x: region.x, y: region.y, width: region.width, height: region.height })
+      : undefined,
     extensionRequestDays: t.extensionRequestDays,
     extensionReason: t.extensionReason,
     extensionStatus: t.extensionStatus,
