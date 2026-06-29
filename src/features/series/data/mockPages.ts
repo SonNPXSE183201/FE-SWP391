@@ -131,3 +131,16 @@ export const PAGE_STATUS_CONFIG = {
   Completed: { label: 'Hoàn thành', color: 'text-success', bg: 'bg-success/10', dotColor: 'bg-success' },
   NeedsRevision: { label: 'Cần sửa', color: 'text-warning', bg: 'bg-warning/10', dotColor: 'bg-warning' },
 } as const;
+
+const DEFAULT_PAGE_STATUS_CONFIG = {
+  label: 'Không rõ',
+  color: 'text-text-muted',
+  bg: 'bg-bg-surface',
+  dotColor: 'bg-text-muted',
+} as const;
+
+export const getPageStatusConfig = (status: Page['status'] | string) =>
+  PAGE_STATUS_CONFIG[status as Page['status']] ?? {
+    ...DEFAULT_PAGE_STATUS_CONFIG,
+    label: status || DEFAULT_PAGE_STATUS_CONFIG.label,
+  };

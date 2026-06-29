@@ -40,8 +40,7 @@ export const QC_CHECKLIST_ITEMS: string[] = [
   'Số trang hợp lệ (ValidPageCount) đã được xác nhận',
 ];
 
-export const formatVND = (value: number): string =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+export { formatVND } from '../../utils/currency';
 
 /**
  * Deadline status for F3.5 tracking.

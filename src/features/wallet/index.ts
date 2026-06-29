@@ -17,7 +17,7 @@ export { useWalletSignalR } from './hooks/useWalletSignalR';
 export { calculateMonthlyStats } from './utils';
 
 // Constants & Config
-export { TX_TYPE_CONFIG, TX_FILTER_OPTIONS, formatVND } from './constants';
+export { TX_TYPE_CONFIG, TX_FILTER_OPTIONS, formatVND, formatVNDNumber, parseVND, formatVNDInput } from './constants';
 
 // Mock Data (for development only)
 export { MOCK_WALLET, MOCK_TRANSACTIONS } from './data/mockData';

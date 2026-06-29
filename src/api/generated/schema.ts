@@ -341,6 +341,189 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/board-voting/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BoardVotingConfigDtoApiResponse"];
+                        "application/json": components["schemas"]["BoardVotingConfigDtoApiResponse"];
+                        "text/json": components["schemas"]["BoardVotingConfigDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateBoardVotingConfigDto"];
+                    "text/json": components["schemas"]["UpdateBoardVotingConfigDto"];
+                    "application/*+json": components["schemas"]["UpdateBoardVotingConfigDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BoardVotingConfigDtoApiResponse"];
+                        "application/json": components["schemas"]["BoardVotingConfigDtoApiResponse"];
+                        "text/json": components["schemas"]["BoardVotingConfigDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/board-voting/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BoardVotingRulesDtoApiResponse"];
+                        "application/json": components["schemas"]["BoardVotingRulesDtoApiResponse"];
+                        "text/json": components["schemas"]["BoardVotingRulesDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/board-voting/escalated": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SeriesDtoIEnumerableApiResponse"];
+                        "application/json": components["schemas"]["SeriesDtoIEnumerableApiResponse"];
+                        "text/json": components["schemas"]["SeriesDtoIEnumerableApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/board-voting/series/{id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ManualResolveBoardVoteDto"];
+                    "text/json": components["schemas"]["ManualResolveBoardVoteDto"];
+                    "application/*+json": components["schemas"]["ManualResolveBoardVoteDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/contracts/series": {
         parameters: {
             query?: never;
@@ -460,6 +643,86 @@ export interface paths {
             };
         };
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/platform-wallet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PlatformWalletDtoApiResponse"];
+                        "application/json": components["schemas"]["PlatformWalletDtoApiResponse"];
+                        "text/json": components["schemas"]["PlatformWalletDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/platform-wallet/top-up": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["TopUpPlatformWalletDto"];
+                    "text/json": components["schemas"]["TopUpPlatformWalletDto"];
+                    "application/*+json": components["schemas"]["TopUpPlatformWalletDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["StringApiResponse"];
+                        "application/json": components["schemas"]["StringApiResponse"];
+                        "text/json": components["schemas"]["StringApiResponse"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -1263,9 +1526,46 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["SeriesDtoIEnumerableApiResponse"];
-                        "application/json": components["schemas"]["SeriesDtoIEnumerableApiResponse"];
-                        "text/json": components["schemas"]["SeriesDtoIEnumerableApiResponse"];
+                        "text/plain": components["schemas"]["PendingBoardVotesResponseDtoApiResponse"];
+                        "application/json": components["schemas"]["PendingBoardVotesResponseDtoApiResponse"];
+                        "text/json": components["schemas"]["PendingBoardVotesResponseDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/votes/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BoardVotingRulesDtoApiResponse"];
+                        "application/json": components["schemas"]["BoardVotingRulesDtoApiResponse"];
+                        "text/json": components["schemas"]["BoardVotingRulesDtoApiResponse"];
                     };
                 };
             };
@@ -4380,6 +4680,64 @@ export interface components {
             /** Format: date-time */
             voteAt?: string;
         };
+        BoardVotingConfigDto: {
+            /** Format: int32 */
+            autoResolveHours?: number;
+            /** Format: int32 */
+            approvalThresholdPercent?: number;
+            /** Format: int32 */
+            rejectionThresholdPercent?: number;
+            tiePolicy?: string | null;
+            clearVotesOnResubmit?: boolean;
+            requireOddBoardSize?: boolean;
+            /** Format: int32 */
+            boardRoleId?: number;
+            /** Format: int32 */
+            chairUserId?: number | null;
+            chairUserName?: string | null;
+        };
+        BoardVotingConfigDtoApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["BoardVotingConfigDto"];
+            errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
+        BoardVotingRulesDto: {
+            /** Format: int32 */
+            boardMemberCount?: number;
+            /** Format: int32 */
+            approveRequired?: number;
+            /** Format: int32 */
+            rejectRequired?: number;
+            /** Format: int32 */
+            approvalThresholdPercent?: number;
+            /** Format: int32 */
+            rejectionThresholdPercent?: number;
+            tiePolicy?: string | null;
+            /** Format: int32 */
+            autoResolveHours?: number;
+            isEvenBoardSize?: boolean;
+            requireOddBoardSize?: boolean;
+            oddBoardSizeWarning?: string | null;
+            /** Format: int32 */
+            chairUserId?: number | null;
+            chairUserName?: string | null;
+            rulesSummary?: string | null;
+        };
+        BoardVotingRulesDtoApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["BoardVotingRulesDto"];
+            errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
         ChangePasswordDto: {
             currentPassword?: string | null;
             newPassword?: string | null;
@@ -4826,6 +5184,12 @@ export interface components {
         LogoutDto: {
             refreshToken?: string | null;
         };
+        ManualResolveBoardVoteDto: {
+            approved?: boolean;
+            reason?: string | null;
+            /** Format: double */
+            approvedBudget?: number | null;
+        };
         Notification: {
             /** Format: int32 */
             id?: number;
@@ -4914,6 +5278,38 @@ export interface components {
             statusCode?: number;
             message?: string | null;
             data?: components["schemas"]["PageDto"][] | null;
+            errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
+        PendingBoardVotesResponseDto: {
+            rules?: components["schemas"]["BoardVotingRulesDto"];
+            series?: components["schemas"]["SeriesDto"][] | null;
+        };
+        PendingBoardVotesResponseDtoApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["PendingBoardVotesResponseDto"];
+            errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
+        PlatformWalletDto: {
+            /** Format: double */
+            balance?: number;
+            /** Format: int32 */
+            treasuryWalletId?: number;
+            label?: string | null;
+            description?: string | null;
+        };
+        PlatformWalletDtoApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["PlatformWalletDto"];
             errors?: {
                 [key: string]: string[] | null;
             } | null;
@@ -5220,6 +5616,7 @@ export interface components {
             /** Format: int32 */
             editorId?: number | null;
             editorNote?: string | null;
+            mangakaSubmissionNote?: string | null;
             title?: string | null;
             genre?: string | null;
             synopsis?: string | null;
@@ -5456,8 +5853,12 @@ export interface components {
             mangakaName?: string | null;
             assistantName?: string | null;
             /** Format: int32 */
+            pageId?: number;
+            /** Format: int32 */
             pageNumber?: number;
             pageImageUrl?: string | null;
+            regionName?: string | null;
+            regionCoordinatesJson?: string | null;
             /** Format: date-time */
             createAt?: string;
             /** Format: date-time */
@@ -5505,6 +5906,11 @@ export interface components {
             errors?: {
                 [key: string]: string[] | null;
             } | null;
+        };
+        TopUpPlatformWalletDto: {
+            /** Format: double */
+            amount?: number;
+            note?: string | null;
         };
         Transaction: {
             /** Format: int32 */
@@ -5601,6 +6007,19 @@ export interface components {
             specialtyTags?: string | null;
             portfolioUrl?: string | null;
             skills?: string | null;
+        };
+        UpdateBoardVotingConfigDto: {
+            /** Format: int32 */
+            autoResolveHours?: number;
+            /** Format: int32 */
+            approvalThresholdPercent?: number;
+            /** Format: int32 */
+            rejectionThresholdPercent?: number;
+            tiePolicy?: string | null;
+            clearVotesOnResubmit?: boolean;
+            requireOddBoardSize?: boolean;
+            /** Format: int32 */
+            chairUserId?: number | null;
         };
         UpdateContractDto: {
             /** Format: double */
@@ -5748,6 +6167,7 @@ export interface components {
         };
         VoteSeriesRequestDto: {
             approved?: boolean;
+            voteChoice?: string | null;
             comment?: string | null;
             /** Format: double */
             recommendedBudget?: number;
@@ -5760,7 +6180,8 @@ export interface components {
             /** Format: date-time */
             updateAt?: string | null;
             /** Format: int32 */
-            userId?: number;
+            userId?: number | null;
+            kind?: string | null;
             /** Format: double */
             setupFundBalance?: number;
             /** Format: double */

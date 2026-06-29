@@ -15,6 +15,7 @@ import {
 import { HelpTip } from '../../../components/common/HelpTip';
 import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
 import { VoteProgressBar } from './VoteProgressBar';
+import { BoardSeriesDossier } from './BoardSeriesDossier';
 import {
   parseSeriesGenres,
   summarizeBoardVotes,
@@ -173,6 +174,11 @@ export const VoteModal = ({
         </div>
 
         <form onSubmit={onSubmit} className="p-5 sm:p-6 space-y-5">
+          <div className="rounded-xl border border-brand/15 bg-brand/5 p-4">
+            <p className="text-xs font-semibold text-text-primary mb-3">Hồ sơ trước khi biểu quyết</p>
+            <BoardSeriesDossier series={voteTarget} variant="compact" />
+          </div>
+
           {/* Decision — full width */}
           <div>
             <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-2.5">
