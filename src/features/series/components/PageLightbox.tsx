@@ -1,9 +1,10 @@
 import { useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import type { Page } from '../../../types/entities';
-import { PAGE_STATUS_CONFIG } from '../data/mockPages';
+import { getPageStatusConfig } from '../data/mockPages';
 import { PagePlaceholder } from './PagePlaceholder';
+import { usePagePreviewUrl } from '../hooks/usePagePreviewUrl';
 
 interface PageLightboxProps {
   pages: Page[];
@@ -14,7 +15,6 @@ interface PageLightboxProps {
 
 export const PageLightbox = ({ pages, currentIndex, onClose, onNav }: PageLightboxProps) => {
   const page = pages[currentIndex];
-  const statusCfg = PAGE_STATUS_CONFIG[page.status];
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') onClose();
@@ -23,15 +23,53 @@ export const PageLightbox = ({ pages, currentIndex, onClose, onNav }: PageLightb
   }, [currentIndex, pages.length, onClose, onNav]);
 
   useEffect(() => {
+    if (!page) {
+      onClose();
+      return;
+    }
     document.addEventListener('keydown', handleKeyDown);
     document.body.style.overflow = 'hidden';
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
-  }, [handleKeyDown]);
+  }, [handleKeyDown, page, onClose]);
+
+  if (!page) return null;
+
+  const statusCfg = getPageStatusConfig(page.status);
 
   return createPortal(
+    <PageLightboxContent
+      page={page}
+      pages={pages}
+      currentIndex={currentIndex}
+      statusCfg={statusCfg}
+      onClose={onClose}
+      onNav={onNav}
+    />,
+    document.body,
+  );
+};
+
+const PageLightboxContent = ({
+  page,
+  pages,
+  currentIndex,
+  statusCfg,
+  onClose,
+  onNav,
+}: {
+  page: Page;
+  pages: Page[];
+  currentIndex: number;
+  statusCfg: ReturnType<typeof getPageStatusConfig>;
+  onClose: () => void;
+  onNav: (idx: number) => void;
+}) => {
+  const { displayUrl, isLoading } = usePagePreviewUrl(page);
+
+  return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/85 backdrop-blur-md" onClick={onClose} />
 
@@ -74,9 +112,13 @@ export const PageLightbox = ({ pages, currentIndex, onClose, onNav }: PageLightb
 
       {/* Image */}
       <div className="relative max-w-[90vw] max-h-[90vh] animate-fade-in">
-        {page.imageUrl ? (
+        {isLoading ? (
+          <div className="flex h-[min(85vh,560px)] w-[min(90vw,400px)] items-center justify-center rounded-lg bg-bg-surface/10">
+            <Loader2 size={32} className="animate-spin text-white/70" />
+          </div>
+        ) : displayUrl ? (
           <img
-            src={page.imageUrl}
+            src={displayUrl}
             alt={`Trang ${page.pageNumber}`}
             className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
           />
@@ -86,7 +128,6 @@ export const PageLightbox = ({ pages, currentIndex, onClose, onNav }: PageLightb
           </div>
         )}
       </div>
-    </div>,
-    document.body,
+    </div>
   );
 };

@@ -1,9 +1,19 @@
-import { LayoutDashboard, TrendingUp, CheckCircle, Clock, Star, Loader2 } from 'lucide-react';
+import {
+  LayoutDashboard,
+  TrendingUp,
+  CheckCircle,
+  Clock,
+  Star,
+  Loader2,
+  PieChart,
+} from 'lucide-react';
 import { formatVND } from '../../wallet';
 import { useAssistantDashboard } from '../hooks/useAssistantDashboard';
+import { StatCard } from './StatCard';
+import { ChartCard, TrendBarChart, DonutChart, CHART_COLORS, formatCompactVND } from './charts';
 
 export const AssistantDashboardFeature = () => {
-  const { stats, recentTasks, isLoading, error } = useAssistantDashboard();
+  const { stats, recentTasks, charts, isLoading, error } = useAssistantDashboard();
 
   if (isLoading) {
     return (
@@ -22,7 +32,8 @@ export const AssistantDashboardFeature = () => {
   }
 
   return (
-    <div>
+    <div className="animate-fade-in space-y-6">
+      {/* Page Header */}
       <div className="page-header">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
@@ -36,70 +47,86 @@ export const AssistantDashboardFeature = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-        <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 flex flex-col gap-2 relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 w-16 h-16 bg-blue-500/10 rounded-full group-hover:scale-150 transition-transform duration-500" />
-          <div className="flex justify-between items-center z-10">
-            <span className="text-xs text-text-muted uppercase tracking-wider font-medium">Task đang làm</span>
-            <Clock size={18} className="text-blue-400" />
-          </div>
-          <span className="text-3xl font-bold text-text-primary z-10">{stats.inProgress}</span>
-        </div>
-
-        <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 flex flex-col gap-2 relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 w-16 h-16 bg-green-500/10 rounded-full group-hover:scale-150 transition-transform duration-500" />
-          <div className="flex justify-between items-center z-10">
-            <span className="text-xs text-text-muted uppercase tracking-wider font-medium">Task hoàn thành</span>
-            <CheckCircle size={18} className="text-green-400" />
-          </div>
-          <span className="text-3xl font-bold text-text-primary z-10">{stats.completed}</span>
-        </div>
-
-        <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 flex flex-col gap-2 relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 w-16 h-16 bg-yellow-500/10 rounded-full group-hover:scale-150 transition-transform duration-500" />
-          <div className="flex justify-between items-center z-10">
-            <span className="text-xs text-text-muted uppercase tracking-wider font-medium">Đánh giá TB</span>
-            <Star size={18} className="text-yellow-400" />
-          </div>
-          <span className="text-3xl font-bold text-text-primary z-10">{stats.averageRating} / 5.0</span>
-        </div>
-
-        <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 flex flex-col gap-2 relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 w-16 h-16 bg-brand/10 rounded-full group-hover:scale-150 transition-transform duration-500" />
-          <div className="flex justify-between items-center z-10">
-            <span className="text-xs text-text-muted uppercase tracking-wider font-medium">Thu nhập tháng</span>
-            <TrendingUp size={18} className="text-brand" />
-          </div>
-          <span className="text-2xl font-bold text-brand z-10">
-            {formatVND(stats.monthlyIncome)}
-          </span>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Task đang làm" value={stats.inProgress} icon={Clock} color="text-info" navigateTo="/assistant/tasks" />
+        <StatCard label="Task hoàn thành" value={stats.completed} icon={CheckCircle} color="text-success" navigateTo="/assistant/tasks" />
+        <StatCard label="Đánh giá trung bình" value={stats.averageRating} suffix="/ 5.0" icon={Star} color="text-warning" />
+        <StatCard
+          label="Thu nhập tháng"
+          value={formatVND(stats.monthlyIncome)}
+          icon={TrendingUp}
+          color="text-brand"
+          navigateTo="/assistant/wallet"
+        />
       </div>
 
+      {/* Charts */}
+      {charts && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <ChartCard
+            title="Thu nhập 6 tháng gần đây"
+            subtitle="Tiền công nhận theo tháng"
+            icon={TrendingUp}
+            className="lg:col-span-2"
+            action={<span className="text-sm font-bold text-brand">{formatVND(stats.monthlyIncome)}</span>}
+          >
+            <TrendBarChart
+              data={charts.incomeTrend}
+              color={CHART_COLORS.brand}
+              name="Thu nhập"
+              valueFormatter={formatCompactVND}
+            />
+          </ChartCard>
+
+          <ChartCard title="Phân bổ công việc" subtitle="Theo trạng thái task" icon={PieChart}>
+            {charts.taskStatus.length > 0 ? (
+              <DonutChart
+                data={charts.taskStatus}
+                centerValue={stats.inProgress + stats.completed}
+                centerLabel="Tổng task"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-[200px] text-xs text-text-muted">
+                Chưa có công việc nào
+              </div>
+            )}
+          </ChartCard>
+        </div>
+      )}
+
       {/* Recent Activity */}
-      <div className="mt-6 bg-bg-secondary border border-border-custom rounded-xl overflow-hidden">
-        <div className="p-5 border-b border-border-custom">
-          <h2 className="text-lg font-bold text-text-primary">Hoạt động gần đây</h2>
+      <div className="bg-bg-secondary border border-border-custom rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-border-custom flex items-center gap-2">
+          <Clock size={16} className="text-text-muted" />
+          <h2 className="text-sm font-semibold text-text-primary">Hoạt động gần đây</h2>
         </div>
         <div className="divide-y divide-border-custom">
-          {recentTasks.map(task => (
-            <div key={task.id} className="p-5 flex items-center justify-between hover:bg-bg-primary/50 transition-colors">
-              <div>
-                <p className="font-medium text-text-primary mb-1">{task.title}</p>
+          {recentTasks.length === 0 && (
+            <div className="px-5 py-10 text-center text-xs text-text-muted">Chưa có công việc nào gần đây</div>
+          )}
+          {recentTasks.map((task) => (
+            <div
+              key={task.id}
+              className="px-5 py-4 flex items-center justify-between hover:bg-bg-surface/30 transition-colors"
+            >
+              <div className="min-w-0">
+                <p className="font-medium text-text-primary mb-1 truncate">{task.title}</p>
                 <div className="flex items-center gap-3 text-xs text-text-muted">
-                  <span>{new Date(task.date).toLocaleDateString('vi-VN')}</span>
-                  <span className={`px-2 py-0.5 rounded-full font-medium ${
-                    task.status === 'Approved' ? 'bg-green-500/10 text-green-400' :
-                    task.status === 'In_Progress' ? 'bg-blue-500/10 text-blue-400' :
-                    'bg-yellow-500/10 text-yellow-400'
-                  }`}>
+                  <span>{task.date ? new Date(task.date).toLocaleDateString('vi-VN') : '—'}</span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full font-medium ${
+                      task.status === 'Approved'
+                        ? 'bg-success/10 text-success'
+                        : task.status === 'In_Progress'
+                          ? 'bg-info/10 text-info'
+                          : 'bg-warning/10 text-warning'
+                    }`}
+                  >
                     {task.status.replace('_', ' ')}
                   </span>
                 </div>
               </div>
-              <div className="font-bold text-text-primary">
-                {formatVND(task.amount)}
-              </div>
+              <div className="font-bold text-text-primary flex-shrink-0 ml-3">{formatVND(task.amount)}</div>
             </div>
           ))}
         </div>

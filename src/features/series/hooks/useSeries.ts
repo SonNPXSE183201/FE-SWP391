@@ -86,20 +86,36 @@ export const formatChapterDate = (chapter: Chapter): string => {
   return parsed.toLocaleDateString('vi-VN');
 };
 
+const PAGE_STATUS_ALIASES: Record<string, Page['status']> = {
+  Composited: 'Completed',
+  Approved: 'Completed',
+};
+
 export const mapPageStatus = (status: unknown): Page['status'] => {
   if (status === 0 || status === '0') return 'Pending';
   if (status === 1 || status === '1') return 'InProgress';
   if (status === 2 || status === '2') return 'NeedsRevision';
   if (status === 3 || status === '3') return 'Completed';
-  return (status as Page['status']) || 'Pending';
+
+  const normalized = String(status ?? '');
+  if (PAGE_STATUS_ALIASES[normalized]) return PAGE_STATUS_ALIASES[normalized];
+  if (
+    normalized === 'Pending'
+    || normalized === 'InProgress'
+    || normalized === 'Completed'
+    || normalized === 'NeedsRevision'
+  ) {
+    return normalized;
+  }
+  return 'Pending';
 };
 
 export const mapPageDtoToEntity = (dto: PageDto): Page => ({
   id: dto.id?.toString() || '',
   chapterId: dto.chapterId?.toString() || '',
   pageNumber: dto.pageNumber || 1,
-  imageUrl: dto.rawImageUrl || dto.compositeImageUrl || '',
-  compositeImageUrl: dto.compositeImageUrl || undefined,
+  imageUrl: resolveMediaUrl(dto.rawImageUrl || dto.compositeImageUrl || ''),
+  compositeImageUrl: dto.compositeImageUrl ? resolveMediaUrl(dto.compositeImageUrl) : undefined,
   status: mapPageStatus(dto.status),
   regionCount: 0,
   createdAt: dto.createAt || new Date().toISOString(),

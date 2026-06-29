@@ -11,6 +11,7 @@ import type { SeriesStatus } from '../../../types/entities';
 import {
   dashboardApi,
   type ActivityType,
+  type MangakaDashboardCharts,
   type RecentActivityDto,
   type SeriesOverviewDto,
 } from '../api/dashboard.api';
@@ -68,19 +69,17 @@ export const getGreeting = (): string => {
 // ─── Hook ────────────────────────────────────────────────────
 export const useMangakaDashboard = () => {
   const query = useQuery<
-    { stats: DashboardStats; activities: DashboardActivity[]; seriesOverview: DashboardSeriesOverview[] },
+    {
+      stats: DashboardStats;
+      activities: DashboardActivity[];
+      seriesOverview: DashboardSeriesOverview[];
+      charts: MangakaDashboardCharts;
+    },
     Error
   >({
     queryKey: ['dashboard', 'mangaka'],
     queryFn: async () => {
-      const response = await dashboardApi.getMangakaDashboard();
-
-      const apiResponse = response.data;
-      if (!apiResponse.success || !apiResponse.data) {
-        throw new Error(apiResponse.message || 'Failed to fetch dashboard data');
-      }
-
-      const data = apiResponse.data;
+      const data = await dashboardApi.getMangakaDashboard();
 
       // Map stats (direct passthrough — shape matches)
       const stats: DashboardStats = { ...data.stats };
@@ -103,7 +102,7 @@ export const useMangakaDashboard = () => {
         (s: SeriesOverviewDto) => ({ ...s })
       );
 
-      return { stats, activities, seriesOverview };
+      return { stats, activities, seriesOverview, charts: data.charts };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,
@@ -113,6 +112,7 @@ export const useMangakaDashboard = () => {
     stats: query.data?.stats ?? null,
     activities: query.data?.activities ?? [],
     seriesOverview: query.data?.seriesOverview ?? [],
+    charts: query.data?.charts ?? null,
     isLoading: query.isLoading,
     error: query.error,
   };
