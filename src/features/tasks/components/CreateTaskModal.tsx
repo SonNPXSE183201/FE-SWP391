@@ -5,10 +5,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus, X, Send, Calendar, DollarSign, AlertCircle,
   BookOpen, FileText, Shield, Banknote, Loader2,
-  CheckCircle2, Type, Image, Wallet,
+  CheckCircle2, Type, Image, Wallet, UserCheck,
 } from 'lucide-react';
 import { useWallet, formatVND, formatVNDInput, parseVND } from '../../wallet';
 import { useMySeries, useChapters, useChapterPages } from '../../series';
+import { useSeriesActiveTeam } from '../../series/hooks/useSeriesTeam';
 import { taskApi } from '../api/task.api';
 import type { ApiResponse } from '../../../api/axios';
 import type { TasksDto } from '../../../api/generated/types';
@@ -24,6 +25,8 @@ interface CreateTaskFormData {
   amount: string;
   deadline: string;
   note: string;
+  assistantId: string;
+  regionId?: string | number;
 }
 
 interface CreateTaskFormErrors {
@@ -33,6 +36,7 @@ interface CreateTaskFormErrors {
   taskName?: string;
   amount?: string;
   deadline?: string;
+  assistantId?: string;
 }
 
 export interface TaskContext {
@@ -40,7 +44,7 @@ export interface TaskContext {
   chapterId: string;
   pageId: string;
   taskName: string;
-  regionId?: string;
+  regionId?: string | number;
 }
 
 interface CreateTaskModalProps {
@@ -62,6 +66,8 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
     amount: '',
     deadline: '',
     note: '',
+    assistantId: '',
+    regionId: initialContext.regionId,
   });
   const [errors, setErrors] = useState<CreateTaskFormErrors>({});
   const [success, setSuccess] = useState(false);
@@ -73,6 +79,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
   const { data: seriesList = [] } = useMySeries({ pageSize: 100 });
   const { data: chaptersList = [] } = useChapters(formData.seriesId, { pageSize: 100 });
   const { data: pagesList = [] } = useChapterPages(formData.chapterId);
+  const { data: activeTeam = [], isLoading: teamLoading } = useSeriesActiveTeam(formData.seriesId);
 
   const availablePages = pagesList;
 
@@ -116,6 +123,9 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
     } else if (formData.deadline < minDeadline) {
       newErrors.deadline = 'Hạn chót phải từ ngày mai trở đi';
     }
+    if (!formData.assistantId) {
+      newErrors.assistantId = 'Phải chọn Trợ lý trong nhóm dự án';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -132,9 +142,9 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
     mutationFn: async () => {
       let finalRegionId: number;
 
-      if (initialContext.regionId) {
+      if (formData.regionId != null && formData.regionId !== '') {
         // Handle mock string ID vs real numeric ID
-        const parsed = Number(initialContext.regionId);
+        const parsed = Number(formData.regionId);
         finalRegionId = isNaN(parsed) ? 1 : parsed;
       } else {
         throw new Error('Không tìm thấy vùng hợp lệ. Bạn phải khoanh vùng trên khung vẽ trước khi tạo công việc.');
@@ -143,6 +153,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
       const res = await taskApi.create({
         regionId: finalRegionId,
         description: formData.taskName,
+        assistantId: Number(formData.assistantId),
         paymentAmount: amountNum,
         deadline: new Date(formData.deadline + 'T23:59:59Z').toISOString(),
       });
@@ -152,7 +163,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
     },
     onSuccess: () => {
       setSuccess(true);
-      toast.success(`Đã đăng công việc "${formData.taskName}" lên Bảng việc làm & khoá ${formatVND(amountNum)}`, { duration: 4000 });
+      toast.success(`Đã giao việc cho Trợ lý & khoá ${formatVND(amountNum)}`, { duration: 4000 });
       // Invalidate all task-related queries so every page sees the new task
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
@@ -179,9 +190,9 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
           <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center animate-bounce">
             <CheckCircle2 size={32} className="text-success" />
           </div>
-          <h3 className="text-lg font-bold text-text-primary">Đã đăng lên Bảng việc làm!</h3>
+          <h3 className="text-lg font-bold text-text-primary">Đã giao việc!</h3>
           <p className="text-sm text-text-muted text-center">
-            Khoá <span className="text-text-primary font-semibold">{formatVND(amountNum)}</span> · Chờ Trợ lý nhận việc
+            Khoá <span className="text-text-primary font-semibold">{formatVND(amountNum)}</span> · Trợ lý sẽ nhận thông báo
           </p>
         </div>
       </div>,
@@ -209,12 +220,12 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
                 <h2 className="text-lg font-bold text-text-primary">Đăng việc mới</h2>
                 <HelpTip
                   size="sm"
-                  title="Bảng việc làm công khai"
-                  content={<>Công việc sẽ được đăng lên <strong>Bảng việc làm công khai</strong>. Bất kỳ Trợ lý nào cũng có thể nhận việc.</>}
+                  title="Giao việc trong nhóm dự án"
+                  content={<>Chỉ có thể giao Task cho <strong>Trợ lý thuộc nhóm Series</strong>. Mời thành viên tại trang chi tiết Series trước khi giao việc.</>}
                 />
               </div>
               <p className="text-xs text-text-muted mt-0.5">
-                Đăng việc → Khoá tiền → Chờ Trợ lý nhận
+                Chọn Trợ lý trong team → Khoá tiền → Giao việc
               </p>
             </div>
           </div>
@@ -280,6 +291,37 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
                   {errors.taskName && <p className="text-[11px] text-danger mt-1">{errors.taskName}</p>}
                 </div>
               )}
+
+              {/* Assistant picker — chỉ thành viên Active trong Series_Assistant */}
+              <div>
+                <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
+                  <UserCheck size={13} />
+                  Trợ lý phụ trách <span className="text-danger">*</span>
+                </label>
+                {teamLoading ? (
+                  <div className="flex items-center gap-2 text-xs text-text-muted py-2">
+                    <Loader2 size={14} className="animate-spin" /> Đang tải nhóm dự án...
+                  </div>
+                ) : activeTeam.length === 0 ? (
+                  <p className="text-[11px] text-warning bg-warning/10 border border-warning/20 rounded-lg px-3 py-2">
+                    Chưa có Trợ lý Active trong nhóm. Vào trang Series → mời thành viên trước khi giao việc.
+                  </p>
+                ) : (
+                  <select
+                    value={formData.assistantId}
+                    onChange={(e) => updateField('assistantId', e.target.value)}
+                    className={`${inputBase} ${errors.assistantId ? 'border-danger/50' : 'border-border-custom'}`}
+                  >
+                    <option value="">— Chọn Trợ lý —</option>
+                    {activeTeam.map((m) => (
+                      <option key={m.assistantId} value={String(m.assistantId)}>
+                        {m.assistantName} · {m.roleInTeam}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {errors.assistantId && <p className="text-[11px] text-danger mt-1">{errors.assistantId}</p>}
+              </div>
 
               {/* Amount */}
               <div>

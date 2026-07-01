@@ -146,4 +146,6 @@ export const canvasApi = {
     }
     return axiosInstance.delete(`/api/annotations/${annotationId}`);
   },
+
+  markPageReady: (pageId: string) => seriesApi.markPageReady(pageId),
 };

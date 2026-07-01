@@ -18,6 +18,7 @@ const mockResponse = createMockApiResponse;
 
 // Re-export for component usage
 export type { SeriesReviewDto };
+export type AnnotationDto = components['schemas']['AnnotationDto'];
 
 // ─── Mock Data (fallback) ───
 const MOCK_SERIES_REVIEW: SeriesReviewDto = {
@@ -133,12 +134,18 @@ export const reviewApi = {
   },
 
   /** POST /api/reviews/series/{id}/submit-to-board — Editor trình lên Board */
-  submitToBoard: async (seriesId: string, notes: string) => {
+  submitToBoard: async (
+    seriesId: string,
+    payload: { notes: string; editorRecommendedBudget?: number },
+  ) => {
     if (USE_MOCK) {
       await mockDelay(600);
       return mockResponse(true, 'Đã trình Hội đồng thành công');
     }
-    const body: SubmitToBoardDto = { notes };
+    const body: SubmitToBoardDto & { editorRecommendedBudget?: number } = {
+      notes: payload.notes,
+      editorRecommendedBudget: payload.editorRecommendedBudget,
+    };
     return axiosInstance.post<ApiResponse<boolean>>(`/api/reviews/series/${seriesId}/submit-to-board`, body);
   },
 
@@ -201,6 +208,53 @@ export const reviewApi = {
       `/api/reviews/chapters/${chapterId}/revision`,
       { feedbackComment: reason },
     );
+    return res;
+  },
+
+  listAnnotations: async (params: { pageId?: string; taskVersionId?: string }) => {
+    const res = await axiosInstance.get<ApiResponse<AnnotationDto[]>>('/api/annotations', {
+      params: {
+        ...(params.pageId ? { pageId: Number(params.pageId) } : {}),
+        ...(params.taskVersionId ? { taskVersionId: Number(params.taskVersionId) } : {}),
+      },
+    });
+    return res;
+  },
+
+  createAnnotation: async (payload: {
+    pageId: string;
+    x: number;
+    y: number;
+    comment: string;
+    type: string;
+  }) => {
+    const res = await axiosInstance.post<ApiResponse<AnnotationDto>>('/api/annotations', {
+      pageId: Number(payload.pageId),
+      coordinatesJson: JSON.stringify({ top: payload.y, left: payload.x, width: 0, height: 0 }),
+      comment: payload.comment,
+      type: payload.type,
+    });
+    return res;
+  },
+
+  updateAnnotation: async (annotationId: string, payload: {
+    pageId: string;
+    x: number;
+    y: number;
+    comment: string;
+    type: string;
+  }) => {
+    const res = await axiosInstance.put<ApiResponse<AnnotationDto>>(`/api/annotations/${annotationId}`, {
+      pageId: Number(payload.pageId),
+      coordinatesJson: JSON.stringify({ top: payload.y, left: payload.x, width: 0, height: 0 }),
+      comment: payload.comment,
+      type: payload.type,
+    });
+    return res;
+  },
+
+  deleteAnnotation: async (annotationId: string) => {
+    const res = await axiosInstance.delete<ApiResponse<unknown>>(`/api/annotations/${annotationId}`);
     return res;
   },
 };

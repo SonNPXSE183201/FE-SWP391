@@ -19,16 +19,12 @@ type PendingBoardVotesPayload = {
 const MOCK_RULES: BoardVotingRulesDto = {
   boardMemberCount: 6,
   approveRequired: 4,
-  rejectRequired: 4,
-  approvalThresholdPercent: 66,
-  rejectionThresholdPercent: 66,
-  tiePolicy: 'Escalate',
+  totalWeight: 7,
+  chairWeight: 2,
+  approvalThresholdPercent: 51,
   autoResolveHours: 48,
-  isEvenBoardSize: true,
-  requireOddBoardSize: true,
-  oddBoardSizeWarning: 'Hội đồng đang có 6 thành viên (số chẵn). Khuyến nghị số lẻ để tránh hòa phiếu.',
   rulesSummary:
-    'Cần ≥4/6 phiếu Đồng ý (66%) hoặc ≥4/6 phiếu Từ chối (66%). Hòa → chuyển Admin xử lý thủ công. Tự chốt sau 48h.',
+    'Cần ≥4/7 trọng số phiếu Đồng ý (51%). Chủ tịch HĐ = 2 phiếu. Tự chốt sau 48h.',
 };
 
 const MOCK_VOTING_SERIES: VotingSeriesDto[] = [

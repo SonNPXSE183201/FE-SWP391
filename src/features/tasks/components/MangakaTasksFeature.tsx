@@ -2,13 +2,15 @@ import { useState, useMemo, useEffect } from 'react';
 import {
   ClipboardList, Search, Eye,
   UserCheck, Calendar, DollarSign, Filter, ArrowUpDown,
-  Clock, Loader2,
+  Clock, Loader2, X,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 import { 
-  TASK_STATUS_CONFIG, 
   TASK_STATUS_FILTER_OPTIONS,
+  OPEN_TASK_STATUSES,
+  REVIEWABLE_TASK_STATUSES,
+  getTaskStatusConfig,
   formatDeadline,
   useMangakaTasks,
   useApproveExtension,
@@ -19,6 +21,8 @@ import { formatVND } from '../../wallet';
 import { usePagination } from '../../../hooks/usePagination';
 import { Pagination } from '../../../components/common/Pagination';
 import { CustomSelect } from '../../../components/common/CustomSelect';
+import { HelpTip } from '../../../components/common/HelpTip';
+import { normalizeTaskStatus, taskStatusMatchesFilter, toSelectFilterOptions } from '../../../utils/status';
 
 export const MangakaTasksFeature = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,7 +51,7 @@ export const MangakaTasksFeature = () => {
         t.regionId?.toString().includes(searchQuery.toLowerCase()) ||
         t.mangakaId?.toString().includes(searchQuery.toLowerCase()) ||
         (t.assistantName || '').toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = !statusFilter || t.status === statusFilter;
+      const matchesStatus = taskStatusMatchesFilter(t.status, statusFilter);
       return matchesSearch && matchesStatus;
     });
 
@@ -72,11 +76,14 @@ export const MangakaTasksFeature = () => {
   // Stats
   const stats = useMemo(() => ({
     total: tasks.length,
-    inProgress: tasks.filter((t) => t.status === 'In_Progress').length,
-    pendingReview: tasks.filter((t) => t.status === 'Pending_Review').length,
-    totalLocked: tasks.filter((t) => t.status && ['Pending', 'In_Progress', 'Pending_Review', 'Revision'].includes(t.status))
+    inProgress: tasks.filter((t) => normalizeTaskStatus(t.status) === 'In_Progress').length,
+    pendingReview: tasks.filter((t) => normalizeTaskStatus(t.status) === 'Pending_Review').length,
+    totalLocked: tasks
+      .filter((t) => t.status && OPEN_TASK_STATUSES.includes(normalizeTaskStatus(t.status)))
       .reduce((sum, t) => sum + (t.paymentAmount || 0), 0),
   }), [tasks]);
+
+  const hasActiveFilters = !!searchQuery.trim() || !!statusFilter || sortBy !== 'newest';
 
   if (isLoading) {
     return (
@@ -89,7 +96,7 @@ export const MangakaTasksFeature = () => {
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-text-muted">Không thể tải danh sách tasks. Vui lòng thử lại.</p>
+        <p className="text-text-muted">Không thể tải danh sách công việc. Vui lòng thử lại.</p>
       </div>
     );
   }
@@ -103,80 +110,131 @@ export const MangakaTasksFeature = () => {
             <ClipboardList size={20} className="text-brand" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-text-primary">Quản lý Task</h1>
-            <p className="text-xs text-text-muted mt-0.5">Phân công và theo dõi công việc trợ lý vẽ</p>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-text-primary">Quản lý công việc</h1>
+              <HelpTip
+                title="Giải thích"
+                ariaLabel="Giải thích quản lý công việc"
+                placement="bottom-start"
+                width="22rem"
+                content={(
+                  <div className="space-y-2">
+                    <p className="text-xs text-text-secondary leading-relaxed">
+                      Đây là nơi bạn theo dõi các vùng đã giao trợ lý và duyệt bài nộp.
+                    </p>
+                    <ul className="text-xs text-text-secondary leading-relaxed space-y-1 pl-4">
+                      <li><span className="text-text-primary font-medium">Chờ duyệt</span>: Trợ lý đã nộp, bạn mở xem và duyệt/sửa.</li>
+                      <li><span className="text-text-primary font-medium">Tiền tạm giữ</span>: tổng tiền đang giữ cho các công việc chưa kết thúc.</li>
+                    </ul>
+                  </div>
+                )}
+              />
+            </div>
+            <p className="text-xs text-text-muted mt-0.5">
+              Tìm nhanh, lọc trạng thái, xem bài nộp và xử lý gia hạn
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6">
-        {[
-          { label: 'Tổng Tasks', value: stats.total, icon: ClipboardList, color: 'text-brand' },
-          { label: 'Đang thực hiện', value: stats.inProgress, icon: Clock, color: 'text-info' },
-          { label: 'Chờ duyệt bài', value: stats.pendingReview, icon: Eye, color: 'text-warning' },
-          { label: 'Tiền đang Lock', value: formatVND(stats.totalLocked), icon: DollarSign, color: 'text-danger' },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="bg-bg-secondary border border-border-custom rounded-xl p-4 flex items-center gap-3">
-            <div className={`w-9 h-9 rounded-lg bg-bg-surface flex items-center justify-center ${color}`}>
-              <Icon size={18} />
+      {/* Stats (compact pills) */}
+      <div className="mt-6 bg-bg-secondary border border-border-custom rounded-xl p-3 flex flex-wrap items-center gap-2">
+        <StatPill label="Tổng công việc" value={String(stats.total)} icon={ClipboardList} tone="text-brand" />
+        <StatPill label="Đang làm" value={String(stats.inProgress)} icon={Clock} tone="text-info" />
+        <StatPill label="Chờ duyệt" value={String(stats.pendingReview)} icon={Eye} tone="text-warning" />
+        <StatPill
+          label="Tiền tạm giữ"
+          value={formatVND(stats.totalLocked)}
+          icon={DollarSign}
+          tone="text-danger"
+          help={(
+            <div className="space-y-2">
+              <p className="text-xs text-text-secondary leading-relaxed">
+                Là tổng tiền đang giữ cho các công việc chưa kết thúc (Chờ nhận việc/Đang làm/Chờ duyệt/Yêu cầu sửa).
+              </p>
             </div>
-            <div>
-              <div className="text-base font-bold text-text-primary">{value}</div>
-              <div className="text-[11px] text-text-muted">{label}</div>
-            </div>
-          </div>
-        ))}
+          )}
+        />
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-6">
-        <div className="relative flex-1">
-          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-          <input
-            type="text" placeholder="Tìm task, series, assistant..."
-            value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-bg-secondary border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all"
-          />
+      <div className="mt-4 bg-bg-secondary border border-border-custom rounded-xl p-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Tìm theo mô tả, ID vùng, tên trợ lý..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-bg-primary/40 border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="w-[170px]">
+              <CustomSelect
+                options={toSelectFilterOptions(TASK_STATUS_FILTER_OPTIONS)}
+                value={statusFilter}
+                onChange={(v) => setStatusFilter(v)}
+                placeholder="Trạng thái"
+                icon={<Filter size={14} />}
+                size="sm"
+              />
+            </div>
+            <div className="w-[150px]">
+              <CustomSelect
+                options={[
+                  { value: 'newest', label: 'Mới nhất' },
+                  { value: 'deadline', label: 'Deadline' },
+                  { value: 'amount', label: 'Số tiền' },
+                ]}
+                value={sortBy}
+                onChange={(v) => setSortBy(v as typeof sortBy)}
+                icon={<ArrowUpDown size={14} />}
+                size="sm"
+              />
+            </div>
+
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  setStatusFilter('');
+                  setSortBy('newest');
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-bg-primary/40 border border-border-custom text-text-secondary hover:text-text-primary hover:border-brand/30 transition-colors cursor-pointer text-xs font-medium"
+                title="Xóa bộ lọc"
+              >
+                <X size={14} />
+                Xóa lọc
+              </button>
+            )}
+          </div>
         </div>
-        <div className="w-[170px]">
-          <CustomSelect
-            options={TASK_STATUS_FILTER_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
-            value={statusFilter}
-            onChange={(v) => setStatusFilter(v)}
-            placeholder="Tất cả trạng thái"
-            icon={<Filter size={14} />}
-            size="sm"
-          />
-        </div>
-        <div className="w-[140px]">
-          <CustomSelect
-            options={[
-              { value: 'newest', label: 'Mới nhất' },
-              { value: 'deadline', label: 'Deadline' },
-              { value: 'amount', label: 'Số tiền' },
-            ]}
-            value={sortBy}
-            onChange={(v) => setSortBy(v as typeof sortBy)}
-            icon={<ArrowUpDown size={14} />}
-            size="sm"
-          />
+
+        <div className="flex items-center justify-between mt-2 text-[11px] text-text-muted">
+          <span>
+            Hiển thị <span className="text-text-primary font-medium">{filtered.length}</span> / {tasks.length} công việc
+          </span>
+          {statusFilter && (
+            <span className="inline-flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand" />
+              Lọc theo trạng thái
+            </span>
+          )}
         </div>
       </div>
-
-      {/* Results count */}
-      <p className="text-xs text-text-muted mt-4">
-        Tìm thấy <span className="text-text-primary font-medium">{filtered.length}</span> / {tasks.length} tasks
-      </p>
 
       {/* Task List */}
       <div className="space-y-3 mt-3">
         {pagination.paginatedData.map((task) => {
-          const statusCfg = TASK_STATUS_CONFIG[task.status as keyof typeof TASK_STATUS_CONFIG] || { label: String(task.status), bg: 'bg-bg-surface', color: 'text-text-muted', icon: Eye };
+          const statusCfg = getTaskStatusConfig(task.status);
           const StatusIcon = statusCfg.icon;
           const dl = formatDeadline(task.deadline || '');
 
-          const reviewable = ['Pending_Review', 'Revision', 'Approved', 'Disputed'].includes(String(task.status));
+          const reviewable = REVIEWABLE_TASK_STATUSES.includes(normalizeTaskStatus(task.status));
 
           return (
             <div
@@ -193,7 +251,7 @@ export const MangakaTasksFeature = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-sm font-semibold text-text-primary group-hover:text-brand transition-colors">
-                      {task.description || `Task ${task.id} - Region ${task.regionId}`}
+                      {task.description || `Công việc ${task.id} - Vùng ${task.regionId}`}
                     </h3>
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusCfg.bg} ${statusCfg.color}`}>
                       {statusCfg.label}
@@ -205,7 +263,7 @@ export const MangakaTasksFeature = () => {
                     )}
                   </div>
                   <p className="text-xs text-text-muted mt-1">
-                    {[`Vùng ${task.regionId}`, `Trang ${task.pageNumber || '?'}`, task.mangakaId ? 'Mangaka ' + task.mangakaId : ''].filter(Boolean).join(' · ')}
+                    {[`Vùng ${task.regionId}`, `Trang ${task.pageNumber || '—'}`, task.assistantId ? `Trợ lý #${task.assistantId}` : ''].filter(Boolean).join(' · ')}
                   </p>
 
                   {/* Bottom row */}
@@ -301,7 +359,7 @@ export const MangakaTasksFeature = () => {
         onPageChange={pagination.goToPage}
         onNextPage={pagination.nextPage}
         onPrevPage={pagination.prevPage}
-        itemLabel="tasks"
+        itemLabel="công việc"
       />
 
       {/* ─── Review (xem bài nộp + ghim lỗi Canvas) Modal ─── */}
@@ -315,3 +373,38 @@ export const MangakaTasksFeature = () => {
     </div>
   );
 };
+
+const StatPill = ({
+  label,
+  value,
+  icon: Icon,
+  tone,
+  help,
+}: {
+  label: string;
+  value: string;
+  icon: typeof ClipboardList;
+  tone: string;
+  help?: React.ReactNode;
+}) => (
+  <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-bg-primary/40 border border-border-custom">
+    <div className={`w-8 h-8 rounded-lg bg-bg-surface flex items-center justify-center ${tone}`}>
+      <Icon size={16} />
+    </div>
+    <div className="leading-tight">
+      <div className="text-sm font-bold text-text-primary">{value}</div>
+      <div className="text-[10px] text-text-muted inline-flex items-center gap-1">
+        {label}
+        {help && (
+          <HelpTip
+            title={label}
+            ariaLabel={`Giải thích ${label}`}
+            placement="bottom-start"
+            width="20rem"
+            content={help}
+          />
+        )}
+      </div>
+    </div>
+  </div>
+);

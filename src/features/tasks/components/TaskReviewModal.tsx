@@ -11,14 +11,20 @@ import type { TasksDto } from '../../../api/generated/types';
 import type { Annotation, AnnotationType } from '../../../types/entities';
 import { CanvasViewer } from '../../../components/canvas/CanvasViewer';
 import type { CanvasViewerHandle } from '../../../components/canvas/CanvasViewer';
-import { useTaskVersions, useApproveTask, useRequestRevisionTask } from '../hooks/useTasks';
+import { useTaskVersions, useApproveTask, useRequestRevisionTask, useCompositedPageUrl } from '../hooks/useTasks';
+import { TaskLayerPreview } from './TaskLayerPreview';
 import { ANNOTATION_TYPE_CONFIG } from '../../review/constants';
 import { formatDeadline } from '../constants';
 import { formatVND } from '../../wallet';
 import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
 
 interface TaskReviewModalProps {
-  task: TasksDto;
+  task: TasksDto & {
+    seriesTitle?: string | null;
+    chapterTitle?: string | null;
+    chapterNumber?: number;
+    baseLayerUrl?: string | null;
+  };
   onClose: () => void;
 }
 
@@ -64,6 +70,9 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
 
   const active = versions[activeIdx];
   const activeUrl = active?.submittedFileUrl ? resolveMediaUrl(active.submittedFileUrl) : '';
+  const pageIdStr = task.pageId ? String(task.pageId) : undefined;
+  const { data: compositeUrl } = useCompositedPageUrl(pageIdStr);
+  const compositeBase = compositeUrl || (task.baseLayerUrl ? resolveMediaUrl(task.baseLayerUrl) : '') || (task.pageImageUrl ? resolveMediaUrl(task.pageImageUrl) : '');
   const dl = formatDeadline(task.deadline || '');
   const canReview = task.status === 'Pending_Review';
 
@@ -167,6 +176,16 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
         <div className="p-6 space-y-4">
           {/* Task meta */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {task.seriesTitle && (
+              <div className="col-span-2 sm:col-span-4 flex items-center gap-1.5 text-[11px] text-text-secondary">
+                <FileText size={12} className="text-brand" />
+                {task.seriesTitle}
+                {task.chapterNumber ? ` · Ch.${task.chapterNumber}` : ''}
+                {task.chapterTitle ? `: ${task.chapterTitle}` : ''}
+                {task.pageNumber ? ` · Trang ${task.pageNumber}` : ''}
+                {task.regionName ? ` · ${task.regionName}` : ''}
+              </div>
+            )}
             <div className="flex items-center gap-1.5 text-[11px] text-text-secondary">
               <FileText size={12} className="text-text-muted" />
               Vùng {task.regionId} · Trang {task.pageNumber ?? '?'}
@@ -228,9 +247,19 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
             </div>
           ) : revising ? (
             <div className="grid lg:grid-cols-[1fr_300px] gap-4">
-              {/* Canvas annotate */}
+              {/* Composite canvas + overlay submission (F2.5) */}
               <div className="h-[300px] lg:h-[460px] bg-bg-surface rounded-xl border border-border-custom overflow-hidden">
-                {activeUrl ? (
+                {compositeBase ? (
+                  <TaskLayerPreview
+                    baseImageUrl={compositeBase}
+                    overlayImageUrl={activeUrl}
+                    coordinatesJson={task.regionCoordinatesJson}
+                    regionName={task.regionName}
+                    heightClassName="h-full min-h-[300px] lg:min-h-[460px]"
+                    className="rounded-none border-0"
+                    label="Composite — ghim lỗi trên bối cảnh tổng thể"
+                  />
+                ) : activeUrl ? (
                   <CanvasViewer
                     ref={canvasRef}
                     imageUrl={activeUrl}
@@ -320,12 +349,16 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
             </div>
           ) : (
             <div className="space-y-3">
+              <p className="text-[11px] text-text-muted">Duyệt trên Canvas tổng thể (composite + lớp nộp bài)</p>
               <div className="relative bg-bg-surface rounded-xl border border-border-custom overflow-hidden flex items-center justify-center h-[420px]">
-                {activeUrl ? (
-                  <img
-                    src={activeUrl}
-                    alt={`Phiên bản ${active?.versionNumber}`}
-                    className="max-w-full max-h-full object-contain"
+                {compositeBase || activeUrl ? (
+                  <TaskLayerPreview
+                    baseImageUrl={compositeBase || task.pageImageUrl}
+                    overlayImageUrl={activeUrl}
+                    coordinatesJson={task.regionCoordinatesJson}
+                    regionName={task.regionName}
+                    heightClassName="h-[420px] w-full"
+                    className="rounded-none border-0"
                   />
                 ) : (
                   <div className="flex flex-col items-center gap-2 text-text-muted">
@@ -334,7 +367,7 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
                   </div>
                 )}
                 {active && (
-                  <div className="absolute top-2 left-2 flex items-center gap-2">
+                  <div className="absolute top-2 left-2 flex items-center gap-2 z-10">
                     <span className="text-[10px] font-semibold bg-black/60 text-white px-2 py-1 rounded">
                       Phiên bản {active.versionNumber}
                     </span>
@@ -350,9 +383,9 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
                     href={activeUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="absolute top-2 right-2 inline-flex items-center gap-1 text-[10px] font-medium bg-black/60 text-white px-2 py-1 rounded hover:bg-black/80 transition-colors no-underline"
+                    className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 text-[10px] font-medium bg-black/60 text-white px-2 py-1 rounded hover:bg-black/80 transition-colors no-underline"
                   >
-                    <ExternalLink size={11} /> Mở ảnh gốc
+                    <ExternalLink size={11} /> Mở lớp PNG gốc
                   </a>
                 )}
               </div>

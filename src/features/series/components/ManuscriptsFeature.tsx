@@ -12,15 +12,16 @@ import {
 } from 'lucide-react';
 
 import {
-  CHAPTER_STATUS_CONFIG,
   CHAPTER_STATUS_FILTER_OPTIONS,
-  SERIES_STATUS_CONFIG,
+  getChapterStatusConfig,
   UploadChapterModal,
   useAllChapters,
   useMySeries,
   formatChapterDate,
 } from '../index';
 import { CustomSelect } from '../../../components/common/CustomSelect';
+import { chapterStatusMatchesFilter, toSelectFilterOptions } from '../../../utils/status';
+import { getSeriesStatusConfig } from '../constants';
 import type { Chapter, Series } from '../../../types/entities';
 
 type SeriesGroup = Series & { chapters: Chapter[] };
@@ -50,7 +51,7 @@ export const ManuscriptsFeature = () => {
         let seriesChapters = (chaptersBySeries.get(series.id) ?? [])
           .sort((a, b) => a.chapterNumber - b.chapterNumber);
         if (statusFilter) {
-          seriesChapters = seriesChapters.filter((c) => c.status === statusFilter);
+          seriesChapters = seriesChapters.filter((c) => chapterStatusMatchesFilter(c.status, statusFilter));
         }
         return { ...series, chapters: seriesChapters };
       })
@@ -107,7 +108,7 @@ export const ManuscriptsFeature = () => {
           </div>
           <div>
             <h1 className="text-xl font-bold text-text-primary">Quản lý bản thảo</h1>
-            <p className="text-xs text-text-muted mt-0.5">Upload và theo dõi chapters theo từng series</p>
+            <p className="text-xs text-text-muted mt-0.5">Tải lên và theo dõi các chương theo từng bộ truyện</p>
           </div>
         </div>
       </div>
@@ -116,10 +117,7 @@ export const ManuscriptsFeature = () => {
       <div className="flex flex-wrap items-center gap-3 mt-6">
         <div className="w-[200px]">
           <CustomSelect
-            options={CHAPTER_STATUS_FILTER_OPTIONS.filter((o) => o.value !== '').map((o) => ({
-              value: o.value,
-              label: o.label,
-            }))}
+            options={toSelectFilterOptions(CHAPTER_STATUS_FILTER_OPTIONS)}
             value={statusFilter}
             onChange={setStatusFilter}
             placeholder="Tất cả trạng thái"
@@ -127,7 +125,7 @@ export const ManuscriptsFeature = () => {
           />
         </div>
         <span className="text-xs text-text-muted ml-auto">
-          {seriesGroups.length} series · {totalChapters} chapters
+          {seriesGroups.length} bộ truyện · {totalChapters} chương
         </span>
       </div>
 
@@ -135,7 +133,7 @@ export const ManuscriptsFeature = () => {
       <div className="space-y-3 mt-5">
         {seriesGroups.map((group) => {
           const isExpanded = expandedSeriesIds.has(group.id);
-          const seriesStatus = SERIES_STATUS_CONFIG[group.status];
+          const seriesStatus = getSeriesStatusConfig(group.status);
 
           return (
             <div
@@ -179,7 +177,7 @@ export const ManuscriptsFeature = () => {
                       </span>
                     </div>
                     <p className="text-[11px] text-text-muted mt-0.5">
-                      {group.chapters.length} chapter{group.chapters.length !== 1 ? 's' : ''}
+                      {group.chapters.length} chương
                     </p>
                   </div>
                 </button>
@@ -188,10 +186,10 @@ export const ManuscriptsFeature = () => {
                   type="button"
                   onClick={() => openUploadModal(group.id)}
                   className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-brand bg-brand/10 hover:bg-brand/15 border border-brand/20 cursor-pointer transition-colors flex-shrink-0"
-                  title="Nộp chapter cho series này"
+                  title="Tạo chương nháp cho bộ truyện này"
                 >
                   <Plus size={14} />
-                  <span className="hidden sm:inline">Nộp chapter</span>
+                  <span className="hidden sm:inline">Tạo chương</span>
                 </button>
               </div>
 
@@ -200,19 +198,19 @@ export const ManuscriptsFeature = () => {
                   {group.chapters.length === 0 ? (
                     <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
                       <FileText size={28} className="text-text-muted" />
-                      <p className="text-xs text-text-muted">Chưa có chapter nào trong series này</p>
+                      <p className="text-xs text-text-muted">Chưa có chương nào trong bộ truyện này</p>
                       <button
                         type="button"
                         onClick={() => openUploadModal(group.id)}
                         className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium bg-brand text-white border-none cursor-pointer hover:bg-brand-hover transition-colors"
                       >
                         <Upload size={14} />
-                        Nộp chapter đầu tiên
+                        Nộp chương đầu tiên
                       </button>
                     </div>
                   ) : (
                     group.chapters.map((chapter) => {
-                      const statusCfg = CHAPTER_STATUS_CONFIG[chapter.status];
+                      const statusCfg = getChapterStatusConfig(chapter.status);
                       const StatusIcon = statusCfg.icon;
                       const date = formatChapterDate(chapter);
 
@@ -282,7 +280,7 @@ export const ManuscriptsFeature = () => {
       {seriesGroups.length === 0 && (
         <div className="mt-8 bg-bg-secondary border border-border-custom rounded-xl p-12 flex flex-col items-center gap-4">
           <BookOpen size={40} className="text-text-muted" />
-          <p className="text-sm text-text-secondary">Không có series hoặc chapter phù hợp bộ lọc</p>
+          <p className="text-sm text-text-secondary">Không có bộ truyện hoặc chương phù hợp bộ lọc</p>
         </div>
       )}
 

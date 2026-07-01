@@ -11,13 +11,14 @@ import {
 } from 'lucide-react';
 
 import {
-  SERIES_STATUS_CONFIG,
+  getSeriesStatusConfig,
   StatusTimeline,
   SeriesInfoCard,
   NameUploader,
   SubmitChecklist,
   AcceptFundPanel,
   EditorRevisionPanel,
+  SeriesTeamPanel,
   useNameUpload,
   useSeriesSubmit,
   useAcceptFund,
@@ -112,9 +113,10 @@ export const SeriesDetailFeature = () => {
   const isPendingBoardVote =
     currentStatus === 'PendingBoardVote' || series.status === 'PendingBoardVote';
   const isFundPending = currentStatus === 'Approved';
+  const canManageTeam = currentStatus === 'Published';
   const statusConfig = hasRevisionRequest
     ? { label: 'Cần chỉnh sửa', color: 'text-amber-400', bg: 'bg-amber-500/10' }
-    : SERIES_STATUS_CONFIG[currentStatus];
+    : getSeriesStatusConfig(currentStatus);
 
   const revisionParsed = hasRevisionRequest ? parseEditorRevisionNote(series.editorNote!) : null;
 
@@ -210,6 +212,10 @@ export const SeriesDetailFeature = () => {
           {/* Series Info (Feature Component) */}
           <SeriesInfoCard series={series} />
 
+          {canManageTeam && seriesId && (
+            <SeriesTeamPanel seriesId={seriesId} seriesTitle={series.title} />
+          )}
+
           {/* Upload Name — Draft only (Feature Component) */}
           {isDraft && (
             <NameUploader
@@ -303,10 +309,13 @@ export const SeriesDetailFeature = () => {
           {isFundPending && (
             <div className="mt-8">
               <AcceptFundPanel
+                estimatedBudget={series.estimatedProductionBudget ?? 0}
                 approvedBudget={series.approvedProductionBudget ?? 0}
                 hasContract={series.hasContract || false}
                 isAccepting={acceptFund.isAccepting}
+                isDeclining={acceptFund.isDeclining}
                 onAccept={acceptFund.acceptFund}
+                onDecline={acceptFund.declineFund}
               />
             </div>
           )}

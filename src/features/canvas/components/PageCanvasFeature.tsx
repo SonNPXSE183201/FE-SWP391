@@ -27,6 +27,9 @@ import {
   ZoomOut,
   Maximize2,
   Clock,
+  CheckCircle2,
+  MapPin,
+  Upload,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { getAxiosErrorMessage } from "../../../api/axios";
@@ -39,74 +42,26 @@ import {
   useDeleteRegion,
   useUpdateRegion,
   useCanvasPages,
+  useMarkPageReady,
+  useAnnotations,
 } from "../hooks/useCanvasData";
 import {
   useCompositedPageUrl,
   useRefreshPageComposite,
   useMangakaTasks,
 } from "../../tasks/hooks/useTasks";
-import { useChapterDetail } from "../../series";
+import { useChapterDetail, ReplacePageImageModal, useReplacePageImage, getPageStatusConfig } from "../../series";
+import { getTaskStatusConfig } from "../../tasks";
 import { CreateTaskModal } from "../../tasks";
 import { formatVND } from "../../wallet";
-import type { Region } from "../../../types/entities";
+import type { Annotation, Region } from "../../../types/entities";
+import { ANNOTATION_TYPE_CONFIG } from "../../review/constants";
 import type { TasksDto } from "../../../api/generated/types";
 import type { CanvasViewerHandle } from "../../../components/canvas/CanvasViewer";
 
 interface PageCanvasFeatureProps {
   chapterId?: string;
 }
-
-const PAGE_STATUS_COLORS: Record<
-  string,
-  { dot: string; bg: string; text: string; label: string }
-> = {
-  Pending: {
-    dot: "bg-text-muted",
-    bg: "bg-text-muted/10",
-    text: "text-text-muted",
-    label: "Chờ xử lý",
-  },
-  InProgress: {
-    dot: "bg-info",
-    bg: "bg-info/10",
-    text: "text-info",
-    label: "Đang làm",
-  },
-  Completed: {
-    dot: "bg-success",
-    bg: "bg-success/10",
-    text: "text-success",
-    label: "Hoàn thành",
-  },
-  NeedsRevision: {
-    dot: "bg-warning",
-    bg: "bg-warning/10",
-    text: "text-warning",
-    label: "Cần sửa",
-  },
-};
-
-const TASK_STATUS_CONFIG: Record<
-  string,
-  { bg: string; text: string; label: string }
-> = {
-  Pending: { bg: "bg-info/10", text: "text-info", label: "Chờ nhận" },
-  In_Progress: { bg: "bg-info/10", text: "text-info", label: "Đang làm" },
-  Pending_Review: {
-    bg: "bg-warning/10",
-    text: "text-warning",
-    label: "Chờ duyệt",
-  },
-  Revision: { bg: "bg-warning/10", text: "text-warning", label: "Cần sửa" },
-  Approved: { bg: "bg-success/10", text: "text-success", label: "Đã duyệt" },
-  Disputed: { bg: "bg-danger/10", text: "text-danger", label: "Tranh chấp" },
-  Cancelled: {
-    bg: "bg-text-muted/10",
-    text: "text-text-muted",
-    label: "Đã hủy",
-  },
-  Closed: { bg: "bg-text-muted/10", text: "text-text-muted", label: "Đã đóng" },
-};
 
 export const PageCanvasFeature = ({
   chapterId = "1",
@@ -121,14 +76,17 @@ export const PageCanvasFeature = ({
   const [editingRegionId, setEditingRegionId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
   const [showCreateTask, setShowCreateTask] = useState(false);
+  const [showReplaceImage, setShowReplaceImage] = useState(false);
 
   const {
     activeTool,
     zoomLevel,
     selectedRegionId,
+    selectedAnnotationId,
     setActiveTool,
     setZoomLevel,
     setSelectedRegion,
+    setSelectedAnnotation,
   } = useCanvasStore();
 
   // ─── Data ───
@@ -139,6 +97,7 @@ export const PageCanvasFeature = ({
   const pageId = currentPage?.id ?? "";
 
   const { data: regions = [] } = useRegions(pageId);
+  const { data: editorAnnotations = [] } = useAnnotations(pageId);
   const { data: mangakaTasks = [] } = useMangakaTasks({ pageSize: 200 });
   const {
     data: compositedUrl,
@@ -146,6 +105,8 @@ export const PageCanvasFeature = ({
     isFetching: isCompositeLoading,
   } = useCompositedPageUrl(pageId);
   const refreshComposite = useRefreshPageComposite();
+  const markPageReady = useMarkPageReady(chapterId);
+  const replacePageImage = useReplacePageImage(chapterId);
 
   const createRegion = useCreateRegion(pageId);
   const updateRegion = useUpdateRegion(pageId);
@@ -323,12 +284,32 @@ export const PageCanvasFeature = ({
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect -- intentional reset when pageId changes */
     setSelectedRegion(null);
+    setSelectedAnnotation(null);
     setActiveTool("select");
     setEditingRegionId(null);
     setRegionLabel("");
     setRegionLabelError(false);
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [pageId, setSelectedRegion, setActiveTool]);
+  }, [pageId, setSelectedRegion, setSelectedAnnotation, setActiveTool]);
+
+  // Đồng bộ annotation với trang hiện tại:
+  // - nếu annotation đang chọn không còn tồn tại thì bỏ chọn
+  // - nếu trang có lỗi mà chưa chọn gì thì tự chọn lỗi đầu tiên
+  useEffect(() => {
+    if (!pageId) return;
+    if (editorAnnotations.length === 0) {
+      if (selectedAnnotationId) setSelectedAnnotation(null);
+      return;
+    }
+
+    const hasSelected = selectedAnnotationId
+      ? editorAnnotations.some((a) => a.id === selectedAnnotationId)
+      : false;
+
+    if (!hasSelected) {
+      setSelectedAnnotation(editorAnnotations[0]?.id ?? null);
+    }
+  }, [pageId, editorAnnotations, selectedAnnotationId, setSelectedAnnotation]);
 
   // ─── Zoom handlers (zoom là tương đối: 100% = trang vừa khít khung) ───
   const handleZoomIn = useCallback(() => {
@@ -342,6 +323,15 @@ export const PageCanvasFeature = ({
   const handleZoomFit = useCallback(() => {
     canvasRef.current?.resetView();
   }, []);
+
+  const isPageCompleted = currentPage?.status === "Completed";
+  const canMarkPageReady =
+    !!pageId && !!currentPage && !isPageCompleted && regions.length === 0;
+
+  const handleMarkPageReady = () => {
+    if (!canMarkPageReady) return;
+    markPageReady.mutate(pageId);
+  };
 
   // ─── Loading skeleton ───
   if (pagesLoading) {
@@ -382,8 +372,7 @@ export const PageCanvasFeature = ({
     );
   }
 
-  const statusConfig =
-    PAGE_STATUS_COLORS[currentPage.status] ?? PAGE_STATUS_COLORS.Pending;
+  const statusConfig = getPageStatusConfig(currentPage.status);
   const assignedCount = regions.filter((r: Region) =>
     tasksByRegion.has(r.id),
   ).length;
@@ -411,12 +400,20 @@ export const PageCanvasFeature = ({
               </h2>
               <div className="flex items-center gap-2">
                 <span
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium ${statusConfig.bg} ${statusConfig.text}`}
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium ${statusConfig.bg} ${statusConfig.color}`}
                 >
                   {statusConfig.label}
                 </span>
                 <span className="text-[10px] text-text-muted">
                   {regions.length} vùng · {assignedCount} đã giao việc
+                  {editorAnnotations.length > 0 && (
+                    <>
+                      {" · "}
+                      <span className="text-amber-400">
+                        {editorAnnotations.length} lỗi Editor
+                      </span>
+                    </>
+                  )}
                 </span>
               </div>
             </div>
@@ -479,6 +476,28 @@ export const PageCanvasFeature = ({
 
           {/* Right: composite + page nav */}
           <div className="flex items-center gap-2">
+            {canMarkPageReady && (
+              <button
+                type="button"
+                onClick={handleMarkPageReady}
+                disabled={markPageReady.isPending}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/15 border border-emerald-500/30 text-[11px] font-semibold text-emerald-400 hover:bg-emerald-600/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                title="Trang upload đã xong — không cần vẽ vùng hay giao Assistant"
+              >
+                {markPageReady.isPending ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <CheckCircle2 size={14} />
+                )}
+                Đánh dấu sẵn sàng
+              </button>
+            )}
+            {isPageCompleted && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-success/10 border border-success/20 text-[11px] font-semibold text-success">
+                <CheckCircle2 size={14} />
+                Đã sẵn sàng
+              </span>
+            )}
             {hasCompositeOverlay && (
               <a
                 href={canvasImageUrl}
@@ -491,6 +510,15 @@ export const PageCanvasFeature = ({
                 <Download size={14} /> Tải ảnh
               </a>
             )}
+            <button
+              type="button"
+              onClick={() => setShowReplaceImage(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand/10 border border-brand/25 text-[11px] font-semibold text-brand hover:bg-brand/20 transition-colors cursor-pointer"
+              title="Tải lại ảnh trang hiện tại sau khi sửa ngoài Canvas"
+            >
+              <Upload size={14} />
+              Tải lại ảnh
+            </button>
             <button
               type="button"
               onClick={handleRefreshComposite}
@@ -535,6 +563,16 @@ export const PageCanvasFeature = ({
           </div>
         </div>
 
+        {editorAnnotations.length > 0 && (
+          <div className="flex items-start gap-2 px-3 py-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-200/90 shrink-0">
+            <MapPin size={14} className="text-amber-400 mt-0.5 shrink-0" />
+            <p>
+              Editor đã ghim <strong className="text-amber-300">{editorAnnotations.length} lỗi</strong> trên
+              trang này. Click ghim trên ảnh hoặc mục bên phải để xem vị trí và mô tả cần sửa.
+            </p>
+          </div>
+        )}
+
         {/* ═══ Main area: filmstrip + canvas + sidebar ═══ */}
         <div className="flex gap-3 flex-1 min-h-0">
           {/* ── Page filmstrip ── */}
@@ -546,8 +584,7 @@ export const PageCanvasFeature = ({
             </div>
             <div className="flex-1 overflow-y-auto p-2 space-y-2">
               {pages.map((page, idx) => {
-                const cfg =
-                  PAGE_STATUS_COLORS[page.status] ?? PAGE_STATUS_COLORS.Pending;
+                const cfg = getPageStatusConfig(page.status);
                 const isActive = idx === currentPageIndex;
                 return (
                   <button
@@ -582,7 +619,7 @@ export const PageCanvasFeature = ({
                       {page.pageNumber}
                     </div>
                     <span
-                      className={`absolute bottom-1 right-1 w-2 h-2 rounded-full ${cfg.dot} ring-2 ring-black/40`}
+                      className={`absolute bottom-1 right-1 w-2 h-2 rounded-full ${cfg.dotColor} ring-2 ring-black/40`}
                     />
                   </button>
                 );
@@ -597,11 +634,14 @@ export const PageCanvasFeature = ({
               key={pageId}
               imageUrl={canvasImageUrl}
               regions={regions}
+              annotations={editorAnnotations}
               mode={activeTool === "select" ? "view" : activeTool}
               onRegionCreated={handleRegionCreated}
               onRegionUpdated={handleRegionUpdated}
               selectedRegionId={selectedRegionId}
               onRegionSelect={setSelectedRegion}
+              selectedAnnotationId={selectedAnnotationId}
+              onAnnotationSelect={setSelectedAnnotation}
               onZoomChange={setZoomLevel}
               showRegionCoords
               className="w-full h-full"
@@ -653,25 +693,137 @@ export const PageCanvasFeature = ({
             </div>
 
             <div className="flex-1 overflow-y-auto p-3 space-y-2">
+              {editorAnnotations.length > 0 && (
+                <div className="mb-3 pb-3 border-b border-amber-500/15 space-y-2">
+                  <div className="flex items-center gap-1.5">
+                    <MapPin size={13} className="text-amber-400" />
+                    <p className="text-[11px] font-semibold text-text-primary">
+                      Lỗi Editor ghim ({editorAnnotations.length})
+                    </p>
+                  </div>
+                  {editorAnnotations.map((anno: Annotation) => {
+                    const cfg = ANNOTATION_TYPE_CONFIG[anno.type];
+                    const isSelected = anno.id === selectedAnnotationId;
+                    return (
+                      <div
+                        key={anno.id}
+                        className={`w-full text-left p-2.5 rounded-lg border transition-all ${
+                          isSelected
+                            ? "border-amber-400/50 bg-amber-500/10"
+                            : "border-border-custom/50 bg-bg-primary hover:border-amber-400/30"
+                        }`}
+                      >
+                        <div
+                          onClick={() =>
+                            setSelectedAnnotation(isSelected ? null : anno.id)
+                          }
+                          className="cursor-pointer"
+                        >
+                          <span className={`text-[10px] font-medium ${cfg.color}`}>
+                            {cfg.icon} {cfg.label}
+                          </span>
+                          <p className="text-[11px] text-text-primary mt-1 leading-snug">
+                            {anno.comment}
+                          </p>
+                          <p className="text-[9px] text-text-muted mt-1">
+                            {anno.editorName || "Editor"}
+                          </p>
+                        </div>
+
+                        {isSelected && (
+                          <div className="mt-2 pt-2 border-t border-amber-500/20 flex gap-1.5 animate-fade-in">
+                            <button
+                              type="button"
+                              onClick={() => setShowReplaceImage(true)}
+                              className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-brand text-white text-[10px] font-semibold hover:bg-brand-hover transition-colors border-none cursor-pointer"
+                              title="Tải lên ảnh trang đã sửa để thay thế"
+                            >
+                              <Upload size={12} />
+                              Sửa ảnh
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setActiveTool("region")}
+                              className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-bg-surface border border-border-custom text-text-secondary hover:text-text-primary hover:border-brand/40 text-[10px] font-medium transition-colors cursor-pointer"
+                              title="Khoanh vùng vị trí lỗi để giao việc cho Assistant"
+                            >
+                              <SquareDashedBottom size={12} />
+                              Khoanh vùng
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  <div className="rounded-lg border border-brand/20 bg-brand/5 p-2.5 space-y-2">
+                    <p className="text-[10px] font-semibold text-text-primary">Cách xử lý</p>
+                    <ol className="text-[10px] text-text-secondary space-y-1 list-decimal list-inside leading-relaxed">
+                      <li>
+                        <span className="text-text-primary font-medium">Tự sửa (khuyến nghị):</span> chỉnh file
+                        ngoài → tải lại ảnh trang → <span className="text-emerald-400">Đánh dấu sẵn sàng</span>
+                      </li>
+                      <li>
+                        <span className="text-text-primary font-medium">Nhờ Assistant:</span> chỉ khi phần lỗi cần
+                        trợ lý vẽ lại — khoanh vùng rồi giao việc
+                      </li>
+                    </ol>
+                    <button
+                      type="button"
+                      onClick={() => setShowReplaceImage(true)}
+                      className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md text-[10px] font-medium bg-brand/10 border border-brand/25 text-brand hover:bg-brand/20 transition-colors cursor-pointer"
+                    >
+                      <Upload size={11} />
+                      Tải lại ảnh trang này
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {regions.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 gap-3 text-text-muted">
+                <div className="flex flex-col items-center justify-center py-8 gap-4 text-text-muted">
                   <SquareDashedBottom size={28} />
-                  <p className="text-xs text-center px-4">
-                    Chưa có vùng nào.
-                    <br />
-                    Chọn công cụ{" "}
-                    <b className="text-text-secondary">Khoanh vùng</b> rồi kéo
-                    chuột trên trang để tạo.
-                  </p>
+                  {isPageCompleted ? (
+                    <p className="text-xs text-center px-4 text-success">
+                      Trang này đã được đánh dấu sẵn sàng — không cần sản xuất thêm.
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-xs text-center px-4">
+                        {editorAnnotations.length > 0 ? (
+                          <>
+                            Bạn có thể <b className="text-text-secondary">tự sửa file</b> rồi đánh dấu sẵn sàng,
+                            hoặc khoanh vùng để giao Assistant nếu cần trợ lý vẽ lại.
+                          </>
+                        ) : (
+                          <>
+                            Chưa có vùng nào.
+                            <br />
+                            Nếu ảnh upload đã hoàn chỉnh, bấm{" "}
+                            <b className="text-text-secondary">Đánh dấu sẵn sàng</b> thay vì khoanh vùng.
+                          </>
+                        )}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleMarkPageReady}
+                        disabled={markPageReady.isPending}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white border-none cursor-pointer transition-colors disabled:opacity-50"
+                      >
+                        {markPageReady.isPending ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <CheckCircle2 size={14} />
+                        )}
+                        Đánh dấu sẵn sàng
+                      </button>
+                    </>
+                  )}
                 </div>
               ) : (
                 regions.map((region: Region, idx: number) => {
                   const task = tasksByRegion.get(region.id);
-                  const isSelected = region.id === selectedRegionId;
-                  const taskCfg = task
-                    ? (TASK_STATUS_CONFIG[task.status ?? "Pending"] ??
-                      TASK_STATUS_CONFIG.Pending)
-                    : null;
+                  const isSelected = region.id == selectedRegionId;
+                  const taskCfg = task ? getTaskStatusConfig(task.status) : null;
                   return (
                     <div
                       key={region.id}
@@ -777,7 +929,7 @@ export const PageCanvasFeature = ({
                         <div className="mt-2 pt-2 border-t border-border-custom/60 space-y-1">
                           <div className="flex items-center justify-between">
                             <span
-                              className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${taskCfg.bg} ${taskCfg.text}`}
+                              className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${taskCfg.bg} ${taskCfg.color}`}
                             >
                               {taskCfg.label}
                             </span>
@@ -839,12 +991,30 @@ export const PageCanvasFeature = ({
                   chapterId: chapterDetail.id,
                   pageId: currentPage.id,
                   taskName:
-                    regions.find((r: Region) => r.id === selectedRegionId)
+                    regions.find((r: Region) => r.id == selectedRegionId)
                       ?.label || "",
                   regionId: selectedRegionId || undefined,
                 }
               : { seriesId: "", chapterId: "", pageId: "", taskName: "" }
           }
+        />
+      )}
+
+      {showReplaceImage && currentPage && (
+        <ReplacePageImageModal
+          page={currentPage}
+          isSubmitting={replacePageImage.isPending}
+          onClose={() => setShowReplaceImage(false)}
+          onSubmit={(file) => {
+            replacePageImage.mutate(
+              { pageId: currentPage.id, file },
+              {
+                onSuccess: () => {
+                  setShowReplaceImage(false);
+                },
+              },
+            );
+          }}
         />
       )}
     </>

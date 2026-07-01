@@ -68,10 +68,11 @@ export const ReviewSeriesFeature = () => {
   const checkedCount = CHECKLIST_ITEMS.filter((item) => checklist[item.id]).length;
   const allChecked = checkedCount === CHECKLIST_ITEMS.length;
   const uncheckedItems = CHECKLIST_ITEMS.filter((item) => !checklist[item.id]);
+  const nonBudgetUnchecked = uncheckedItems.filter((item) => item.id !== 'budget');
 
   const suggestedBudgetNum = suggestedBudget ? Number(suggestedBudget.replace(/[^0-9]/g, '')) : 0;
-  const budgetFailed = uncheckedItems.some((item) => item.id === 'budget');
-  const budgetChanged = suggestedBudgetNum > 0 && suggestedBudgetNum !== originalBudget;
+  const budgetFailed = !checklist.budget;
+  const onlyBudgetFailed = budgetFailed && nonBudgetUnchecked.length === 0;
 
   const coverUrl = typedSeries?.coverArtworkUrl ? resolveMediaUrl(typedSeries.coverArtworkUrl) : '';
 
@@ -105,22 +106,36 @@ export const ReviewSeriesFeature = () => {
       return;
     }
 
-    if (budgetFailed) {
+    if (onlyBudgetFailed) {
       if (suggestedBudgetNum <= 0) {
-        toast.error('Mục ngân sách chưa đạt — vui lòng nhập ngân sách đề xuất.');
+        toast.error('Vui lòng nhập ngân sách Editor đề xuất.');
         return;
       }
-      if (suggestedBudgetNum === originalBudget) {
-        toast.error('Ngân sách đề xuất phải khác mức Mangaka đang yêu cầu.');
-        return;
-      }
+      submitToBoard.mutate(
+        {
+          seriesId: seriesId ?? '',
+          notes: editorNotes.trim(),
+          editorRecommendedBudget: suggestedBudgetNum,
+        },
+        {
+          onSuccess: () => {
+            toast.success('Đã trình hồ sơ lên Hội đồng kèm đề xuất ngân sách!');
+            navigate('/editor/review');
+          },
+          onError: (err: unknown) => {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+            toast.error(msg || 'Có lỗi xảy ra. Vui lòng thử lại.');
+          },
+        },
+      );
+      return;
     }
 
     requireRevision.mutate(
       {
         seriesId: seriesId ?? '',
         comment: editorNotes.trim(),
-        suggestedBudget: budgetFailed || budgetChanged ? suggestedBudgetNum : undefined,
+        suggestedBudget: undefined,
         failedChecklistItems: uncheckedItems.map((item) => item.id),
       },
       {
@@ -306,9 +321,9 @@ export const ReviewSeriesFeature = () => {
                 <HelpTip
                   content={
                     <>
-                      Tick các mục đạt yêu cầu trong checklist. Nếu{' '}
-                      <strong className="text-text-primary">đủ 4/4</strong>, hồ sơ sẽ được trình lên Hội
-                      đồng. Nếu còn mục chưa đạt, nhận xét của bạn sẽ gửi về Mangaka để chỉnh sửa.
+                      Tick các mục đạt yêu cầu. Nếu <strong className="text-text-primary">đủ 4/4</strong>, hồ sơ
+                      trình thẳng lên Hội đồng. Nếu chỉ mục ngân sách chưa đạt, nhập mức Editor đề xuất — hồ sơ vẫn
+                      được trình Board mà không bắt Mangaka nộp lại. Các mục khác chưa đạt sẽ gửi về Mangaka chỉnh sửa.
                     </>
                   }
                   ariaLabel="Hướng dẫn đánh giá"
@@ -366,9 +381,13 @@ export const ReviewSeriesFeature = () => {
               <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 space-y-3 animate-fade-in shrink-0 mt-4">
                 <div className="flex items-center gap-2">
                   <Banknote size={14} className="text-amber-400" />
-                  <p className="text-xs font-semibold text-text-primary">Ngân sách đề xuất</p>
+                  <p className="text-xs font-semibold text-text-primary">Ngân sách Editor đề xuất</p>
                   <span className="text-danger text-[10px]">*</span>
                 </div>
+                <p className="text-[11px] text-amber-300/90 leading-relaxed">
+                  Ngân sách hiện tại vượt định mức hoặc chưa phù hợp với quy mô dự án. Nhập mức đề xuất và lý do —
+                  hồ sơ vẫn được đẩy lên Hội đồng.
+                </p>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="px-3 py-2 rounded-lg bg-bg-surface border border-border-custom">
                     <p className="text-[10px] text-text-muted">Mangaka đề xuất</p>
@@ -379,13 +398,13 @@ export const ReviewSeriesFeature = () => {
                     inputMode="numeric"
                     value={suggestedBudget ? formatCurrencyInput(suggestedBudget) : ''}
                     onChange={(e) => setSuggestedBudget(e.target.value.replace(/[^0-9]/g, ''))}
-                    placeholder="Nhập mức mới"
+                    placeholder="Nhập mức Editor đề xuất"
                     className="px-3 py-2 bg-bg-surface border border-border-custom rounded-lg text-sm text-text-primary focus:outline-none focus:border-brand/50"
                   />
                 </div>
-                {budgetChanged && (
+                {suggestedBudgetNum > 0 && (
                   <p className="text-[11px] text-brand font-medium">
-                    Sẽ gửi cho Mangaka: {formatCurrency(suggestedBudgetNum)}
+                    Hội đồng sẽ thấy: {formatCurrency(suggestedBudgetNum)}
                   </p>
                 )}
               </div>
@@ -402,7 +421,9 @@ export const ReviewSeriesFeature = () => {
                 placeholder={
                   allChecked
                     ? 'Nhận xét tổng quan trước khi trình Hội đồng...'
-                    : 'Mô tả chi tiết phần Mangaka cần chỉnh sửa...'
+                    : onlyBudgetFailed
+                      ? 'Lý do điều chỉnh ngân sách (vd. cắt giảm chi phí thuê trợ lý)...'
+                      : 'Mô tả chi tiết phần Mangaka cần chỉnh sửa...'
                 }
                 maxLength={1000}
                 className="flex-1 min-h-[7rem] w-full px-4 py-3 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 resize-none"
@@ -416,7 +437,7 @@ export const ReviewSeriesFeature = () => {
                 onClick={handleSubmitEvaluation}
                 disabled={isSubmitting}
                 className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border-none cursor-pointer transition-all disabled:opacity-50 ${
-                  allChecked
+                  allChecked || onlyBudgetFailed
                     ? 'bg-brand hover:bg-brand-hover text-white shadow-brand'
                     : 'bg-amber-500 hover:bg-amber-600 text-white'
                 }`}
