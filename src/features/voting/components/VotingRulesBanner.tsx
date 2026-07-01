@@ -1,7 +1,7 @@
-import { AlertTriangle, BarChart3, Clock, ShieldAlert, Users } from 'lucide-react';
+import { BarChart3, Clock, Crown, Users, AlertTriangle } from 'lucide-react';
 import { HelpTip } from '../../../components/common/HelpTip';
 import type { BoardVotingRulesDto } from '../../admin/api/boardVoting.api';
-import { getTiePolicyDetail, getTiePolicyShortLabel, calcEffectiveThresholdPercent } from '../voting.utils';
+import { calcEffectiveThresholdPercent } from '../voting.utils';
 
 type VotingRulesBannerProps = {
   rules: BoardVotingRulesDto;
@@ -9,9 +9,9 @@ type VotingRulesBannerProps = {
 
 export const VotingRulesBanner = ({ rules }: VotingRulesBannerProps) => {
   const n = rules.boardMemberCount;
-  const tieShort = getTiePolicyShortLabel(rules.tiePolicy);
-  const approveEffective = calcEffectiveThresholdPercent(rules.approveRequired, n);
-  const rejectEffective = calcEffectiveThresholdPercent(rules.rejectRequired, n);
+  const totalWeight = rules.totalWeight ?? n;
+  const chairWeight = rules.chairWeight ?? 1;
+  const approveEffective = calcEffectiveThresholdPercent(rules.approveRequired, totalWeight);
 
   return (
     <div className="rounded-xl border border-border-custom bg-bg-secondary">
@@ -32,29 +32,20 @@ export const VotingRulesBanner = ({ rules }: VotingRulesBannerProps) => {
                 content={
                   <ul className="space-y-2 list-none m-0 p-0">
                     <li>
-                      <strong className="text-success">Duyệt cấp vốn:</strong> cần ≥{rules.approveRequired}/{n}{' '}
-                      phiếu Đồng ý ({rules.approvalThresholdPercent}% thành viên HĐ).
+                      <strong className="text-success">Duyệt cấp vốn:</strong> cần ≥{rules.approveRequired}/
+                      {totalWeight} trọng số phiếu Đồng ý ({rules.approvalThresholdPercent}%).
                     </li>
                     <li>
-                      <strong className="text-danger">Từ chối:</strong> cần ≥{rules.rejectRequired}/{n} phiếu Từ
-                      chối ({rules.rejectionThresholdPercent}%).
+                      <strong className="text-text-secondary">Trọng số:</strong> Chủ tịch HĐ = {chairWeight} phiếu,
+                      TV thường = 1 phiếu. Tổng trọng số luôn lẻ → không hòa phiếu.
                     </li>
                     <li>
-                      <strong className="text-text-secondary">Bỏ qua:</strong> không tính vào phe Đồng ý/Từ chối,
-                      nhưng vẫn tính là TV đã vote.
+                      <strong className="text-text-secondary">Ngân sách duyệt:</strong> trung bình có trọng số
+                      các mức đề xuất từ phiếu Approve.
                     </li>
                     <li>
-                      <strong className="text-amber-300">Hòa phiếu:</strong>{' '}
-                      {getTiePolicyDetail(rules.tiePolicy, rules.chairUserName)}
-                    </li>
-                    <li>
-                      <strong className="text-text-secondary">Lưu ý:</strong> cấu hình {rules.approvalThresholdPercent}%
-                      với {n} TV = cần ≥{rules.approveRequired} phiếu (tương đương ≥{approveEffective}% thực tế).
-                      2/3 chính xác là 66.67% — preset khuyến nghị dùng <strong>66%</strong> → 4/6.
-                    </li>
-                    <li>
-                      <strong className="text-text-secondary">Tự chốt:</strong> sau {rules.autoResolveHours} giờ nếu
-                      chưa đủ ngưỡng — hệ thống kết thúc theo phiếu hiện có (ưu tiên phe nhiều hơn).
+                      <strong className="text-text-secondary">Tự chốt:</strong> sau {rules.autoResolveHours} giờ —
+                      phe Đồng ý nhiều hơn thì duyệt, ngược lại từ chối.
                     </li>
                   </ul>
                 }
@@ -66,12 +57,13 @@ export const VotingRulesBanner = ({ rules }: VotingRulesBannerProps) => {
                 {n} thành viên HĐ
               </span>
               <span className="inline-flex items-center gap-1">
-                <Clock size={11} />
-                Tự chốt {rules.autoResolveHours}h
+                <Crown size={11} />
+                Chủ tịch = {chairWeight} phiếu
+                {rules.chairUserName ? ` (${rules.chairUserName})` : ''}
               </span>
               <span className="inline-flex items-center gap-1">
-                <ShieldAlert size={11} />
-                {tieShort}
+                <Clock size={11} />
+                Tự chốt {rules.autoResolveHours}h
               </span>
             </p>
           </div>
@@ -79,24 +71,14 @@ export const VotingRulesBanner = ({ rules }: VotingRulesBannerProps) => {
 
         <div className="flex flex-wrap gap-2 lg:justify-end shrink-0">
           <span className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full bg-success/10 text-success font-medium border border-success/15">
-            Duyệt ≥{rules.approveRequired}/{n}
+            Duyệt ≥{rules.approveRequired}/{totalWeight}
             <span className="text-success/70 font-normal">
               ({rules.approvalThresholdPercent}%
-              {approveEffective !== rules.approvalThresholdPercent
-                ? ` → ≥${approveEffective}% TV`
-                : ''}
-              )
+              {approveEffective !== rules.approvalThresholdPercent ? ` → ≥${approveEffective}%` : ''})
             </span>
           </span>
-          <span className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full bg-danger/10 text-danger font-medium border border-danger/15">
-            Từ chối ≥{rules.rejectRequired}/{n}
-            <span className="text-danger/70 font-normal">
-              ({rules.rejectionThresholdPercent}%
-              {rejectEffective !== rules.rejectionThresholdPercent
-                ? ` → ≥${rejectEffective}% TV`
-                : ''}
-              )
-            </span>
+          <span className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full bg-bg-primary text-text-muted font-medium border border-border-custom">
+            Tổng trọng số: {totalWeight}
           </span>
           <span className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full bg-bg-primary text-text-muted font-medium border border-border-custom">
             <Clock size={11} />
@@ -105,10 +87,10 @@ export const VotingRulesBanner = ({ rules }: VotingRulesBannerProps) => {
         </div>
       </div>
 
-      {rules.oddBoardSizeWarning && (
+      {rules.chairIsValid === false && rules.chairInvalidWarning && (
         <div className="flex items-start gap-2 px-4 py-2.5 bg-amber-500/8 border-t border-amber-500/15 text-[11px] text-amber-300">
           <AlertTriangle size={13} className="shrink-0 mt-0.5" />
-          <span>{rules.oddBoardSizeWarning}</span>
+          <span>{rules.chairInvalidWarning}</span>
         </div>
       )}
     </div>

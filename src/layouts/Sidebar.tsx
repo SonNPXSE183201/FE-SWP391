@@ -53,15 +53,15 @@ const getNavSections = (role: UserRole): NavSectionConfig[] => {
         {
           title: 'Tổng quan',
           items: [
-            { label: 'Dashboard', path: '/mangaka', icon: <LayoutDashboard size={20} /> },
+            { label: 'Bảng điều khiển', path: '/mangaka', icon: <LayoutDashboard size={20} /> },
           ],
         },
         {
           title: 'Sáng tác',
           items: [
-            { label: 'Series của tôi', path: '/mangaka/series', icon: <BookOpen size={20} /> },
+            { label: 'Bộ truyện của tôi', path: '/mangaka/series', icon: <BookOpen size={20} /> },
             { label: 'Bản thảo', path: '/mangaka/manuscripts', icon: <FileText size={20} /> },
-            { label: 'Quản lý Task', path: '/mangaka/tasks', icon: <ClipboardList size={20} /> },
+            { label: 'Quản lý công việc', path: '/mangaka/tasks', icon: <ClipboardList size={20} /> },
           ],
         },
         {
@@ -272,62 +272,6 @@ export const Sidebar = ({ collapsed, mobileOpen, onToggleCollapse, onCloseMobile
             </div>
           ))}
         </nav>
-
-        {/* Footer — Settings + User + Logout */}
-        <div className="p-2 border-t border-border-custom flex-shrink-0">
-          {/* Settings */}
-          <NavLink
-            to={`/${user.role.toLowerCase()}/settings`}
-            title={collapsed ? 'Cài đặt' : undefined}
-            className={`
-              flex items-center gap-2 rounded-lg-custom text-sm font-medium transition-all duration-200 no-underline border border-transparent
-              ${collapsed ? 'justify-center p-2.5' : 'px-4 py-2.5'}
-              ${location.pathname.includes('/settings')
-                ? 'bg-brand/[0.12] text-brand border-brand/20'
-                : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'
-              }
-            `}
-          >
-            <span className="flex items-center justify-center shrink-0 w-5 h-5">
-              <Settings size={20} />
-            </span>
-            {!collapsed && <span className="flex-1 truncate">Cài đặt</span>}
-          </NavLink>
-
-          {/* User info */}
-          <div className={`flex items-center gap-2 rounded-lg-custom cursor-pointer transition-colors duration-200 hover:bg-bg-secondary mt-1 ${collapsed ? 'justify-center p-2' : 'px-4 py-2'}`}>
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand to-secondary flex items-center justify-center text-sm font-bold text-white shrink-0">
-              {initials}
-            </div>
-            {!collapsed && (
-              <div className="flex-1 min-w-0 overflow-hidden">
-                <div className="text-[13px] font-semibold text-text-primary truncate">
-                  {user.fullName}
-                </div>
-                <div className="text-[11px] text-text-muted">
-                  {roleDisplayNames[user.role]}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Logout */}
-          <button
-            onClick={handleLogout}
-            title={collapsed ? 'Đăng xuất' : undefined}
-            className={`
-              flex items-center gap-2 w-full rounded-lg-custom text-sm font-medium
-              transition-all duration-200 border-none cursor-pointer bg-transparent mt-0.5
-              text-text-secondary hover:bg-danger/10 hover:text-danger
-              ${collapsed ? 'justify-center p-2.5' : 'px-4 py-2.5'}
-            `}
-          >
-            <span className="flex items-center justify-center shrink-0 w-5 h-5">
-              <LogOut size={20} />
-            </span>
-            {!collapsed && <span className="flex-1 text-left truncate">Đăng xuất</span>}
-          </button>
-        </div>
       </aside>
     </>
   );

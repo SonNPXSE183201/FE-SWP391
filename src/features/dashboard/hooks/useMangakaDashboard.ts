@@ -99,7 +99,12 @@ export const useMangakaDashboard = () => {
 
       // Map series overview (direct passthrough)
       const seriesOverview: DashboardSeriesOverview[] = data.seriesOverview.map(
-        (s: SeriesOverviewDto) => ({ ...s })
+        (s: SeriesOverviewDto) => ({
+          ...s,
+          trend: (s.trend ?? '')
+            .replace(/\bchapters?\b/gi, 'chương')
+            .replace(/\bseries\b/gi, 'bộ truyện'),
+        })
       );
 
       return { stats, activities, seriesOverview, charts: data.charts };

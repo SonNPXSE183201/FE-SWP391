@@ -2,8 +2,9 @@ import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { taskApi } from '../api/task.api';
 import type { ApiResponse, TasksDto, TaskVersionDto, AnnotationDto } from '../../../api/generated/types';
-import type { Task, TaskStatus } from '../../../types/entities';
+import type { Task } from '../../../types/entities';
 import { unwrapPaged } from '../../../api/apiResponse';
+import { normalizeTaskStatus } from '../../../utils/status';
 
 export type AvailableTaskDto = TasksDto;
 
@@ -15,12 +16,10 @@ export interface AvailableTasksResult {
 }
 
 /**
- * Backend dùng "Submitted" cho trạng thái "Assistant đã nộp bài, chờ tác giả duyệt",
- * trong khi frontend (TaskStatus, UI, filter) dùng "Pending_Review". Chuẩn hóa tại đây
- * để mọi màn hình hiển thị badge/đếm/nút Duyệt-Sửa đổi nhất quán.
+ * Backend dùng "Submitted" cho trạng thái chờ tác giả duyệt;
+ * chuẩn hóa về Pending_Review tại utils/status.
  */
-export const normalizeTaskStatus = (status?: string | null): TaskStatus =>
-  (status === 'Submitted' ? 'Pending_Review' : (status as TaskStatus)) || 'Pending';
+export { normalizeTaskStatus } from '../../../utils/status';
 
 /** Trả về bản sao DTO với status đã chuẩn hóa về union TaskStatus của frontend. */
 export const normalizeTaskDto = (dto: TasksDto): TasksDto =>

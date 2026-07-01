@@ -1,6 +1,16 @@
 export { getGenreLabel, GENRE_OPTIONS, GENRE_GROUPS } from './constants/genres';
-export { SERIES_STATUS_CONFIG, SERIES_STATUS_FILTER_OPTIONS } from './constants';
-export { CHAPTER_STATUS_CONFIG, CHAPTER_STATUS_FILTER_OPTIONS, PAGE_STATUS_FILTER_OPTIONS } from './constants';
+export {
+  SERIES_STATUS_CONFIG,
+  SERIES_STATUS_FILTER_OPTIONS,
+  CHAPTER_STATUS_CONFIG,
+  CHAPTER_STATUS_FILTER_OPTIONS,
+  EDITOR_CHAPTER_REVIEW_FILTER_OPTIONS,
+  PAGE_STATUS_CONFIG,
+  PAGE_STATUS_FILTER_OPTIONS,
+  getSeriesStatusConfig,
+  getChapterStatusConfig,
+  getPageStatusConfig,
+} from './constants';
 export { MOCK_SERIES, MOCK_CHAPTERS } from './data/mockData';
 export { getPagesByChapterId } from './data/mockPages';
 export { EditorRevisionPanel } from './components/EditorRevisionPanel';
@@ -19,9 +29,21 @@ export * from './hooks/useSeries';
 export { formatChapterDate } from './hooks/useSeries';
 export { UploadChapterModal } from './components/UploadChapterModal';
 export { AddPagesModal } from './components/AddPagesModal';
+export { ReplacePageImageModal } from './components/ReplacePageImageModal';
 export { PageCard } from './components/PageCard';
 export { PageLightbox } from './components/PageLightbox';
 export { SeriesListFeature } from './components/SeriesListFeature';
 export { SeriesDetailFeature } from './components/SeriesDetailFeature';
+export { SeriesTeamPanel } from './components/SeriesTeamPanel';
+export { SeriesInviteRespondFeature } from './components/SeriesInviteRespondFeature';
+export * from './hooks/useSeriesTeam';
 export { ManuscriptsFeature } from './components/ManuscriptsFeature';
 export { ChapterDetailFeature } from './components/ChapterDetailFeature';
+export { ChapterSubmitPanel } from './components/ChapterSubmitPanel';
+export {
+  useChapterProductionReadiness,
+  useSubmitChapterForReview,
+  isChapterSubmittableStatus,
+  useReplacePageImage,
+} from './hooks/useChapterProduction';
+export type { ChapterProductionReadiness } from './types/chapterProduction';

@@ -18,6 +18,8 @@ import {
   useAssistantMyTasks,
   useAcceptTask,
   AssistantTaskDetailModal,
+  ASSISTANT_MY_TASK_FILTER_OPTIONS,
+  ACTIVE_TASK_STATUSES,
 } from '../index';
 import { AssistantTaskCard } from './AssistantTaskCard';
 import { TaskRegionPreviewModal } from './TaskRegionPreviewModal';
@@ -27,24 +29,15 @@ import { CustomSelect } from '../../../components/common/CustomSelect';
 import { HelpTip } from '../../../components/common/HelpTip';
 import type { AvailableTaskDto } from '../hooks/useTasks';
 import type { TaskStatus } from '../../../types/entities';
+import { normalizeTaskStatus, taskStatusMatchesFilter } from '../../../utils/status';
 
 // ─── Types & constants ───────────────────────────────────────
 type TabKey = 'Available' | 'MyTasks';
 type MyStatusFilter = '' | TaskStatus | 'active';
 
 const PAGE_SIZE = 10;
-const ACTIVE_STATUSES: TaskStatus[] = ['In_Progress', 'Revision'];
 
-const MY_TASK_FILTERS: { value: '' | TaskStatus | 'active'; label: string }[] = [
-  { value: '', label: 'Tất cả' },
-  { value: 'active', label: 'Cần làm' },
-  { value: 'In_Progress', label: 'Đang làm' },
-  { value: 'Pending_Review', label: 'Chờ duyệt' },
-  { value: 'Revision', label: 'Cần sửa' },
-  { value: 'Approved', label: 'Hoàn thành' },
-];
-
-const MY_TASK_FILTER_OPTIONS = MY_TASK_FILTERS.map(({ value, label }) => ({
+const ASSISTANT_MY_TASK_SELECT_OPTIONS = ASSISTANT_MY_TASK_FILTER_OPTIONS.map(({ value, label }) => ({
   value: value || 'all',
   label,
 }));
@@ -79,9 +72,9 @@ const filterMyTasks = (items: AvailableTaskDto[], statusFilter: MyStatusFilter, 
   if (search.trim()) list = list.filter((t) => matchesSearch(t, search));
   if (!statusFilter) return list;
   if (statusFilter === 'active') {
-    return list.filter((t) => ACTIVE_STATUSES.includes(t.status as TaskStatus));
+    return list.filter((t) => ACTIVE_TASK_STATUSES.includes(normalizeTaskStatus(t.status)));
   }
-  return list.filter((t) => t.status === statusFilter);
+  return list.filter((t) => taskStatusMatchesFilter(t.status, statusFilter));
 };
 
 // ─── Component ───────────────────────────────────────────────
@@ -152,9 +145,9 @@ export const TaskQueueFeature = () => {
   const myStats = useMemo(() => {
     const all = myData?.items ?? [];
     return {
-      active: all.filter((t) => ACTIVE_STATUSES.includes(t.status as TaskStatus)).length,
-      review: all.filter((t) => t.status === 'Pending_Review').length,
-      done: all.filter((t) => t.status === 'Approved').length,
+      active: all.filter((t) => ACTIVE_TASK_STATUSES.includes(normalizeTaskStatus(t.status))).length,
+      review: all.filter((t) => normalizeTaskStatus(t.status) === 'Pending_Review').length,
+      done: all.filter((t) => normalizeTaskStatus(t.status) === 'Approved').length,
     };
   }, [myData]);
 
@@ -316,7 +309,7 @@ export const TaskQueueFeature = () => {
         {isMyTasksTab && (
           <div className="w-full shrink-0 lg:w-[190px]">
             <CustomSelect
-              options={MY_TASK_FILTER_OPTIONS}
+              options={ASSISTANT_MY_TASK_SELECT_OPTIONS}
               value={myStatusFilter || 'all'}
               onChange={(v) => {
                 setMyStatusFilter(v === 'all' ? '' : (v as MyStatusFilter));

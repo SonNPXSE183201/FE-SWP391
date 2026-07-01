@@ -1,5 +1,13 @@
 // Tasks feature barrel
-export { TASK_STATUS_CONFIG, TASK_STATUS_FILTER_OPTIONS } from './constants';
+export {
+  TASK_STATUS_CONFIG,
+  TASK_STATUS_FILTER_OPTIONS,
+  ACTIVE_TASK_STATUSES,
+  OPEN_TASK_STATUSES,
+  REVIEWABLE_TASK_STATUSES,
+  ASSISTANT_MY_TASK_FILTER_OPTIONS,
+  getTaskStatusConfig,
+} from './constants';
 export { formatDeadline } from './constants';
 
 // Components

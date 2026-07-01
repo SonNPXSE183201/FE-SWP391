@@ -110,6 +110,12 @@ const buildSeriesUpdatePayload = (
   resourceFolderUrl,
 });
 
+const buildDirectApiUrl = (path: string): string => {
+  const configuredBase = (import.meta.env.VITE_MPS_SERVICE_URL as string | undefined)?.trim();
+  const base = configuredBase || (import.meta.env.DEV ? 'http://localhost:5010' : (typeof window !== 'undefined' ? window.location.origin : ''));
+  return `${base.replace(/\/$/, '')}${path}`;
+};
+
 // ─── API Functions ───────────────────────────────────────────
 
 export const seriesApi = {
@@ -235,6 +241,10 @@ export const seriesApi = {
   acceptFund: (seriesId: string) =>
     axiosInstance.post<ApiResponse<null>>(`/api/series/${seriesId}/accept-fund`),
 
+  /** Mangaka từ chối vốn cấp phát (Fund_Pending → Draft) */
+  declineFund: (seriesId: string) =>
+    axiosInstance.post<ApiResponse<null>>(`/api/series/${seriesId}/decline-fund`),
+
   toggleOnLeave: (onLeave: boolean) =>
     axiosInstance.post<ApiResponse<null>>(`/api/series/absence?onLeave=${onLeave}`),
 
@@ -305,6 +315,35 @@ export const seriesApi = {
     return axiosInstance.post<ApiResponse<ChapterDto>>(`/api/series/${seriesId}/chapters`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
+  },
+
+  getChapterProductionReadiness: (chapterId: string) =>
+    axiosInstance.get<ApiResponse<Record<string, unknown>>>(`/api/chapters/${chapterId}/production-readiness`),
+
+  submitChapterForReview: (chapterId: string) =>
+    axiosInstance.post<ApiResponse<ChapterDto>>(`/api/chapters/${chapterId}/submit-for-review`),
+
+  markPageReady: (pageId: string) =>
+    axiosInstance.post<ApiResponse<PageDto>>(`/api/pages/${pageId}/mark-ready`),
+
+  replacePageImage: async (pageId: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      return await axiosInstance.post<ApiResponse<PageDto>>(`/api/pages/${pageId}/replace-image`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+    } catch (err) {
+      // Một số môi trường dev báo lỗi route ở API Gateway.
+      // Khi đó retry thẳng vào service MangaPublishingSystem (:5010).
+      if (isAxiosError(err) && err.response?.status === 404) {
+        const directUrl = buildDirectApiUrl(`/api/pages/${pageId}/replace-image`);
+        return axiosInstance.post<ApiResponse<PageDto>>(directUrl, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      }
+      throw err;
+    }
   },
 
   /** Nối thêm trang vào chapter đã tồn tại — POST /api/chapters/{id}/pages */

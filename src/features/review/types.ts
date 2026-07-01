@@ -2,7 +2,7 @@ import { components } from '../../api/generated/schema';
 
 // ─── Chapter Review (QC) Types ───────────────────────────────
 
-export type ChapterReviewStatus = 'Pending_Review' | 'Revision';
+export type ChapterReviewStatus = 'UnderReview' | 'Revision';
 
 export type ReviewQueueItem = components["schemas"]["Chapter"] & {
   series?: {
