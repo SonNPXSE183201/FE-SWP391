@@ -15,7 +15,6 @@ import {
   Inbox,
   Crown,
   RefreshCw,
-  ShieldAlert,
   Sparkles,
 } from 'lucide-react';
 import { HelpTip } from '../../../components/common/HelpTip';
@@ -31,37 +30,10 @@ import {
 import type { BoardVotingConfigDto } from '../api/boardVoting.api';
 import { calcBoardVotesRequired } from '../../voting/voting.utils';
 
-const TIE_POLICIES = [
-  {
-    value: 'Escalate' as const,
-    label: 'Chuyển Admin quyết định',
-    short: 'Admin chốt',
-    hint: 'Khi hòa phiếu, bạn xử lý thủ công ở mục bên dưới.',
-    icon: ShieldAlert,
-    accent: 'amber',
-  },
-  {
-    value: 'Reject' as const,
-    label: 'Tự động từ chối',
-    short: 'Từ chối',
-    hint: 'Hòa phiếu = truyện bị đánh rớt.',
-    icon: XCircle,
-    accent: 'danger',
-  },
-  {
-    value: 'ChairDecides' as const,
-    label: 'Theo phiếu Chủ tịch HĐ',
-    short: 'Chủ tịch',
-    hint: 'Khi hòa, hệ thống theo hướng Chủ tịch đã vote (Đồng ý / Từ chối).',
-    icon: Crown,
-    accent: 'brand',
-  },
-] as const;
-
 const PRESETS = [
-  { label: '2/3 HĐ (~66%)', approve: 66, reject: 66 },
-  { label: 'Đa số đơn giản', approve: 51, reject: 51 },
-  { label: 'Khó duyệt, dễ rớt', approve: 66, reject: 51 },
+  { label: 'Đa số đơn giản (51%)', approve: 51 },
+  { label: 'Siêu đa số (~66%)', approve: 66 },
+  { label: 'Khó duyệt (75%)', approve: 75 },
 ] as const;
 
 const formatCurrency = (v: number) =>
@@ -103,23 +75,35 @@ export const AdminBoardVotingFeature = () => {
 
   const preview = useMemo(() => {
     if (!form) return null;
-    const approveReq = calcRequired(boardCount, form.approvalThresholdPercent);
-    const rejectReq = calcRequired(boardCount, form.rejectionThresholdPercent);
-    const tiePolicy = TIE_POLICIES.find((p) => p.value === form.tiePolicy);
-    return { approveReq, rejectReq, tiePolicy, chairLabel: selectedChair?.fullName ?? form.chairUserName };
-  }, [form, boardCount, selectedChair]);
+    const chairWeight = liveRules?.chairWeight ?? (boardCount % 2 === 0 ? 2 : 3);
+    const totalWeight = liveRules?.totalWeight ?? chairWeight + boardCount - 1;
+    const approveReq = liveRules?.approveRequired ?? calcRequired(totalWeight, form.approvalThresholdPercent);
+    return { approveReq, totalWeight, chairWeight, chairLabel: selectedChair?.fullName ?? form.chairUserName };
+  }, [form, boardCount, selectedChair, liveRules]);
+
+  const chairSelectionInvalid = useMemo(() => {
+    if (!form?.chairUserId) return false;
+    return !boardMembers.some((m) => Number(m.id) === form.chairUserId);
+  }, [form?.chairUserId, boardMembers]);
+
+  const chairWarning =
+    (form?.chairIsValid === false ? form.chairInvalidWarning : null) ??
+    (chairSelectionInvalid
+      ? `Chủ tịch đã chọn (${form?.chairUserName ?? `#${form?.chairUserId}`}) không còn là thành viên HĐ đang hoạt động. Khóa tài khoản sẽ tự gỡ Chủ tịch — vui lòng chọn người khác.`
+      : null);
 
   const handleSaveConfig = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form) return;
+    if (form.chairUserId && chairSelectionInvalid) {
+      showAppError('Chủ tịch HĐ phải là thành viên đang hoạt động (Active).');
+      return;
+    }
     try {
       await updateConfig.mutateAsync({
         autoResolveHours: form.autoResolveHours,
         approvalThresholdPercent: form.approvalThresholdPercent,
-        rejectionThresholdPercent: form.rejectionThresholdPercent,
-        tiePolicy: form.tiePolicy,
         clearVotesOnResubmit: form.clearVotesOnResubmit,
-        requireOddBoardSize: form.requireOddBoardSize,
         chairUserId: form.chairUserId ?? null,
       });
       showAppSuccess('Đã lưu cấu hình biểu quyết.');
@@ -185,13 +169,22 @@ export const AdminBoardVotingFeature = () => {
               />
             </div>
             <p className="text-sm text-text-muted mt-1 max-w-2xl">
-              Quy định cách Hội đồng chốt duyệt/từ chối series và ai xử lý khi phiếu hòa.
+              Trọng số động Chủ tịch HĐ — tổng phiếu luôn lẻ, không hòa. Ngân sách duyệt = trung bình có trọng số.
             </p>
           </div>
         </div>
       </div>
 
-      {/* Stats */}
+      {chairWarning && (
+        <div className="flex items-start gap-3 p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-sm text-amber-200">
+          <AlertTriangle size={18} className="shrink-0 mt-0.5 text-amber-400" />
+          <div>
+            <p className="font-medium text-amber-100">Chủ tịch Hội đồng không hợp lệ</p>
+            <p className="text-xs text-amber-200/90 mt-1 leading-relaxed">{chairWarning}</p>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-bg-secondary border border-border-custom rounded-xl px-4 py-3 flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-brand/10 text-brand flex items-center justify-center shrink-0">
@@ -207,26 +200,26 @@ export const AdminBoardVotingFeature = () => {
             <CheckCircle size={17} />
           </div>
           <div>
-            <p className="text-lg font-bold text-success leading-none">{preview.approveReq}/{boardCount}</p>
-            <p className="text-[11px] text-text-muted mt-1">Phiếu cần để duyệt</p>
+            <p className="text-lg font-bold text-success leading-none">{preview.approveReq}/{preview.totalWeight}</p>
+            <p className="text-[11px] text-text-muted mt-1">Trọng số cần để duyệt</p>
           </div>
         </div>
         <div className="bg-bg-secondary border border-border-custom rounded-xl px-4 py-3 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-danger/10 text-danger flex items-center justify-center shrink-0">
-            <XCircle size={17} />
+          <div className="w-9 h-9 rounded-lg bg-brand/10 text-brand flex items-center justify-center shrink-0">
+            <Crown size={17} />
           </div>
           <div>
-            <p className="text-lg font-bold text-danger leading-none">{preview.rejectReq}/{boardCount}</p>
-            <p className="text-[11px] text-text-muted mt-1">Phiếu cần để từ chối</p>
+            <p className="text-lg font-bold text-brand leading-none">{preview.totalWeight}</p>
+            <p className="text-[11px] text-text-muted mt-1">Tổng trọng số phiếu</p>
           </div>
         </div>
         <div className="bg-bg-secondary border border-border-custom rounded-xl px-4 py-3 flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0">
-            <AlertTriangle size={17} />
+            <Crown size={17} />
           </div>
           <div>
-            <p className="text-lg font-bold text-text-primary leading-none">{escalated.length}</p>
-            <p className="text-[11px] text-text-muted mt-1">Chờ quyết thủ công</p>
+            <p className="text-lg font-bold text-text-primary leading-none">{preview.chairWeight}</p>
+            <p className="text-[11px] text-text-muted mt-1">Trọng số Chủ tịch</p>
           </div>
         </div>
       </div>
@@ -249,7 +242,6 @@ export const AdminBoardVotingFeature = () => {
                       setForm({
                         ...form,
                         approvalThresholdPercent: preset.approve,
-                        rejectionThresholdPercent: preset.reject,
                       })
                     }
                     className="px-2.5 py-1 rounded-lg text-[11px] font-medium border border-border-custom bg-bg-primary text-text-muted hover:text-brand hover:border-brand/30 cursor-pointer transition-colors"
@@ -278,31 +270,11 @@ export const AdminBoardVotingFeature = () => {
                   className={inputClass}
                 />
                 <span className="text-[11px] text-text-muted">
-                  Hiện tại: cần <strong className="text-success">{preview.approveReq}</strong> phiếu
+                  Hiện tại: cần <strong className="text-success">{preview.approveReq}</strong> trọng số / {preview.totalWeight}
                 </span>
               </label>
 
-              <label className="block space-y-1.5">
-                <span className="flex items-center gap-1.5 text-xs font-medium text-text-secondary">
-                  <Percent size={12} className="text-danger" />
-                  % phiếu Từ chối để đánh rớt
-                </span>
-                <input
-                  type="number"
-                  min={1}
-                  max={100}
-                  value={form.rejectionThresholdPercent}
-                  onChange={(e) =>
-                    setForm({ ...form, rejectionThresholdPercent: Number(e.target.value) })
-                  }
-                  className={inputClass}
-                />
-                <span className="text-[11px] text-text-muted">
-                  Hiện tại: cần <strong className="text-danger">{preview.rejectReq}</strong> phiếu
-                </span>
-              </label>
-
-              <label className="block space-y-1.5">
+              <label className="block space-y-1.5 sm:col-span-2">
                 <span className="flex items-center gap-1.5 text-xs font-medium text-text-secondary">
                   <Clock size={12} className="text-brand" />
                   Tự chốt sau (giờ)
@@ -320,72 +292,23 @@ export const AdminBoardVotingFeature = () => {
               </label>
             </div>
 
-            <div className="space-y-2">
-              <span className="flex items-center gap-1.5 text-xs font-medium text-text-secondary">
-                <ShieldAlert size={12} className="text-amber-400" />
-                Khi hòa phiếu (3–3…)
-              </span>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                {TIE_POLICIES.map((p) => {
-                  const Icon = p.icon;
-                  const selected = form.tiePolicy === p.value;
-                  const accentRing =
-                    p.accent === 'amber'
-                      ? selected
-                        ? 'border-amber-400/60 bg-amber-500/10 ring-1 ring-amber-400/30'
-                        : 'border-border-custom bg-bg-primary hover:border-amber-400/30'
-                      : p.accent === 'danger'
-                        ? selected
-                          ? 'border-danger/60 bg-danger/10 ring-1 ring-danger/30'
-                          : 'border-border-custom bg-bg-primary hover:border-danger/30'
-                        : selected
-                          ? 'border-brand/60 bg-brand/10 ring-1 ring-brand/30'
-                          : 'border-border-custom bg-bg-primary hover:border-brand/30';
-                  return (
-                    <button
-                      key={p.value}
-                      type="button"
-                      onClick={() => setForm({ ...form, tiePolicy: p.value })}
-                      className={`flex flex-col items-start gap-2 p-3 rounded-lg border text-left transition-all ${accentRing}`}
-                    >
-                      <div className="flex items-center gap-2 w-full">
-                        <Icon
-                          size={16}
-                          className={
-                            p.accent === 'amber'
-                              ? 'text-amber-400'
-                              : p.accent === 'danger'
-                                ? 'text-danger'
-                                : 'text-brand'
-                          }
-                        />
-                        <span className="text-sm font-medium text-text-primary leading-tight">
-                          {p.label}
-                        </span>
-                      </div>
-                      <span className="text-[11px] text-text-muted leading-snug">{p.hint}</span>
-                    </button>
-                  );
-                })}
+            <div className="space-y-3 p-4 rounded-xl bg-bg-primary border border-brand/20">
+              <div className="flex flex-wrap items-center gap-2">
+                <Crown size={14} className="text-amber-400" />
+                <span className="text-sm font-medium text-text-primary">Chủ tịch Hội đồng</span>
+                <HelpTip
+                  content="Chủ tịch phải là TV HĐ đang Active. Nếu khóa tài khoản Chủ tịch, hệ thống tự gỡ và mọi TV tạm tính 1 phiếu cho đến khi chỉ định lại."
+                  title="Chủ tịch HĐ"
+                  size="sm"
+                  ariaLabel="Giải thích Chủ tịch Hội đồng"
+                />
               </div>
-            </div>
-
-            {form.tiePolicy === 'ChairDecides' && (
-              <div className="space-y-3 p-4 rounded-xl bg-bg-primary border border-brand/20">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Crown size={14} className="text-amber-400" />
-                  <span className="text-sm font-medium text-text-primary">Chủ tịch Hội đồng</span>
-                  <HelpTip
-                    content="Một thành viên HĐ được chỉ định trước. Khi hòa phiếu, hệ thống lấy hướng Đồng ý hoặc Từ chối mà Chủ tịch đã vote — không phải Admin."
-                    title="Chủ tịch HĐ là ai?"
-                    size="sm"
-                    ariaLabel="Giải thích Chủ tịch Hội đồng"
-                  />
-                </div>
-                <p className="text-[11px] text-text-muted">
-                  Chọn 1 thành viên Hội đồng đang active. Mặc định seed:{' '}
-                  <strong className="text-text-secondary">board1</strong> — Lê Văn Hội Đồng.
-                </p>
+              <p className="text-[11px] text-text-muted">
+                Trọng số hiện tại: Chủ tịch = {preview.chairWeight}, tổng = {preview.totalWeight}
+                {chairSelectionInvalid && form.chairUserName
+                  ? ` · Đang lưu "${form.chairUserName}" (không còn active)`
+                  : ''}
+              </p>
                 {boardMembersLoading ? (
                   <div className="flex justify-center py-6">
                     <Loader2 className="animate-spin text-brand" size={20} />
@@ -442,7 +365,6 @@ export const AdminBoardVotingFeature = () => {
                   </p>
                 )}
               </div>
-            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <label
@@ -465,27 +387,6 @@ export const AdminBoardVotingFeature = () => {
                   </p>
                   <p className="text-[11px] text-text-muted mt-0.5">
                     Editor trình lại Hội đồng → vote từ đầu
-                  </p>
-                </div>
-              </label>
-
-              <label
-                className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                  form.requireOddBoardSize
-                    ? 'bg-amber-500/5 border-amber-500/25'
-                    : 'bg-bg-primary border-border-custom'
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={form.requireOddBoardSize}
-                  onChange={(e) => setForm({ ...form, requireOddBoardSize: e.target.checked })}
-                  className="mt-0.5"
-                />
-                <div>
-                  <p className="text-sm font-medium text-text-primary">Cảnh báo số TV chẵn</p>
-                  <p className="text-[11px] text-text-muted mt-0.5">
-                    6 người dễ hòa 3–3 — khuyến nghị 5 hoặc 7 TV
                   </p>
                 </div>
               </label>
@@ -528,56 +429,28 @@ export const AdminBoardVotingFeature = () => {
                 <li className="flex items-start gap-2">
                   <CheckCircle size={14} className="text-success shrink-0 mt-0.5" />
                   <span>
-                    Cần <strong className="text-success">{preview.approveReq} phiếu Đồng ý</strong>{' '}
+                    Cần <strong className="text-success">{preview.approveReq}/{preview.totalWeight} trọng số Đồng ý</strong>{' '}
                     ({form.approvalThresholdPercent}%) → duyệt cấp vốn
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <XCircle size={14} className="text-danger shrink-0 mt-0.5" />
+                  <Crown size={14} className="text-brand shrink-0 mt-0.5" />
                   <span>
-                    Cần <strong className="text-danger">{preview.rejectReq} phiếu Từ chối</strong>{' '}
-                    ({form.rejectionThresholdPercent}%) → đánh rớt
+                    Chủ tịch = {preview.chairWeight} phiếu
+                    {preview.chairLabel ? ` (${preview.chairLabel})` : ''}, TV thường = 1
                   </span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <AlertTriangle size={14} className="text-amber-400 shrink-0 mt-0.5" />
-                  <span>
-                    Hòa phiếu →{' '}
-                    <strong className="text-text-primary">{preview.tiePolicy?.label}</strong>
-                  </span>
-                </li>
-                {form.tiePolicy === 'ChairDecides' && preview.chairLabel && (
-                  <li className="flex items-start gap-2">
-                    <Crown size={14} className="text-amber-400 shrink-0 mt-0.5" />
-                    <span>
-                      Chủ tịch HĐ: <strong className="text-text-primary">{preview.chairLabel}</strong>
-                    </span>
-                  </li>
-                )}
                 <li className="flex items-start gap-2">
                   <Clock size={14} className="text-brand shrink-0 mt-0.5" />
                   <span>
-                    Sau <strong>{form.autoResolveHours} giờ</strong> chưa chốt → hệ thống tự kết thúc
+                    Sau <strong>{form.autoResolveHours} giờ</strong> → phe nhiều hơn thắng
                   </span>
                 </li>
               </ul>
             </div>
 
-            {liveRules?.oddBoardSizeWarning && form.requireOddBoardSize && (
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300">
-                <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-                {liveRules.oddBoardSizeWarning}
-              </div>
-            )}
-
             <div className="p-3 rounded-lg border border-dashed border-border-custom text-[11px] text-text-muted">
-              <strong className="text-text-secondary">Ví dụ 3–3:</strong> 6 người vote hết, 3 Đồng ý
-              + 3 Từ chối → không đủ 4 phiếu →{' '}
-              {form.tiePolicy === 'Escalate'
-                ? 'chuyển bạn xử lý thủ công bên dưới'
-                : form.tiePolicy === 'Reject'
-                  ? 'tự động từ chối'
-                  : `theo phiếu Chủ tịch${preview.chairLabel ? ` (${preview.chairLabel})` : ''}`}
+              Tổng trọng số luôn lẻ — không hòa phiếu. Ngân sách duyệt = trung bình có trọng số các phiếu Approve.
             </div>
           </div>
         </div>

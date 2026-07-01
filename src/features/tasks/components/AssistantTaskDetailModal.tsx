@@ -5,7 +5,7 @@ import {
   X, RotateCcw, User, Calendar, FileText,
   Loader2, ImageOff, ExternalLink, MapPin, Upload, Clock,
   Image as ImageIcon, ClipboardList, Eye, CheckCircle2, AlertCircle,
-  Coins, FileCheck2, Hourglass,
+  Coins, FileCheck2, Hourglass, BookOpen,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -13,6 +13,7 @@ import type { TasksDto } from '../../../api/generated/types';
 import type { Annotation } from '../../../types/entities';
 import { CanvasViewer } from '../../../components/canvas/CanvasViewer';
 import { TaskRegionPreview } from './TaskRegionPreview';
+import { TaskLayerPreview } from './TaskLayerPreview';
 import { useTaskVersions, useTaskVersionAnnotations, useRequestExtension } from '../hooks/useTasks';
 import { taskApi } from '../api/task.api';
 import { parseTaskRevisionPins } from '../../canvas/utils/canvas.utils';
@@ -24,7 +25,12 @@ import { validatePngTransparent } from '../../../utils/validatePngTransparent';
 import type { TaskStatus } from '../../../types/entities';
 
 interface AssistantTaskDetailModalProps {
-  task: TasksDto;
+  task: TasksDto & {
+    seriesTitle?: string | null;
+    chapterTitle?: string | null;
+    chapterNumber?: number;
+    baseLayerUrl?: string | null;
+  };
   onClose: () => void;
 }
 
@@ -53,6 +59,7 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewConfirmed, setPreviewConfirmed] = useState(false);
   const [showExtension, setShowExtension] = useState(false);
   const [extensionReason, setExtensionReason] = useState('');
   const [versionResetSeen, setVersionResetSeen] = useState('');
@@ -105,11 +112,16 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
     if (filePreviewUrl) URL.revokeObjectURL(filePreviewUrl);
     setSelectedFile(file);
     setFilePreviewUrl(file ? URL.createObjectURL(file) : null);
+    setPreviewConfirmed(false);
   };
 
   const handleSubmit = async () => {
     if (!selectedFile) {
       toast.error('Vui lòng chọn file PNG kết quả trước khi nộp');
+      return;
+    }
+    if (!previewConfirmed) {
+      toast.error('Hãy xem trước trên Canvas và xác nhận khớp bối cảnh trước khi nộp');
       return;
     }
     const validation = await validatePngTransparent(selectedFile);
@@ -195,19 +207,32 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
       </label>
 
       {filePreviewUrl && (
-        <div className="relative rounded-xl border border-success/30 overflow-hidden bg-[repeating-conic-gradient(#333_0%_25%,#444_0%_50%)] bg-[length:16px_16px]">
-          <span className="absolute top-2 left-2 z-10 inline-flex items-center gap-1 rounded bg-success/90 px-2 py-0.5 text-[10px] font-semibold text-white">
-            <CheckCircle2 size={11} /> Sẵn sàng nộp
-          </span>
-          <button
-            type="button"
-            onClick={() => handleFileSelect(null)}
-            className="absolute top-2 right-2 z-10 rounded bg-black/60 p-1 text-white hover:bg-black/80 border-none cursor-pointer"
-            aria-label="Xóa file đã chọn"
-          >
-            <X size={12} />
-          </button>
-          <img src={filePreviewUrl} alt="Xem trước" className="w-full max-h-44 object-contain" />
+        <div className="space-y-2">
+          <p className="text-[11px] font-medium text-text-secondary flex items-center gap-1.5">
+            <Eye size={13} className="text-brand" />
+            Xem trước trên Canvas (F2.8)
+          </p>
+          <TaskLayerPreview
+            baseImageUrl={task.baseLayerUrl || task.pageImageUrl}
+            overlayImageUrl={filePreviewUrl}
+            coordinatesJson={task.regionCoordinatesJson}
+            regionName={task.regionName}
+            heightClassName="h-48"
+            label="Preview — kiểm tra khớp khung & thoại"
+          />
+          {!previewConfirmed ? (
+            <button
+              type="button"
+              onClick={() => setPreviewConfirmed(true)}
+              className="w-full py-2.5 rounded-xl bg-brand/10 text-brand text-xs font-semibold border border-brand/30 cursor-pointer hover:bg-brand/15 transition-colors"
+            >
+              Xác nhận hình vẽ đã khớp bối cảnh
+            </button>
+          ) : (
+            <p className="text-[11px] text-success flex items-center gap-1.5 justify-center">
+              <CheckCircle2 size={13} /> Đã xác nhận — có thể nộp bài
+            </p>
+          )}
         </div>
       )}
 
@@ -343,6 +368,32 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
             <X size={18} />
           </button>
         </div>
+
+        {/* Context tree (F2.6) */}
+        {(task.seriesTitle || task.chapterTitle) && (
+          <div className="shrink-0 px-6 py-2.5 border-b border-border-custom bg-brand/5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-text-secondary">
+            <BookOpen size={12} className="text-brand shrink-0" />
+            {task.seriesTitle && <span className="font-semibold text-text-primary">{task.seriesTitle}</span>}
+            {task.chapterNumber != null && task.chapterNumber > 0 && (
+              <>
+                <span className="text-text-muted">›</span>
+                <span>Ch.{task.chapterNumber}{task.chapterTitle ? `: ${task.chapterTitle}` : ''}</span>
+              </>
+            )}
+            {(task.pageNumber ?? 0) > 0 && (
+              <>
+                <span className="text-text-muted">›</span>
+                <span>Trang {task.pageNumber}</span>
+              </>
+            )}
+            {task.regionName && (
+              <>
+                <span className="text-text-muted">›</span>
+                <span className="text-brand font-medium">{task.regionName}</span>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Meta bar */}
         <div className="shrink-0 px-6 py-3 border-b border-border-custom bg-bg-surface/40 flex flex-wrap items-center gap-2">
@@ -522,15 +573,15 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={isSubmitting || !selectedFile}
+              disabled={isSubmitting || !selectedFile || !previewConfirmed}
               className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border-none cursor-pointer transition-all ${
-                isSubmitting || !selectedFile
+                isSubmitting || !selectedFile || !previewConfirmed
                   ? 'bg-success/40 text-white/70 cursor-not-allowed'
                   : 'bg-success hover:bg-green-600 text-white'
               }`}
             >
               {isSubmitting ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
-              {isRevision ? 'Nộp bản sửa' : 'Nộp bài'}
+              {isRevision ? 'Xác nhận nộp bản sửa' : 'Xác nhận nộp bài'}
             </button>
           )}
         </div>

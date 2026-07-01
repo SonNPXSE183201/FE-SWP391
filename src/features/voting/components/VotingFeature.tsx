@@ -13,7 +13,6 @@ import {
   Tags,
   CheckCircle,
   XCircle,
-  MinusCircle,
   Clock,
   ImagePlus,
   BarChart3,
@@ -61,8 +60,6 @@ const getVoteDecisionConfig = (decision: VoteUiChoice) => {
       return { label: 'Phê duyệt', color: 'text-success', bg: 'bg-success/10', icon: CheckCircle };
     case 'Reject':
       return { label: 'Từ chối', color: 'text-danger', bg: 'bg-danger/10', icon: XCircle };
-    case 'Abstain':
-      return { label: 'Bỏ qua', color: 'text-text-muted', bg: 'bg-bg-surface', icon: MinusCircle };
   }
 };
 
@@ -157,7 +154,7 @@ export const VotingFeature = () => {
 
   const getTotalVotes = (item: VotingSeriesDto) => {
     const r = getVoteResults(item);
-    return r.approve + r.reject + r.abstain;
+    return r.approve + r.reject;
   };
 
   const getVoteDenominator = () => boardTotal || 1;
@@ -290,7 +287,6 @@ export const VotingFeature = () => {
               <VoteProgressBar
                 approve={voteResults.approve}
                 reject={voteResults.reject}
-                abstain={voteResults.abstain}
                 boardTotal={getVoteDenominator()}
               />
               <div className="space-y-3 pt-2 border-t border-border-custom/60">
@@ -330,24 +326,6 @@ export const VotingFeature = () => {
                     />
                   </div>
                 </div>
-                {/* Abstain bar */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-1.5 text-xs text-text-muted font-medium">
-                      <MinusCircle size={12} />
-                      Bỏ qua
-                    </div>
-                    <span className="text-xs font-bold text-text-muted">
-                      {voteResults.abstain} ({getPercentage(voteResults.abstain, getVoteDenominator())}% HĐ)
-                    </span>
-                  </div>
-                  <div className="w-full h-2.5 bg-bg-surface rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-text-muted/40 rounded-full transition-all duration-500"
-                      style={{ width: `${getPercentage(voteResults.abstain, getVoteDenominator())}%` }}
-                    />
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -378,6 +356,7 @@ export const VotingFeature = () => {
             setVoteBudget={setVoteBudget}
             boardTotal={boardTotal || 6}
             approveRequired={votingRules?.approveRequired}
+            totalWeight={votingRules?.totalWeight}
             onClose={() => setShowVoteModal(false)}
             onSubmit={handleVoteSubmit}
             submitVoteMutation={submitVoteMutation}
@@ -556,7 +535,6 @@ export const VotingFeature = () => {
                         <VoteProgressBar
                           approve={voteResults.approve}
                           reject={voteResults.reject}
-                          abstain={voteResults.abstain}
                           boardTotal={getVoteDenominator()}
                           compact
                         />
@@ -603,6 +581,7 @@ export const VotingFeature = () => {
           setVoteBudget={setVoteBudget}
           boardTotal={boardTotal || 6}
           approveRequired={votingRules?.approveRequired}
+          totalWeight={votingRules?.totalWeight}
           onClose={() => setShowVoteModal(false)}
           onSubmit={handleVoteSubmit}
           submitVoteMutation={submitVoteMutation}

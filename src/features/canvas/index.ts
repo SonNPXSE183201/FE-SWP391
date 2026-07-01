@@ -15,6 +15,7 @@ export {
   useAnnotations,
   useCreateAnnotation,
   useDeleteAnnotation,
+  useMarkPageReady,
 } from './hooks/useCanvasData';
 
 // API

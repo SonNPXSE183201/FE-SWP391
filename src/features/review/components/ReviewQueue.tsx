@@ -20,30 +20,18 @@ import { HelpTip } from '../../../components/common/HelpTip';
 import { useReviewQueue, usePendingSeriesReview } from '../hooks/useReview';
 import { formatVND, getDeadlineStatus } from '../constants';
 import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
+import {
+  EDITOR_CHAPTER_REVIEW_FILTER_OPTIONS,
+  getChapterStatusConfig,
+  getSeriesStatusConfig,
+} from '../../series';
+import { chapterStatusMatchesFilter, normalizeChapterStatus } from '../../../utils/status';
 import type { ChapterReviewStatus } from '../types';
 import type { SeriesReviewDto } from '../api/review.api';
 
 interface ReviewQueueProps {
   onSelect: (chapterId: string) => void;
 }
-
-const CHAPTER_STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
-  Pending_Review: { label: 'Chờ duyệt', cls: 'bg-amber-500/10 text-amber-400' },
-  Revision: { label: 'Đang sửa lại', cls: 'bg-orange-500/10 text-orange-400' },
-  Approved: { label: 'Đã duyệt', cls: 'bg-success/10 text-success' },
-  Draft: { label: 'Bản nháp', cls: 'bg-bg-surface text-text-muted' },
-};
-
-const SERIES_STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
-  Pending_Approval: { label: 'Chờ duyệt Series', cls: 'bg-amber-500/10 text-amber-400' },
-  Pending_Board_Vote: { label: 'Chờ Hội đồng', cls: 'bg-brand/10 text-brand' },
-};
-
-const CHAPTER_FILTERS: { value: 'All' | ChapterReviewStatus; label: string }[] = [
-  { value: 'All', label: 'Tất cả' },
-  { value: 'Pending_Review', label: 'Chờ duyệt' },
-  { value: 'Revision', label: 'Đang sửa lại' },
-];
 
 const formatDate = (value?: string | null) => {
   if (!value) return '—';
@@ -136,10 +124,7 @@ const EmptyBlock = ({
 
 const SeriesReviewCard = ({ series }: { series: SeriesReviewDto }) => {
   const coverUrl = series.coverArtworkUrl ? resolveMediaUrl(series.coverArtworkUrl) : '';
-  const status = SERIES_STATUS_CONFIG[series.status ?? ''] ?? {
-    label: 'Chờ xử lý',
-    cls: 'bg-amber-500/10 text-amber-400',
-  };
+  const status = getSeriesStatusConfig(series.status);
   const genres = parseGenres(series.genre);
 
   return (
@@ -159,7 +144,7 @@ const SeriesReviewCard = ({ series }: { series: SeriesReviewDto }) => {
 
       <div className="flex-1 min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${status.cls}`}>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${status.bg} ${status.color}`}>
             {status.label}
           </span>
           {series.estimatedProductionBudget != null && series.estimatedProductionBudget > 0 && (
@@ -209,18 +194,18 @@ const SeriesReviewCard = ({ series }: { series: SeriesReviewDto }) => {
 export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
   const { data: queue = [], isLoading: chaptersLoading } = useReviewQueue();
   const { data: pendingSeries = [], isLoading: seriesLoading } = usePendingSeriesReview();
-  const [chapterFilter, setChapterFilter] = useState<'All' | ChapterReviewStatus>('All');
+  const [chapterFilter, setChapterFilter] = useState<'' | ChapterReviewStatus>('');
 
   const filteredChapters = useMemo(
-    () => (chapterFilter === 'All' ? queue : queue.filter((c) => c.status === chapterFilter)),
+    () => queue.filter((c) => chapterStatusMatchesFilter(c.status, chapterFilter)),
     [queue, chapterFilter],
   );
 
   const stats = useMemo(
     () => ({
       series: pendingSeries.length,
-      chaptersPending: queue.filter((c) => c.status === 'Pending_Review').length,
-      chaptersRevision: queue.filter((c) => c.status === 'Revision').length,
+      chaptersPending: queue.filter((c) => normalizeChapterStatus(c.status) === 'UnderReview').length,
+      chaptersRevision: queue.filter((c) => normalizeChapterStatus(c.status) === 'Revision').length,
     }),
     [pendingSeries.length, queue],
   );
@@ -265,13 +250,13 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
           tone="bg-amber-500/10 text-amber-400"
         />
         <SummaryStat
-          label="Chapter chờ duyệt"
+          label="Chapter chờ biên tập"
           value={stats.chaptersPending}
           icon={FileText}
           tone="bg-brand/10 text-brand"
         />
         <SummaryStat
-          label="Chapter đang sửa lại"
+          label="Chapter yêu cầu sửa"
           value={stats.chaptersRevision}
           icon={RotateCcw}
           tone="bg-orange-500/10 text-orange-400"
@@ -319,11 +304,11 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
             action={
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] text-text-muted mr-1 hidden sm:inline">Lọc</span>
-                {CHAPTER_FILTERS.map((f) => (
+                {EDITOR_CHAPTER_REVIEW_FILTER_OPTIONS.map((f) => (
                   <button
-                    key={f.value}
+                    key={f.value || 'all'}
                     type="button"
-                    onClick={() => setChapterFilter(f.value)}
+                    onClick={() => setChapterFilter(f.value as '' | ChapterReviewStatus)}
                     className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer border ${
                       chapterFilter === f.value
                         ? 'bg-brand/10 text-brand border-brand/30'
@@ -345,7 +330,7 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
                 icon={Inbox}
                 title="Chưa có chapter nào"
                 description={
-                  chapterFilter === 'All'
+                  !chapterFilter
                     ? 'Chapter sẽ hiện ở đây khi Mangaka nộp bản vẽ sau khi Series đã được duyệt.'
                     : 'Không có chapter nào trong trạng thái này. Thử chọn "Tất cả".'
                 }
@@ -353,10 +338,7 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {filteredChapters.map((c) => {
-                  const status = CHAPTER_STATUS_CONFIG[c.status || ''] || {
-                    label: c.status,
-                    cls: 'bg-bg-surface text-text-muted',
-                  };
+                  const status = getChapterStatusConfig(c.status);
                   const deadline = getDeadlineStatus(c.submissionDeadline || new Date().toISOString());
                   const seriesTitle = c.series?.title || `Series #${c.seriesId}`;
                   const coverUrl = c.series?.coverImageUrl
@@ -386,7 +368,7 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${status.cls}`}>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${status.bg} ${status.color}`}>
                               {status.label}
                             </span>
                             <ChevronRight

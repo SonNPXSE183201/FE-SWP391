@@ -4,30 +4,31 @@ import type { ApiResponse, SeriesDto } from '../../../api/generated/types';
 export type BoardVotingConfigDto = {
   autoResolveHours: number;
   approvalThresholdPercent: number;
-  rejectionThresholdPercent: number;
-  tiePolicy: 'Reject' | 'Escalate' | 'ChairDecides';
   clearVotesOnResubmit: boolean;
-  requireOddBoardSize: boolean;
   boardRoleId: number;
   chairUserId?: number | null;
   chairUserName?: string | null;
+  chairIsValid?: boolean;
+  chairInvalidWarning?: string | null;
 };
 
-export type UpdateBoardVotingConfigDto = Omit<BoardVotingConfigDto, 'boardRoleId' | 'chairUserName'>;
+export type UpdateBoardVotingConfigDto = Omit<
+  BoardVotingConfigDto,
+  'boardRoleId' | 'chairUserName' | 'chairIsValid' | 'chairInvalidWarning'
+>;
 
 export type BoardVotingRulesDto = {
   boardMemberCount: number;
   approveRequired: number;
-  rejectRequired: number;
+  totalWeight: number;
+  chairWeight: number;
   approvalThresholdPercent: number;
-  rejectionThresholdPercent: number;
-  tiePolicy: string;
   autoResolveHours: number;
-  isEvenBoardSize: boolean;
-  requireOddBoardSize: boolean;
-  oddBoardSizeWarning?: string | null;
   chairUserId?: number | null;
   chairUserName?: string | null;
+  chairIsValid?: boolean;
+  chairInvalidWarning?: string | null;
+  effectiveChairUserId?: number | null;
   rulesSummary: string;
 };
 

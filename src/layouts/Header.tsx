@@ -5,6 +5,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { NotificationDropdown } from '../features/notifications';
+import { UserDropdown } from './UserDropdown';
 
 interface HeaderProps {
   onMobileMenuToggle: () => void;
@@ -17,14 +18,14 @@ const pathLabels: Record<string, string> = {
   editor: 'Biên tập viên',
   board: 'Hội đồng BT',
   admin: 'Quản trị viên',
-  series: 'Series',
+  series: 'Bộ truyện',
   manuscripts: 'Bản thảo',
-  tasks: 'Quản lý Task',
+  tasks: 'Quản lý công việc',
   wallet: 'Ví tiền',
-  portfolio: 'Portfolio',
+  portfolio: 'Hồ sơ tác phẩm',
   profile: 'Hồ sơ',
-  review: 'Review',
-  annotations: 'Annotation',
+  review: 'Duyệt bài',
+  annotations: 'Ghim lỗi',
   disputes: 'Tranh chấp',
   voting: 'Bỏ phiếu',
   ranking: 'Xếp hạng',
@@ -85,18 +86,13 @@ export const Header = ({ onMobileMenuToggle }: HeaderProps) => {
       </div>
 
       {/* Right side */}
-      <div className="flex items-center gap-2">
-        {/* Search (hidden on mobile) */}
-        <button
-          className="hidden md:flex items-center gap-2 px-3.5 py-2 bg-bg-surface border border-border-custom rounded-lg-custom text-text-muted text-[13px] cursor-pointer min-w-[220px] hover:border-brand hover:bg-bg-secondary transition-all duration-200"
-          aria-label="Tìm kiếm"
-        >
-          <Search size={16} />
-          <span>Tìm kiếm...</span>
-        </button>
-
+      <div className="flex items-center gap-4">
         {/* Notifications */}
         <NotificationDropdown />
+        
+        {/* User Menu */}
+        <div className="h-6 w-px bg-border-custom hidden md:block" />
+        <UserDropdown />
       </div>
     </header>
   );

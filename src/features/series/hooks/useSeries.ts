@@ -1,38 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { seriesApi } from '../api/series.api';
-import type { Series, Chapter, Page, SeriesStatus } from '../../../types/entities';
+import type { Series, Chapter, Page } from '../../../types/entities';
 import { components } from '../../../api/generated/schema';
 
 import type { ApiResponse, SeriesDto, PageDto, ChapterDto, PagedResult } from '../../../api/generated/types';
 import { getPagedItems, isApiSuccess } from '../../../api/apiResponse';
 import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
 import { parseApiDate } from '../../../utils/parseApiDate';
+import { normalizeSeriesStatus, normalizeChapterStatus, normalizePageStatus } from '../../../utils/status';
 
 // ─── Mapper ──────────────────────────────────────────────────
-const BE_STATUS_MAP: Record<string, SeriesStatus> = {
-  Draft: 'Draft',
-  Pending_Approval: 'PendingApproval',
-  Pending_Board_Vote: 'PendingBoardVote',
-  Fund_Pending: 'Approved',
-  Active: 'Published',
-  'In Production': 'Published',
-  In_Production: 'Published',
-  Rejected: 'Cancelled',
-};
-
-const mapSeriesStatus = (status: unknown): SeriesStatus => {
-  if (status === 0 || status === '0') return 'Draft';
-  if (status === 1 || status === '1') return 'PendingApproval';
-  if (status === 2 || status === '2') return 'Approved';
-  if (status === 3 || status === '3') return 'Published';
-  if (status === 4 || status === '4') return 'OnHold';
-  if (status === 5 || status === '5') return 'Cancelled';
-  if (typeof status === 'string' && BE_STATUS_MAP[status]) return BE_STATUS_MAP[status];
-  return (status as SeriesStatus) || 'Draft';
-};
-
-export const mapSeriesDtoToEntity = (dto: components['schemas']['SeriesDto']): Series => ({
-  id: dto.id?.toString() || '',
+export const mapSeriesDtoToEntity = (dto: components['schemas']['SeriesDto']): Series => ({  id: dto.id?.toString() || '',
   title: dto.title || '',
   synopsis: dto.synopsis || '',
   genre: dto.genre ? dto.genre.split(',') : [],
@@ -42,36 +20,21 @@ export const mapSeriesDtoToEntity = (dto: components['schemas']['SeriesDto']): S
   approvedProductionBudget: dto.approvedProductionBudget ?? 0,
   mangakaId: dto.mangakaId?.toString() || '',
   mangakaName: dto.mangakaName || '',
-  status: mapSeriesStatus(dto.status),
+  status: normalizeSeriesStatus(dto.status),
   chapterCount: 0,
   createdAt: dto.createAt || new Date().toISOString(),
   updatedAt: dto.updateAt || new Date().toISOString(),
   hasContract: dto.hasContract,
   editorNote: dto.editorNote ?? undefined,
-  mangakaSubmissionNote: dto.mangakaSubmissionNote ?? undefined,
+  mangakaSubmissionNote: (dto as any).mangakaSubmissionNote ?? undefined,
 });
 
-const CHAPTER_STATUS_MAP: Record<string, Chapter['status']> = {
-  Draft: 'Draft',
-  Submitted: 'Submitted',
-  UnderReview: 'UnderReview',
-  Approved: 'Approved',
-  Revision: 'Revision',
-  Published: 'Published',
-};
-
-const mapChapterStatus = (status: unknown): Chapter['status'] => {
-  if (typeof status === 'string' && CHAPTER_STATUS_MAP[status]) return CHAPTER_STATUS_MAP[status];
-  return 'Draft';
-};
-
-export const mapChapterDtoToEntity = (dto: ChapterDto, seriesTitle = ''): Chapter => ({
-  id: dto.id?.toString() || '',
+export const mapChapterDtoToEntity = (dto: ChapterDto, seriesTitle = ''): Chapter => ({  id: dto.id?.toString() || '',
   seriesId: dto.seriesId?.toString() || '',
   seriesTitle,
   chapterNumber: dto.chapterNumber ?? 0,
   title: dto.title || '',
-  status: mapChapterStatus(dto.status),
+  status: normalizeChapterStatus(dto.status),
   pageCount: dto.validPageCount ?? 0,
   validPageCount: dto.validPageCount ?? 0,
   createdAt: dto.createAt || new Date().toISOString(),
@@ -86,37 +49,14 @@ export const formatChapterDate = (chapter: Chapter): string => {
   return parsed.toLocaleDateString('vi-VN');
 };
 
-const PAGE_STATUS_ALIASES: Record<string, Page['status']> = {
-  Composited: 'Completed',
-  Approved: 'Completed',
-};
+export { normalizePageStatus as mapPageStatus } from '../../../utils/status';
 
-export const mapPageStatus = (status: unknown): Page['status'] => {
-  if (status === 0 || status === '0') return 'Pending';
-  if (status === 1 || status === '1') return 'InProgress';
-  if (status === 2 || status === '2') return 'NeedsRevision';
-  if (status === 3 || status === '3') return 'Completed';
-
-  const normalized = String(status ?? '');
-  if (PAGE_STATUS_ALIASES[normalized]) return PAGE_STATUS_ALIASES[normalized];
-  if (
-    normalized === 'Pending'
-    || normalized === 'InProgress'
-    || normalized === 'Completed'
-    || normalized === 'NeedsRevision'
-  ) {
-    return normalized;
-  }
-  return 'Pending';
-};
-
-export const mapPageDtoToEntity = (dto: PageDto): Page => ({
-  id: dto.id?.toString() || '',
+export const mapPageDtoToEntity = (dto: PageDto): Page => ({  id: dto.id?.toString() || '',
   chapterId: dto.chapterId?.toString() || '',
   pageNumber: dto.pageNumber || 1,
   imageUrl: resolveMediaUrl(dto.rawImageUrl || dto.compositeImageUrl || ''),
   compositeImageUrl: dto.compositeImageUrl ? resolveMediaUrl(dto.compositeImageUrl) : undefined,
-  status: mapPageStatus(dto.status),
+  status: normalizePageStatus(dto.status),
   regionCount: 0,
   createdAt: dto.createAt || new Date().toISOString(),
   updatedAt: dto.updateAt || new Date().toISOString(),

@@ -54,7 +54,7 @@ export const mapTaskDtoToEntity = (dto: components['schemas']['TasksDto']): Task
 export interface CreateTaskRequest {
   regionId: number;
   description?: string;
-  assistantId?: string;
+  assistantId: number;
   paymentAmount: number;
   deadline: string;
   zIndex_Order?: number;

@@ -1,15 +1,24 @@
-import { ZoomIn, Layers, Loader2 } from 'lucide-react';
+import { ZoomIn, Layers, Loader2, MapPin, Upload } from 'lucide-react';
 import type { Page } from '../../../types/entities';
-import { getPageStatusConfig } from '../data/mockPages';
+import { getPageStatusConfig } from '../constants';
 import { PagePlaceholder } from './PagePlaceholder';
 import { usePagePreviewUrl } from '../hooks/usePagePreviewUrl';
 
 interface PageCardProps {
   page: Page;
   onClick: () => void;
+  editorAnnotationCount?: number;
+  canReplaceImage?: boolean;
+  onReplaceImage?: () => void;
 }
 
-export const PageCard = ({ page, onClick }: PageCardProps) => {
+export const PageCard = ({
+  page,
+  onClick,
+  editorAnnotationCount = 0,
+  canReplaceImage = false,
+  onReplaceImage,
+}: PageCardProps) => {
   const statusCfg = getPageStatusConfig(page.status);
   const { displayUrl, isLoading, hasLiveComposite } = usePagePreviewUrl(page);
   const hasComposite = !!page.compositeImageUrl || hasLiveComposite;
@@ -68,17 +77,42 @@ export const PageCard = ({ page, onClick }: PageCardProps) => {
             </span>
           </div>
         )}
+
+        {editorAnnotationCount > 0 && (
+          <div className="absolute top-10 right-2">
+            <span className="inline-flex items-center gap-1 bg-amber-500/85 backdrop-blur-sm text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-md">
+              <MapPin size={10} />
+              {editorAnnotationCount} lỗi
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Footer */}
-      <div className="p-2.5 flex items-center justify-between">
-        <span className="text-xs font-medium text-text-primary">
+      <div className="p-2.5 space-y-2">
+        <span className="block text-xs font-semibold text-text-primary">
           Trang {page.pageNumber}
         </span>
-        <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold ${statusCfg.bg} ${statusCfg.color}`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dotColor}`} />
-          {statusCfg.label}
-        </span>
+        <div className="flex items-center justify-between gap-2">
+          {canReplaceImage && onReplaceImage && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onReplaceImage();
+              }}
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-brand/10 text-brand hover:bg-brand/20 border border-brand/20 cursor-pointer"
+              title="Tải lại ảnh trang đã sửa"
+            >
+              <Upload size={10} />
+              Tải lại
+            </button>
+          )}
+          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold ${statusCfg.bg} ${statusCfg.color}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dotColor}`} />
+            {statusCfg.label}
+          </span>
+        </div>
       </div>
     </div>
   );

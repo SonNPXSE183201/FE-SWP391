@@ -86,8 +86,8 @@ export const UploadChapterModal = ({ onClose, seriesId: preselectedSeriesId }: U
 
       if (isApiSuccess(apiData)) {
         toast.success(
-          `Đã nộp Chapter ${chapterNum}: ${title} (${pages.length} trang)`,
-          { icon: <CheckCircle2 size={18} className="text-success" />, duration: 4000 },
+          `Đã tạo Chapter ${chapterNum}: ${title} (${pages.length} trang). Tiếp theo: Canvas → giao task → nộp Editor.`,
+          { icon: <CheckCircle2 size={18} className="text-success" />, duration: 5000 },
         );
 
         // Invalidate React Query caches so lists refresh automatically
@@ -99,7 +99,7 @@ export const UploadChapterModal = ({ onClose, seriesId: preselectedSeriesId }: U
 
         onClose();
       } else {
-        toast.error(apiData.message || 'Nộp chapter thất bại');
+        toast.error(apiData.message || 'Tạo chapter thất bại');
       }
     } catch (err) {
       const msg = getAxiosErrorMessage(err, 'Upload thất bại. Vui lòng thử lại.');
@@ -124,8 +124,8 @@ export const UploadChapterModal = ({ onClose, seriesId: preselectedSeriesId }: U
               <Upload size={18} className="text-brand" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-text-primary">Nộp bản thảo Chapter</h2>
-              <p className="text-[11px] text-text-muted">Upload các trang bản thảo (Name)</p>
+              <h2 className="text-base font-semibold text-text-primary">Tạo Chapter nháp</h2>
+              <p className="text-[11px] text-text-muted">Upload trang phác thảo — sau đó sản xuất trên Canvas rồi nộp Editor</p>
             </div>
           </div>
           <button
@@ -293,7 +293,7 @@ export const UploadChapterModal = ({ onClose, seriesId: preselectedSeriesId }: U
             ) : (
               <>
                 <Upload size={14} />
-                Nộp bản thảo
+                Tạo chapter nháp
               </>
             )}
           </button>

@@ -124,23 +124,8 @@ export const MOCK_PAGES: Page[] = [
 export const getPagesByChapterId = (chapterId: string): Page[] =>
   MOCK_PAGES.filter((p) => p.chapterId === chapterId);
 
-// ─── Page Status Config ──────────────────────────────────────
-export const PAGE_STATUS_CONFIG = {
-  Pending: { label: 'Chờ xử lý', color: 'text-text-muted', bg: 'bg-bg-surface', dotColor: 'bg-text-muted' },
-  InProgress: { label: 'Đang làm', color: 'text-info', bg: 'bg-info/10', dotColor: 'bg-info' },
-  Completed: { label: 'Hoàn thành', color: 'text-success', bg: 'bg-success/10', dotColor: 'bg-success' },
-  NeedsRevision: { label: 'Cần sửa', color: 'text-warning', bg: 'bg-warning/10', dotColor: 'bg-warning' },
-} as const;
-
-const DEFAULT_PAGE_STATUS_CONFIG = {
-  label: 'Không rõ',
-  color: 'text-text-muted',
-  bg: 'bg-bg-surface',
-  dotColor: 'bg-text-muted',
-} as const;
-
-export const getPageStatusConfig = (status: Page['status'] | string) =>
-  PAGE_STATUS_CONFIG[status as Page['status']] ?? {
-    ...DEFAULT_PAGE_STATUS_CONFIG,
-    label: status || DEFAULT_PAGE_STATUS_CONFIG.label,
-  };
+// ─── Page Status Config (re-export from constants) ─────────────
+export {
+  PAGE_STATUS_CONFIG,
+  getPageStatusConfig,
+} from '../constants';

@@ -2,17 +2,13 @@ import { useNavigate } from 'react-router-dom';
 import { FileText, Clock, Eye } from 'lucide-react';
 import type { Series } from '../../../types/entities';
 import { getGenreLabel } from '../constants/genres';
-import { SERIES_STATUS_CONFIG } from '../constants';
+import { getSeriesStatusConfig } from '../constants';
 import { CoverPlaceholder } from './CoverPlaceholder';
 
 const resolveSeriesStatusBadge = (series: Series) =>
   series.editorNote && series.status === 'Draft'
     ? { label: 'Cần chỉnh sửa', color: 'text-amber-400', bg: 'bg-amber-500/10' }
-    : SERIES_STATUS_CONFIG[series.status] || {
-        label: String(series.status),
-        color: 'text-text-muted',
-        bg: 'bg-bg-surface',
-      };
+    : getSeriesStatusConfig(series.status);
 
 // ─── Grid Card ───────────────────────────────────────────────
 export const SeriesCard = ({ series, index }: { series: Series; index: number }) => {

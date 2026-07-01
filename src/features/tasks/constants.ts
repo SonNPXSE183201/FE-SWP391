@@ -22,15 +22,46 @@ export const TASK_STATUS_CONFIG: Record<TaskStatus, { label: string; color: stri
 };
 
 export const TASK_STATUS_FILTER_OPTIONS = [
-  { value: '', label: 'Tất cả' },
-  { value: 'Pending', label: 'Chờ nhận' },
-  { value: 'In_Progress', label: 'Đang thực hiện' },
-  { value: 'Pending_Review', label: 'Chờ duyệt' },
-  { value: 'Approved', label: 'Đã duyệt' },
-  { value: 'Revision', label: 'Yêu cầu sửa' },
-  { value: 'Disputed', label: 'Tranh chấp' },
-  { value: 'Cancelled', label: 'Đã hủy' },
+  { value: '', label: 'Tất cả trạng thái' },
+  { value: 'Pending', label: TASK_STATUS_CONFIG.Pending.label },
+  { value: 'In_Progress', label: TASK_STATUS_CONFIG.In_Progress.label },
+  { value: 'Pending_Review', label: TASK_STATUS_CONFIG.Pending_Review.label },
+  { value: 'Approved', label: TASK_STATUS_CONFIG.Approved.label },
+  { value: 'Revision', label: TASK_STATUS_CONFIG.Revision.label },
+  { value: 'Disputed', label: TASK_STATUS_CONFIG.Disputed.label },
+  { value: 'Cancelled', label: TASK_STATUS_CONFIG.Cancelled.label },
 ];
+
+/** Task Assistant đang cần làm tiếp */
+export const ACTIVE_TASK_STATUSES: TaskStatus[] = ['In_Progress', 'Revision'];
+
+/** Task Mangaka còn khóa tiền / chưa kết thúc */
+export const OPEN_TASK_STATUSES: TaskStatus[] = ['Pending', 'In_Progress', 'Pending_Review', 'Revision'];
+
+/** Task Mangaka có thể duyệt / xem kết quả */
+export const REVIEWABLE_TASK_STATUSES: TaskStatus[] = ['Pending_Review', 'Revision', 'Approved', 'Disputed'];
+
+export const ASSISTANT_MY_TASK_FILTER_OPTIONS: { value: string; label: string }[] = [
+  { value: '', label: 'Tất cả' },
+  { value: 'active', label: 'Cần làm' },
+  { value: 'In_Progress', label: TASK_STATUS_CONFIG.In_Progress.label },
+  { value: 'Pending_Review', label: TASK_STATUS_CONFIG.Pending_Review.label },
+  { value: 'Revision', label: TASK_STATUS_CONFIG.Revision.label },
+  { value: 'Approved', label: TASK_STATUS_CONFIG.Approved.label },
+];
+
+const DEFAULT_TASK_STATUS = {
+  label: 'Không rõ',
+  color: 'text-text-muted',
+  bg: 'bg-bg-surface',
+  icon: Clock,
+};
+
+export const getTaskStatusConfig = (status: unknown) => {
+  const key = status === 'Submitted' ? 'Pending_Review' : String(status ?? 'Pending');
+  const cfg = TASK_STATUS_CONFIG[key as TaskStatus];
+  return cfg ?? { ...DEFAULT_TASK_STATUS, label: String(status || DEFAULT_TASK_STATUS.label) };
+};
 
 // ─── Deadline Formatter ──────────────────────────────────────
 export const formatDeadline = (deadline: string) => {

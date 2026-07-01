@@ -33,6 +33,7 @@ import {
   AssistantProfilePage,
   AssistantWalletPage,
   AssistantSettingsPage,
+  SeriesInviteRespondPage,
 } from './pages/assistant';
 
 // ─── Editor Pages ───
@@ -135,6 +136,7 @@ function App() {
           <Route element={<MainLayout />}>
             <Route path="/assistant" element={<AssistantDashboardPage />} />
             <Route path="/assistant/tasks" element={<TaskQueuePage />} />
+            <Route path="/assistant/series-invites/:seriesId" element={<SeriesInviteRespondPage />} />
             <Route path="/assistant/portfolio" element={<PortfolioPage />} />
             <Route path="/assistant/profile" element={<AssistantProfilePage />} />
             <Route path="/assistant/wallet" element={<AssistantWalletPage />} />
