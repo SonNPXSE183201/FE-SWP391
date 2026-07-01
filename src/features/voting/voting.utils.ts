@@ -1,17 +1,19 @@
 import type { BoardVoteDto, SeriesDto } from '../../api/generated/types';
 
 /** Series pending vote — may include boardVotes when BE expands SeriesDto */
-export type VotingSeriesDto = SeriesDto & { boardVotes?: BoardVoteDto[] | null };
+export type VotingSeriesDto = SeriesDto & {
+  boardVotes?: BoardVoteDto[] | null;
+  editorRecommendedBudget?: number | null;
+};
 
 export type VotingListFilter = 'All' | 'Pending' | 'Voted' | 'Closed';
 
 /** UI-only label for vote buttons — not sent to API */
-export type VoteUiChoice = 'Approve' | 'Reject' | 'Abstain';
+export type VoteUiChoice = 'Approve' | 'Reject';
 
 export type VoteResultSummary = {
   approve: number;
   reject: number;
-  abstain: number;
   total: number;
 };
 
@@ -24,16 +26,14 @@ export const summarizeBoardVotes = (boardVotes?: BoardVoteDto[] | null): VoteRes
   const votes = boardVotes ?? [];
   let approve = 0;
   let reject = 0;
-  let abstain = 0;
 
   for (const vote of votes) {
     const type = (vote.voteType ?? '').toLowerCase();
     if (type === 'approve' || type === 'approved') approve += 1;
     else if (type === 'reject' || type === 'rejected') reject += 1;
-    else if (type === 'abstain') abstain += 1;
   }
 
-  return { approve, reject, abstain, total: votes.length };
+  return { approve, reject, total: votes.length };
 };
 
 export const findMyBoardVote = (
@@ -50,7 +50,6 @@ export const boardVoteToUiChoice = (vote?: BoardVoteDto): VoteUiChoice | undefin
   const type = vote.voteType.toLowerCase();
   if (type === 'approve' || type === 'approved') return 'Approve';
   if (type === 'reject' || type === 'rejected') return 'Reject';
-  if (type === 'abstain') return 'Abstain';
   return undefined;
 };
 
@@ -105,28 +104,18 @@ export const calcEffectiveThresholdPercent = (required: number, memberCount: num
   return Math.round((required * 100) / n);
 };
 
-export const getTiePolicyShortLabel = (policy?: string | null): string => {
-  switch (policy) {
-    case 'Reject':
-      return 'Hòa → Từ chối';
-    case 'ChairDecides':
-      return 'Hòa → Chủ tịch';
-    case 'Escalate':
-    default:
-      return 'Hòa → Admin';
-  }
+/** Kiểm tra ngân sách đề xuất nằm trong 50%–150% so với ngân sách Mangaka */
+export const isRecommendedBudgetInRange = (
+  recommended: number,
+  estimatedBudget: number,
+): boolean => {
+  if (estimatedBudget <= 0) return recommended > 0;
+  const min = estimatedBudget * 0.5;
+  const max = estimatedBudget * 1.5;
+  return recommended >= min && recommended <= max;
 };
 
-export const getTiePolicyDetail = (policy?: string | null, chairName?: string | null): string => {
-  switch (policy) {
-    case 'Reject':
-      return 'Khi số phiếu Đồng ý bằng Từ chối và tất cả TV đã vote, series bị từ chối tự động.';
-    case 'ChairDecides':
-      return chairName
-        ? `Khi hòa phiếu, hệ thống theo vote Đồng ý/Từ chối của Chủ tịch HĐ (${chairName}).`
-        : 'Khi hòa phiếu, hệ thống theo vote Đồng ý/Từ chối của Chủ tịch HĐ đã chỉ định.';
-    case 'Escalate':
-    default:
-      return 'Khi hòa phiếu hoặc không đạt ngưỡng, chuyển Quản trị viên quyết định thủ công.';
-  }
-};
+export const getRecommendedBudgetRange = (estimatedBudget: number) => ({
+  min: estimatedBudget * 0.5,
+  max: estimatedBudget * 1.5,
+});

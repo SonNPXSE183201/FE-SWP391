@@ -11,9 +11,9 @@ import { CanvasToolbar } from '../../../components/canvas/CanvasToolbar';
 import { MobileCanvasWarning } from '../../../components/canvas/MobileCanvasWarning';
 import { useCanvasStore } from '../../../stores/canvasStore';
 import type { CanvasViewerHandle } from '../../../components/canvas/CanvasViewer';
-import { useAuthStore } from '../../../stores/authStore';
 import type { Annotation, AnnotationType } from '../../../types/entities';
 import { useChapterReview, useApproveChapter, useRequireChapterRevision } from '../hooks/useReview';
+import { reviewApi, type AnnotationDto } from '../api/review.api';
 import { ANNOTATION_TYPE_CONFIG, QC_CHECKLIST_ITEMS, formatVND } from '../constants';
 import type { PageDto } from '../../../api/generated/types';
 import { Point } from 'fabric';
@@ -25,7 +25,6 @@ interface ChapterQCReviewProps {
 
 export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => {
   const { data: chapter, isLoading } = useChapterReview(chapterId);
-  const editorName = useAuthStore((s) => s.user?.fullName) ?? 'Tantou Editor';
 
   const approveChapter = useApproveChapter();
   const requireRevision = useRequireChapterRevision();
@@ -43,6 +42,57 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
   const [revisionReason, setRevisionReason] = useState('');
   const [checklist, setChecklist] = useState<boolean[]>(QC_CHECKLIST_ITEMS.map(() => false));
   const canvasRef = useRef<CanvasViewerHandle>(null);
+  const revisionTemplates = [
+    'Bố cục khung hình chưa rõ điểm nhấn, cần cân lại bố cục.',
+    'Chi tiết biểu cảm và cử chỉ nhân vật chưa khớp nội dung thoại.',
+    'Hiệu ứng ánh sáng/bóng đổ chưa đồng nhất giữa các trang.',
+  ];
+
+  const toAnnotationEntity = useCallback((dto: AnnotationDto): Annotation => {
+    const coords = (() => {
+      try {
+        const parsed = JSON.parse(dto.coordinatesJson ?? '{}') as {
+          x?: number | string;
+          y?: number | string;
+          left?: number | string;
+          top?: number | string;
+        };
+        const toNum = (v: number | string | undefined): number =>
+          typeof v === 'number' ? v : Number(v ?? 0);
+        return {
+          x: Number.isFinite(toNum(parsed.left))
+            ? toNum(parsed.left)
+            : Number.isFinite(toNum(parsed.x))
+              ? toNum(parsed.x)
+              : 0,
+          y: Number.isFinite(toNum(parsed.top))
+            ? toNum(parsed.top)
+            : Number.isFinite(toNum(parsed.y))
+              ? toNum(parsed.y)
+              : 0,
+        };
+      } catch {
+        return { x: 0, y: 0 };
+      }
+    })();
+
+    const rawType = String(dto.type ?? '');
+    const normalizedType: AnnotationType = rawType === 'Art' || rawType === 'Content' ? rawType : 'Technical';
+
+    return {
+      id: String(dto.id ?? `anno-${Date.now()}`),
+      pageId: String(dto.pageId ?? ''),
+      editorId: String(dto.createdByUserId ?? '0'),
+      editorName: dto.createdByUserName || 'Editor',
+      type: normalizedType,
+      x: coords.x,
+      y: coords.y,
+      comment: dto.comment ?? '',
+      resolved: false,
+      createdAt: dto.createAt || new Date().toISOString(),
+      updatedAt: dto.updateAt || dto.createAt || new Date().toISOString(),
+    };
+  }, []);
 
   // Seed annotations from the loaded chapter data once.
   const seededRef = useRef<string | null>(null);
@@ -77,6 +127,35 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
   const currentPage = pages[currentPageIndex];
   const pageId = String(currentPage?.id ?? '');
 
+  useEffect(() => {
+    if (!pages.length) return;
+    let cancelled = false;
+
+    const loadChapterAnnotations = async () => {
+      try {
+        const list = await Promise.all(
+          pages.map(async (p: PageDto) => {
+            const pid = String(p.id ?? '');
+            if (!pid) return [] as Annotation[];
+            const res = await reviewApi.listAnnotations({ pageId: pid });
+            const rows = res.data?.data ?? [];
+            return rows.map(toAnnotationEntity);
+          }),
+        );
+        if (!cancelled) {
+          setAnnotations(list.flat());
+        }
+      } catch {
+        // keep seeded data from chapter detail as a fallback if annotation API fails
+      }
+    };
+
+    void loadChapterAnnotations();
+    return () => {
+      cancelled = true;
+    };
+  }, [pages, toAnnotationEntity]);
+
   const pageAnnotations = useMemo(
     () => annotations.filter((a) => a.pageId === pageId),
     [annotations, pageId],
@@ -95,40 +174,79 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
 
   const genkouryo = validPageCount * (chapter?.appliedGenkouryoPrice ?? 0);
   const totalUnresolved = annotations.filter((a) => !a.resolved).length;
+  const invalidPageCount = pages.length - validPageCount;
+  const reviewProgress = pages.length > 0 ? Math.round((validPageCount / pages.length) * 100) : 0;
+  const unresolvedAnnotations = useMemo(
+    () => annotations.filter((a) => !a.resolved),
+    [annotations],
+  );
+  const autoRevisionSummary = useMemo(() => {
+    if (!unresolvedAnnotations.length) return '';
+    const byPage = new Map<string, Annotation[]>();
+    unresolvedAnnotations.forEach((a) => {
+      const list = byPage.get(a.pageId) ?? [];
+      list.push(a);
+      byPage.set(a.pageId, list);
+    });
+
+    const lines = Array.from(byPage.entries())
+      .sort((a, b) => Number(a[0]) - Number(b[0]))
+      .map(([pid, list]) => {
+        const page = pages.find((p: PageDto) => String(p.id) === pid);
+        const pageNo = page?.pageNumber ?? pid;
+        const topIssues = list.slice(0, 2).map((item) => item.comment).filter(Boolean);
+        const suffix = list.length > 2 ? ` (+${list.length - 2} lỗi khác)` : '';
+        return `- Trang ${pageNo}: ${topIssues.join('; ')}${suffix}`;
+      });
+
+    return `Vui lòng chỉnh sửa theo các lỗi đã ghim:\n${lines.join('\n')}`.slice(0, 500);
+  }, [pages, unresolvedAnnotations]);
+
+  useEffect(() => {
+    if (!showRevision || revisionReason.trim() || !autoRevisionSummary) return;
+    setRevisionReason(autoRevisionSummary);
+  }, [showRevision, revisionReason, autoRevisionSummary]);
 
   // ─── Handlers ───
   const handleCreate = useCallback(
-    (data: { x: number; y: number; type: AnnotationType; comment: string }) => {
+    async (data: { x: number; y: number; type: AnnotationType; comment: string }) => {
       if (!data.comment.trim()) {
         toast.error('Vui lòng nhập nội dung lỗi trước khi ghim');
         return;
       }
-      const ts = new Date().toISOString();
-      setAnnotations((prev) => [
-        ...prev,
-        {
-          id: `anno-${Date.now()}`,
+      if (!pageId) {
+        toast.error('Không xác định được trang để ghim lỗi');
+        return;
+      }
+      try {
+        const created = await reviewApi.createAnnotation({
           pageId,
-          editorId: 'me',
-          editorName,
-          type: data.type,
           x: data.x,
           y: data.y,
           comment: data.comment.trim(),
-          resolved: false,
-          createdAt: ts,
-          updatedAt: ts,
-        },
-      ]);
-      setAnnoComment('');
-      toast.success(`Đã ghim ${ANNOTATION_TYPE_CONFIG[data.type].label}`);
+          type: data.type,
+        });
+        const saved = created.data?.data ? toAnnotationEntity(created.data.data) : null;
+        if (saved) {
+          setAnnotations((prev) => [...prev, saved]);
+        }
+        setAnnoComment('');
+        toast.success(`Đã ghim ${ANNOTATION_TYPE_CONFIG[data.type].label}`);
+      } catch {
+        toast.error('Không thể lưu ghim lỗi. Vui lòng thử lại.');
+      }
     },
-    [pageId, editorName],
+    [pageId, toAnnotationEntity],
   );
 
-  const handleDelete = useCallback((id: string) => {
-    setAnnotations((prev) => prev.filter((a) => a.id !== id));
-    setSelectedAnnotation(null);
+  const handleDelete = useCallback(async (id: string) => {
+    try {
+      await reviewApi.deleteAnnotation(id);
+      setAnnotations((prev) => prev.filter((a) => a.id !== id));
+      setSelectedAnnotation(null);
+    } catch {
+      toast.error('Không thể xoá ghim lỗi');
+    }
   }, [setSelectedAnnotation]);
 
   const handleToggleResolved = useCallback((id: string) => {
@@ -157,12 +275,13 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
   };
 
   const handleRevision = () => {
-    if (!revisionReason.trim()) {
+    const finalReason = revisionReason.trim() || autoRevisionSummary.trim();
+    if (!finalReason) {
       toast.error('Vui lòng nhập lý do yêu cầu sửa');
       return;
     }
     requireRevision.mutate(
-      { chapterId, reason: revisionReason },
+      { chapterId, reason: finalReason },
       {
         onSuccess: () => {
           toast.success('Đã trả Chapter về cho Mangaka chỉnh sửa');
@@ -172,6 +291,10 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
         onError: () => toast.error('Có lỗi khi gửi yêu cầu sửa'),
       },
     );
+  };
+
+  const handleApplyRevisionTemplate = (template: string) => {
+    setRevisionReason((prev) => (prev.trim() ? `${prev.trim()}\n- ${template}`.slice(0, 500) : `- ${template}`));
   };
 
   const handleZoomIn = useCallback(() => {
@@ -205,6 +328,10 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
     canvasRef.current?.resetView();
   }, []);
 
+  const startPinning = useCallback(() => {
+    setActiveTool('annotate');
+  }, [setActiveTool]);
+
   const allChecked = checklist.every(Boolean);
 
   if (isLoading) {
@@ -230,231 +357,304 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
   return (
     <>
       <MobileCanvasWarning />
-      <div className="hidden md:flex flex-col gap-4 animate-fade-in h-[calc(100vh-120px)]">
-        {/* ─── Header ─── */}
-        <div className="flex items-center justify-between flex-shrink-0 gap-4">
+      <div className="hidden md:flex flex-col gap-3 animate-fade-in h-[calc(100vh-100px)]">
+        {/* ─── Compact header ─── */}
+        <div className="flex items-center justify-between flex-shrink-0 gap-3 bg-bg-secondary border border-border-custom rounded-xl px-4 py-2.5">
           <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={onBack}
-              className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-surface transition-colors bg-transparent border-none cursor-pointer flex-shrink-0"
+              className="w-9 h-9 rounded-lg bg-bg-primary border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary hover:border-brand/30 transition-colors cursor-pointer flex-shrink-0"
+              title="Quay lại hàng đợi"
             >
-              <ArrowLeft size={20} />
+              <ArrowLeft size={16} />
             </button>
             <div className="min-w-0">
-              <h1 className="text-lg font-bold text-text-primary truncate">
+              <h1 className="text-sm font-bold text-text-primary truncate">
                 {chapter.series?.title || `Series #${chapter.seriesId}`} · Ch.{chapter.chapterNumber}
               </h1>
-              <p className="text-xs text-text-muted truncate">
+              <p className="text-[11px] text-text-secondary truncate">
                 {chapter.title} — {chapter.series?.mangaka?.fullName || 'Unknown Mangaka'}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <div className="text-right">
-              <p className="text-[10px] text-text-muted uppercase tracking-wider">Trang hợp lệ</p>
-              <p className="text-sm font-bold text-text-primary">
-                <span className="text-success">{validPageCount}</span> / {pages.length}
-              </p>
+          <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-bg-primary border border-border-custom">
+              <div className="w-16 h-1 rounded-full bg-bg-surface overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-brand to-success transition-all duration-300"
+                  style={{ width: `${reviewProgress}%` }}
+                />
+              </div>
+              <span className="text-[10px] font-semibold text-text-secondary tabular-nums">{reviewProgress}%</span>
             </div>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-success/10 border border-success/20 text-[10px] font-semibold text-success">
+              <CheckCircle2 size={11} />
+              {validPageCount}/{pages.length} hợp lệ
+            </span>
+            {invalidPageCount > 0 && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-danger/10 border border-danger/20 text-[10px] font-semibold text-danger">
+                <AlertCircle size={11} />
+                {invalidPageCount} cần sửa
+              </span>
+            )}
+            {totalUnresolved > 0 && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[10px] font-semibold text-amber-400">
+                <MapPin size={11} />
+                {totalUnresolved} lỗi mở
+              </span>
+            )}
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-bg-primary border border-border-custom text-[10px] font-medium text-text-secondary">
+              <Banknote size={11} className="text-success" />
+              {formatVND(genkouryo)}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => setShowRevision(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-secondary hover:text-text-primary hover:border-amber-500/30 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-bg-primary border border-border-custom rounded-lg text-xs text-text-secondary hover:text-text-primary hover:border-amber-500/30 transition-all cursor-pointer"
             >
-              <RotateCcw size={14} /> Yêu cầu sửa
+              <RotateCcw size={13} /> Yêu cầu sửa
             </button>
             <button
               onClick={() => setShowApprove(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium shadow-brand transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-medium shadow-brand transition-all cursor-pointer"
             >
-              <CheckCircle2 size={14} /> Duyệt Chapter
+              <CheckCircle2 size={13} /> Duyệt Chapter
             </button>
           </div>
         </div>
 
-        {/* ─── Body ─── */}
-        <div className="flex-1 flex flex-col min-h-0 gap-4">
-          {/* ═══ Header: Top Toolbar ═══ */}
-          <div className="flex items-center justify-between flex-shrink-0 bg-bg-secondary p-2 rounded-xl border border-border-custom">
-            <div className="flex items-center gap-2">
-              <span
-                className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${pageHasError(pageId)
-                    ? 'bg-danger/10 text-danger'
-                    : 'bg-success/10 text-success'
+        {/* ─── Workspace ─── */}
+        <div className="flex gap-3 flex-1 min-h-0">
+          {/* Page filmstrip — vertical */}
+          <div className="w-[76px] flex-shrink-0 flex flex-col gap-2 overflow-y-auto pr-0.5">
+            <p className="text-[9px] uppercase tracking-wider text-text-muted font-medium text-center shrink-0">
+              Trang
+            </p>
+            {pages.map((p: PageDto, idx: number) => {
+              const invalid = pageHasError(String(p.id));
+              const isActive = idx === currentPageIndex;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setCurrentPageIndex(idx)}
+                  className={`relative flex-shrink-0 w-full aspect-[3/4] rounded-lg overflow-hidden border-2 transition-all cursor-pointer group ${
+                    isActive
+                      ? 'border-brand ring-2 ring-brand/20'
+                      : 'border-border-custom/50 hover:border-border-custom'
                   }`}
-              >
-                {pageHasError(pageId) ? 'Invalid' : 'Hợp lệ'}
-              </span>
-              <span className="text-xs text-text-secondary">
-                Trang {currentPage?.pageNumber} · {pageAnnotations.length} ghim lỗi
-              </span>
+                  title={`Trang ${p.pageNumber} — ${invalid ? 'Cần sửa' : 'Hợp lệ'}`}
+                >
+                  <img
+                    src={p.compositeImageUrl || p.rawImageUrl || ''}
+                    alt={`Trang ${p.pageNumber}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <span
+                    className={`absolute top-1 right-1 w-2 h-2 rounded-full border border-bg-secondary ${
+                      invalid ? 'bg-danger' : 'bg-success'
+                    }`}
+                  />
+                  <span
+                    className={`absolute bottom-0 inset-x-0 text-[10px] font-semibold text-center py-0.5 ${
+                      isActive ? 'bg-brand/90 text-white' : 'bg-black/60 text-white/90'
+                    }`}
+                  >
+                    {p.pageNumber}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Canvas column */}
+          <div className="flex flex-col flex-1 min-w-0 gap-0 bg-bg-secondary border border-border-custom rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-border-custom bg-bg-secondary flex-shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <span
+                  className={`px-2 py-0.5 rounded-md text-[10px] font-semibold shrink-0 ${
+                    pageHasError(pageId)
+                      ? 'bg-danger/10 text-danger border border-danger/20'
+                      : 'bg-success/10 text-success border border-success/20'
+                  }`}
+                >
+                  {pageHasError(pageId) ? 'Cần sửa' : 'Hợp lệ'}
+                </span>
+                <span className="text-[11px] text-text-secondary truncate">
+                  Trang {currentPage?.pageNumber} · {pageAnnotations.length} ghim
+                </span>
+              </div>
+
+              <CanvasToolbar
+                activeTool={activeTool}
+                zoomLevel={zoomLevel}
+                onToolChange={setActiveTool}
+                onZoomIn={handleZoomIn}
+                onZoomOut={handleZoomOut}
+                onZoomReset={handleZoomReset}
+                onZoomFit={handleZoomFit}
+                showRegionTool={false}
+                showAnnotateTool
+                variant="docked"
+                canDelete={!!selectedAnnotationId}
+                onDelete={() => {
+                  if (selectedAnnotationId) {
+                    void handleDelete(selectedAnnotationId);
+                  }
+                }}
+              />
+
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => setCurrentPageIndex(Math.max(0, currentPageIndex - 1))}
+                  disabled={currentPageIndex === 0}
+                  className="w-8 h-8 rounded-lg bg-bg-primary border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  <ChevronLeft size={15} />
+                </button>
+                <span className="text-[11px] font-mono text-text-secondary min-w-[48px] text-center tabular-nums">
+                  {currentPageIndex + 1}/{pages.length}
+                </span>
+                <button
+                  onClick={() => setCurrentPageIndex(Math.min(pages.length - 1, currentPageIndex + 1))}
+                  disabled={currentPageIndex === pages.length - 1}
+                  className="w-8 h-8 rounded-lg bg-bg-primary border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  <ChevronRight size={15} />
+                </button>
+              </div>
             </div>
 
-            <CanvasToolbar
-              activeTool={activeTool}
-              zoomLevel={zoomLevel}
-              onToolChange={setActiveTool}
-              onZoomIn={handleZoomIn}
-              onZoomOut={handleZoomOut}
-              onZoomReset={handleZoomReset}
-              onZoomFit={handleZoomFit}
-              showRegionTool={false}
-              showAnnotateTool
-              canDelete={!!selectedAnnotationId}
-              onDelete={() => {
-                if (selectedAnnotationId) {
-                  setAnnotations((prev) => prev.filter((a) => a.id !== selectedAnnotationId));
-                  setSelectedAnnotation(null);
-                }
-              }}
-            />
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setCurrentPageIndex(Math.max(0, currentPageIndex - 1))}
-                disabled={currentPageIndex === 0}
-                className="w-8 h-8 rounded-lg bg-bg-primary border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <span className="text-xs font-mono text-text-secondary min-w-[56px] text-center">
-                {currentPageIndex + 1} / {pages.length}
-              </span>
-              <button
-                onClick={() => setCurrentPageIndex(Math.min(pages.length - 1, currentPageIndex + 1))}
-                disabled={currentPageIndex === pages.length - 1}
-                className="w-8 h-8 rounded-lg bg-bg-primary border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-              >
-                <ChevronRight size={16} />
-              </button>
+            <div className="flex-1 relative min-h-0 bg-bg-primary/40">
+              {currentPage && (
+                <CanvasViewer
+                  ref={canvasRef}
+                  key={currentPage.id}
+                  imageUrl={currentPage.compositeImageUrl || currentPage.rawImageUrl || ''}
+                  annotations={pageAnnotations}
+                  mode={activeTool === 'annotate' ? 'annotate' : 'view'}
+                  onAnnotationCreated={(data) =>
+                    handleCreate({ ...data, type: annotationType, comment: annoComment })
+                  }
+                  selectedAnnotationId={selectedAnnotationId}
+                  onAnnotationSelect={setSelectedAnnotation}
+                  onZoomChange={setZoomLevel}
+                  className="w-full h-full"
+                />
+              )}
             </div>
           </div>
 
-          {/* ═══ Main Content: Canvas & Sidebar ═══ */}
-          <div className="flex gap-4 flex-1 min-h-0">
-            {/* Canvas Area */}
-            <div className="flex flex-col flex-1 min-w-0 gap-2">
-              <div className="flex-1 relative bg-bg-secondary border border-border-custom rounded-xl overflow-hidden min-h-0">
-                {currentPage && (
-                  <CanvasViewer
-                    ref={canvasRef}
-                    key={currentPage.id}
-                    imageUrl={currentPage.compositeImageUrl || currentPage.rawImageUrl || ''}
-                    annotations={pageAnnotations}
-                    mode={activeTool === 'annotate' ? 'annotate' : 'view'}
-                    onAnnotationCreated={(data) =>
-                      handleCreate({ ...data, type: annotationType, comment: annoComment })
-                    }
-                    selectedAnnotationId={selectedAnnotationId}
-                    onAnnotationSelect={setSelectedAnnotation}
-                    onZoomChange={setZoomLevel}
-                    className="w-full h-full"
-                  />
-                )}
-              </div>
-
-              {/* Page filmstrip with valid/invalid badges */}
-              <div className="flex items-center gap-2 flex-shrink-0 overflow-x-auto pb-1">
-                {pages.map((p: PageDto, idx: number) => {
-                  const invalid = pageHasError(String(p.id));
-                  return (
-                    <button
-                      key={p.id}
-                      onClick={() => setCurrentPageIndex(idx)}
-                      className={`relative flex-shrink-0 w-12 h-16 rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${idx === currentPageIndex ? 'border-brand' : 'border-border-custom/50 hover:border-border-custom'
-                        }`}
-                      title={`Trang ${p.pageNumber} — ${invalid ? 'Invalid' : 'Hợp lệ'}`}
-                    >
-                      <img src={p.compositeImageUrl || p.rawImageUrl || ''} alt={`p${p.pageNumber}`} className="w-full h-full object-cover" />
-                      <span
-                        className={`absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full border border-bg-secondary ${invalid ? 'bg-danger' : 'bg-success'
-                          }`}
-                      />
-                      <span className="absolute bottom-0 inset-x-0 text-[9px] text-center text-white bg-black/50">
-                        {p.pageNumber}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
           {/* Sidebar */}
-          <div className="w-[340px] flex-shrink-0 flex flex-col gap-4 min-h-0">
-            {/* QC summary */}
-            <div className="bg-bg-secondary border border-border-custom rounded-xl p-4 flex-shrink-0">
-              <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2 mb-3">
-                <ClipboardCheck size={14} className="text-brand" /> Tổng kết QC
-              </h3>
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="bg-bg-surface rounded-lg p-2">
-                  <p className="text-lg font-bold text-success">{validPageCount}</p>
-                  <p className="text-[9px] text-text-muted">Hợp lệ</p>
+          <div className="w-[300px] xl:w-[320px] flex-shrink-0 flex flex-col gap-3 min-h-0">
+            {/* QC summary — compact */}
+            <div className="bg-bg-secondary border border-border-custom rounded-xl p-3 flex-shrink-0">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
+                  <ClipboardCheck size={13} className="text-brand" />
+                  Tổng kết QC
+                </h3>
+                <span className="text-[10px] text-text-muted lg:hidden">{reviewProgress}%</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5">
+                <div className="rounded-lg bg-bg-primary border border-success/15 p-2 text-center">
+                  <p className="text-base font-bold text-success leading-none">{validPageCount}</p>
+                  <p className="text-[9px] text-text-secondary mt-0.5">Hợp lệ</p>
                 </div>
-                <div className="bg-bg-surface rounded-lg p-2">
-                  <p className="text-lg font-bold text-danger">{pages.length - validPageCount}</p>
-                  <p className="text-[9px] text-text-muted">Invalid</p>
+                <div className="rounded-lg bg-bg-primary border border-danger/15 p-2 text-center">
+                  <p className="text-base font-bold text-danger leading-none">{invalidPageCount}</p>
+                  <p className="text-[9px] text-text-secondary mt-0.5">Cần sửa</p>
                 </div>
-                <div className="bg-bg-surface rounded-lg p-2">
-                  <p className="text-lg font-bold text-amber-400">{totalUnresolved}</p>
-                  <p className="text-[9px] text-text-muted">Lỗi mở</p>
+                <div className="rounded-lg bg-bg-primary border border-amber-500/15 p-2 text-center">
+                  <p className="text-base font-bold text-amber-400 leading-none">{totalUnresolved}</p>
+                  <p className="text-[9px] text-text-secondary mt-0.5">Lỗi mở</p>
                 </div>
               </div>
-              <div className="mt-3 flex items-center justify-between p-2.5 bg-success/5 border border-success/20 rounded-lg">
-                <span className="text-[11px] text-text-secondary flex items-center gap-1.5">
-                  <Banknote size={13} className="text-success" /> Nhuận bút dự kiến
-                </span>
-                <span className="text-sm font-bold text-success">{formatVND(genkouryo)}</span>
+              <div className="mt-2 flex items-center justify-between px-2 py-1.5 rounded-lg bg-success/5 border border-success/15">
+                <span className="text-[10px] text-text-secondary">Nhuận bút dự kiến</span>
+                <span className="text-xs font-bold text-success">{formatVND(genkouryo)}</span>
               </div>
-              <p className="text-[9px] text-text-muted mt-1.5 text-center">
-                {validPageCount} trang × {formatVND(chapter.appliedGenkouryoPrice || 0)} (G02)
-              </p>
             </div>
 
-            {/* Annotations panel */}
+            {/* Pin error panel */}
             <div className="bg-bg-secondary border border-border-custom rounded-xl flex flex-col flex-1 min-h-0">
-              <div className="p-4 border-b border-border-custom flex-shrink-0">
-                <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
-                  <MapPin size={14} className="text-red-400" /> Ghim lỗi — Trang {currentPage?.pageNumber}
-                </h3>
+              <div className="p-3 border-b border-border-custom flex-shrink-0">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
+                    <MapPin size={13} className="text-red-400" />
+                    Ghim lỗi · Trang {currentPage?.pageNumber}
+                  </h3>
+                  {activeTool !== 'annotate' ? (
+                    <button
+                      type="button"
+                      onClick={startPinning}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-brand/10 border border-brand/25 text-[10px] font-semibold text-brand hover:bg-brand/20 transition-colors cursor-pointer"
+                    >
+                      <MapPin size={10} />
+                      Bắt đầu
+                    </button>
+                  ) : (
+                    <span className="text-[10px] font-medium text-brand">Đang ghim</span>
+                  )}
+                </div>
 
-                {activeTool === 'annotate' && (
-                  <div className="mt-3 space-y-2">
-                    <div className="flex gap-1.5">
-                      {(Object.keys(ANNOTATION_TYPE_CONFIG) as AnnotationType[]).map((type) => {
-                        const cfg = ANNOTATION_TYPE_CONFIG[type];
-                        return (
-                          <button
-                            key={type}
-                            onClick={() => setAnnotationType(type)}
-                            className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-medium border transition-all cursor-pointer ${annotationType === type
-                                ? `${cfg.bg} ${cfg.color} ${cfg.border}`
-                                : 'bg-bg-primary border-border-custom/50 text-text-muted hover:border-border-custom'
-                              }`}
-                          >
-                            <span>{cfg.icon}</span>
-                            <span className="hidden lg:inline">{cfg.short}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <textarea
-                      value={annoComment}
-                      onChange={(e) => setAnnoComment(e.target.value)}
-                      placeholder="Mô tả lỗi... (bắt buộc)"
-                      rows={2}
-                      className="w-full px-3 py-2 text-xs bg-bg-primary border border-border-custom rounded-lg text-text-primary placeholder:text-text-muted/50 focus:outline-none focus:border-brand/50 resize-none"
-                    />
-                    <p className="text-[9px] text-text-muted">Click lên ảnh để đặt ghim lỗi tại vị trí đó.</p>
+                <ol className="mt-2 space-y-0.5 text-[10px] text-text-secondary list-decimal list-inside">
+                  <li>Chọn loại lỗi</li>
+                  <li>Nhập mô tả ngắn</li>
+                  <li>Click lên ảnh để đặt ghim</li>
+                </ol>
+
+                <div className={`mt-3 space-y-2 transition-opacity ${activeTool === 'annotate' ? 'opacity-100' : 'opacity-60'}`}>
+                  <div className="flex gap-1">
+                    {(Object.keys(ANNOTATION_TYPE_CONFIG) as AnnotationType[]).map((type) => {
+                      const cfg = ANNOTATION_TYPE_CONFIG[type];
+                      return (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => {
+                            setAnnotationType(type);
+                            startPinning();
+                          }}
+                          className={`flex-1 flex flex-col items-center gap-0.5 px-1.5 py-1.5 rounded-lg text-[9px] font-medium border transition-all cursor-pointer ${
+                            annotationType === type
+                              ? `${cfg.bg} ${cfg.color} ${cfg.border}`
+                              : 'bg-bg-primary border-border-custom text-text-secondary hover:border-border-custom'
+                          }`}
+                        >
+                          <span className="text-sm leading-none">{cfg.icon}</span>
+                          <span>{cfg.short}</span>
+                        </button>
+                      );
+                    })}
                   </div>
-                )}
+                  <textarea
+                    value={annoComment}
+                    onChange={(e) => setAnnoComment(e.target.value)}
+                    onFocus={startPinning}
+                    placeholder="Mô tả lỗi... (bắt buộc)"
+                    rows={2}
+                    className="w-full px-2.5 py-2 text-xs bg-bg-primary border border-border-custom rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 resize-none"
+                    maxLength={200}
+                  />
+                  <div className="flex items-center justify-between text-[9px] text-text-muted">
+                    <span>Click ảnh để ghim vị trí</span>
+                    <span className="tabular-nums">{annoComment.length}/200</span>
+                  </div>
+                </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+              <div className="flex-1 overflow-y-auto p-2 space-y-1.5 min-h-0">
                 {pageAnnotations.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-8 gap-2 text-text-muted">
-                    <CheckCircle2 size={22} className="text-success" />
-                    <p className="text-xs text-center">Trang này chưa có lỗi nào.<br />Chọn công cụ Ghim lỗi để bắt đầu.</p>
+                  <div className="flex flex-col items-center justify-center py-10 gap-2 text-text-muted">
+                    <CheckCircle2 size={20} className="text-success/70" />
+                    <p className="text-[11px] text-center text-text-secondary leading-relaxed">
+                      Trang này chưa có lỗi.
+                      <br />
+                      Nhấn <span className="text-brand font-medium">Bắt đầu</span> để ghim lỗi.
+                    </p>
                   </div>
                 ) : (
                   pageAnnotations.map((a) => {
@@ -463,35 +663,36 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                       <div
                         key={a.id}
                         onClick={() => setSelectedAnnotation(a.id === selectedAnnotationId ? null : a.id)}
-                        className={`group p-3 rounded-lg border transition-all cursor-pointer ${a.id === selectedAnnotationId
+                        className={`group p-2.5 rounded-lg border transition-all cursor-pointer ${
+                          a.id === selectedAnnotationId
                             ? 'border-brand/40 bg-brand/5'
                             : a.resolved
-                              ? 'border-border-custom/30 bg-bg-primary/50 opacity-60'
+                              ? 'border-border-custom/30 bg-bg-primary/40 opacity-60'
                               : 'border-border-custom/50 bg-bg-primary hover:border-brand/20'
-                          }`}
+                        }`}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <span className={`text-[10px] font-medium flex items-center gap-1 ${cfg.color}`}>
                             {cfg.icon} {cfg.label}
                           </span>
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={(e) => { e.stopPropagation(); handleToggleResolved(a.id); }}
-                              className="w-5 h-5 rounded flex items-center justify-center text-success hover:bg-success/10 cursor-pointer bg-transparent border-none"
+                              className="w-6 h-6 rounded flex items-center justify-center text-success hover:bg-success/10 cursor-pointer bg-transparent border-none"
                               title={a.resolved ? 'Mở lại lỗi' : 'Đánh dấu đã xử lý'}
                             >
-                              {a.resolved ? <RotateCcw size={10} /> : <CheckCircle2 size={10} />}
+                              {a.resolved ? <RotateCcw size={11} /> : <CheckCircle2 size={11} />}
                             </button>
                             <button
-                              onClick={(e) => { e.stopPropagation(); handleDelete(a.id); }}
-                              className="w-5 h-5 rounded flex items-center justify-center text-danger hover:bg-danger/10 cursor-pointer bg-transparent border-none"
+                              onClick={(e) => { e.stopPropagation(); void handleDelete(a.id); }}
+                              className="w-6 h-6 rounded flex items-center justify-center text-danger hover:bg-danger/10 cursor-pointer bg-transparent border-none"
                             >
-                              <Trash2 size={10} />
+                              <Trash2 size={11} />
                             </button>
                           </div>
                         </div>
-                        <p className="text-[11px] text-text-secondary mt-1.5 line-clamp-2">{a.comment}</p>
-                        <div className="flex items-center justify-between mt-1.5">
+                        <p className="text-[11px] text-text-primary mt-1 line-clamp-2 leading-snug">{a.comment}</p>
+                        <div className="flex items-center justify-between mt-1">
                           <span className="text-[9px] text-text-muted">{a.editorName}</span>
                           {a.resolved && (
                             <span className="text-[9px] text-success flex items-center gap-0.5">
@@ -507,7 +708,6 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
             </div>
           </div>
         </div>
-      </div>
       </div>
 
       {/* ─── Approve Modal (F3.6) ─── */}
@@ -531,7 +731,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                 <div className="flex items-start gap-2 p-3 bg-amber-500/5 border border-amber-500/20 rounded-lg">
                   <AlertCircle size={14} className="text-amber-400 mt-0.5 flex-shrink-0" />
                   <p className="text-[11px] text-amber-400">
-                    Còn {totalUnresolved} lỗi chưa xử lý → {pages.length - validPageCount} trang đang bị tính Invalid và sẽ không được trả nhuận bút.
+                    Còn {totalUnresolved} lỗi chưa xử lý → {invalidPageCount} trang cần sửa và sẽ không được trả nhuận bút.
                   </p>
                 </div>
               )}
@@ -614,17 +814,63 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
               <p className="text-sm text-text-secondary">
                 Chapter sẽ được trả về cho <span className="text-text-primary font-medium">{chapter.series?.mangaka?.fullName || 'Unknown Mangaka'}</span> kèm {totalUnresolved} lỗi đã ghim để chỉnh sửa.
               </p>
+              {unresolvedAnnotations.length > 0 && (
+                <div className="rounded-xl border border-border-custom bg-bg-surface p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-medium text-text-primary">
+                      Lỗi đã ghim ({unresolvedAnnotations.length})
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setRevisionReason(autoRevisionSummary)}
+                      className="text-[11px] text-brand hover:underline bg-transparent border-none cursor-pointer"
+                    >
+                      Dùng tóm tắt tự động
+                    </button>
+                  </div>
+                  <ul className="mt-2 space-y-1.5 text-[11px] text-text-secondary max-h-24 overflow-y-auto pr-1">
+                    {unresolvedAnnotations.slice(0, 6).map((item) => {
+                      const page = pages.find((p: PageDto) => String(p.id) === item.pageId);
+                      return (
+                        <li key={item.id} className="leading-4">
+                          • Trang {page?.pageNumber ?? item.pageId}: {item.comment}
+                        </li>
+                      );
+                    })}
+                    {unresolvedAnnotations.length > 6 && (
+                      <li className="text-text-muted">• ... và {unresolvedAnnotations.length - 6} lỗi khác</li>
+                    )}
+                  </ul>
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                  Lý do / Tóm tắt yêu cầu sửa <span className="text-danger">*</span>
+                  Lý do / Tóm tắt yêu cầu sửa {unresolvedAnnotations.length === 0 && <span className="text-danger">*</span>}
                 </label>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {revisionTemplates.map((template) => (
+                    <button
+                      key={template}
+                      type="button"
+                      onClick={() => handleApplyRevisionTemplate(template)}
+                      className="px-2 py-1 text-[10px] rounded-md border border-border-custom bg-bg-primary hover:border-brand/30 text-text-muted hover:text-text-primary cursor-pointer"
+                    >
+                      + {template.slice(0, 26)}...
+                    </button>
+                  ))}
+                </div>
                 <textarea
                   value={revisionReason}
                   onChange={(e) => setRevisionReason(e.target.value)}
-                  placeholder="Tóm tắt các điểm cần Mangaka xử lý..."
+                  placeholder={unresolvedAnnotations.length > 0
+                    ? 'Có thể chỉnh lại tóm tắt tự động trước khi gửi...'
+                    : 'Tóm tắt các điểm cần Mangaka xử lý...'}
                   rows={4}
                   className="w-full px-4 py-3 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 resize-none"
                   maxLength={500}
+                  onKeyDown={(e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') handleRevision();
+                  }}
                 />
                 <p className="text-[10px] text-text-muted mt-1 text-right">{revisionReason.length}/500</p>
               </div>

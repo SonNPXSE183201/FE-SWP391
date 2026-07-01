@@ -2,7 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { X, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import type { Page } from '../../../types/entities';
-import { getPageStatusConfig } from '../data/mockPages';
+import { getPageStatusConfig } from '../constants';
 import { PagePlaceholder } from './PagePlaceholder';
 import { usePagePreviewUrl } from '../hooks/usePagePreviewUrl';
 

@@ -27,6 +27,8 @@ interface CanvasToolbarProps {
   showAnnotateTool?: boolean;
   canDelete?: boolean;
   onDelete?: () => void;
+  /** docked = flat chrome in a top bar; floating = pill overlay on canvas */
+  variant?: 'docked' | 'floating';
 }
 
 // ─── Tool Config ─────────────────────────────────────────────
@@ -59,6 +61,7 @@ export const CanvasToolbar = ({
   showAnnotateTool = true,
   canDelete = false,
   onDelete,
+  variant = 'floating',
 }: CanvasToolbarProps) => {
   const visibleTools = ALL_TOOLS.filter((t) => {
     if ((t.tool === 'region' || t.tool === 'freeform') && !showRegionTool) return false;
@@ -68,8 +71,13 @@ export const CanvasToolbar = ({
 
   const zoomPercentage = Math.round(zoomLevel * 100);
 
+  const shellClass =
+    variant === 'docked'
+      ? 'flex items-center gap-1 rounded-xl bg-bg-primary border border-border-custom px-1.5 py-1'
+      : 'flex items-center gap-1 rounded-2xl bg-bg-primary/90 backdrop-blur-xl border border-border-custom shadow-lg px-2 py-1.5';
+
   return (
-    <div className="flex items-center gap-1 rounded-2xl bg-bg-primary/90 backdrop-blur-xl border border-border-custom shadow-lg px-2 py-1.5">
+    <div className={shellClass}>
       {/* ── Tool Buttons ── */}
       <div className="flex items-center gap-0.5">
         {visibleTools.map(({ tool, icon: Icon, label }) => {

@@ -1685,6 +1685,84 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/chapters/{id}/production-readiness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ChapterProductionReadinessDtoApiResponse"];
+                        "application/json": components["schemas"]["ChapterProductionReadinessDtoApiResponse"];
+                        "text/json": components["schemas"]["ChapterProductionReadinessDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/chapters/{id}/submit-for-review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ChapterDtoApiResponse"];
+                        "application/json": components["schemas"]["ChapterDtoApiResponse"];
+                        "text/json": components["schemas"]["ChapterDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/contracts": {
         parameters: {
             query?: never;
@@ -2259,6 +2337,91 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/pages/{id}/mark-ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PageDtoApiResponse"];
+                        "application/json": components["schemas"]["PageDtoApiResponse"];
+                        "text/json": components["schemas"]["PageDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/pages/{id}/replace-image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        File?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PageDtoApiResponse"];
+                        "application/json": components["schemas"]["PageDtoApiResponse"];
+                        "text/json": components["schemas"]["PageDtoApiResponse"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -4302,6 +4465,7 @@ export interface paths {
                     vnp_TransactionStatus?: string;
                     vnp_TxnRef?: string;
                     vnp_SecureHash?: string;
+                    noRedirect?: boolean;
                 };
                 header?: never;
                 path?: never;
@@ -4827,6 +4991,36 @@ export interface components {
                 [key: string]: string[] | null;
             } | null;
         };
+        ChapterProductionCheckDto: {
+            key?: string | null;
+            label?: string | null;
+            passed?: boolean;
+            detail?: string | null;
+        };
+        ChapterProductionReadinessDto: {
+            /** Format: int32 */
+            chapterId?: number;
+            status?: string | null;
+            canSubmit?: boolean;
+            /** Format: int32 */
+            totalPages?: number;
+            /** Format: int32 */
+            pagesReady?: number;
+            /** Format: int32 */
+            openTaskCount?: number;
+            checks?: components["schemas"]["ChapterProductionCheckDto"][] | null;
+            blockers?: string[] | null;
+        };
+        ChapterProductionReadinessDtoApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["ChapterProductionReadinessDto"];
+            errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
         ChapterSummaryDto: {
             /** Format: int32 */
             id?: number;
@@ -5271,6 +5465,16 @@ export interface components {
             createAt?: string;
             /** Format: date-time */
             updateAt?: string | null;
+        };
+        PageDtoApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["PageDto"];
+            errors?: {
+                [key: string]: string[] | null;
+            } | null;
         };
         PageDtoIEnumerableApiResponse: {
             success?: boolean;

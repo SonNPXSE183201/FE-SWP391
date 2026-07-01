@@ -8,7 +8,7 @@ export const NEMU_BUDGET_REQUIRED = 'Ngân sách bản phác thảo là bắt bu
 export const NEMU_MANUSCRIPT_LABEL = 'Bản phác thảo truyện';
 export const NEMU_MANUSCRIPT_UPLOAD_HINT =
   'Tải lên file bản phác thảo (PDF). Lưu trên hệ thống trước khi gửi xét duyệt.';
-export const NEMU_FUNDING_LABEL = 'Cấp vốn bản phác thảo';
+export const NEMU_FUNDING_LABEL = 'Vốn sản xuất cấp phát';
 
 export const CREATE_SERIES_WORKFLOW_HELP = [
   'Bước 1: Lưu hồ sơ bản nháp kèm thông tin series và ngân sách đề xuất.',

@@ -1,8 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { canvasApi } from '../api/canvas.api';
 import type { AnnotationDto, PageDto, RegionDto } from '../../../api/generated/types';
 import type { AnnotationType, Page, Region } from '../../../types/entities';
 import { mapPageDtoToEntity } from '../../series/hooks/useSeries';
+import { isApiSuccess, getAxiosErrorMessage } from '../../../api/apiResponse';
+import type { ApiResponse } from '../../../api/generated/types';
 import {
   mapAnnotationDtoToEntity,
   mapRegionDtoToEntity,
@@ -116,6 +119,35 @@ export const useDeleteAnnotation = (pageId: string) => {
   return useMutation({
     mutationFn: (annotationId: string) => canvasApi.deleteAnnotation(annotationId),
     onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.annotations(pageId) }),
+  });
+};
+
+export const useMarkPageReady = (chapterId: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (pageId: string) => {
+      try {
+        const res = await canvasApi.markPageReady(pageId);
+        const apiData = res.data as ApiResponse<PageDto>;
+        if (!isApiSuccess(apiData)) {
+          throw new Error(apiData.message || 'Không thể đánh dấu trang');
+        }
+        return apiData;
+      } catch (err) {
+        throw new Error(getAxiosErrorMessage(err, 'Không thể đánh dấu trang sẵn sàng'));
+      }
+    },
+    onSuccess: (_data, pageId) => {
+      toast.success('Đã đánh dấu trang sẵn sàng — không cần sản xuất thêm');
+      void qc.invalidateQueries({ queryKey: KEYS.pages(chapterId) });
+      void qc.invalidateQueries({ queryKey: ['pages', chapterId] });
+      void qc.invalidateQueries({ queryKey: ['chapter', chapterId] });
+      void qc.invalidateQueries({ queryKey: ['chapter', chapterId, 'production-readiness'] });
+      void qc.invalidateQueries({ queryKey: KEYS.regions(pageId) });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
   });
 };
 

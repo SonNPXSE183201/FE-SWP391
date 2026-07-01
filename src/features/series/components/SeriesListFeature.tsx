@@ -14,6 +14,7 @@ import { usePagination } from '../../../hooks/usePagination';
 import { Pagination } from '../../../components/common/Pagination';
 import { CustomSelect } from '../../../components/common/CustomSelect';
 import { useMySeries } from '../hooks/useSeries';
+import { seriesStatusMatchesFilter, toSelectFilterOptions } from '../../../utils/status';
 export const SeriesListFeature = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -28,7 +29,7 @@ export const SeriesListFeature = () => {
         s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.synopsis.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.genre.some((g) => g.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchesStatus = !statusFilter || s.status === statusFilter;
+      const matchesStatus = seriesStatusMatchesFilter(s.status, statusFilter);
       return matchesSearch && matchesStatus;
     });
   }, [searchQuery, statusFilter, series]);
@@ -56,8 +57,8 @@ export const SeriesListFeature = () => {
             <BookOpen size={20} className="text-brand" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-text-primary">Series của tôi</h1>
-            <p className="text-xs text-text-muted mt-0.5">Quản lý toàn bộ series manga</p>
+            <h1 className="text-xl font-bold text-text-primary">Bộ truyện của tôi</h1>
+            <p className="text-xs text-text-muted mt-0.5">Quản lý toàn bộ bộ truyện manga</p>
           </div>
         </div>
         <button
@@ -65,17 +66,17 @@ export const SeriesListFeature = () => {
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition-all duration-200 border-none cursor-pointer shadow-brand hover:shadow-brand-hover hover:-translate-y-0.5 active:translate-y-0"
         >
           <Plus size={16} />
-          Tạo Series mới
+          Tạo bộ truyện mới
         </button>
       </div>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6">
         {[
-          { label: 'Tổng Series', value: stats.total, icon: BookOpen, color: 'text-brand' },
+          { label: 'Tổng bộ truyện', value: stats.total, icon: BookOpen, color: 'text-brand' },
           { label: 'Đang xuất bản', value: stats.published, icon: TrendingUp, color: 'text-success' },
           { label: 'Chờ duyệt', value: stats.pending, icon: Clock, color: 'text-warning' },
-          { label: 'Tổng Chapters', value: stats.totalChapters, icon: FileText, color: 'text-info' },
+          { label: 'Tổng chương', value: stats.totalChapters, icon: FileText, color: 'text-info' },
         ].map(({ label, value, icon: Icon, color }) => (
           <div key={label} className="bg-bg-secondary border border-border-custom rounded-xl p-4 flex items-center gap-3 hover:border-brand/20 transition-colors">
             <div className={`w-9 h-9 rounded-lg bg-bg-surface flex items-center justify-center ${color}`}>
@@ -94,14 +95,14 @@ export const SeriesListFeature = () => {
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
           <input
-            type="text" placeholder="Tìm kiếm series, thể loại..."
+            type="text" placeholder="Tìm kiếm bộ truyện, thể loại..."
             value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-bg-secondary border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all"
           />
         </div>
         <div className="w-[170px]">
           <CustomSelect
-            options={SERIES_STATUS_FILTER_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label }))}
+            options={toSelectFilterOptions(SERIES_STATUS_FILTER_OPTIONS)}
             value={statusFilter}
             onChange={(v) => setStatusFilter(v)}
             placeholder="Tất cả trạng thái"
@@ -124,7 +125,7 @@ export const SeriesListFeature = () => {
       {/* Results count */}
       <div className="flex items-center justify-between mt-4">
         <p className="text-xs text-text-muted">
-          Tìm thấy <span className="text-text-primary font-medium">{filteredSeries.length}</span> / {series.length} series
+          Tìm thấy <span className="text-text-primary font-medium">{filteredSeries.length}</span> / {series.length} bộ truyện
         </p>
         {(searchQuery || statusFilter) && (
           <button onClick={() => { setSearchQuery(''); setStatusFilter(''); }}
@@ -155,7 +156,7 @@ export const SeriesListFeature = () => {
             <Search size={28} className="text-text-muted" />
           </div>
           <div className="text-center">
-            <p className="text-sm font-medium text-text-primary">Không tìm thấy series</p>
+            <p className="text-sm font-medium text-text-primary">Không tìm thấy bộ truyện</p>
             <p className="text-xs text-text-muted mt-1">Thử thay đổi từ khóa hoặc bộ lọc</p>
           </div>
         </div>
@@ -174,7 +175,7 @@ export const SeriesListFeature = () => {
         onPageChange={pagination.goToPage}
         onNextPage={pagination.nextPage}
         onPrevPage={pagination.prevPage}
-        itemLabel="series"
+        itemLabel="bộ truyện"
       />
     </div>
   );

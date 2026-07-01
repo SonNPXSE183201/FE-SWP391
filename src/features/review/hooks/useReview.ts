@@ -26,8 +26,15 @@ export const useReviewSeriesDetail = (seriesId: string) =>
 
 export const useSubmitToBoard = () =>
   useMutation({
-    mutationFn: ({ seriesId, notes }: { seriesId: string; notes: string }) =>
-      reviewApi.submitToBoard(seriesId, notes),
+    mutationFn: ({
+      seriesId,
+      notes,
+      editorRecommendedBudget,
+    }: {
+      seriesId: string;
+      notes: string;
+      editorRecommendedBudget?: number;
+    }) => reviewApi.submitToBoard(seriesId, { notes, editorRecommendedBudget }),
   });
 
 export const useRequireRevision = () =>
