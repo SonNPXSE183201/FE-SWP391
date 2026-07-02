@@ -12,8 +12,6 @@ import {
   SquareDashedBottom,
   Trash2,
   ArrowLeft,
-  ChevronLeft,
-  ChevronRight,
   ImageOff,
   UserPlus,
   Pencil,
@@ -328,7 +326,7 @@ export const PageCanvasFeature = ({
   
   const allTasksDone = regions.length > 0 && regions.every(r => {
     const task = tasksByRegion.get(r.id);
-    return task && ['Approved', 'Closed', 'Cancelled'].includes(task.status);
+    return task?.status && ['Approved', 'Closed', 'Cancelled'].includes(task.status);
   });
 
   const canMarkPageReady =
@@ -379,9 +377,7 @@ export const PageCanvasFeature = ({
   }
 
   const statusConfig = getPageStatusConfig(currentPage.status);
-  const assignedCount = regions.filter((r: Region) =>
-    tasksByRegion.has(r.id),
-  ).length;
+
   const isDrawingTool = activeTool === "region";
 
   return (

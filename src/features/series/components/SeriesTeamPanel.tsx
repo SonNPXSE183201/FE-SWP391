@@ -34,7 +34,7 @@ const memberStatusLabel: Record<string, { text: string; cls: string }> = {
   Pending: { text: 'Chờ phản hồi', cls: 'bg-warning/10 text-warning' },
 };
 
-export const SeriesTeamPanel = ({ seriesId, seriesTitle, canManage = true }: SeriesTeamPanelProps) => {
+export const SeriesTeamPanel = ({ seriesId, canManage = true }: SeriesTeamPanelProps) => {
   const navigate = useNavigate();
   const { data: members = [], isLoading } = useSeriesTeam(seriesId);
   const removeMutation = useRemoveSeriesTeamMember(seriesId);

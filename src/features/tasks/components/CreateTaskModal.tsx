@@ -350,7 +350,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
                       .filter(m => !selectedRole || m.roleInTeam?.includes(selectedRole))
                       .map((m) => ({
                       value: String(m.assistantId),
-                      label: m.assistantName
+                      label: m.assistantName ?? 'Unknown'
                     }))}
                     value={formData.assistantId}
                     onChange={(val) => updateField('assistantId', val)}

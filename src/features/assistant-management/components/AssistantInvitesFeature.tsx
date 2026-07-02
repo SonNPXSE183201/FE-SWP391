@@ -9,8 +9,7 @@ import { InviteDetailModal } from './InviteDetailModal';
 
 export const AssistantInvitesFeature = () => {
   const { data: invites = [], isLoading } = useAssistantInvites();
-  const queryClient = useQueryClient();
-  const [selectedInvite, setSelectedInvite] = useState<AssistantInviteDto | null>(null);
+    const [selectedInvite, setSelectedInvite] = useState<AssistantInviteDto | null>(null);
 
   if (isLoading) {
     return (
