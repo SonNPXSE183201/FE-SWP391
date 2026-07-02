@@ -86,6 +86,8 @@ const SERIES_DATA_REFRESH_TYPES = new Set([
   'Series_Approved',
   'Series_Rejected',
   'Series_Pending_Review',
+  'Series_Team_Accepted',
+  'Series_Team_Declined',
 ]);
 
 const refreshSeriesQueries = (queryClient: QueryClient) => {
@@ -174,6 +176,10 @@ export const useSignalR = () => {
         queryClient.invalidateQueries({ queryKey: ['tasks'] });
       }
 
+      if (rawType === 'Series_Team_Invite') {
+        queryClient.invalidateQueries({ queryKey: ['assistant-invites'] });
+      }
+
       if (shouldRefreshAdminUsers(item.type, item.link)) {
         queryClient.invalidateQueries({ queryKey: ['admin-users'] });
         queryClient.invalidateQueries({ queryKey: ['admin-editors'] });
@@ -206,6 +212,10 @@ export const useSignalR = () => {
         refreshSeriesQueries(queryClient);
       }
 
+      if (type === 'Series_Team_Invite') {
+        queryClient.invalidateQueries({ queryKey: ['assistant-invites'] });
+      }
+
       if (shouldRefreshAdminUsers(item.type)) {
         queryClient.invalidateQueries({ queryKey: ['admin-users'] });
         queryClient.invalidateQueries({ queryKey: ['admin-editors'] });
@@ -236,10 +246,12 @@ export const useSignalR = () => {
       setUnreadCount(newCount);
     });
 
-    // BoardDataChanged: server notifies that Board Voting data has changed (someone voted or new series submitted)
+    // BoardDataChanged: vote, config, or board membership changed
     connection.on('BoardDataChanged', () => {
       console.log('[SignalR] BoardDataChanged received (refreshing queries)');
       queryClient.invalidateQueries({ queryKey: ['voting'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'board-voting'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'board-members'] });
     });
 
     // ─── Lifecycle logging ────────────────────────────────────

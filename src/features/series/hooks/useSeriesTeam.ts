@@ -41,7 +41,8 @@ export const useInviteSeriesAssistant = (seriesId?: string) => {
 export const useRemoveSeriesTeamMember = (seriesId?: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (assistantId: number) => seriesTeamApi.removeMember(seriesId!, assistantId),
+    mutationFn: ({ assistantId, roleToRemove }: { assistantId: number; roleToRemove?: string }) =>
+      seriesTeamApi.removeMember(seriesId!, assistantId, roleToRemove),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: seriesTeamKeys.team(seriesId) });
       queryClient.invalidateQueries({ queryKey: seriesTeamKeys.activeTeam(seriesId) });

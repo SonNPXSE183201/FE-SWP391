@@ -23,6 +23,7 @@ import {
   ChapterDetailPage,
   SeriesDetailPage,
   PageCanvasPage,
+  MangakaAssistantsPage,
 } from './pages/mangaka';
 
 // ─── Assistant Pages ───
@@ -34,6 +35,7 @@ import {
   AssistantWalletPage,
   AssistantSettingsPage,
   SeriesInviteRespondPage,
+  AssistantInvitesPage,
 } from './pages/assistant';
 
 // ─── Editor Pages ───
@@ -124,6 +126,7 @@ function App() {
             <Route path="/mangaka/manuscripts" element={<ManuscriptsPage />} />
             <Route path="/mangaka/manuscripts/:chapterId" element={<ChapterDetailPage />} />
             <Route path="/mangaka/tasks" element={<MangakaTasksPage />} />
+            <Route path="/mangaka/assistants" element={<MangakaAssistantsPage />} />
             <Route path="/mangaka/wallet" element={<MangakaWalletPage />} />
             <Route path="/mangaka/canvas" element={<PageCanvasPage />} />
             <Route path="/mangaka/canvas/:chapterId" element={<PageCanvasPage />} />
@@ -136,6 +139,7 @@ function App() {
           <Route element={<MainLayout />}>
             <Route path="/assistant" element={<AssistantDashboardPage />} />
             <Route path="/assistant/tasks" element={<TaskQueuePage />} />
+            <Route path="/assistant/invites" element={<AssistantInvitesPage />} />
             <Route path="/assistant/series-invites/:seriesId" element={<SeriesInviteRespondPage />} />
             <Route path="/assistant/portfolio" element={<PortfolioPage />} />
             <Route path="/assistant/profile" element={<AssistantProfilePage />} />

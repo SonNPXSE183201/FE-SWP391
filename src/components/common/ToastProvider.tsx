@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, ToastBar } from 'react-hot-toast';
 
 /**
  * Toast phải render trực tiếp lên document.body (portal), không nằm trong #root.
@@ -13,6 +13,7 @@ export const ToastProvider = () =>
       containerStyle={{ zIndex: 999999, pointerEvents: 'none' }}
       toastOptions={{
         className: 'premium-toast',
+        duration: 4000,
         style: {
           zIndex: 999999,
           pointerEvents: 'auto',
@@ -31,24 +32,47 @@ export const ToastProvider = () =>
             primary: 'var(--success, #10B981)',
             secondary: '#1A1A24',
           },
-          style: {
-            zIndex: 999999,
-            border: '1px solid rgba(16, 185, 129, 0.3)',
-            background: 'linear-gradient(to right, rgba(16, 185, 129, 0.05), var(--bg-secondary, #1A1A24))',
-          },
         },
         error: {
           iconTheme: {
             primary: 'var(--danger, #EF4444)',
             secondary: '#1A1A24',
           },
-          style: {
-            zIndex: 999999,
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            background: 'linear-gradient(to right, rgba(239, 68, 68, 0.05), var(--bg-secondary, #1A1A24))',
-          },
         },
       }}
-    />,
+    >
+      {(t) => (
+        <ToastBar toast={t}>
+          {({ icon, message }) => {
+            const isStringMessage = typeof t.message === 'string';
+            
+            if (isStringMessage) {
+              let title = 'Thông báo';
+              if (t.type === 'success') title = 'Thành công';
+              else if (t.type === 'error') title = 'Lỗi';
+
+              return (
+                <>
+                  {icon}
+                  <div className="flex flex-col gap-0.5 min-w-0 max-w-[320px] ml-1">
+                    <span className="font-semibold text-sm text-text-primary leading-tight">{title}</span>
+                    <span className="text-xs text-text-secondary leading-snug break-words">
+                      {t.message as string}
+                    </span>
+                  </div>
+                </>
+              );
+            }
+
+            return (
+              <>
+                {icon}
+                {message}
+              </>
+            );
+          }}
+        </ToastBar>
+      )}
+    </Toaster>,
     document.body,
   );

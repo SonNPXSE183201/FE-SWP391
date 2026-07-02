@@ -302,14 +302,26 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
       <div className="flex-1 min-h-[240px] lg:min-h-[360px] rounded-xl border border-border-custom overflow-hidden bg-bg-surface relative">
         {refUrl ? (
           <>
-            <TaskRegionPreview
-              pageId={task.pageId}
-              imageUrl={task.pageImageUrl}
-              coordinatesJson={task.regionCoordinatesJson}
-              regionName={task.regionName}
-              heightClassName="h-full min-h-[240px] lg:min-h-[360px]"
-              className="rounded-none border-0"
-            />
+            {!canSubmit && activeUrl ? (
+              <TaskLayerPreview
+                baseImageUrl={task.baseLayerUrl || task.pageImageUrl}
+                overlayImageUrl={activeUrl}
+                coordinatesJson={task.regionCoordinatesJson}
+                regionName={task.regionName}
+                heightClassName="h-full min-h-[240px] lg:min-h-[360px]"
+                className="rounded-none border-0"
+                label="Đã lồng ghép (Preview)"
+              />
+            ) : (
+              <TaskRegionPreview
+                pageId={task.pageId}
+                imageUrl={task.pageImageUrl}
+                coordinatesJson={task.regionCoordinatesJson}
+                regionName={task.regionName}
+                heightClassName="h-full min-h-[240px] lg:min-h-[360px]"
+                className="rounded-none border-0"
+              />
+            )}
             <a
               href={refUrl}
               target="_blank"

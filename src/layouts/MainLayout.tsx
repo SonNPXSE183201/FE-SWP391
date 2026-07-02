@@ -36,7 +36,7 @@ export const MainLayout = () => {
 
       {/* Main content area */}
       <div
-        className={`flex-1 flex flex-col min-h-screen transition-[margin-left] duration-300 ease-in-out
+        className={`flex-1 min-w-0 flex flex-col min-h-screen transition-[margin-left] duration-300 ease-in-out
           ${sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-[260px]'}
         `}
       >

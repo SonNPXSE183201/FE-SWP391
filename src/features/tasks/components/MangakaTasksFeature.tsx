@@ -137,8 +137,8 @@ export const MangakaTasksFeature = () => {
         </div>
       </div>
 
-      {/* Stats (compact pills) */}
-      <div className="mt-6 bg-bg-secondary border border-border-custom rounded-xl p-3 flex flex-wrap items-center gap-2">
+      {/* Stats (Dashboard cards) */}
+      <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatPill label="Tổng công việc" value={String(stats.total)} icon={ClipboardList} tone="text-brand" />
         <StatPill label="Đang làm" value={String(stats.inProgress)} icon={Clock} tone="text-info" />
         <StatPill label="Chờ duyệt" value={String(stats.pendingReview)} icon={Eye} tone="text-warning" />
@@ -387,22 +387,27 @@ const StatPill = ({
   tone: string;
   help?: React.ReactNode;
 }) => (
-  <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-bg-primary/40 border border-border-custom">
-    <div className={`w-8 h-8 rounded-lg bg-bg-surface flex items-center justify-center ${tone}`}>
-      <Icon size={16} />
+  <div className="relative overflow-hidden group flex items-center gap-4 px-5 py-4 rounded-2xl bg-bg-secondary border border-border-custom shadow-sm hover:border-brand/30 hover:shadow-md transition-all duration-300">
+    {/* Decorative background circle */}
+    <div className={`absolute right-0 top-0 w-24 h-24 rounded-full ${tone.replace('text-', 'bg-')}/5 -mr-8 -mt-8 transition-transform duration-500 group-hover:scale-110`} />
+    
+    <div className={`w-12 h-12 rounded-xl bg-bg-surface flex items-center justify-center flex-shrink-0 ${tone} shadow-sm group-hover:scale-105 transition-transform duration-300`}>
+      <Icon size={24} />
     </div>
-    <div className="leading-tight">
-      <div className="text-sm font-bold text-text-primary">{value}</div>
-      <div className="text-[10px] text-text-muted inline-flex items-center gap-1">
+    <div className="flex-col relative z-10">
+      <div className="text-2xl font-bold text-text-primary tracking-tight">{value}</div>
+      <div className="text-[11px] font-medium text-text-muted mt-0.5 inline-flex items-center gap-1.5 uppercase tracking-wide">
         {label}
         {help && (
-          <HelpTip
-            title={label}
-            ariaLabel={`Giải thích ${label}`}
-            placement="bottom-start"
-            width="20rem"
-            content={help}
-          />
+          <div className="text-text-muted hover:text-text-primary transition-colors">
+            <HelpTip
+              title={label}
+              ariaLabel={`Giải thích ${label}`}
+              placement="bottom-start"
+              width="20rem"
+              content={help}
+            />
+          </div>
         )}
       </div>
     </div>

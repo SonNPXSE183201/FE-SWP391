@@ -25,7 +25,7 @@ export const TASK_STATUS_FILTER_OPTIONS = [
   { value: '', label: 'Tất cả trạng thái' },
   { value: 'Pending', label: TASK_STATUS_CONFIG.Pending.label },
   { value: 'In_Progress', label: TASK_STATUS_CONFIG.In_Progress.label },
-  { value: 'Pending_Review', label: TASK_STATUS_CONFIG.Pending_Review.label },
+  { value: 'Submitted', label: TASK_STATUS_CONFIG.Pending_Review.label },
   { value: 'Approved', label: TASK_STATUS_CONFIG.Approved.label },
   { value: 'Revision', label: TASK_STATUS_CONFIG.Revision.label },
   { value: 'Disputed', label: TASK_STATUS_CONFIG.Disputed.label },
@@ -45,7 +45,7 @@ export const ASSISTANT_MY_TASK_FILTER_OPTIONS: { value: string; label: string }[
   { value: '', label: 'Tất cả' },
   { value: 'active', label: 'Cần làm' },
   { value: 'In_Progress', label: TASK_STATUS_CONFIG.In_Progress.label },
-  { value: 'Pending_Review', label: TASK_STATUS_CONFIG.Pending_Review.label },
+  { value: 'Submitted', label: TASK_STATUS_CONFIG.Pending_Review.label },
   { value: 'Revision', label: TASK_STATUS_CONFIG.Revision.label },
   { value: 'Approved', label: TASK_STATUS_CONFIG.Approved.label },
 ];

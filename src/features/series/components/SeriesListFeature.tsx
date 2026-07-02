@@ -13,14 +13,24 @@ import {
 import { usePagination } from '../../../hooks/usePagination';
 import { Pagination } from '../../../components/common/Pagination';
 import { CustomSelect } from '../../../components/common/CustomSelect';
-import { useMySeries } from '../hooks/useSeries';
+import { useMySeries, useAllChapters } from '../hooks/useSeries';
 import { seriesStatusMatchesFilter, toSelectFilterOptions } from '../../../utils/status';
+
 export const SeriesListFeature = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const { data: series = [] } = useMySeries();
+  
+  const { data: rawSeries = [] } = useMySeries();
+  const { data: allChapters = [] } = useAllChapters();
+
+  const series = useMemo(() => {
+    return rawSeries.map(s => {
+      const chapterCount = allChapters.filter(c => c.seriesId === s.id).length;
+      return { ...s, chapterCount };
+    });
+  }, [rawSeries, allChapters]);
 
   const filteredSeries = useMemo(() => {
     return series.filter((s) => {

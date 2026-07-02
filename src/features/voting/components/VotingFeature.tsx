@@ -37,6 +37,7 @@ import {
   findMyBoardVote,
   getSeriesIdString,
   getVotingUiStatus,
+  matchesVotingFilter,
   parseSeriesGenres,
   summarizeBoardVotes,
   uiChoiceToVoteSeriesRequest,
@@ -63,10 +64,33 @@ const getVoteDecisionConfig = (decision: VoteUiChoice) => {
   }
 };
 
+const getSeriesOutcomeBadge = (seriesStatus?: string | null) => {
+  switch (seriesStatus) {
+    case 'Fund_Pending':
+      return { label: 'Đã duyệt cấp vốn', color: 'text-success', bg: 'bg-success/10', icon: CheckCircle };
+    case 'Rejected':
+      return { label: 'Đã từ chối', color: 'text-danger', bg: 'bg-danger/10', icon: XCircle };
+    case 'Vote_Escalated':
+      return { label: 'Chờ quyết định thủ công', color: 'text-amber-400', bg: 'bg-amber-500/10', icon: Clock };
+    default:
+      return null;
+  }
+};
+
 const getStatusBadge = (series: VotingSeriesDto, boardMemberId?: number | string | null) => {
   const status = getVotingUiStatus(series, boardMemberId);
   const myVote = boardVoteToUiChoice(findMyBoardVote(series.boardVotes, boardMemberId));
+  const outcome = getSeriesOutcomeBadge(series.status);
+
   if (status === 'Voted' && myVote) {
+    if (outcome) {
+      return (
+        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${outcome.bg} ${outcome.color}`}>
+          <outcome.icon size={11} />
+          {outcome.label}
+        </span>
+      );
+    }
     const cfg = getVoteDecisionConfig(myVote);
     return (
       <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${cfg.bg} ${cfg.color}`}>
@@ -98,7 +122,7 @@ export const VotingFeature = () => {
   const [voteComment, setVoteComment] = useState('');
   const [voteBudget, setVoteBudget] = useState<number>(0);
 
-  const { data: votingData, isLoading } = useVotingList(filter);
+  const { data: votingData, isLoading, isError, refetch } = useVotingList();
   const votingList = votingData?.series ?? [];
   const votingRules = votingData?.rules;
   const boardTotal = votingRules?.boardMemberCount ?? 0;
@@ -115,15 +139,16 @@ export const VotingFeature = () => {
     return { pending, voted, total: votingList.length };
   }, [votingList, boardMemberId]);
 
-  const filteredList = useMemo(
-    () =>
-      votingList.filter(
+  const filteredList = useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    return votingList
+      .filter((item) => matchesVotingFilter(item, filter, boardMemberId))
+      .filter(
         (item) =>
-          (item.title ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (item.mangakaName ?? '').toLowerCase().includes(searchQuery.toLowerCase()),
-      ),
-    [votingList, searchQuery],
-  );
+          (item.title ?? '').toLowerCase().includes(q) ||
+          (item.mangakaName ?? '').toLowerCase().includes(q),
+      );
+  }, [votingList, filter, boardMemberId, searchQuery]);
 
   const handleOpenVoteModal = (item: VotingSeriesDto) => {
     setVoteTarget(item);
@@ -152,18 +177,10 @@ export const VotingFeature = () => {
 
   const getVoteResults = (item: VotingSeriesDto) => summarizeBoardVotes(item.boardVotes);
 
-  const getTotalVotes = (item: VotingSeriesDto) => {
-    const r = getVoteResults(item);
-    return r.approve + r.reject;
-  };
-
   const getVoteDenominator = () => boardTotal || 1;
 
-  const getPercentage = (count: number, total: number) =>
-    total === 0 ? 0 : Math.round((count / total) * 100);
   // ── Detail View ──
   if (selectedItem) {
-    const totalVotes = getTotalVotes(selectedItem);
     const voteResults = getVoteResults(selectedItem);
     const genres = parseSeriesGenres(selectedItem.genre);
     const uiStatus = getVotingUiStatus(selectedItem, boardMemberId);
@@ -271,62 +288,35 @@ export const VotingFeature = () => {
           <div className="lg:col-span-2 space-y-5">
             {/* Vote Distribution */}
             <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2 mb-5">
                 <BarChart3 size={16} className="text-brand" />
                 <h2 className="text-sm font-semibold text-text-primary">Kết quả biểu quyết</h2>
                 <HelpTip
-                  content="Xanh = Phê duyệt, đỏ = Từ chối, xám = Bỏ qua. Số phiếu / tổng thành viên Hội đồng được phân công."
+                  content={
+                    <>
+                      <p className="mb-2">Theo dõi tiến độ bỏ phiếu của Hội đồng.</p>
+                      <ul className="list-disc pl-4 space-y-1 text-text-muted">
+                        <li>Xanh = Phê duyệt, đỏ = Từ chối</li>
+                        <li>Phần trống = TV chưa bỏ phiếu</li>
+                        <li>% HĐ = tỷ lệ trên tổng thành viên Hội đồng</li>
+                      </ul>
+                    </>
+                  }
                   title="Cách đọc biểu đồ"
                   ariaLabel="Giải thích kết quả biểu quyết"
                   size="sm"
                 />
-                <span className="ml-auto text-xs text-text-muted">
-                  {totalVotes}/{getVoteDenominator()} TV đã vote
-                </span>
+                {votingRules && (
+                  <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-brand/10 text-brand border border-brand/20 font-medium tabular-nums">
+                    Ngưỡng duyệt ≥{votingRules.approveRequired}/{votingRules.totalWeight}
+                  </span>
+                )}
               </div>
               <VoteProgressBar
                 approve={voteResults.approve}
                 reject={voteResults.reject}
                 boardTotal={getVoteDenominator()}
               />
-              <div className="space-y-3 pt-2 border-t border-border-custom/60">
-                {/* Approve bar */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-1.5 text-xs text-success font-medium">
-                      <CheckCircle size={12} />
-                      Phê duyệt
-                    </div>
-                    <span className="text-xs font-bold text-success">
-                      {voteResults.approve} ({getPercentage(voteResults.approve, getVoteDenominator())}% HĐ)
-                    </span>
-                  </div>
-                  <div className="w-full h-2.5 bg-bg-surface rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-success rounded-full transition-all duration-500"
-                      style={{ width: `${getPercentage(voteResults.approve, getVoteDenominator())}%` }}
-                    />
-                  </div>
-                </div>
-                {/* Reject bar */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-1.5 text-xs text-danger font-medium">
-                      <XCircle size={12} />
-                      Từ chối
-                    </div>
-                    <span className="text-xs font-bold text-danger">
-                      {voteResults.reject} ({getPercentage(voteResults.reject, getVoteDenominator())}% HĐ)
-                    </span>
-                  </div>
-                  <div className="w-full h-2.5 bg-bg-surface rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-danger rounded-full transition-all duration-500"
-                      style={{ width: `${getPercentage(voteResults.reject, getVoteDenominator())}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* Action */}
@@ -454,6 +444,20 @@ export const VotingFeature = () => {
         {isLoading ? (
           <div className="flex justify-center items-center py-16">
             <Loader2 size={32} className="animate-spin text-brand" />
+          </div>
+        ) : isError ? (
+          <div className="flex flex-col items-center justify-center py-14 text-center rounded-xl border border-dashed border-danger/30 bg-danger/5">
+            <p className="text-sm font-medium text-danger">Không tải được danh sách biểu quyết</p>
+            <p className="text-xs text-text-muted mt-1 max-w-sm">
+              Backend có thể đang lỗi hoặc chưa được build lại. Thử restart backend rồi tải lại trang.
+            </p>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="mt-4 px-4 py-2 rounded-lg text-xs font-medium bg-brand text-white border-none cursor-pointer"
+            >
+              Thử lại
+            </button>
           </div>
         ) : filteredList.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-14 text-center rounded-xl border border-dashed border-border-custom bg-bg-primary/40">
