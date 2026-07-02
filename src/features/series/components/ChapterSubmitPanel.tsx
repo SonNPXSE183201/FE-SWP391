@@ -337,8 +337,8 @@ export const ChapterSubmitPanel = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5">
-        <div className="space-y-2 lg:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
+        <div className="space-y-2">
           {readiness.checks.map((item) => (
             <div
               key={item.key}
