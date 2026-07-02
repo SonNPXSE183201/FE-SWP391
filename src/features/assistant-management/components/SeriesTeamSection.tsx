@@ -1,12 +1,10 @@
 import { useMemo } from 'react';
 import toast from 'react-hot-toast';
-import { BookOpen, Trash2, Loader2 } from 'lucide-react';
+import { BookOpen, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { fixMojibake } from '../../../utils/fixMojibake';
 import { useRemoveSeriesTeamMember, useSeriesTeam } from '../../series/hooks/useSeriesTeam';
 import { useSeriesDetail } from '../../series/hooks/useSeries';
 import { getTeamComposition } from '../../series/utils/teamComposition.utils';
-import { ListTableShell, tableCellClass, tableHeadClass, tableRowClass } from './ListTableShell';
 import { TeamRoleTable } from './TeamRoleTable';
 
 interface SeriesTeamSectionProps {
@@ -27,23 +25,7 @@ export const SeriesTeamSection = ({ seriesId }: SeriesTeamSectionProps) => {
     } catch {
       toast.error('Không gỡ được thành viên');
     }
-  };
-
-  const statusLabel: Record<string, string> = {
-    Active: 'Đang hoạt động',
-    Pending: 'Chờ phản hồi',
-    Removed: 'Đã gỡ',
-    Inactive: 'Tạm nghỉ',
-  };
-
-  const statusClass: Record<string, string> = {
-    Active: 'bg-success/10 text-success',
-    Pending: 'bg-warning/10 text-warning',
-    Removed: 'bg-bg-surface text-text-muted',
-    Inactive: 'bg-bg-surface text-text-muted',
-  };
-
-  if (seriesLoading || teamLoading) {
+  };  if (seriesLoading || teamLoading) {
     return (
       <div className="flex justify-center py-20">
         <Loader2 size={28} className="animate-spin text-brand" />

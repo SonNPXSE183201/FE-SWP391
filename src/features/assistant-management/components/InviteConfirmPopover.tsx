@@ -14,7 +14,6 @@ import {
 import toast from 'react-hot-toast';
 import { CustomSelect } from '../../../components/common/CustomSelect';
 import { fixMojibake } from '../../../utils/fixMojibake';
-import { ROLE_OPTIONS, type TeamRole } from '../../series/constants/teamRoles';
 import { useMySeries } from '../../series/hooks/useSeries';
 import {
   useInviteSeriesAssistant,
@@ -24,7 +23,6 @@ import type { AssistantBrowseItem } from '../../series/types/assistantBrowse.typ
 import { splitTags } from '../../series/utils/assistantInvite.utils';
 import {
   getTeamComposition,
-  type TeamRoleCompositionItem,
 } from '../../series/utils/teamComposition.utils';
 import { AssistantAvatar } from './AssistantAvatar';
 
@@ -91,6 +89,7 @@ export const InviteConfirmPopover = ({
   /* When series changes → auto-pick a smart role */
   useEffect(() => {
     if (!selectedSeriesId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedRoles([]);
       return;
     }

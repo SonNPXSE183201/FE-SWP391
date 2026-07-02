@@ -11,7 +11,6 @@ import {
   XCircle,
   Loader2,
   Sparkles,
-  Tag,
   Clock,
 } from 'lucide-react';
 import type { AssistantInviteDto } from '../hooks/useAssistantInvites';
