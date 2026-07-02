@@ -1,7 +1,7 @@
-import { NavLink, useLocation } from 'react-router-dom';
-import { useAuthStore } from '../stores/authStore';
-import type { UserRole } from '../stores/authStore';
-import { Logo } from '../components/common/Logo';
+import { NavLink, useLocation } from "react-router-dom";
+import { useAuthStore } from "../stores/authStore";
+import type { UserRole } from "../stores/authStore";
+import { Logo } from "../components/common/Logo";
 import {
   LayoutDashboard,
   BookOpen,
@@ -21,10 +21,9 @@ import {
   Palette,
   BriefcaseBusiness,
   Sparkles,
-  LogOut,
-  Settings,
-} from 'lucide-react';
-import type { ReactNode } from 'react';
+  Mailbox,
+} from "lucide-react";
+import type { ReactNode } from "react";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -46,108 +45,220 @@ interface NavSectionConfig {
 }
 
 // Navigation configs per role
-const getNavSections = (role: UserRole): NavSectionConfig[] => {
+const getNavSections = (role: UserRole, invitesCount: number = 0): NavSectionConfig[] => {
   switch (role) {
-    case 'Mangaka':
+    case "Mangaka":
       return [
         {
-          title: 'Tổng quan',
+          title: "Tổng quan",
           items: [
-            { label: 'Bảng điều khiển', path: '/mangaka', icon: <LayoutDashboard size={20} /> },
+            {
+              label: "Bảng tin",
+              path: "/mangaka",
+              icon: <LayoutDashboard size={20} />,
+            },
           ],
         },
         {
-          title: 'Sáng tác',
+          title: "Tác phẩm",
           items: [
-            { label: 'Bộ truyện của tôi', path: '/mangaka/series', icon: <BookOpen size={20} /> },
-            { label: 'Bản thảo', path: '/mangaka/manuscripts', icon: <FileText size={20} /> },
-            { label: 'Quản lý công việc', path: '/mangaka/tasks', icon: <ClipboardList size={20} /> },
+            {
+              label: "Danh sách truyện",
+              path: "/mangaka/series",
+              icon: <BookOpen size={20} />,
+            },
+            {
+              label: "Quản lý bản thảo",
+              path: "/mangaka/manuscripts",
+              icon: <FileText size={20} />,
+            },
           ],
         },
         {
-          title: 'Tài chính',
+          title: "Nhân sự & Công việc",
           items: [
-            { label: 'Ví tiền', path: '/mangaka/wallet', icon: <Wallet size={20} /> },
+            {
+              label: "Tìm cộng sự",
+              path: "/mangaka/assistants",
+              icon: <Users size={20} />,
+            },
+            {
+              label: "Giao việc & Tiến độ",
+              path: "/mangaka/tasks",
+              icon: <ClipboardList size={20} />,
+            },
+          ],
+        },
+        {
+          title: "Tài chính",
+          items: [
+            {
+              label: "Quản lý doanh thu",
+              path: "/mangaka/wallet",
+              icon: <Wallet size={20} />,
+            },
           ],
         },
       ];
 
-    case 'Assistant':
+    case "Assistant":
       return [
         {
-          title: 'Tổng quan',
+          title: "Tổng quan",
           items: [
-            { label: 'Dashboard', path: '/assistant', icon: <LayoutDashboard size={20} /> },
+            {
+              label: "Dashboard",
+              path: "/assistant",
+              icon: <LayoutDashboard size={20} />,
+            },
           ],
         },
         {
-          title: 'Công việc',
+          title: "Công việc",
           items: [
-            { label: 'Bảng việc làm', path: '/assistant/tasks', icon: <ClipboardList size={20} /> },
-            { label: 'Portfolio', path: '/assistant/portfolio', icon: <Palette size={20} /> },
-            { label: 'Hồ sơ nghề nghiệp', path: '/assistant/profile', icon: <BriefcaseBusiness size={20} /> },
+            {
+              label: "Lời mời dự án",
+              path: "/assistant/invites",
+              icon: <Mailbox size={20} />,
+              badge: invitesCount,
+            },
+            {
+              label: "Bảng việc làm",
+              path: "/assistant/tasks",
+              icon: <ClipboardList size={20} />,
+            },
+            {
+              label: "Portfolio",
+              path: "/assistant/portfolio",
+              icon: <Palette size={20} />,
+            },
+            {
+              label: "Hồ sơ nghề nghiệp",
+              path: "/assistant/profile",
+              icon: <BriefcaseBusiness size={20} />,
+            },
           ],
         },
         {
-          title: 'Tài chính',
+          title: "Tài chính",
           items: [
-            { label: 'Thu nhập', path: '/assistant/wallet', icon: <Wallet size={20} /> },
+            {
+              label: "Thu nhập",
+              path: "/assistant/wallet",
+              icon: <Wallet size={20} />,
+            },
           ],
         },
       ];
 
-    case 'Editor':
+    case "Editor":
       return [
         {
-          title: 'Tổng quan',
+          title: "Tổng quan",
           items: [
-            { label: 'Dashboard', path: '/editor', icon: <LayoutDashboard size={20} /> },
+            {
+              label: "Dashboard",
+              path: "/editor",
+              icon: <LayoutDashboard size={20} />,
+            },
           ],
         },
         {
-          title: 'Biên tập',
+          title: "Biên tập",
           items: [
-            { label: 'Duyệt bản thảo', path: '/editor/review', icon: <FileText size={20} /> },
-            { label: 'Annotation', path: '/editor/annotations', icon: <Sparkles size={20} /> },
-            { label: 'Phân xử tranh chấp', path: '/editor/disputes', icon: <Shield size={20} /> },
+            {
+              label: "Duyệt bản thảo",
+              path: "/editor/review",
+              icon: <FileText size={20} />,
+            },
+            {
+              label: "Annotation",
+              path: "/editor/annotations",
+              icon: <Sparkles size={20} />,
+            },
+            {
+              label: "Phân xử tranh chấp",
+              path: "/editor/disputes",
+              icon: <Shield size={20} />,
+            },
           ],
         },
       ];
 
-    case 'Board':
+    case "Board":
       return [
         {
-          title: 'Tổng quan',
+          title: "Tổng quan",
           items: [
-            { label: 'Dashboard', path: '/board', icon: <LayoutDashboard size={20} /> },
+            {
+              label: "Dashboard",
+              path: "/board",
+              icon: <LayoutDashboard size={20} />,
+            },
           ],
         },
         {
-          title: 'Xuất bản',
+          title: "Xuất bản",
           items: [
-            { label: 'Bỏ phiếu', path: '/board/voting', icon: <Vote size={20} /> },
-            { label: 'Xếp hạng', path: '/board/ranking', icon: <BarChart3 size={20} /> },
-            { label: 'Lịch xuất bản', path: '/board/schedule', icon: <Calendar size={20} /> },
+            {
+              label: "Bỏ phiếu",
+              path: "/board/voting",
+              icon: <Vote size={20} />,
+            },
+            {
+              label: "Xếp hạng",
+              path: "/board/ranking",
+              icon: <BarChart3 size={20} />,
+            },
+            {
+              label: "Lịch xuất bản",
+              path: "/board/schedule",
+              icon: <Calendar size={20} />,
+            },
           ],
         },
       ];
 
-    case 'Admin':
+    case "Admin":
       return [
         {
-          title: 'Tổng quan',
+          title: "Tổng quan",
           items: [
-            { label: 'Dashboard', path: '/admin', icon: <LayoutDashboard size={20} /> },
+            {
+              label: "Dashboard",
+              path: "/admin",
+              icon: <LayoutDashboard size={20} />,
+            },
           ],
         },
         {
-          title: 'Quản trị',
+          title: "Quản trị",
           items: [
-            { label: 'Quản lý người dùng', path: '/admin/users', icon: <Users size={20} /> },
-            { label: 'Hợp đồng', path: '/admin/contracts', icon: <FileSignature size={20} /> },
-            { label: 'Đối soát giao dịch', path: '/admin/reconciliation', icon: <Receipt size={20} /> },
-            { label: 'Duyệt rút tiền', path: '/admin/withdraw-approval', icon: <ArrowUpFromLine size={20} /> },
-            { label: 'Biểu quyết HĐ', path: '/admin/board-voting', icon: <Vote size={20} /> },
+            {
+              label: "Quản lý người dùng",
+              path: "/admin/users",
+              icon: <Users size={20} />,
+            },
+            {
+              label: "Hợp đồng",
+              path: "/admin/contracts",
+              icon: <FileSignature size={20} />,
+            },
+            {
+              label: "Đối soát giao dịch",
+              path: "/admin/reconciliation",
+              icon: <Receipt size={20} />,
+            },
+            {
+              label: "Duyệt rút tiền",
+              path: "/admin/withdraw-approval",
+              icon: <ArrowUpFromLine size={20} />,
+            },
+            {
+              label: "Biểu quyết HĐ",
+              path: "/admin/board-voting",
+              icon: <Vote size={20} />,
+            },
           ],
         },
       ];
@@ -157,41 +268,21 @@ const getNavSections = (role: UserRole): NavSectionConfig[] => {
   }
 };
 
-// Role display names
-const roleDisplayNames: Record<UserRole, string> = {
-  Mangaka: 'Mangaka',
-  Assistant: 'Trợ lý vẽ',
-  Editor: 'Biên tập viên',
-  Board: 'Hội đồng BT',
-  Admin: 'Quản trị viên',
-};
+import { useAssistantInvites } from "../features/assistant-management/hooks/useAssistantInvites";
 
-export const Sidebar = ({ collapsed, mobileOpen, onToggleCollapse, onCloseMobile }: SidebarProps) => {
-  const { user, logout, refreshToken } = useAuthStore();
+export const Sidebar = ({
+  collapsed,
+  mobileOpen,
+  onToggleCollapse,
+  onCloseMobile,
+}: SidebarProps) => {
+  const { user } = useAuthStore();
   const location = useLocation();
-
-  const handleLogout = async () => {
-    try {
-      if (refreshToken) {
-        const { authApi } = await import('../features/auth/api/auth.api');
-        await authApi.logout({ refreshToken });
-      }
-    } catch (error) {
-      console.error('Failed to logout from server:', error);
-    } finally {
-      logout();
-    }
-  };
+  const { data: invites = [] } = useAssistantInvites();
 
   if (!user) return null;
 
-  const navSections = getNavSections(user.role);
-  const initials = user.fullName
-    .split(' ')
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+  const navSections = getNavSections(user.role, invites.length);
 
   return (
     <>
@@ -208,17 +299,19 @@ export const Sidebar = ({ collapsed, mobileOpen, onToggleCollapse, onCloseMobile
         className={`
           fixed top-0 left-0 z-40 flex flex-col h-screen bg-bg-primary border-r border-border-custom
           transition-all duration-300 ease-in-out
-          ${collapsed ? 'w-[72px]' : 'w-[260px]'}
-          ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
+          ${collapsed ? "w-[72px]" : "w-[260px]"}
+          ${mobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0
         `}
       >
         {/* Sidebar Header */}
-        <div className={`flex items-center h-16 px-4 border-b border-border-custom flex-shrink-0 ${collapsed ? 'justify-center' : 'justify-between'}`}>
+        <div
+          className={`flex items-center h-16 px-4 border-b border-border-custom flex-shrink-0 ${collapsed ? "justify-center" : "justify-between"}`}
+        >
           {!collapsed && <Logo size="sm" showText />}
           <button
             className="flex items-center justify-center w-8 h-8 rounded-lg-custom bg-transparent text-text-secondary hover:bg-bg-surface hover:text-text-primary transition-all duration-200 border-none cursor-pointer"
             onClick={onToggleCollapse}
-            aria-label={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
+            aria-label={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
           >
             {collapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
           </button>
@@ -247,10 +340,11 @@ export const Sidebar = ({ collapsed, mobileOpen, onToggleCollapse, onCloseMobile
                     className={`
                       group flex items-center gap-2 my-0.5 rounded-lg-custom text-sm font-medium
                       transition-all duration-200 no-underline border border-transparent
-                      ${collapsed ? 'justify-center p-2.5' : 'px-4 py-2.5'}
-                      ${isActive
-                        ? 'bg-brand/[0.12] text-brand border-brand/20 hover:bg-brand/[0.18] hover:text-brand-hover'
-                        : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'
+                      ${collapsed ? "justify-center p-2.5" : "px-4 py-2.5"}
+                      ${
+                        isActive
+                          ? "bg-brand/[0.12] text-brand border-brand/20 hover:bg-brand/[0.18] hover:text-brand-hover"
+                          : "text-text-secondary hover:bg-bg-secondary hover:text-text-primary"
                       }
                     `}
                     onClick={onCloseMobile}
@@ -263,7 +357,7 @@ export const Sidebar = ({ collapsed, mobileOpen, onToggleCollapse, onCloseMobile
                     )}
                     {!collapsed && item.badge && item.badge > 0 && (
                       <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-danger text-white text-[11px] font-bold shrink-0">
-                        {item.badge > 99 ? '99+' : item.badge}
+                        {item.badge > 99 ? "99+" : item.badge}
                       </span>
                     )}
                   </NavLink>

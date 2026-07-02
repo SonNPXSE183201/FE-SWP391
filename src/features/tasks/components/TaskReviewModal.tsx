@@ -149,9 +149,9 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-4xl max-h-[94vh] overflow-y-auto shadow-lg-custom animate-scale-in">
+      <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-4xl max-h-[94vh] flex flex-col shadow-lg-custom animate-scale-in overflow-hidden">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-bg-secondary border-b border-border-custom px-6 py-4 flex items-center justify-between rounded-t-2xl">
+        <div className="shrink-0 bg-bg-secondary border-b border-border-custom px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 rounded-lg bg-brand/10 flex items-center justify-center flex-shrink-0">
               {revising ? <RotateCcw size={18} className="text-danger" /> : <Eye size={18} className="text-brand" />}
@@ -173,7 +173,7 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col p-6 gap-4">
           {/* Task meta */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {task.seriesTitle && (
@@ -246,9 +246,9 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
               <p className="text-sm text-text-secondary">Trợ lý chưa nộp bản vẽ nào cho task này.</p>
             </div>
           ) : revising ? (
-            <div className="grid lg:grid-cols-[1fr_300px] gap-4">
+            <div className="grid lg:grid-cols-[1fr_300px] gap-4 flex-1 min-h-0">
               {/* Composite canvas + overlay submission (F2.5) */}
-              <div className="h-[300px] lg:h-[460px] bg-bg-surface rounded-xl border border-border-custom overflow-hidden">
+              <div className="relative bg-bg-surface rounded-xl border border-border-custom overflow-hidden h-full min-h-[300px]">
                 {compositeBase ? (
                   <TaskLayerPreview
                     baseImageUrl={compositeBase}
@@ -279,7 +279,7 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
               </div>
 
               {/* Controls: danh sách điểm lỗi + nhận xét + gia hạn (luôn hiển thị) */}
-              <div className="flex flex-col gap-3 lg:max-h-[460px] lg:overflow-y-auto lg:pr-1">
+              <div className="flex flex-col gap-3 h-full overflow-y-auto lg:pr-1">
                 <div>
                   <p className="text-xs font-medium text-text-secondary mb-1.5 flex items-center gap-1.5">
                     <MapPin size={13} className="text-danger" />
@@ -348,20 +348,20 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
               </div>
             </div>
           ) : (
-            <div className="space-y-3">
-              <p className="text-[11px] text-text-muted">Duyệt trên Canvas tổng thể (composite + lớp nộp bài)</p>
-              <div className="relative bg-bg-surface rounded-xl border border-border-custom overflow-hidden flex items-center justify-center h-[420px]">
+            <div className="flex flex-col flex-1 min-h-0 gap-3">
+              <p className="shrink-0 text-[11px] text-text-muted">Duyệt trên Canvas tổng thể (composite + lớp nộp bài)</p>
+              <div className="flex-1 min-h-[400px] relative bg-bg-surface rounded-xl border border-border-custom overflow-hidden flex flex-col">
                 {compositeBase || activeUrl ? (
                   <TaskLayerPreview
                     baseImageUrl={compositeBase || task.pageImageUrl}
                     overlayImageUrl={activeUrl}
                     coordinatesJson={task.regionCoordinatesJson}
                     regionName={task.regionName}
-                    heightClassName="h-[420px] w-full"
-                    className="rounded-none border-0"
+                    heightClassName="flex-1"
+                    className="rounded-none border-0 w-full"
                   />
                 ) : (
-                  <div className="flex flex-col items-center gap-2 text-text-muted">
+                  <div className="flex-1 flex flex-col items-center justify-center gap-2 text-text-muted">
                     <ImageOff size={32} />
                     <span className="text-xs">Không tải được ảnh bài nộp</span>
                   </div>
@@ -391,7 +391,7 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
               </div>
 
               {versions.length > 1 && (
-                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 shrink-0">
                   {versions.map((v, idx) => {
                     const thumb = v.submittedFileUrl ? resolveMediaUrl(v.submittedFileUrl) : '';
                     return (
@@ -423,7 +423,7 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
 
           {/* ─── Nhận xét gần nhất (chế độ xem) ─── */}
           {!revising && task.feedbackComment && (
-            <div className="bg-warning/5 border border-warning/20 rounded-lg p-3">
+            <div className="bg-warning/5 border border-warning/20 rounded-lg p-3 shrink-0">
               <p className="text-[11px] font-semibold text-warning mb-0.5">Nhận xét gần nhất của tác giả</p>
               <p className="text-[11px] text-text-secondary">{task.feedbackComment}</p>
             </div>

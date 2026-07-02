@@ -14,7 +14,7 @@ type DashboardStatsDto = components['schemas']['DashboardStatsResponseDto'];
 type AdminDashboardDto = components['schemas']['AdminDashboardResponseDto'];
 
 // SeriesStatus from entities.ts — kept as string literal since dashboard uses it for UI display
-type SeriesStatus = 'Draft' | 'PendingApproval' | 'Approved' | 'Published' | 'OnHold' | 'Cancelled';
+type SeriesStatus = 'Draft' | 'PendingApproval' | 'PendingBoardVote' | 'Approved' | 'Published' | 'OnHold' | 'Cancelled';
 
 // Donut slice colors (hex mirrors the theme palette in charts/chartTheme.ts).
 const C = {
@@ -190,10 +190,13 @@ const statNum = (dto: DashboardStatsDto, key: keyof DashboardStatsDto): number =
   return val == null ? 0 : Number(val);
 };
 
+import { normalizeSeriesStatus } from '../../../utils/status';
+
 // Map SeriesStatus → human label + slice color for status donuts.
 const SERIES_STATUS_SLICE: Record<SeriesStatus, { label: string; color: string }> = {
   Draft: { label: 'Bản nháp', color: C.secondary },
   PendingApproval: { label: 'Chờ duyệt', color: C.warning },
+  PendingBoardVote: { label: 'Chờ hội đồng', color: C.brand },
   Approved: { label: 'Đã duyệt', color: C.info },
   Published: { label: 'Đã xuất bản', color: C.success },
   OnHold: { label: 'Tạm dừng', color: '#8B8B9E' },
@@ -203,7 +206,7 @@ const SERIES_STATUS_SLICE: Record<SeriesStatus, { label: string; color: string }
 const buildSeriesStatusSlices = (series: { status?: string | null }[]): ChartSlice[] => {
   const counts = new Map<SeriesStatus, number>();
   for (const s of series) {
-    const status = (s.status as SeriesStatus) || 'Draft';
+    const status = normalizeSeriesStatus(s.status);
     counts.set(status, (counts.get(status) ?? 0) + 1);
   }
   return nonEmptySlices(

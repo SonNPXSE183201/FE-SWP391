@@ -324,9 +324,15 @@ export const PageCanvasFeature = ({
     canvasRef.current?.resetView();
   }, []);
 
-  const isPageCompleted = currentPage?.status === "Completed";
+  const isPageCompleted = currentPage?.status === 'Completed';
+  
+  const allTasksDone = regions.length > 0 && regions.every(r => {
+    const task = tasksByRegion.get(r.id);
+    return task && ['Approved', 'Closed', 'Cancelled'].includes(task.status);
+  });
+
   const canMarkPageReady =
-    !!pageId && !!currentPage && !isPageCompleted && regions.length === 0;
+    !!pageId && !!currentPage && !isPageCompleted && (regions.length === 0 || allTasksDone);
 
   const handleMarkPageReady = () => {
     if (!canMarkPageReady) return;
@@ -393,29 +399,20 @@ export const PageCanvasFeature = ({
             >
               <ArrowLeft size={16} />
             </button>
-            <div className="min-w-0">
-              <h2 className="text-sm font-bold text-text-primary truncate">
-                {chapterDetail ? `Ch.${chapterDetail.chapterNumber} · ` : ""}
-                Trang {currentPage.pageNumber} / {pages.length}
+            <div className="min-w-0 flex items-center gap-2">
+              <h2 className="text-[13px] font-bold text-text-primary whitespace-nowrap">
+                {chapterDetail ? `Chương ${chapterDetail.chapterNumber}` : "Trang canvas"}
               </h2>
-              <div className="flex items-center gap-2">
-                <span
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium ${statusConfig.bg} ${statusConfig.color}`}
-                >
-                  {statusConfig.label}
+              <span
+                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium ${statusConfig.bg} ${statusConfig.color}`}
+              >
+                {statusConfig.label}
+              </span>
+              {editorAnnotations.length > 0 && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-amber-500/10 text-amber-400">
+                  {editorAnnotations.length} lỗi Editor
                 </span>
-                <span className="text-[10px] text-text-muted">
-                  {regions.length} vùng · {assignedCount} đã giao việc
-                  {editorAnnotations.length > 0 && (
-                    <>
-                      {" · "}
-                      <span className="text-amber-400">
-                        {editorAnnotations.length} lỗi Editor
-                      </span>
-                    </>
-                  )}
-                </span>
-              </div>
+              )}
             </div>
           </div>
 
@@ -481,8 +478,8 @@ export const PageCanvasFeature = ({
                 type="button"
                 onClick={handleMarkPageReady}
                 disabled={markPageReady.isPending}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/15 border border-emerald-500/30 text-[11px] font-semibold text-emerald-400 hover:bg-emerald-600/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                title="Trang upload đã xong — không cần vẽ vùng hay giao Assistant"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/15 border border-emerald-500/30 text-[11px] font-semibold text-emerald-400 whitespace-nowrap hover:bg-emerald-600/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                title={regions.length === 0 ? "Trang upload đã xong — không cần vẽ vùng hay giao Assistant" : "Đánh dấu trang đã hoàn thiện sau khi gộp lớp Assistant"}
               >
                 {markPageReady.isPending ? (
                   <Loader2 size={14} className="animate-spin" />
@@ -493,7 +490,7 @@ export const PageCanvasFeature = ({
               </button>
             )}
             {isPageCompleted && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-success/10 border border-success/20 text-[11px] font-semibold text-success">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-success/10 border border-success/20 text-[11px] font-semibold text-success whitespace-nowrap">
                 <CheckCircle2 size={14} />
                 Đã sẵn sàng
               </span>
@@ -504,7 +501,7 @@ export const PageCanvasFeature = ({
                 download={`trang-${currentPage.pageNumber}-composite.png`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand/10 border border-brand/20 text-[11px] font-semibold text-brand hover:bg-brand/20 transition-colors no-underline"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand/10 border border-brand/20 text-[11px] font-semibold text-brand whitespace-nowrap hover:bg-brand/20 transition-colors no-underline"
                 title="Tải file PNG trang đã gộp lớp Assistant"
               >
                 <Download size={14} /> Tải ảnh
@@ -513,7 +510,7 @@ export const PageCanvasFeature = ({
             <button
               type="button"
               onClick={() => setShowReplaceImage(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand/10 border border-brand/25 text-[11px] font-semibold text-brand hover:bg-brand/20 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand/10 border border-brand/25 text-[11px] font-semibold text-brand whitespace-nowrap hover:bg-brand/20 transition-colors cursor-pointer"
               title="Tải lại ảnh trang hiện tại sau khi sửa ngoài Canvas"
             >
               <Upload size={14} />
@@ -525,7 +522,7 @@ export const PageCanvasFeature = ({
               disabled={
                 !pageId || refreshComposite.isPending || isCompositeLoading
               }
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-bg-primary border border-border-custom text-[11px] font-semibold text-text-secondary hover:text-text-primary hover:border-brand/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-bg-primary border border-border-custom text-[11px] font-semibold text-text-secondary whitespace-nowrap hover:text-text-primary hover:border-brand/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               title="Tạo lại ảnh gộp từ các Task đã duyệt"
             >
               {refreshComposite.isPending || isCompositeLoading ? (
@@ -535,31 +532,7 @@ export const PageCanvasFeature = ({
               )}
               Làm mới ảnh gộp
             </button>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() =>
-                  setCurrentPageIndex(Math.max(0, currentPageIndex - 1))
-                }
-                disabled={currentPageIndex === 0}
-                className="w-8 h-8 rounded-lg bg-bg-primary border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary hover:border-brand/30 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <span className="text-xs font-mono text-text-secondary min-w-[52px] text-center">
-                {currentPageIndex + 1} / {pages.length}
-              </span>
-              <button
-                onClick={() =>
-                  setCurrentPageIndex(
-                    Math.min(pages.length - 1, currentPageIndex + 1),
-                  )
-                }
-                disabled={currentPageIndex === pages.length - 1}
-                className="w-8 h-8 rounded-lg bg-bg-primary border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary hover:border-brand/30 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
+
           </div>
         </div>
 
@@ -574,7 +547,7 @@ export const PageCanvasFeature = ({
         )}
 
         {/* ═══ Main area: filmstrip + canvas + sidebar ═══ */}
-        <div className="flex gap-3 flex-1 min-h-0">
+        <div className="flex gap-3 flex-1 min-h-0 min-w-0">
           {/* ── Page filmstrip ── */}
           <div className="w-24 flex-shrink-0 bg-bg-secondary border border-border-custom rounded-xl flex flex-col">
             <div className="px-2 py-2.5 border-b border-border-custom text-center">
