@@ -52,6 +52,7 @@ export const TaskLayerPreview = (props: TaskLayerPreviewProps) => {
   } = props;
   const containerRef = useRef<HTMLDivElement>(null);
   const [naturalSize, setNaturalSize] = useState<{ w: number; h: number } | null>(null);
+  const [overlayNaturalSize, setOverlayNaturalSize] = useState<{ w: number; h: number } | null>(null);
   const [layout, setLayout] = useState<ImageLayout | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const coords = parseCoordinatesJson(coordinatesJson);
@@ -78,24 +79,11 @@ export const TaskLayerPreview = (props: TaskLayerPreviewProps) => {
     return () => observer.disconnect();
   }, [updateLayout]);
 
-  if (!baseUrl || imgError) {
-    if (overlayUrl) {
-      // Fallback to showing just the overlay if base image fails
-      return (
-        <div className={`flex items-center justify-center gap-2 rounded-xl border border-border-custom bg-black/30 ${heightClassName} ${className}`}>
-          <img src={overlayUrl} alt="Lớp vẽ overlay" className="h-full w-full object-contain" />
-          {(label || regionName) && (
-            <span className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)] truncate rounded-md bg-black/65 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm z-10">
-              {label || regionName} (chỉ có lớp nộp)
-            </span>
-          )}
-        </div>
-      );
-    }
+  if (imgError) {
     return (
       <div className={`flex flex-col items-center justify-center gap-2 rounded-xl border border-border-custom bg-bg-surface text-text-muted ${heightClassName} ${className}`}>
         <ImageOff size={22} className="opacity-50" />
-        <span className="text-[11px]">Chưa có ảnh nền trang</span>
+        <span className="text-[11px]">Không tải được ảnh</span>
       </div>
     );
   }
@@ -129,15 +117,36 @@ export const TaskLayerPreview = (props: TaskLayerPreviewProps) => {
           onError={() => setFailedUrl(baseUrl)}
         />
 
-        {regionStyle && overlayUrl && (
-          <div className="absolute overflow-hidden pointer-events-none" style={regionStyle}>
-            <img src={overlayUrl} alt="Lớp vẽ overlay" className="w-full h-full object-contain" />
-          </div>
+        {overlayUrl && (
+          <>
+            {/* 
+              Determine if overlay is a patch or full-page. 
+              If we don't know yet, we render it hidden to get dimensions.
+            */}
+            <img 
+              src={overlayUrl} 
+              alt="Overlay detector" 
+              className="hidden" 
+              onLoad={(e) => setOverlayNaturalSize({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })} 
+            />
+            
+            {overlayNaturalSize && naturalSize && overlayNaturalSize.w >= naturalSize.w * 0.8 ? (
+              // Full-page overlay
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <img src={overlayUrl} alt="Lớp vẽ overlay" className="w-full h-full object-contain" />
+              </div>
+            ) : regionStyle ? (
+              // Patch overlay
+              <div className="absolute overflow-hidden pointer-events-none" style={regionStyle}>
+                <img src={overlayUrl} alt="Lớp vẽ overlay" className="w-full h-full object-contain" />
+              </div>
+            ) : null}
+          </>
         )}
 
         {regionStyle && (
           <div
-            className="pointer-events-none absolute rounded-sm border border-brand/50"
+            className="pointer-events-none absolute rounded-sm border border-brand/50 border-dashed bg-brand/5"
             style={regionStyle}
           />
         )}

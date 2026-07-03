@@ -267,14 +267,14 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
         <EmptyBlock
           icon={CheckCircle2}
           title="Hàng đợi đang trống"
-          description="Không có series hay chapter nào cần xử lý. Bạn sẽ nhận thông báo khi có hồ sơ mới."
+          description="Không có bộ truyện hay chương nào cần xử lý. Bạn sẽ nhận thông báo khi có hồ sơ mới."
         />
       ) : (
         <div className="space-y-6">
           <SectionShell
             icon={BookOpen}
-            title="Hồ sơ Series mới"
-            description="Mangaka gửi lần đầu: ảnh bìa, tóm tắt, bản phác thảo (Name) và ngân sách. Bạn đánh giá rồi trình Hội đồng hoặc yêu cầu chỉnh sửa."
+            title="Hồ sơ bộ truyện mới"
+            description="Mangaka gửi lần đầu: ảnh bìa, tóm tắt, bản phác thảo và ngân sách. Bạn đánh giá rồi trình Hội đồng hoặc yêu cầu chỉnh sửa."
             count={pendingSeries.length}
           >
             {seriesLoading ? (
@@ -284,8 +284,8 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
             ) : pendingSeries.length === 0 ? (
               <EmptyBlock
                 icon={BookOpen}
-                title="Không có series chờ duyệt"
-                description="Mangaka chưa gửi hồ sơ mới hoặc bạn đã xử lý hết các series trong hàng đợi."
+                title="Không có bộ truyện chờ duyệt"
+                description="Mangaka chưa gửi hồ sơ mới hoặc bạn đã xử lý hết các bộ truyện trong hàng đợi."
               />
             ) : (
               <div className="space-y-3">
@@ -298,8 +298,8 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
 
           <SectionShell
             icon={FileText}
-            title="Chapter đã nộp"
-            description="Sau khi Series được chấp nhận, Mangaka nộp từng chapter. Bạn kiểm tra lỗi, xác nhận số trang hợp lệ và duyệt nhuận bút."
+            title="Chương đã nộp"
+            description="Sau khi bộ truyện được chấp nhận, Mangaka nộp từng chương. Bạn kiểm tra lỗi, xác nhận số trang hợp lệ và duyệt nhuận bút."
             count={filteredChapters.length}
             action={
               <div className="flex items-center gap-1.5">
@@ -328,11 +328,11 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
             ) : filteredChapters.length === 0 ? (
               <EmptyBlock
                 icon={Inbox}
-                title="Chưa có chapter nào"
+                title="Chưa có chương nào"
                 description={
                   !chapterFilter
-                    ? 'Chapter sẽ hiện ở đây khi Mangaka nộp bản vẽ sau khi Series đã được duyệt.'
-                    : 'Không có chapter nào trong trạng thái này. Thử chọn "Tất cả".'
+                    ? 'Chương sẽ hiện ở đây khi Mangaka nộp bản vẽ sau khi bộ truyện đã được duyệt.'
+                    : 'Không có chương nào trong trạng thái này. Thử chọn "Tất cả".'
                 }
               />
             ) : (
@@ -340,7 +340,7 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
                 {filteredChapters.map((c) => {
                   const status = getChapterStatusConfig(c.status);
                   const deadline = getDeadlineStatus(c.submissionDeadline || new Date().toISOString());
-                  const seriesTitle = c.series?.title || `Series #${c.seriesId}`;
+                  const seriesTitle = c.series?.title || `Bộ truyện #${c.seriesId}`;
                   const coverUrl = c.series?.coverImageUrl
                     ? resolveMediaUrl(c.series.coverImageUrl)
                     : '';
@@ -380,7 +380,7 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
                             {seriesTitle}
                           </h3>
                           <p className="text-xs text-text-secondary truncate">
-                            Ch.{c.chapterNumber} · {c.title}
+                            Chương {c.chapterNumber} · {c.title}
                           </p>
                           <div className="flex items-center gap-1.5 mt-1 text-[11px] text-text-muted">
                             <User size={11} />

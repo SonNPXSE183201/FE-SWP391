@@ -77,24 +77,25 @@ const getEmptyMessage = (filter: FilterStatus, search: string): { title: string;
   if (search.trim()) {
     return {
       title: `Không tìm thấy kết quả cho "${search.trim()}"`,
-      hint: 'Thử tìm bằng tên series hoặc tên Mangaka khác.',
+      hint: 'Thử tìm bằng tên bộ truyện hoặc tên Mangaka khác.',
     };
   }
   if (filter === 'pending') {
     return {
-      title: 'Không có series nào đang chờ lập hợp đồng',
-      hint: 'Series cần được Hội đồng phê duyệt (Fund_Pending) trước khi xuất hiện tại đây.',
+      title: 'Không có bộ truyện nào đang chờ lập hợp đồng',
+      hint: 'Bộ truyện cần được Hội đồng phê duyệt (Fund_Pending) trước khi xuất hiện tại đây.',
     };
   }
   if (filter === 'contracted') {
     return {
-      title: 'Chưa có series nào đã lập hợp đồng',
-      hint: 'Các hợp đồng đã tạo sẽ hiển thị tại tab này.',
+      title: 'Chưa có bộ truyện nào đã lập hợp đồng',
+      hint: 'Hợp đồng sau khi tạo sẽ được quản lý tại đây.',
     };
   }
+
   return {
-    title: 'Danh sách trống',
-    hint: 'Chưa có series nào đủ điều kiện lập hợp đồng.',
+    title: 'Chưa có bộ truyện nào',
+    hint: 'Chưa có bộ truyện nào đủ điều kiện lập hợp đồng.',
   };
 };
 
@@ -258,7 +259,7 @@ export const ContractManagementFeature = () => {
           <div>
             <h1 className="page-header__title">Quản lý Hợp đồng</h1>
             <p className="page-header__subtitle">
-              Lập hợp đồng nhuận bút và quản lý phụ lục cho series đã được Hội đồng phê duyệt
+              Lập hợp đồng nhuận bút và quản lý phụ lục cho bộ truyện đã được Hội đồng phê duyệt
             </p>
           </div>
         </div>
@@ -272,7 +273,7 @@ export const ContractManagementFeature = () => {
             <span className="text-[10px] uppercase tracking-wider font-medium">Chờ lập HĐ</span>
           </div>
           <p className="text-2xl font-bold text-warning mt-2">{pendingCount}</p>
-          <p className="text-[11px] text-text-muted mt-1">Series đã duyệt, chưa có hợp đồng</p>
+          <p className="text-[11px] text-text-muted mt-1">Bộ truyện đã duyệt, chưa có hợp đồng</p>
         </div>
         <div className="bg-bg-secondary border border-border-custom rounded-xl p-4">
           <div className="flex items-center gap-2 text-text-muted">
@@ -288,7 +289,7 @@ export const ContractManagementFeature = () => {
             <span className="text-[10px] uppercase tracking-wider font-medium">Tổng ngân sách duyệt</span>
           </div>
           <p className="text-lg font-bold text-text-primary mt-2">{formatVND(totalBudget)}</p>
-          <p className="text-[11px] text-text-muted mt-1">Tổng ngân sách Board đã phê duyệt</p>
+          <p className="text-[11px] text-text-muted mt-1">Tổng ngân sách Hội đồng đã phê duyệt</p>
         </div>
       </div>
 
@@ -300,7 +301,7 @@ export const ContractManagementFeature = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm theo tên series hoặc Mangaka..."
+            placeholder="Tìm theo tên bộ truyện hoặc Mangaka..."
             className="w-full pl-9 pr-4 py-2.5 bg-bg-secondary border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 transition-colors"
           />
         </div>
@@ -349,7 +350,7 @@ export const ContractManagementFeature = () => {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-16 text-text-muted">
             <Loader2 size={28} className="animate-spin text-brand mb-3" />
-            <span className="text-sm">Đang tải danh sách series...</span>
+            <span className="text-sm">Đang tải danh sách bộ truyện...</span>
           </div>
         ) : isError ? (
           <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
@@ -518,7 +519,7 @@ export const ContractManagementFeature = () => {
 
         {!isLoading && !isError && filteredData.length > 0 && (
           <div className="px-5 py-3 border-t border-border-custom bg-bg-surface/30 text-xs text-text-muted flex items-center justify-between">
-            <span>Hiển thị {filteredData.length} / {seriesList.length} series</span>
+            <span>Hiển thị {filteredData.length} / {seriesList.length} bộ truyện</span>
             {contractedCount > 0 && (
               <span className="text-[10px] text-text-muted flex items-center gap-1">
                 <Eye size={10} />

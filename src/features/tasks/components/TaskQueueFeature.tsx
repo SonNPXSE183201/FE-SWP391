@@ -146,7 +146,7 @@ export const TaskQueueFeature = () => {
     const all = myData?.items ?? [];
     return {
       active: all.filter((t) => ACTIVE_TASK_STATUSES.includes(normalizeTaskStatus(t.status))).length,
-      review: all.filter((t) => normalizeTaskStatus(t.status) === 'Pending_Review').length,
+      review: all.filter((t) => normalizeTaskStatus(t.status) === 'Submitted').length,
       done: all.filter((t) => normalizeTaskStatus(t.status) === 'Approved').length,
     };
   }, [myData]);
@@ -231,7 +231,7 @@ export const TaskQueueFeature = () => {
         <div className="flex flex-wrap gap-2">
           {(isMyTasksTab
             ? [
-                { label: 'Cần làm', value: myStats.active, icon: ListChecks, color: 'text-info', bg: 'bg-info/10' },
+                { label: 'Việc cần xử lý', value: myStats.active, icon: ListChecks, color: 'text-info', bg: 'bg-info/10' },
                 { label: 'Chờ duyệt', value: myStats.review, icon: Clock, color: 'text-warning', bg: 'bg-warning/10' },
                 { label: 'Hoàn thành', value: myStats.done, icon: CheckCircle2, color: 'text-success', bg: 'bg-success/10' },
               ]

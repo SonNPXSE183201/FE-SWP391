@@ -59,7 +59,7 @@ const EvidenceCard = ({ ev }: { ev: DisputeEvidenceDto }) => {
           </div>
           <span className="text-xs font-medium text-text-primary">{ev.submitterName}</span>
           <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${badgeBg}`}>
-            {ev.submittedBy}
+            {isMangaka ? 'Tác giả' : 'Trợ lý'}
           </span>
         </div>
         <span className="text-[10px] text-text-muted">{formatDateTime(ev.createdAt ?? '')}</span>
@@ -69,7 +69,7 @@ const EvidenceCard = ({ ev }: { ev: DisputeEvidenceDto }) => {
         <p className="text-sm text-text-secondary leading-relaxed">{ev.content}</p>
       ) : (
         <div className="rounded-lg overflow-hidden border border-border-custom">
-          <img src={ev.content ?? ''} alt="Evidence" className="w-full h-48 object-cover" />
+          <img src={ev.content ?? ''} alt="Bằng chứng" className="w-full h-48 object-cover" />
         </div>
       )}
     </div>
@@ -202,27 +202,27 @@ export const DisputeManagementFeature = () => {
             <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
               <div className="flex items-center gap-2 mb-4">
                 <FileText size={16} className="text-brand" />
-                <h2 className="text-sm font-semibold text-text-primary">Thông tin Task</h2>
+                <h2 className="text-sm font-semibold text-text-primary">Thông tin Nhiệm vụ</h2>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="bg-bg-surface border border-border-custom rounded-lg p-3">
-                  <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">Task</p>
+                  <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">Nhiệm vụ</p>
                   <p className="text-sm font-medium text-text-primary">{disputeDetail.taskTitle}</p>
                 </div>
                 <div className="bg-bg-surface border border-border-custom rounded-lg p-3">
-                  <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">Region</p>
+                  <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">Vùng</p>
                   <p className="text-sm font-medium text-text-primary flex items-center gap-1.5">
                     <MapPin size={12} className="text-text-muted" /> {disputeDetail.regionInfo}
                   </p>
                 </div>
                 <div className="bg-bg-surface border border-border-custom rounded-lg p-3">
-                  <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">Deadline</p>
+                  <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">Hạn chót</p>
                   <p className="text-sm font-medium text-text-primary flex items-center gap-1.5">
                     <Clock size={12} className="text-text-muted" /> {formatDateTime(disputeDetail.taskDeadline ?? '')}
                   </p>
                 </div>
                 <div className="bg-bg-surface border border-border-custom rounded-lg p-3">
-                  <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">Số tiền Lock</p>
+                  <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">Số tiền khóa</p>
                   <p className="text-sm font-bold text-amber-400">{formatVND(lockedAmt)}</p>
                 </div>
               </div>
@@ -240,7 +240,7 @@ export const DisputeManagementFeature = () => {
                     <div className="w-6 h-6 rounded-full bg-orange-400/10 flex items-center justify-center">
                       <User size={12} className="text-orange-400" />
                     </div>
-                    <span className="text-xs font-medium text-orange-400">Mangaka — {disputeDetail.mangakaName}</span>
+                    <span className="text-xs font-medium text-orange-400">Tác giả — {disputeDetail.mangakaName}</span>
                   </div>
                   <p className="text-sm text-text-secondary leading-relaxed">{disputeDetail.mangakaReason}</p>
                 </div>
@@ -249,7 +249,7 @@ export const DisputeManagementFeature = () => {
                     <div className="w-6 h-6 rounded-full bg-blue-400/10 flex items-center justify-center">
                       <User size={12} className="text-blue-400" />
                     </div>
-                    <span className="text-xs font-medium text-blue-400">Assistant — {disputeDetail.assistantName}</span>
+                    <span className="text-xs font-medium text-blue-400">Trợ lý — {disputeDetail.assistantName}</span>
                   </div>
                   <p className="text-sm text-text-secondary leading-relaxed">{disputeDetail.assistantReason}</p>
                 </div>
@@ -270,7 +270,7 @@ export const DisputeManagementFeature = () => {
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-2 h-2 rounded-full bg-orange-400" />
-                      <span className="text-xs font-medium text-text-secondary">Từ Mangaka ({mangakaEvidence.length})</span>
+                      <span className="text-xs font-medium text-text-secondary">Từ Tác giả ({mangakaEvidence.length})</span>
                     </div>
                     {mangakaEvidence.length > 0 ? (
                       mangakaEvidence.map((ev: DisputeEvidenceDto, idx: number) => <EvidenceCard key={`mangaka-${idx}`} ev={ev} />)
@@ -282,7 +282,7 @@ export const DisputeManagementFeature = () => {
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-2 h-2 rounded-full bg-blue-400" />
-                      <span className="text-xs font-medium text-text-secondary">Từ Assistant ({assistantEvidence.length})</span>
+                      <span className="text-xs font-medium text-text-secondary">Từ Trợ lý ({assistantEvidence.length})</span>
                     </div>
                     {assistantEvidence.length > 0 ? (
                       assistantEvidence.map((ev: DisputeEvidenceDto, idx: number) => <EvidenceCard key={`assistant-${idx}`} ev={ev} />)
@@ -310,7 +310,7 @@ export const DisputeManagementFeature = () => {
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-text-primary truncate">{disputeDetail.mangakaName}</p>
-                    <p className="text-[10px] text-orange-400 font-medium">Mangaka</p>
+                    <p className="text-[10px] text-orange-400 font-medium">Tác giả</p>
                   </div>
                 </div>
                 <div className="bg-bg-surface border border-blue-400/20 rounded-xl p-4 flex items-center gap-3">
@@ -319,7 +319,7 @@ export const DisputeManagementFeature = () => {
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-text-primary truncate">{disputeDetail.assistantName}</p>
-                    <p className="text-[10px] text-blue-400 font-medium">Assistant</p>
+                    <p className="text-[10px] text-blue-400 font-medium">Trợ lý</p>
                   </div>
                 </div>
               </div>
@@ -333,7 +333,7 @@ export const DisputeManagementFeature = () => {
               </div>
               <div className="bg-bg-surface border border-border-custom rounded-xl p-4 space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-text-muted">Số tiền Lock</span>
+                  <span className="text-xs text-text-muted">Số tiền khóa</span>
                   <span className="text-sm font-bold text-text-primary">{formatVND(lockedAmt)}</span>
                 </div>
                 {disputeDetail.status === 'Resolved' && disputeDetail.resolution && (
@@ -356,7 +356,7 @@ export const DisputeManagementFeature = () => {
                   <h2 className="text-sm font-semibold text-text-primary">Phân xử</h2>
                 </div>
                 <p className="text-xs text-text-secondary mb-4">
-                  Xem xét bằng chứng 2 bên và điều chỉnh tỷ lệ Nhuận bút (Partial Payment) theo Rule T06.
+                  Xem xét bằng chứng 2 bên và điều chỉnh tỷ lệ Nhuận bút (Thanh toán một phần) theo Rule T06.
                 </p>
                 <button
                   onClick={handleOpenResolve}
@@ -407,21 +407,24 @@ export const DisputeManagementFeature = () => {
 
         {/* ═══════ RESOLVE MODAL ═══════ */}
         {showResolveModal && createPortal(
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowResolveModal(false)} />
+            <div 
+              className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity duration-300" 
+              onClick={() => setShowResolveModal(false)} 
+            />
 
             {/* Modal */}
-            <div className="relative bg-bg-primary border border-border-custom rounded-2xl shadow-2xl w-full max-w-lg animate-fade-in overflow-hidden">
+            <div className="relative bg-bg-primary border border-border-custom rounded-2xl shadow-xl w-full max-w-2xl animate-fade-in overflow-hidden">
               {/* Header */}
-              <div className="flex items-center justify-between px-5 py-4 border-b border-border-custom">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-border-custom bg-bg-secondary">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center">
                     <Gavel size={16} className="text-brand" />
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-text-primary">Phân xử tranh chấp</h3>
-                    <p className="text-[10px] text-text-muted">Rule T06 — Partial Payment</p>
+                    <p className="text-[10px] text-text-muted">Rule T06 — Thanh toán một phần</p>
                   </div>
                 </div>
                 <button
@@ -433,75 +436,81 @@ export const DisputeManagementFeature = () => {
               </div>
 
               {/* Body */}
-              <div className="px-5 py-5 space-y-5">
-                {/* Locked Amount */}
-                <div className="bg-bg-surface border border-border-custom rounded-xl p-4 text-center">
-                  <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">Tổng tiền Lock</p>
-                  <p className="text-2xl font-bold text-text-primary">{formatVND(lockedAmt)}</p>
+              <div className="px-5 py-4 space-y-4">
+                {/* Locked Amount - Compact */}
+                <div className="bg-bg-surface border border-border-custom rounded-xl p-3 flex items-center justify-between">
+                  <p className="text-[10px] uppercase tracking-wider text-text-muted font-bold flex items-center gap-1.5">
+                    <Shield size={12} className="text-amber-400" />
+                    Tổng tiền khóa
+                  </p>
+                  <p className="text-lg font-bold text-text-primary">
+                    {formatVND(lockedAmt)}
+                  </p>
                 </div>
 
-                {/* Slider */}
-                <div className="space-y-3">
-                  <label className="text-xs font-medium text-text-primary flex items-center gap-2">
-                    <Scale size={14} className="text-brand" />
-                    Tỷ lệ thanh toán cho Assistant
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      step={5}
-                      value={assistantPercent}
-                      onChange={(e) => setAssistantPercent(Number(e.target.value))}
-                      className="w-full h-2 rounded-full appearance-none cursor-pointer accent-brand"
-                      style={{
-                        background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${assistantPercent}%, #f97316 ${assistantPercent}%, #f97316 100%)`,
-                      }}
-                    />
-                    <div className="flex justify-between text-[10px] text-text-muted mt-1">
-                      <span>0%</span>
-                      <span className="text-sm font-bold text-brand">{assistantPercent}%</span>
-                      <span>100%</span>
+                {/* Slider and Breakdown in 2 Columns */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-3 bg-bg-surface border border-border-custom rounded-xl p-4">
+                    <label className="text-xs font-medium text-text-primary flex items-center gap-2">
+                      <Scale size={14} className="text-brand" />
+                      Tỷ lệ thanh toán cho Trợ lý
+                    </label>
+                    <div className="relative pt-2">
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        step={5}
+                        value={assistantPercent}
+                        onChange={(e) => setAssistantPercent(Number(e.target.value))}
+                        className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-brand"
+                        style={{
+                          background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${assistantPercent}%, #f97316 ${assistantPercent}%, #f97316 100%)`,
+                        }}
+                      />
+                      <div className="flex justify-between text-[10px] text-text-muted mt-2">
+                        <span>0%</span>
+                        <span className="text-xs font-bold text-brand">{assistantPercent}%</span>
+                        <span>100%</span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Payment Breakdown */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-bg-surface border border-blue-400/20 rounded-xl p-3 text-center">
-                      <p className="text-[10px] text-blue-400 font-medium mb-0.5">→ Assistant nhận</p>
-                      <p className="text-lg font-bold text-blue-400">{formatVND(assistantAmount)}</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-bg-surface border border-blue-400/20 rounded-xl p-3 flex flex-col justify-center text-center">
+                      <p className="text-[10px] text-blue-400 font-medium mb-0.5">→ Trợ lý nhận</p>
+                      <p className="text-base font-bold text-blue-400">{formatVND(assistantAmount)}</p>
                       <p className="text-[10px] text-text-muted">{assistantPercent}%</p>
                     </div>
-                    <div className="bg-bg-surface border border-orange-400/20 rounded-xl p-3 text-center">
-                      <p className="text-[10px] text-orange-400 font-medium mb-0.5">← Mangaka hoàn</p>
-                      <p className="text-lg font-bold text-orange-400">{formatVND(mangakaRefund)}</p>
+                    <div className="bg-bg-surface border border-orange-400/20 rounded-xl p-3 flex flex-col justify-center text-center">
+                      <p className="text-[10px] text-orange-400 font-medium mb-0.5">← Tác giả hoàn</p>
+                      <p className="text-base font-bold text-orange-400">{formatVND(mangakaRefund)}</p>
                       <p className="text-[10px] text-text-muted">{100 - assistantPercent}%</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Editor Note */}
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <label className="text-xs font-medium text-text-primary flex items-center gap-2">
                     <MessageSquare size={14} className="text-brand" />
-                    Ghi chú phân xử
+                    Ghi chú quyết định phân xử
                   </label>
                   <textarea
                     value={editorNote}
                     onChange={(e) => setEditorNote(e.target.value)}
-                    rows={3}
-                    placeholder="Nhập lý do phân xử và căn cứ quyết định..."
-                    className="w-full bg-bg-surface border border-border-custom rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:border-brand/50 focus:ring-brand/20 transition-all resize-none"
+                    rows={2}
+                    placeholder="Nhập lý do phân xử và căn cứ quyết định để hai bên nắm rõ..."
+                    className="w-full bg-bg-surface border border-border-custom rounded-xl px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all resize-none"
                   />
                 </div>
               </div>
 
               {/* Footer */}
-              <div className="flex items-center justify-end gap-2 px-5 pb-5">
+              <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-border-custom bg-bg-secondary rounded-b-2xl">
                 <button
                   onClick={() => setShowResolveModal(false)}
-                  className="px-4 py-2 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-secondary hover:text-text-primary transition-all cursor-pointer"
+                  className="px-4 py-2 bg-bg-surface border border-border-custom rounded-lg text-sm text-text-secondary hover:text-text-primary transition-all cursor-pointer"
                 >
                   Hủy
                 </button>
@@ -509,10 +518,10 @@ export const DisputeManagementFeature = () => {
                   onClick={handleResolve}
                   disabled={resolveDispute.isPending}
                   className={`
-                    inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium border-none cursor-pointer transition-all
+                    inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border-none cursor-pointer transition-all
                     ${resolveDispute.isPending
                       ? 'bg-brand/50 text-white/70 cursor-not-allowed'
-                      : 'bg-brand hover:bg-brand-hover text-white shadow-brand hover:shadow-brand-hover'
+                      : 'bg-brand hover:bg-brand-hover text-white'
                     }
                   `}
                 >

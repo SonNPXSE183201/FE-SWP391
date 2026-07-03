@@ -35,7 +35,7 @@ export type PageStatus =
 export type TaskStatus =
   | 'Pending'
   | 'In_Progress'
-  | 'Pending_Review'
+  | 'Submitted'
   | 'Approved'
   | 'Revision'
   | 'Disputed'

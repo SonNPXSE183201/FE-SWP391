@@ -1,8 +1,8 @@
 import type { ReconciliationRecord, ReconciliationStatus } from '../types/reconciliation.types';
 import { NEMU_FUNDING_LABEL } from '../../series/constants/seriesCopy';
+import { formatVND } from '../../../utils/currency';
 
-export const formatReconciliationCurrency = (value: number): string =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+export const formatReconciliationCurrency = (value: number): string => formatVND(value);
 
 export const inferTransactionType = (record: ReconciliationRecord): 'deposit' | 'withdraw' | 'funding' | 'platform_topup' | 'other' => {
   const text = `${record.description ?? ''} ${record.referenceCode ?? ''}`.toLowerCase();
