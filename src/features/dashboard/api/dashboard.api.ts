@@ -319,7 +319,7 @@ export const dashboardApi = {
 
     const inProgress = tasksList.filter((t: TasksDto) => t.status === 'In_Progress').length;
     const completed = tasksList.filter((t: TasksDto) => t.status === 'Approved').length;
-    const pendingReview = tasksList.filter((t: TasksDto) => t.status === 'Pending_Review').length;
+    const pendingReview = tasksList.filter((t: TasksDto) => t.status === 'Submitted').length;
 
     const monthlyIncome = transactions
       .filter(

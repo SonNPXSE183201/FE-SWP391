@@ -101,7 +101,7 @@ export const ReviewSeriesFeature = () => {
 
     if (onlyBudgetFailed) {
       if (suggestedBudgetNum <= 0) {
-        toast.error('Vui lòng nhập ngân sách Editor đề xuất.');
+        toast.error('Vui lòng nhập ngân sách biên tập viên đề xuất.');
         return;
       }
       submitToBoard.mutate(
@@ -172,9 +172,9 @@ export const ReviewSeriesFeature = () => {
           <ArrowLeft size={20} />
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold text-text-primary truncate">Review hồ sơ Series</h1>
+          <h1 className="text-xl font-bold text-text-primary truncate">Duyệt hồ sơ bộ truyện</h1>
           <p className="text-xs text-text-muted mt-0.5">
-            {typedSeries.title} · ID {seriesId}
+            {typedSeries.title} · Mã {seriesId}
           </p>
         </div>
         <span className="inline-flex items-center px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-medium border border-amber-500/20">
@@ -261,12 +261,12 @@ export const ReviewSeriesFeature = () => {
                 <p className="text-[11px] text-text-muted mt-1">Mangaka đề xuất</p>
               </div>
               <div className="bg-bg-surface border border-border-custom rounded-xl p-4 h-full">
-                <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Chapters</p>
+                <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Số chương</p>
                 <p className="text-xl font-bold text-text-primary mt-1">{typedSeries.chapterCount ?? 0}</p>
                 <p className="text-[11px] text-text-muted mt-1">
                   {(typedSeries.chapters ?? []).length > 0
-                    ? `Mới nhất: ${typedSeries.chapters![typedSeries.chapters!.length - 1].title ?? 'N/A'}`
-                    : 'Chưa có chapter nào'}
+                    ? `Mới nhất: ${typedSeries.chapters![typedSeries.chapters!.length - 1].title ?? 'không có'}`
+                    : 'Chưa có chương nào'}
                 </p>
               </div>
             </div>
@@ -278,11 +278,11 @@ export const ReviewSeriesFeature = () => {
                     <FileText size={18} className="text-brand" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-text-primary">Bản phác thảo (Name)</p>
+                    <p className="text-xs font-semibold text-text-primary">Bản phác thảo</p>
                     <p className="text-[11px] text-text-muted mt-0.5">
                       {typedSeries.resourceFolderUrl
-                        ? 'Mangaka đã nộp file PDF phác thảo Chapter mẫu.'
-                        : 'Chưa có file Name được nộp kèm hồ sơ.'}
+                        ? 'Mangaka đã nộp tệp phác thảo chương mẫu.'
+                        : 'Chưa có bản phác thảo được nộp kèm hồ sơ.'}
                     </p>
                   </div>
                 </div>
@@ -294,10 +294,10 @@ export const ReviewSeriesFeature = () => {
                     className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-brand/10 hover:bg-brand/20 text-brand text-xs font-medium no-underline flex-shrink-0"
                   >
                     <ExternalLink size={14} />
-                    Xem PDF
+                    Xem tệp
                   </a>
                 ) : (
-                  <span className="text-[10px] text-danger font-medium flex-shrink-0">Thiếu file</span>
+                  <span className="text-[10px] text-danger font-medium flex-shrink-0">Thiếu tệp</span>
                 )}
               </div>
             </div>
@@ -310,13 +310,13 @@ export const ReviewSeriesFeature = () => {
             <div className="flex items-center justify-between gap-2 shrink-0">
               <div className="flex items-center gap-2">
                 <ClipboardCheck size={16} className="text-brand" />
-                <h2 className="text-sm font-semibold text-text-primary">Đánh giá Editor</h2>
+                <h2 className="text-sm font-semibold text-text-primary">Đánh giá biên tập</h2>
                 <HelpTip
                   content={
                     <>
                       Tick các mục đạt yêu cầu. Nếu <strong className="text-text-primary">đủ 4/4</strong>, hồ sơ
-                      trình thẳng lên Hội đồng. Nếu chỉ mục ngân sách chưa đạt, nhập mức Editor đề xuất — hồ sơ vẫn
-                      được trình Board mà không bắt Mangaka nộp lại. Các mục khác chưa đạt sẽ gửi về Mangaka chỉnh sửa.
+                      trình thẳng lên Hội đồng. Nếu chỉ mục ngân sách chưa đạt, nhập mức biên tập viên đề xuất — hồ sơ vẫn
+                      được trình Hội đồng mà không bắt Mangaka nộp lại. Các mục khác chưa đạt sẽ gửi về Mangaka chỉnh sửa.
                     </>
                   }
                   ariaLabel="Hướng dẫn đánh giá"
@@ -340,7 +340,7 @@ export const ReviewSeriesFeature = () => {
 
             <div className="space-y-1 shrink-0 mt-4">
               <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-2">
-                Checklist kiểm tra
+                Danh mục kiểm tra
               </p>
               {CHECKLIST_ITEMS.map((item) => {
                 const checked = checklist[item.id];
@@ -374,7 +374,7 @@ export const ReviewSeriesFeature = () => {
               <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 space-y-3 animate-fade-in shrink-0 mt-4">
                 <div className="flex items-center gap-2">
                   <Banknote size={14} className="text-amber-400" />
-                  <p className="text-xs font-semibold text-text-primary">Ngân sách Editor đề xuất</p>
+                  <p className="text-xs font-semibold text-text-primary">Ngân sách biên tập viên đề xuất</p>
                   <span className="text-danger text-[10px]">*</span>
                 </div>
                 <p className="text-[11px] text-amber-300/90 leading-relaxed">
@@ -391,7 +391,7 @@ export const ReviewSeriesFeature = () => {
                     inputMode="numeric"
                     value={suggestedBudget ? formatVNDInput(suggestedBudget) : ''}
                     onChange={(e) => setSuggestedBudget(e.target.value.replace(/[^0-9]/g, ''))}
-                    placeholder="Nhập mức Editor đề xuất"
+                    placeholder="Nhập mức biên tập viên đề xuất"
                     className="px-3 py-2 bg-bg-surface border border-border-custom rounded-lg text-sm text-text-primary focus:outline-none focus:border-brand/50"
                   />
                 </div>

@@ -36,7 +36,7 @@ export async function validatePngTransparent(file: File): Promise<{ valid: boole
     if (transparentPixels === 0) {
       return {
         valid: false,
-        message: 'PNG phải có nền trong suốt (alpha channel). Vui lòng xuất file với nền transparent.',
+        message: 'Ảnh phải có nền trong suốt. Vui lòng xuất ảnh và loại bỏ phần nền.',
       };
     }
 

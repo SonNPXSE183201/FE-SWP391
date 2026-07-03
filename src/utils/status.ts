@@ -46,7 +46,6 @@ export const seriesStatusMatchesFilter = (status: unknown, filter: string): bool
 const CHAPTER_STATUS_ALIASES: Record<string, ChapterStatus> = {
   Draft: 'Draft',
   Submitted: 'UnderReview',
-  Pending_Review: 'UnderReview',
   UnderReview: 'UnderReview',
   Approved: 'Approved',
   Revision: 'Revision',
@@ -121,12 +120,12 @@ export const countPagesByStatus = (pages: { status: PageStatus | string }[]) => 
 // ─── Task ────────────────────────────────────────────────────
 
 export const normalizeTaskStatus = (status?: string | null): TaskStatus => {
-  if (status === 'Submitted') return 'Pending_Review';
-  const key = String(status ?? '');
+  let key = String(status ?? '');
+  if (key === 'Pending_Review') key = 'Submitted';
   const allowed: TaskStatus[] = [
     'Pending',
     'In_Progress',
-    'Pending_Review',
+    'Submitted',
     'Approved',
     'Revision',
     'Disputed',
@@ -139,7 +138,7 @@ export const normalizeTaskStatus = (status?: string | null): TaskStatus => {
 
 export const taskStatusMatchesFilter = (status: unknown, filter: string): boolean => {
   if (!filter) return true;
-  return normalizeTaskStatus(String(status ?? '')) === filter;
+  return normalizeTaskStatus(String(status ?? '')) === normalizeTaskStatus(filter);
 };
 
 // ─── Filter UI helpers ───────────────────────────────────────

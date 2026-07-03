@@ -47,7 +47,7 @@ export const MOCK_TASKS: MockTask[] = [
     chapterId: 'ch-1', chapterTitle: 'Ch.1: Khởi đầu',
     seriesId: 's-1', seriesTitle: 'Huyền Thoại Samurai',
     assignedAssistantName: 'Minh Anh',  // đã nhận từ Queue
-    status: 'Pending_Review', amount: 350000,
+    status: 'Submitted', amount: 350000,
     deadline: '2026-06-20T23:59:59Z',
     extensionUsed: false,
     createdAt: '2026-06-01T08:00:00Z', updatedAt: '2026-06-10T14:00:00Z',
