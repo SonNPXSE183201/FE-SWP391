@@ -28,6 +28,8 @@ import {
   CheckCircle2,
   MapPin,
   Upload,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { getAxiosErrorMessage } from "../../../api/axios";
@@ -75,6 +77,7 @@ export const PageCanvasFeature = ({
   const [editingLabel, setEditingLabel] = useState("");
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [showReplaceImage, setShowReplaceImage] = useState(false);
+  const [showRegions, setShowRegions] = useState(true);
 
   const {
     activeTool,
@@ -453,6 +456,14 @@ export const PageCanvasFeature = ({
             <ToolButton title="Vừa khung hình" onClick={handleZoomFit}>
               <Maximize2 size={18} />
             </ToolButton>
+            <div className="w-px h-6 bg-border-custom mx-1" />
+            <ToolButton
+              active={!showRegions}
+              title={showRegions ? "Ẩn khung vùng vẽ" : "Hiện khung vùng vẽ"}
+              onClick={() => setShowRegions(!showRegions)}
+            >
+              {showRegions ? <Eye size={18} /> : <EyeOff size={18} />}
+            </ToolButton>
             {selectedRegionId && !tasksByRegion.has(selectedRegionId) && (
               <>
                 <div className="w-px h-6 bg-border-custom mx-1" />
@@ -598,11 +609,17 @@ export const PageCanvasFeature = ({
 
           {/* ── Canvas ── */}
           <div className="flex-1 relative bg-bg-secondary border border-border-custom rounded-xl overflow-hidden min-h-0">
-            <CanvasViewer
-              ref={canvasRef}
+            {(isCompositeLoading && !compositedUrl) ? (
+              <div className="h-full w-full flex flex-col items-center justify-center bg-bg-surface">
+                <Loader2 size={32} className="animate-spin text-brand mb-2" />
+                <span className="text-sm text-text-muted">Đang tải ảnh trang...</span>
+              </div>
+            ) : (
+              <CanvasViewer
+                ref={canvasRef}
               key={pageId}
               imageUrl={canvasImageUrl}
-              regions={regions}
+              regions={showRegions ? regions : []}
               annotations={editorAnnotations}
               mode={activeTool === "select" ? "view" : activeTool}
               onRegionCreated={handleRegionCreated}
@@ -615,6 +632,7 @@ export const PageCanvasFeature = ({
               showRegionCoords
               className="w-full h-full"
             />
+            )}
 
             {/* Region-name prompt overlay while drawing */}
             {isDrawingTool && (

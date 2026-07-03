@@ -34,6 +34,7 @@ import {
   useUpdateBoardVotingConfig,
 } from '../hooks/useBoardVotingAdmin';
 import type { BoardVotingConfigDto } from '../api/boardVoting.api';
+import { formatVND } from '../../../utils/currency';
 import { calcBoardVotesRequired, calcEffectiveThresholdPercent } from '../../voting/voting.utils';
 
 const PRESETS = [
@@ -44,8 +45,7 @@ const PRESETS = [
 
 const MIN_BOARD_MEMBERS = 3;
 
-const formatCurrency = (v: number) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(v);
+
 
 const calcRequired = calcBoardVotesRequired;
 
@@ -86,6 +86,7 @@ export const AdminBoardVotingFeature = () => {
       config?.chairUserId != null &&
       boardMembers.some((m) => Number(m.id) === config.chairUserId);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync chair when member list changes
     setForm((prev) =>
       prev
         ? {
@@ -103,12 +104,12 @@ export const AdminBoardVotingFeature = () => {
   const selectedChair = useMemo(() => {
     if (!form?.chairUserId) return null;
     return boardMembers.find((m) => Number(m.id) === form.chairUserId) ?? null;
-  }, [boardMembers, form?.chairUserId]);
+  }, [boardMembers, form]);
 
   const chairSelectionInvalid = useMemo(() => {
     if (!form?.chairUserId) return false;
     return !boardMembers.some((m) => Number(m.id) === form.chairUserId);
-  }, [form?.chairUserId, boardMembers]);
+  }, [form, boardMembers]);
 
   const preview = useMemo(() => {
     if (!form) return null;
@@ -859,7 +860,7 @@ export const AdminBoardVotingFeature = () => {
                       onChange={(e) => setResolveBudget(Number(e.target.value))}
                       className={inputClass}
                     />
-                    <span className="text-[11px] text-text-muted">{formatCurrency(resolveBudget)}</span>
+                    <span className="text-[11px] text-text-muted">{formatVND(resolveBudget)}</span>
                   </label>
                 )}
 

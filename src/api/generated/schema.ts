@@ -1203,6 +1203,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Assistants/me/invites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AssistantInviteDtoIEnumerableApiResponse"];
+                        "application/json": components["schemas"]["AssistantInviteDtoIEnumerableApiResponse"];
+                        "text/json": components["schemas"]["AssistantInviteDtoIEnumerableApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/login": {
         parameters: {
             query?: never;
@@ -3536,6 +3573,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/series/{id}/decline-fund": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/series/{id}/vote": {
         parameters: {
             query?: never;
@@ -3576,6 +3652,216 @@ export interface paths {
             };
         };
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/series/{seriesId}/team": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    seriesId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SeriesAssistantDtoIEnumerableApiResponse"];
+                        "application/json": components["schemas"]["SeriesAssistantDtoIEnumerableApiResponse"];
+                        "text/json": components["schemas"]["SeriesAssistantDtoIEnumerableApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/series/{seriesId}/team/active": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    seriesId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SeriesAssistantDtoIEnumerableApiResponse"];
+                        "application/json": components["schemas"]["SeriesAssistantDtoIEnumerableApiResponse"];
+                        "text/json": components["schemas"]["SeriesAssistantDtoIEnumerableApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/series/{seriesId}/team/invite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    seriesId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["InviteSeriesAssistantDto"];
+                    "text/json": components["schemas"]["InviteSeriesAssistantDto"];
+                    "application/*+json": components["schemas"]["InviteSeriesAssistantDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SeriesAssistantDtoApiResponse"];
+                        "application/json": components["schemas"]["SeriesAssistantDtoApiResponse"];
+                        "text/json": components["schemas"]["SeriesAssistantDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/series/{seriesId}/team/respond": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    seriesId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RespondSeriesInviteDto"];
+                    "text/json": components["schemas"]["RespondSeriesInviteDto"];
+                    "application/*+json": components["schemas"]["RespondSeriesInviteDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SeriesAssistantDtoApiResponse"];
+                        "application/json": components["schemas"]["SeriesAssistantDtoApiResponse"];
+                        "text/json": components["schemas"]["SeriesAssistantDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/series/{seriesId}/team/{assistantId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: {
+                    roleToRemove?: string;
+                };
+                header?: never;
+                path: {
+                    seriesId: number;
+                    assistantId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;
@@ -4670,6 +4956,34 @@ export interface components {
                 [key: string]: string[] | null;
             } | null;
         };
+        AssistantInviteDto: {
+            /** Format: int32 */
+            seriesId?: number;
+            seriesTitle?: string | null;
+            coverUrl?: string | null;
+            roleInTeam?: string | null;
+            status?: string | null;
+            /** Format: date-time */
+            createAt?: string;
+            genre?: string | null;
+            synopsis?: string | null;
+            publicationSchedule?: string | null;
+            seriesStatus?: string | null;
+            mangakaName?: string | null;
+            mangakaPenName?: string | null;
+            /** Format: int32 */
+            teamSize?: number;
+        };
+        AssistantInviteDtoIEnumerableApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["AssistantInviteDto"][] | null;
+            errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
         AssistantPortfolioStatsDto: {
             /** Format: int32 */
             totalCompletedTasks?: number;
@@ -4849,16 +5163,14 @@ export interface components {
             autoResolveHours?: number;
             /** Format: int32 */
             approvalThresholdPercent?: number;
-            /** Format: int32 */
-            rejectionThresholdPercent?: number;
-            tiePolicy?: string | null;
             clearVotesOnResubmit?: boolean;
-            requireOddBoardSize?: boolean;
             /** Format: int32 */
             boardRoleId?: number;
             /** Format: int32 */
             chairUserId?: number | null;
             chairUserName?: string | null;
+            chairIsValid?: boolean;
+            chairInvalidWarning?: string | null;
         };
         BoardVotingConfigDtoApiResponse: {
             success?: boolean;
@@ -4876,20 +5188,20 @@ export interface components {
             /** Format: int32 */
             approveRequired?: number;
             /** Format: int32 */
-            rejectRequired?: number;
+            totalWeight?: number;
+            /** Format: int32 */
+            chairWeight?: number;
             /** Format: int32 */
             approvalThresholdPercent?: number;
             /** Format: int32 */
-            rejectionThresholdPercent?: number;
-            tiePolicy?: string | null;
-            /** Format: int32 */
             autoResolveHours?: number;
-            isEvenBoardSize?: boolean;
-            requireOddBoardSize?: boolean;
-            oddBoardSizeWarning?: string | null;
             /** Format: int32 */
             chairUserId?: number | null;
             chairUserName?: string | null;
+            chairIsValid?: boolean;
+            chairInvalidWarning?: string | null;
+            /** Format: int32 */
+            effectiveChairUserId?: number | null;
             rulesSummary?: string | null;
         };
         BoardVotingRulesDtoApiResponse: {
@@ -5351,6 +5663,11 @@ export interface components {
                 [key: string]: string[] | null;
             } | null;
         };
+        InviteSeriesAssistantDto: {
+            /** Format: int32 */
+            assistantId?: number;
+            roleInTeam?: string | null;
+        };
         LayerDto: {
             /** Format: int32 */
             regionId?: number;
@@ -5798,6 +6115,9 @@ export interface components {
             /** Format: double */
             assistantRate?: number;
         };
+        RespondSeriesInviteDto: {
+            accept?: boolean;
+        };
         Role: {
             /** Format: int32 */
             id?: number;
@@ -5828,6 +6148,8 @@ export interface components {
             /** Format: double */
             estimatedProductionBudget?: number;
             /** Format: double */
+            editorRecommendedBudget?: number;
+            /** Format: double */
             approvedProductionBudget?: number;
             publicationSchedule?: string | null;
             status?: string | null;
@@ -5838,6 +6160,57 @@ export interface components {
             boardVotes?: components["schemas"]["BoardVote"][] | null;
             contracts?: components["schemas"]["Contract"][] | null;
             chapters?: components["schemas"]["Chapter"][] | null;
+            seriesAssistants?: components["schemas"]["SeriesAssistant"][] | null;
+        };
+        SeriesAssistant: {
+            /** Format: int32 */
+            seriesId?: number;
+            /** Format: int32 */
+            assistantId?: number;
+            roleInTeam?: string | null;
+            /** Format: date-time */
+            joinedDate?: string | null;
+            status?: string | null;
+            /** Format: date-time */
+            createAt?: string;
+            /** Format: date-time */
+            updateAt?: string | null;
+            series?: components["schemas"]["Series"];
+            assistant?: components["schemas"]["User"];
+        };
+        SeriesAssistantDto: {
+            /** Format: int32 */
+            seriesId?: number;
+            /** Format: int32 */
+            assistantId?: number;
+            assistantName?: string | null;
+            assistantEmail?: string | null;
+            roleInTeam?: string | null;
+            /** Format: date-time */
+            joinedDate?: string | null;
+            status?: string | null;
+            /** Format: date-time */
+            createAt?: string;
+        };
+        SeriesAssistantDtoApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["SeriesAssistantDto"];
+            errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
+        SeriesAssistantDtoIEnumerableApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["SeriesAssistantDto"][] | null;
+            errors?: {
+                [key: string]: string[] | null;
+            } | null;
         };
         SeriesDto: {
             /** Format: int32 */
@@ -5852,6 +6225,8 @@ export interface components {
             coverArtworkUrl?: string | null;
             /** Format: double */
             estimatedProductionBudget?: number;
+            /** Format: double */
+            editorRecommendedBudget?: number;
             /** Format: double */
             approvedProductionBudget?: number;
             publicationSchedule?: string | null;
@@ -5898,6 +6273,8 @@ export interface components {
             resourceFolderUrl?: string | null;
             /** Format: double */
             estimatedProductionBudget?: number;
+            /** Format: double */
+            editorRecommendedBudget?: number;
             /** Format: double */
             approvedProductionBudget?: number;
             status?: string | null;
@@ -5955,6 +6332,8 @@ export interface components {
         };
         SubmitToBoardDto: {
             notes?: string | null;
+            /** Format: double */
+            editorRecommendedBudget?: number | null;
         };
         TaskVersion: {
             /** Format: int32 */
@@ -6057,10 +6436,19 @@ export interface components {
             mangakaName?: string | null;
             assistantName?: string | null;
             /** Format: int32 */
+            seriesId?: number;
+            seriesTitle?: string | null;
+            /** Format: int32 */
+            chapterId?: number;
+            /** Format: int32 */
+            chapterNumber?: number;
+            chapterTitle?: string | null;
+            /** Format: int32 */
             pageId?: number;
             /** Format: int32 */
             pageNumber?: number;
             pageImageUrl?: string | null;
+            baseLayerUrl?: string | null;
             regionName?: string | null;
             regionCoordinatesJson?: string | null;
             /** Format: date-time */
@@ -6217,11 +6605,7 @@ export interface components {
             autoResolveHours?: number;
             /** Format: int32 */
             approvalThresholdPercent?: number;
-            /** Format: int32 */
-            rejectionThresholdPercent?: number;
-            tiePolicy?: string | null;
             clearVotesOnResubmit?: boolean;
-            requireOddBoardSize?: boolean;
             /** Format: int32 */
             chairUserId?: number | null;
         };
@@ -6297,6 +6681,7 @@ export interface components {
             toTransactions?: components["schemas"]["Transaction"][] | null;
             refreshTokens?: components["schemas"]["RefreshToken"][] | null;
             portfolioSamples?: components["schemas"]["PortfolioSample"][] | null;
+            seriesAssistants?: components["schemas"]["SeriesAssistant"][] | null;
         };
         UserListItemDto: {
             id?: string | null;

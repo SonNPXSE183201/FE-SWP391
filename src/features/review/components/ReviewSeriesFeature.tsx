@@ -21,6 +21,7 @@ import { HelpTip } from '../../../components/common/HelpTip';
 import { useReviewSeriesDetail, useSubmitToBoard, useRequireRevision } from '../hooks/useReview';
 import type { SeriesReviewDto } from '../api/review.api';
 import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
+import { formatVND, formatVNDInput } from '../../../utils/currency';
 
 const CHECKLIST_ITEMS = [
   { id: 'synopsis', label: 'Nội dung tóm tắt rõ ràng, hấp dẫn' },
@@ -31,14 +32,6 @@ const CHECKLIST_ITEMS = [
 
 type ChecklistId = (typeof CHECKLIST_ITEMS)[number]['id'];
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-
-const formatCurrencyInput = (value: string): string => {
-  const numericValue = value.replace(/[^0-9]/g, '');
-  if (!numericValue) return '';
-  return new Intl.NumberFormat('vi-VN').format(Number(numericValue));
-};
 
 const STATUS_LABELS: Record<string, string> = {
   Pending_Approval: 'Chờ Review',
@@ -264,7 +257,7 @@ export const ReviewSeriesFeature = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-bg-surface border border-border-custom rounded-xl p-4 h-full">
                 <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Vốn yêu cầu</p>
-                <p className="text-xl font-bold text-text-primary mt-1">{formatCurrency(originalBudget)}</p>
+                <p className="text-xl font-bold text-text-primary mt-1">{formatVND(originalBudget)}</p>
                 <p className="text-[11px] text-text-muted mt-1">Mangaka đề xuất</p>
               </div>
               <div className="bg-bg-surface border border-border-custom rounded-xl p-4 h-full">
@@ -391,12 +384,12 @@ export const ReviewSeriesFeature = () => {
                 <div className="grid grid-cols-2 gap-2">
                   <div className="px-3 py-2 rounded-lg bg-bg-surface border border-border-custom">
                     <p className="text-[10px] text-text-muted">Mangaka đề xuất</p>
-                    <p className="text-sm font-semibold text-text-primary">{formatCurrency(originalBudget)}</p>
+                    <p className="text-sm font-semibold text-text-primary whitespace-nowrap">{formatVND(originalBudget)}</p>
                   </div>
                   <input
                     type="text"
                     inputMode="numeric"
-                    value={suggestedBudget ? formatCurrencyInput(suggestedBudget) : ''}
+                    value={suggestedBudget ? formatVNDInput(suggestedBudget) : ''}
                     onChange={(e) => setSuggestedBudget(e.target.value.replace(/[^0-9]/g, ''))}
                     placeholder="Nhập mức Editor đề xuất"
                     className="px-3 py-2 bg-bg-surface border border-border-custom rounded-lg text-sm text-text-primary focus:outline-none focus:border-brand/50"
@@ -404,7 +397,7 @@ export const ReviewSeriesFeature = () => {
                 </div>
                 {suggestedBudgetNum > 0 && (
                   <p className="text-[11px] text-brand font-medium">
-                    Hội đồng sẽ thấy: {formatCurrency(suggestedBudgetNum)}
+                    Hội đồng sẽ thấy: {formatVND(suggestedBudgetNum)}
                   </p>
                 )}
               </div>

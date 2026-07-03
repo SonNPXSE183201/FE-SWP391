@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Banknote, ChevronDown, Loader2, MessageSquareQuote, RotateCcw, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { formatVND, formatVNDInput } from '../../../utils/currency';
 import {
   parseEditorRevisionNote,
   CHECKLIST_LABELS,
@@ -14,15 +15,6 @@ interface EditorRevisionPanelProps {
   onSaveBudget: (amount: number) => Promise<void>;
   onScrollToSubmit?: () => void;
 }
-
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-
-const formatCurrencyInput = (value: string): string => {
-  const numericValue = value.replace(/[^0-9]/g, '');
-  if (!numericValue) return '';
-  return new Intl.NumberFormat('vi-VN').format(Number(numericValue));
-};
 
 const parseMangakaBudgetFromNote = (note: string): number | null => {
   const match = note.match(/Mangaka đề xuất:\s*([\d.,]+)\s*VND/i);
@@ -152,10 +144,10 @@ export const EditorRevisionPanel = ({
             {mangakaBudget != null && mangakaBudget !== editorBudget && (
               <p className="text-xs text-text-muted">
                 Bạn đề xuất{' '}
-                <span className="line-through text-text-secondary">{formatCurrency(mangakaBudget)}</span>
+                <span className="line-through text-text-secondary">{formatVND(mangakaBudget)}</span>
                 {' → '}
                 Editor đề xuất{' '}
-                <span className="font-semibold text-brand">{formatCurrency(editorBudget)}</span>
+                <span className="font-semibold text-brand">{formatVND(editorBudget)}</span>
               </p>
             )}
 
@@ -163,7 +155,7 @@ export const EditorRevisionPanel = ({
               <input
                 type="text"
                 inputMode="numeric"
-                value={budgetInput ? formatCurrencyInput(budgetInput) : ''}
+                value={budgetInput ? formatVNDInput(budgetInput) : ''}
                 onChange={(e) => setBudgetInput(e.target.value.replace(/[^0-9]/g, ''))}
                 placeholder="Nhập ngân sách (VND)"
                 className="flex-1 px-3 py-2.5 bg-bg-primary border border-border-custom rounded-lg text-sm text-text-primary focus:outline-none focus:border-brand/50"

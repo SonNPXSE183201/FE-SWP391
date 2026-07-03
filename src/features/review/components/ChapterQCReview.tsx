@@ -40,6 +40,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
   const [showApprove, setShowApprove] = useState(false);
   const [showRevision, setShowRevision] = useState(false);
   const [revisionReason, setRevisionReason] = useState('');
+  const [manualValidPageCount, setManualValidPageCount] = useState<number | null>(null);
   const [checklist, setChecklist] = useState<boolean[]>(QC_CHECKLIST_ITEMS.map(() => false));
   const canvasRef = useRef<CanvasViewerHandle>(null);
   const revisionTemplates = [
@@ -167,10 +168,12 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
     [annotations],
   );
 
-  const validPageCount = useMemo(
+  const autoValidPageCount = useMemo(
     () => pages.filter((p: PageDto) => !pageHasError(String(p.id))).length,
     [pages, pageHasError],
   );
+  
+  const validPageCount = manualValidPageCount !== null ? manualValidPageCount : autoValidPageCount;
 
   const genkouryo = validPageCount * (chapter?.appliedGenkouryoPrice ?? 0);
   const totalUnresolved = annotations.filter((a) => !a.resolved).length;
@@ -202,10 +205,10 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
     return `Vui lòng chỉnh sửa theo các lỗi đã ghim:\n${lines.join('\n')}`.slice(0, 500);
   }, [pages, unresolvedAnnotations]);
 
-  useEffect(() => {
-    if (!showRevision || revisionReason.trim() || !autoRevisionSummary) return;
-    setRevisionReason(autoRevisionSummary);
-  }, [showRevision, revisionReason, autoRevisionSummary]);
+  const openRevisionModal = useCallback(() => {
+    setShowRevision(true);
+    setRevisionReason((current) => current.trim() || autoRevisionSummary || '');
+  }, [autoRevisionSummary]);
 
   // ─── Handlers ───
   const handleCreate = useCallback(
@@ -412,7 +415,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
 
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
-              onClick={() => setShowRevision(true)}
+              onClick={openRevisionModal}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-bg-primary border border-border-custom rounded-lg text-xs text-text-secondary hover:text-text-primary hover:border-amber-500/30 transition-all cursor-pointer"
             >
               <RotateCcw size={13} /> Yêu cầu sửa
@@ -740,35 +743,69 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                 <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-2">
                   QC Checklist (bắt buộc)
                 </p>
-                <div className="space-y-1">
-                  {QC_CHECKLIST_ITEMS.map((item, idx) => (
-                    <label key={idx} className="flex items-start gap-2.5 p-2 rounded-lg hover:bg-bg-surface cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={checklist[idx]}
-                        onChange={(e) =>
-                          setChecklist((prev) => prev.map((v, i) => (i === idx ? e.target.checked : v)))
+                <div className="space-y-2">
+                  {QC_CHECKLIST_ITEMS.map((item, idx) => {
+                    const isChecked = checklist[idx];
+                    return (
+                      <div
+                        key={idx}
+                        onClick={() =>
+                          setChecklist((prev) => prev.map((v, i) => (i === idx ? !v : v)))
                         }
-                        className="mt-0.5 w-4 h-4 rounded accent-brand cursor-pointer flex-shrink-0"
-                      />
-                      <span className="text-xs text-text-secondary">{item}</span>
-                    </label>
-                  ))}
+                        className={`flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-all border ${
+                          isChecked 
+                            ? 'bg-success/10 border-success/30 shadow-[0_0_12px_rgba(16,185,129,0.1)]' 
+                            : 'bg-bg-surface border-border-custom hover:border-text-muted/30'
+                        }`}
+                      >
+                        <div className="mt-0.5 flex-shrink-0 transition-transform hover:scale-110">
+                          {isChecked ? (
+                            <CheckCircle2 size={16} className="text-success" />
+                          ) : (
+                            <div className="w-4 h-4 rounded-full border border-border-custom bg-bg-primary" />
+                          )}
+                        </div>
+                        <span className={`text-xs transition-colors mt-0.5 ${
+                          isChecked ? 'text-success font-medium' : 'text-text-secondary'
+                        }`}>
+                          {item}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
-              <div className="bg-bg-surface border border-border-custom rounded-xl p-3 space-y-2">
-                <div className="flex items-center justify-between text-xs">
+              <div className="bg-gradient-to-br from-bg-surface to-bg-secondary border border-border-custom rounded-xl p-4 space-y-3 relative overflow-hidden">
+                <div className="absolute -top-4 -right-4 p-4 opacity-[0.03] pointer-events-none">
+                  <Banknote size={80} />
+                </div>
+                <div className="flex items-center justify-between text-xs relative z-10">
                   <span className="text-text-secondary">Số trang hợp lệ (ValidPageCount)</span>
-                  <span className="font-semibold text-text-primary">{validPageCount} / {pages.length}</span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      max={pages.length}
+                      value={validPageCount}
+                      onChange={(e) => {
+                        const val = e.target.value ? Number(e.target.value) : 0;
+                        setManualValidPageCount(Math.min(Math.max(val, 0), pages.length));
+                      }}
+                      className="w-14 px-2 py-1 bg-bg-primary/50 border border-border-custom rounded-md text-right font-semibold text-text-primary focus:outline-none focus:border-brand/50 focus:bg-bg-primary transition-colors"
+                    />
+                    <span className="font-semibold text-text-muted">/ {pages.length}</span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center justify-between text-xs relative z-10">
                   <span className="text-text-secondary">Đơn giá nhuận bút</span>
-                  <span className="font-semibold text-text-primary">{formatVND(chapter.appliedGenkouryoPrice || 0)}/trang</span>
+                  <span className="font-semibold text-text-primary">{formatVND(chapter.appliedGenkouryoPrice || 0)} <span className="text-text-muted font-normal">/trang</span></span>
                 </div>
-                <div className="flex items-center justify-between pt-2 border-t border-border-custom">
-                  <span className="text-xs text-text-secondary font-medium">Tổng giải ngân</span>
-                  <span className="text-base font-bold text-success">{formatVND(genkouryo)}</span>
+                <div className="flex items-center justify-between pt-3 border-t border-border-custom relative z-10">
+                  <span className="text-xs text-text-secondary font-medium uppercase tracking-wider">Tổng giải ngân</span>
+                  <span className="text-xl font-bold text-success drop-shadow-[0_0_8px_rgba(16,185,129,0.3)]">
+                    {formatVND(genkouryo)}
+                  </span>
                 </div>
               </div>
             </div>
