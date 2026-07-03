@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus, X, Send, Calendar, DollarSign, AlertCircle,
   BookOpen, FileText, Shield, Banknote, Loader2,
-  CheckCircle2, Type, Image, Wallet, UserCheck,
+  CheckCircle2, Type, Image, Wallet, UserCheck, Briefcase,
 } from 'lucide-react';
 import { useWallet, formatVND, formatVNDInput, parseVND } from '../../wallet';
 import { useMySeries, useChapters, useChapterPages } from '../../series';
@@ -15,6 +15,7 @@ import type { ApiResponse } from '../../../api/axios';
 import type { TasksDto } from '../../../api/generated/types';
 import { CustomDatePicker } from '../../../components/common/CustomDatePicker';
 import { HelpTip } from '../../../components/common/HelpTip';
+import { CustomSelect } from '../../../components/common/CustomSelect';
 
 // ─── Types ───────────────────────────────────────────────────
 interface CreateTaskFormData {
@@ -80,6 +81,21 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
   const { data: chaptersList = [] } = useChapters(formData.seriesId, { pageSize: 100 });
   const { data: pagesList = [] } = useChapterPages(formData.chapterId);
   const { data: activeTeam = [], isLoading: teamLoading } = useSeriesActiveTeam(formData.seriesId);
+
+  const [selectedRole, setSelectedRole] = useState<string>('');
+
+  const availableRoles = useMemo(() => {
+    const roles = new Set<string>();
+    activeTeam.forEach(member => {
+      if (member.roleInTeam) {
+        member.roleInTeam.split(',').forEach(r => {
+          const trimmed = r.trim();
+          if (trimmed) roles.add(trimmed);
+        });
+      }
+    });
+    return Array.from(roles).sort();
+  }, [activeTeam]);
 
   const availablePages = pagesList;
 
@@ -207,7 +223,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-2xl shadow-lg-custom animate-scale-in flex flex-col overflow-hidden">
+      <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-4xl shadow-lg-custom animate-scale-in flex flex-col overflow-hidden">
 
         {/* ─── Header ─── */}
         <div className="relative px-6 py-4 border-b border-border-custom flex items-center justify-between bg-gradient-to-r from-brand/10 via-brand/[0.04] to-transparent">
@@ -292,6 +308,28 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
                 </div>
               )}
 
+              {/* Role filter */}
+              {availableRoles.length > 0 && (
+                <div className="mb-4">
+                  <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
+                    <Briefcase size={13} />
+                    Vai trò cần tuyển
+                  </label>
+                  <CustomSelect
+                    options={availableRoles.map(r => ({ value: r, label: r }))}
+                    value={selectedRole}
+                    onChange={(val) => {
+                       setSelectedRole(val);
+                       const currentAsst = activeTeam.find(m => String(m.assistantId) === formData.assistantId);
+                       if (currentAsst && val && !currentAsst.roleInTeam?.includes(val)) {
+                           updateField('assistantId', '');
+                       }
+                    }}
+                    placeholder="— Tất cả vai trò —"
+                  />
+                </div>
+              )}
+
               {/* Assistant picker — chỉ thành viên Active trong Series_Assistant */}
               <div>
                 <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
@@ -307,22 +345,55 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
                     Chưa có Trợ lý Active trong nhóm. Vào trang Series → mời thành viên trước khi giao việc.
                   </p>
                 ) : (
-                  <select
+                  <CustomSelect
+                    options={activeTeam
+                      .filter(m => !selectedRole || m.roleInTeam?.includes(selectedRole))
+                      .map((m) => ({
+                      value: String(m.assistantId),
+                      label: m.assistantName ?? 'Unknown'
+                    }))}
                     value={formData.assistantId}
-                    onChange={(e) => updateField('assistantId', e.target.value)}
-                    className={`${inputBase} ${errors.assistantId ? 'border-danger/50' : 'border-border-custom'}`}
-                  >
-                    <option value="">— Chọn Trợ lý —</option>
-                    {activeTeam.map((m) => (
-                      <option key={m.assistantId} value={String(m.assistantId)}>
-                        {m.assistantName} · {m.roleInTeam}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => updateField('assistantId', val)}
+                    placeholder="— Chọn Trợ lý —"
+                    error={!!errors.assistantId}
+                  />
                 )}
                 {errors.assistantId && <p className="text-[11px] text-danger mt-1">{errors.assistantId}</p>}
               </div>
 
+              {/* Deadline */}
+              <div>
+                <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
+                  <Calendar size={13} />
+                  Hạn chót <span className="text-danger">*</span>
+                </label>
+                <CustomDatePicker
+                  value={formData.deadline}
+                  onChange={(v) => updateField('deadline', v)}
+                  min={minDeadline}
+                  error={!!errors.deadline}
+                />
+                {errors.deadline && <p className="text-[11px] text-danger mt-1">{errors.deadline}</p>}
+              </div>
+
+              {/* Note */}
+              <div>
+                <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
+                  <FileText size={13} />
+                  Ghi chú <span className="text-text-muted font-normal">(không bắt buộc)</span>
+                </label>
+                <textarea
+                  value={formData.note}
+                  onChange={(e) => updateField('note', e.target.value)}
+                  placeholder="Mô tả yêu cầu chi tiết cho Trợ lý..."
+                  rows={3}
+                  className={`${inputBase} border-border-custom resize-none`}
+                />
+              </div>
+            </div>
+
+            {/* Right column — wallet lock preview & extra fields */}
+            <div className="space-y-3">
               {/* Amount */}
               <div>
                 <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
@@ -365,40 +436,6 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
                   })}
                 </div>
               </div>
-
-              {/* Deadline */}
-              <div>
-                <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
-                  <Calendar size={13} />
-                  Hạn chót <span className="text-danger">*</span>
-                </label>
-                <CustomDatePicker
-                  value={formData.deadline}
-                  onChange={(v) => updateField('deadline', v)}
-                  min={minDeadline}
-                  error={!!errors.deadline}
-                />
-                {errors.deadline && <p className="text-[11px] text-danger mt-1">{errors.deadline}</p>}
-              </div>
-
-              {/* Note */}
-              <div>
-                <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
-                  <FileText size={13} />
-                  Ghi chú <span className="text-text-muted font-normal">(không bắt buộc)</span>
-                </label>
-                <textarea
-                  value={formData.note}
-                  onChange={(e) => updateField('note', e.target.value)}
-                  placeholder="Mô tả yêu cầu chi tiết cho Trợ lý..."
-                  rows={2}
-                  className={`${inputBase} border-border-custom resize-none`}
-                />
-              </div>
-            </div>
-
-            {/* Right column — wallet lock preview */}
-            <div>
               {amountNum > 0 ? (
                 <div className="bg-bg-surface border border-border-custom rounded-xl p-4 flex flex-col gap-3">
                   <p className="text-sm font-semibold text-text-primary flex items-center gap-1.5">

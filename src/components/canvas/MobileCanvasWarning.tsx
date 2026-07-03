@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { MonitorSmartphone, RotateCcw } from 'lucide-react';
 
 export const MobileCanvasWarning = () => {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 767px)').matches);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 767px)');
@@ -10,9 +10,6 @@ export const MobileCanvasWarning = () => {
     const handleChange = (e: MediaQueryListEvent) => {
       setIsMobile(e.matches);
     };
-
-    // Set initial value
-    setIsMobile(mediaQuery.matches);
 
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
@@ -35,14 +32,14 @@ export const MobileCanvasWarning = () => {
 
         {/* Title */}
         <h2 className="text-xl font-semibold text-white">
-          Canvas không khả dụng trên thiết bị nhỏ
+          Trình xem ảnh không khả dụng trên thiết bị nhỏ
         </h2>
 
         {/* Description */}
         <p className="text-sm text-gray-400 leading-relaxed">
-          Trình chỉnh sửa Canvas yêu cầu màn hình tối thiểu{' '}
+          Trình chỉnh sửa ảnh yêu cầu màn hình tối thiểu{' '}
           <span className="text-white font-medium">768px</span>. Vui lòng sử dụng
-          Desktop hoặc Tablet để có trải nghiệm tốt nhất.
+          máy tính hoặc máy tính bảng để có trải nghiệm tốt nhất.
         </p>
 
         {/* Hints */}

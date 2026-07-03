@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 
 import {
-  CHAPTER_STATUS_FILTER_OPTIONS,
+  SERIES_STATUS_FILTER_OPTIONS,
   getChapterStatusConfig,
   UploadChapterModal,
   useAllChapters,
@@ -20,7 +20,7 @@ import {
   formatChapterDate,
 } from '../index';
 import { CustomSelect } from '../../../components/common/CustomSelect';
-import { chapterStatusMatchesFilter, toSelectFilterOptions } from '../../../utils/status';
+import { seriesStatusMatchesFilter, toSelectFilterOptions } from '../../../utils/status';
 import { getSeriesStatusConfig } from '../constants';
 import type { Chapter, Series } from '../../../types/entities';
 
@@ -47,15 +47,12 @@ export const ManuscriptsFeature = () => {
     }
 
     return seriesList
+      .filter((series) => !statusFilter || seriesStatusMatchesFilter(series.status, statusFilter))
       .map((series) => {
-        let seriesChapters = (chaptersBySeries.get(series.id) ?? [])
+        const seriesChapters = (chaptersBySeries.get(series.id) ?? [])
           .sort((a, b) => a.chapterNumber - b.chapterNumber);
-        if (statusFilter) {
-          seriesChapters = seriesChapters.filter((c) => chapterStatusMatchesFilter(c.status, statusFilter));
-        }
         return { ...series, chapters: seriesChapters };
-      })
-      .filter((group) => !statusFilter || group.chapters.length > 0);
+      });
   }, [seriesList, chapters, statusFilter]);
 
   const totalChapters = useMemo(
@@ -117,7 +114,7 @@ export const ManuscriptsFeature = () => {
       <div className="flex flex-wrap items-center gap-3 mt-6">
         <div className="w-[200px]">
           <CustomSelect
-            options={toSelectFilterOptions(CHAPTER_STATUS_FILTER_OPTIONS)}
+            options={toSelectFilterOptions(SERIES_STATUS_FILTER_OPTIONS)}
             value={statusFilter}
             onChange={setStatusFilter}
             placeholder="Tất cả trạng thái"

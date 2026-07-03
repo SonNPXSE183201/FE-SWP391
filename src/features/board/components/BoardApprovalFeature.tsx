@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
+import { formatVND, formatVNDInput } from '../../../utils/currency';
 import {
   Vote,
   Eye,
@@ -91,15 +92,6 @@ export const BoardApprovalFeature = () => {
   const [publishSchedule, setPublishSchedule] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-  };
-
-  const formatCurrencyInput = (value: string): string => {
-    const numericValue = value.replace(/[^0-9]/g, '');
-    if (!numericValue) return '';
-    return new Intl.NumberFormat('vi-VN').format(Number(numericValue));
-  };
 
   const handleBudgetInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/[^0-9]/g, '');
@@ -210,7 +202,7 @@ export const BoardApprovalFeature = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-bg-surface border border-border-custom rounded-xl p-4">
                   <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">Vốn yêu cầu</p>
-                  <p className="text-xl font-bold text-text-primary">{formatCurrency(selectedProposal.requestedBudget)}</p>
+                  <p className="text-xl font-bold text-text-primary">{formatVND(selectedProposal.requestedBudget)}</p>
                 </div>
                 <div className="bg-bg-surface border border-border-custom rounded-xl p-4">
                   <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">Bản phác thảo</p>
@@ -342,7 +334,7 @@ export const BoardApprovalFeature = () => {
                     <div className="flex items-center gap-1.5">
                       <Banknote size={13} className="text-text-muted" />
                       <span className="text-sm font-semibold text-text-primary">
-                        {formatCurrency(proposal.requestedBudget)}
+                        {formatVND(proposal.requestedBudget)}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -412,7 +404,7 @@ export const BoardApprovalFeature = () => {
                       Vốn Mangaka yêu cầu
                     </p>
                     <p className="text-lg font-bold text-text-primary mt-1">
-                      {formatCurrency(selectedProposal.requestedBudget)}
+                      {formatVND(selectedProposal.requestedBudget)}
                     </p>
                   </div>
                   <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
@@ -430,7 +422,7 @@ export const BoardApprovalFeature = () => {
                   <input
                     type="text"
                     inputMode="numeric"
-                    value={approvedBudget ? formatCurrencyInput(approvedBudget) : ''}
+                    value={approvedBudget ? formatVNDInput(approvedBudget) : ''}
                     onChange={handleBudgetInputChange}
                     placeholder="Nhập số tiền cấp..."
                     className="w-full px-4 py-2.5 pr-14 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:border-brand/50 focus:ring-brand/20 transition-all"

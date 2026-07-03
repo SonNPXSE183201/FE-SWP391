@@ -100,10 +100,9 @@ export const votingApi = {
       if (items.length > 0 || rules) return { rules, series: items };
       if (import.meta.env.DEV) return { rules: MOCK_RULES, series: MOCK_VOTING_SERIES };
       return { rules, series: items };
-    } catch {
+    } catch (error) {
       if (import.meta.env.DEV) {
-        await mockDelay();
-        return { rules: MOCK_RULES, series: MOCK_VOTING_SERIES };
+        console.error('[voting] fetchVotingList failed:', error);
       }
       throw new Error('Không tải được danh sách biểu quyết');
     }

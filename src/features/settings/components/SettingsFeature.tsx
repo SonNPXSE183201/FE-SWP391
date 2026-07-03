@@ -200,69 +200,76 @@ export const SettingsFeature = () => {
     });
   };
 
+  // ─── Profile Hero ──────────────────────────────────────────
+  const renderProfileHero = () => (
+    <div className="bg-bg-secondary border border-border-custom rounded-2xl overflow-hidden mb-6 w-full max-w-7xl">
+      <div className="h-20 sm:h-24 bg-gradient-to-r from-brand/25 via-bg-secondary to-secondary/15 relative">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_40%,rgba(108,92,231,0.2),transparent_55%)]" />
+      </div>
+
+      <div className="px-5 sm:px-6 pb-5 sm:pb-6 -mt-10 sm:-mt-11 relative z-10">
+        <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-5">
+          <div className={`w-20 h-20 sm:w-[5.5rem] sm:h-[5.5rem] rounded-2xl bg-gradient-to-br ${avatarGradient} flex items-center justify-center text-white text-2xl sm:text-3xl font-bold shadow-lg border-4 border-bg-secondary ring-1 ring-white/10 flex-shrink-0`}>
+            {initial}
+          </div>
+
+          <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h2 className="text-xl sm:text-2xl font-bold text-text-primary tracking-tight truncate">
+                  {user?.fullName || 'Chưa cập nhật'}
+                </h2>
+                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold ${roleBadge.bg} ${roleBadge.text}`}>
+                  <Shield size={12} />
+                  {roleBadge.label}
+                </span>
+              </div>
+              <p className="text-sm text-text-secondary mt-1 truncate">
+                {displayUserName ? `@${displayUserName}` : 'Chưa có tên đăng nhập'}
+              </p>
+            </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (profileEditPath && profileEditPath !== '#') {
+                    navigate(profileEditPath);
+                  } else {
+                    toast('Tính năng cập nhật hồ sơ đang được phát triển', { icon: '🚧' });
+                  }
+                }}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-brand/10 hover:bg-brand/20 border border-brand/25 rounded-xl text-sm font-medium text-brand transition-colors flex-shrink-0"
+              >
+                <Pencil size={14} />
+                Chỉnh sửa hồ sơ
+              </button>
+            </div>
+        </div>
+
+        {profileCompletion.percent < 100 && (
+          <div className="mt-5 pt-4 border-t border-border-custom/60">
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <div className="flex items-center gap-2 text-xs text-text-secondary">
+                <AlertCircle size={14} className="text-warning flex-shrink-0" />
+                <span>Hoàn thiện hồ sơ ({profileCompletion.filled}/{profileCompletion.total})</span>
+              </div>
+              <span className="text-xs font-semibold text-warning">{profileCompletion.percent}%</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-bg-surface overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-brand to-secondary transition-all duration-500"
+                style={{ width: `${profileCompletion.percent}%` }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   // ─── Profile Tab ─────────────────────────────────────────
   const renderProfileTab = () => (
     <div className="space-y-5 animate-fade-in">
-      {/* Profile hero card */}
-      <div className="bg-bg-secondary border border-border-custom rounded-2xl overflow-hidden">
-        <div className="h-20 sm:h-24 bg-gradient-to-r from-brand/25 via-bg-secondary to-secondary/15 relative">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_40%,rgba(108,92,231,0.2),transparent_55%)]" />
-        </div>
-
-        <div className="px-5 sm:px-6 pb-5 sm:pb-6 -mt-10 sm:-mt-11 relative z-10">
-          <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-5">
-            <div className={`w-20 h-20 sm:w-[5.5rem] sm:h-[5.5rem] rounded-2xl bg-gradient-to-br ${avatarGradient} flex items-center justify-center text-white text-2xl sm:text-3xl font-bold shadow-lg border-4 border-bg-secondary ring-1 ring-white/10 flex-shrink-0`}>
-              {initial}
-            </div>
-
-            <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <h2 className="text-xl sm:text-2xl font-bold text-text-primary tracking-tight truncate">
-                    {user?.fullName || 'Chưa cập nhật'}
-                  </h2>
-                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold ${roleBadge.bg} ${roleBadge.text}`}>
-                    <Shield size={12} />
-                    {roleBadge.label}
-                  </span>
-                </div>
-                <p className="text-sm text-text-secondary mt-1 truncate">
-                  {displayUserName ? `@${displayUserName}` : 'Chưa có tên đăng nhập'}
-                </p>
-              </div>
-
-              {profileEditPath && (
-                <button
-                  type="button"
-                  onClick={() => navigate(profileEditPath)}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-brand/10 hover:bg-brand/20 border border-brand/25 rounded-xl text-sm font-medium text-brand transition-colors flex-shrink-0"
-                >
-                  <Pencil size={14} />
-                  Chỉnh sửa hồ sơ
-                </button>
-              )}
-            </div>
-          </div>
-
-          {profileCompletion.percent < 100 && (
-            <div className="mt-5 pt-4 border-t border-border-custom/60">
-              <div className="flex items-center justify-between gap-3 mb-2">
-                <div className="flex items-center gap-2 text-xs text-text-secondary">
-                  <AlertCircle size={14} className="text-warning flex-shrink-0" />
-                  <span>Hoàn thiện hồ sơ ({profileCompletion.filled}/{profileCompletion.total})</span>
-                </div>
-                <span className="text-xs font-semibold text-warning">{profileCompletion.percent}%</span>
-              </div>
-              <div className="h-1.5 rounded-full bg-bg-surface overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-brand to-secondary transition-all duration-500"
-                  style={{ width: `${profileCompletion.percent}%` }}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
 
       {/* Detail info grid */}
       <div className="bg-bg-secondary border border-border-custom rounded-2xl overflow-hidden">
@@ -516,7 +523,7 @@ export const SettingsFeature = () => {
   return (
     <div className="animate-fade-in">
       {/* ─── Page Header ─── */}
-      <div className="page-header">
+      <div className="page-header mb-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
             <Settings size={20} className="text-brand" />
@@ -528,8 +535,10 @@ export const SettingsFeature = () => {
         </div>
       </div>
 
+      {renderProfileHero()}
+
       {/* ─── Tab Navigation ─── */}
-      <div className="mt-6">
+      <div>
         <nav
           className="inline-flex p-1 gap-1 bg-bg-secondary border border-border-custom rounded-xl"
           aria-label="Settings tabs"
@@ -560,7 +569,7 @@ export const SettingsFeature = () => {
       </div>
 
       {/* ─── Tab Content ─── */}
-      <div className="mt-6 max-w-4xl">
+      <div className="mt-6 w-full max-w-7xl">
         {renderTabContent()}
       </div>
     </div>

@@ -8,20 +8,20 @@ import type {
 // ─── Series ──────────────────────────────────────────────────
 
 const SERIES_STATUS_ALIASES: Record<string, SeriesStatus> = {
-  Draft: 'Draft',
-  Pending_Approval: 'PendingApproval',
-  PendingApproval: 'PendingApproval',
-  Pending_Board_Vote: 'PendingBoardVote',
-  PendingBoardVote: 'PendingBoardVote',
-  Fund_Pending: 'Approved',
-  Active: 'Published',
-  'In Production': 'Published',
-  In_Production: 'Published',
-  Approved: 'Approved',
-  Published: 'Published',
-  OnHold: 'OnHold',
-  Cancelled: 'Cancelled',
-  Rejected: 'Cancelled',
+  draft: 'Draft',
+  pending_approval: 'PendingApproval',
+  pendingapproval: 'PendingApproval',
+  pending_board_vote: 'PendingBoardVote',
+  pendingboardvote: 'PendingBoardVote',
+  fund_pending: 'Approved',
+  active: 'Published',
+  'in production': 'Published',
+  in_production: 'Published',
+  approved: 'Approved',
+  published: 'Published',
+  onhold: 'OnHold',
+  cancelled: 'Cancelled',
+  rejected: 'Cancelled',
 };
 
 export const normalizeSeriesStatus = (status: unknown): SeriesStatus => {
@@ -31,7 +31,7 @@ export const normalizeSeriesStatus = (status: unknown): SeriesStatus => {
   if (status === 3 || status === '3') return 'Published';
   if (status === 4 || status === '4') return 'OnHold';
   if (status === 5 || status === '5') return 'Cancelled';
-  const key = String(status ?? '');
+  const key = String(status ?? '').trim().toLowerCase();
   if (SERIES_STATUS_ALIASES[key]) return SERIES_STATUS_ALIASES[key];
   return (status as SeriesStatus) || 'Draft';
 };
@@ -46,7 +46,6 @@ export const seriesStatusMatchesFilter = (status: unknown, filter: string): bool
 const CHAPTER_STATUS_ALIASES: Record<string, ChapterStatus> = {
   Draft: 'Draft',
   Submitted: 'UnderReview',
-  Pending_Review: 'UnderReview',
   UnderReview: 'UnderReview',
   Approved: 'Approved',
   Revision: 'Revision',
@@ -121,12 +120,12 @@ export const countPagesByStatus = (pages: { status: PageStatus | string }[]) => 
 // ─── Task ────────────────────────────────────────────────────
 
 export const normalizeTaskStatus = (status?: string | null): TaskStatus => {
-  if (status === 'Submitted') return 'Pending_Review';
-  const key = String(status ?? '');
+  let key = String(status ?? '');
+  if (key === 'Pending_Review') key = 'Submitted';
   const allowed: TaskStatus[] = [
     'Pending',
     'In_Progress',
-    'Pending_Review',
+    'Submitted',
     'Approved',
     'Revision',
     'Disputed',
@@ -139,7 +138,7 @@ export const normalizeTaskStatus = (status?: string | null): TaskStatus => {
 
 export const taskStatusMatchesFilter = (status: unknown, filter: string): boolean => {
   if (!filter) return true;
-  return normalizeTaskStatus(String(status ?? '')) === filter;
+  return normalizeTaskStatus(String(status ?? '')) === normalizeTaskStatus(filter);
 };
 
 // ─── Filter UI helpers ───────────────────────────────────────

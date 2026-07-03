@@ -10,12 +10,14 @@ export const useBoardVotingConfig = () =>
   useQuery({
     queryKey: ['admin', 'board-voting', 'config'],
     queryFn: () => boardVotingAdminApi.getConfig(),
+    refetchInterval: 15_000,
   });
 
 export const useBoardVotingRules = () =>
   useQuery({
     queryKey: ['admin', 'board-voting', 'rules'],
     queryFn: () => boardVotingAdminApi.getRules(),
+    refetchInterval: 15_000,
   });
 
 /** Thành viên Hội đồng active — dùng chọn Chủ tịch HĐ */
@@ -31,7 +33,7 @@ export const useBoardMembers = () =>
       });
       return response.data.data?.items ?? [];
     },
-    staleTime: 60_000,
+    refetchInterval: 15_000,
   });
 
 export const useEscalatedVotes = () =>
@@ -47,6 +49,7 @@ export const useUpdateBoardVotingConfig = () => {
     mutationFn: (dto: UpdateBoardVotingConfigDto) => boardVotingAdminApi.updateConfig(dto),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'board-voting'] });
+      qc.invalidateQueries({ queryKey: ['admin', 'board-members'] });
       qc.invalidateQueries({ queryKey: ['voting'] });
     },
   });
@@ -59,6 +62,7 @@ export const useManualResolveVote = () => {
       boardVotingAdminApi.manualResolve(seriesId, dto),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'board-voting'] });
+      qc.invalidateQueries({ queryKey: ['admin', 'board-members'] });
       qc.invalidateQueries({ queryKey: ['voting'] });
       qc.invalidateQueries({ queryKey: ['series'] });
     },

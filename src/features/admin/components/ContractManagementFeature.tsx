@@ -12,6 +12,7 @@ import {
   BookOpen,
   Search,
 } from 'lucide-react';
+import { formatVND, formatVNDInput } from '../../../utils/currency';
 
 // ─── Mock Data ───
 interface ApprovedSeries {
@@ -76,15 +77,6 @@ export const ContractManagementFeature = () => {
   const [baseGenkouryoPrice, setBaseGenkouryoPrice] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-  };
-
-  const formatCurrencyInput = (value: string): string => {
-    const numericValue = value.replace(/[^0-9]/g, '');
-    if (!numericValue) return '';
-    return new Intl.NumberFormat('vi-VN').format(Number(numericValue));
-  };
 
   const handlePriceInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/[^0-9]/g, '');
@@ -256,7 +248,7 @@ export const ContractManagementFeature = () => {
               {/* Budget */}
               <div className="col-span-2">
                 <span className="text-sm font-semibold text-text-primary">
-                  {formatCurrency(series.approvedBudget)}
+                  {formatVND(series.approvedBudget)}
                 </span>
               </div>
 
@@ -348,7 +340,7 @@ export const ContractManagementFeature = () => {
                       Ngân sách Board đã duyệt
                     </p>
                     <p className="text-xl font-bold text-text-primary mt-1">
-                      {formatCurrency(selectedSeries.approvedBudget)}
+                      {formatVND(selectedSeries.approvedBudget)}
                     </p>
                   </div>
                   <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
@@ -366,13 +358,13 @@ export const ContractManagementFeature = () => {
                   <input
                     type="text"
                     inputMode="numeric"
-                    value={baseGenkouryoPrice ? formatCurrencyInput(baseGenkouryoPrice) : ''}
+                    value={baseGenkouryoPrice ? formatVNDInput(baseGenkouryoPrice) : ''}
                     onChange={handlePriceInputChange}
                     placeholder="VD: 50,000"
                     className="w-full px-4 py-2.5 pr-20 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:border-brand/50 focus:ring-brand/20 transition-all"
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-text-muted">
-                    VNĐ/trang
+                    VND/trang
                   </span>
                 </div>
                 <p className="text-[10px] text-text-muted mt-1.5">

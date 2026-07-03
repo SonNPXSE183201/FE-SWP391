@@ -1,7 +1,6 @@
 import { Loader2, SendHorizonal, AlertTriangle, CheckCircle2, Circle, RotateCcw, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { ChapterProductionReadiness } from '../types/chapterProduction';
-import { HelpTip } from '../../../components/common/HelpTip';
 import { normalizeChapterStatus } from '../../../utils/status';
 
 interface RevisionAnnotation {
@@ -117,7 +116,6 @@ export const ChapterSubmitPanel = ({
 
   const readyCount = readiness.checks.filter((c) => c.passed).length;
   const totalChecks = readiness.checks.length;
-  const missingChecks = totalChecks - readyCount;
   const progressPercent = readiness.checks.length ? (readyCount / readiness.checks.length) * 100 : 0;
 
   // Group annotations by page number for revision view
@@ -276,177 +274,211 @@ export const ChapterSubmitPanel = ({
   }
 
   return (
-    <div className="bg-bg-secondary border border-brand/20 rounded-2xl p-4 sm:p-5 space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <SendHorizonal size={16} className="text-brand" />
-          <div>
-            <h2 className="text-sm font-semibold text-text-primary">Nộp chương lên biên tập viên</h2>
-            <p className="text-[11px] text-text-muted mt-0.5">
-              Hoàn tất danh sách kiểm tra bên dưới rồi nộp để biên tập viên kiểm duyệt.
-            </p>
+    <div className="bg-bg-secondary border border-border-custom/40 rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden group/panel">
+      {/* Background elegant gradient hints */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-brand/5 blur-[80px] rounded-full pointer-events-none transform translate-x-1/3 -translate-y-1/3 transition-opacity duration-700 opacity-50 group-hover/panel:opacity-100" />
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/5 blur-[60px] rounded-full pointer-events-none transform -translate-x-1/3 translate-y-1/3" />
+
+      <div className="relative flex flex-col gap-8">
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-bg-surface to-bg-primary border border-border-custom/50 flex items-center justify-center shrink-0 shadow-sm relative">
+              <div className="absolute inset-0 bg-brand/10 rounded-2xl opacity-0 group-hover/panel:opacity-100 transition-opacity duration-500" />
+              <SendHorizonal size={24} className="text-brand relative z-10" />
+            </div>
+            <div>
+              <h2 className="text-xl font-extrabold text-text-primary tracking-tight">Tiến độ nộp chương</h2>
+              <p className="text-sm text-text-muted mt-1 max-w-md leading-relaxed">
+                Hoàn tất danh sách kiểm tra bên dưới để có thể nộp chương cho biên tập viên.
+              </p>
+            </div>
           </div>
-          <HelpTip
-            title="Khi nào được nộp?"
-            ariaLabel="Giải thích điều kiện nộp chương"
-            placement="bottom-start"
-            width="22rem"
-            content={(
-              <div className="space-y-2">
-                <p className="text-xs text-text-secondary leading-relaxed">
-                  Chương chỉ nộp được khi không còn công việc trợ lý đang xử lý và mỗi trang đều sẵn sàng nộp.
-                </p>
-                <p className="text-xs text-text-secondary leading-relaxed">
-                  Nếu có lỗi từ biên tập viên, bạn có thể tải lại ảnh trang đã sửa hoặc mở khung vẽ để giao trợ lý xử lý.
-                </p>
-              </div>
-            )}
-          />
-        </div>
-        <span
-          className={`text-[10px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${
-            readiness.canSubmit ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25' : 'bg-warning/10 text-warning border border-warning/20'
-          }`}
-        >
-          {readiness.canSubmit ? 'Sẵn sàng nộp' : 'Chưa thể nộp'}
-        </span>
-      </div>
-
-      <div className="rounded-xl border border-border-custom bg-bg-primary/30 px-3 py-2.5">
-        <div className="flex items-center justify-between gap-2 mb-2">
-          <span className="text-[11px] font-medium text-text-secondary">
-            Tiến độ điều kiện nộp
-          </span>
-          <span className="text-[11px] font-semibold text-text-primary">
-            {readyCount}/{totalChecks} điều kiện
-          </span>
-        </div>
-        <div className="h-1.5 rounded-full bg-bg-surface overflow-hidden">
-          <div
-            className={`h-full transition-all duration-300 ${canSubmit ? 'bg-emerald-500' : 'bg-brand'}`}
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-        <div className="flex items-center justify-between gap-2 mt-2 text-[11px]">
-          <span className="text-text-muted">
-            {readiness.pagesReady}/{readiness.totalPages} trang sẵn sàng
-          </span>
-          <span className={canSubmit ? 'text-emerald-300' : 'text-warning'}>
-            {canSubmit ? 'Đủ điều kiện nộp' : `Còn thiếu ${missingChecks} điều kiện`}
-          </span>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5">
-        <div className="space-y-2 lg:col-span-2">
-          {readiness.checks.map((item) => (
-            <div
-              key={item.key}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border text-xs transition-colors ${
-                item.passed
-                  ? 'bg-emerald-500/8 border-emerald-500/20'
-                  : 'bg-bg-surface border-border-custom'
+          <div className="shrink-0">
+            <span
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-colors duration-300 ${
+                canSubmit
+                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                  : 'bg-bg-surface text-text-secondary border border-border-custom'
               }`}
             >
-              <div
-                className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 ${
-                  item.passed ? 'bg-success/15 text-success' : 'bg-bg-secondary text-text-muted border border-border-custom'
-                }`}
-              >
-                {item.passed ? <CheckCircle2 size={14} /> : <Circle size={10} />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="inline-flex items-center gap-1.5">
-                  <span className={item.passed ? 'text-text-primary' : 'text-text-muted'}>{item.label}</span>
-                  {item.detail && (
-                    <HelpTip
-                      title={item.label}
-                      ariaLabel={`Giải thích: ${item.label}`}
-                      placement="bottom-start"
-                      width="18rem"
-                      content={<p className="text-xs text-text-secondary leading-relaxed">{item.detail}</p>}
-                    />
-                  )}
-                </div>
-              </div>
-              <span className={`text-[10px] font-medium ${item.passed ? 'text-emerald-300' : 'text-text-muted'}`}>
-                {item.passed ? 'Hoàn tất' : 'Chưa đạt'}
-              </span>
-            </div>
-          ))}
+              {canSubmit ? (
+                <>
+                  <CheckCircle2 size={16} className="text-emerald-400" />
+                  Sẵn sàng nộp
+                </>
+              ) : (
+                <>
+                  <AlertTriangle size={16} className="text-text-muted" />
+                  Chưa thể nộp
+                </>
+              )}
+            </span>
+          </div>
         </div>
 
-        <div className="space-y-2.5">
-          {readiness.blockers.length > 0 ? (
-            <div className="rounded-xl border border-amber-500/25 bg-amber-500/8 px-3 py-3 space-y-2">
-              <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-300">
-                <AlertTriangle size={13} />
-                Cần hoàn thành trước khi nộp
-                <HelpTip
-                  title="Gợi ý xử lý nhanh"
-                  ariaLabel="Gợi ý xử lý blocker"
-                  placement="bottom-start"
-                  width="20rem"
-                  content={(
-                    <ul className="text-xs text-text-secondary list-disc pl-4 space-y-1">
-                      <li>Ưu tiên xử lý các công việc còn mở trong khung vẽ.</li>
-                      <li>Nếu tự sửa file ảnh, dùng nút tải lại trên thẻ trang.</li>
-                      <li>Sau khi xong, bấm Đánh dấu sẵn sàng cho từng trang.</li>
-                    </ul>
-                  )}
-                />
+        {/* Progress Bar */}
+        <div className="space-y-3 bg-bg-primary/30 p-5 rounded-2xl border border-border-custom/30">
+          <div className="flex items-end justify-between">
+            <div className="space-y-1">
+              <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Tiến độ hoàn thành</span>
+              <div className="text-sm text-text-secondary">
+                <span className="text-text-primary font-bold text-lg">{readyCount}</span>
+                <span className="mx-1.5 opacity-50">/</span>
+                <span>{totalChecks} hạng mục</span>
               </div>
-              <ul className="text-[11px] text-amber-200/90 list-disc pl-4 space-y-1">
-                {readiness.blockers.map((b) => (
-                  <li key={b}>{b}</li>
-                ))}
-              </ul>
             </div>
-          ) : (
-            <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/8 px-3 py-3">
-              <p className="text-[11px] font-semibold text-emerald-300">
-                Tất cả điều kiện đã hoàn thành.
-              </p>
-              <p className="text-[11px] text-text-secondary mt-1">
-                Bạn có thể nộp chương để biên tập viên bắt đầu kiểm duyệt.
-              </p>
+            <div className={`text-3xl font-black tracking-tighter ${canSubmit ? 'text-emerald-400' : 'text-brand/80'}`}>
+              {Math.round(progressPercent)}<span className="text-lg opacity-60">%</span>
             </div>
-          )}
+          </div>
+          <div className="h-3 rounded-full bg-bg-surface border border-border-custom/40 overflow-hidden shadow-inner relative">
+            <div
+              className={`absolute top-0 left-0 h-full transition-all duration-1000 ease-out rounded-full ${
+                canSubmit
+                  ? 'bg-gradient-to-r from-emerald-500 to-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.4)]'
+                  : 'bg-gradient-to-r from-brand/80 to-brand shadow-[0_0_15px_rgba(168,85,247,0.3)]'
+              }`}
+              style={{ width: `${progressPercent}%` }}
+            >
+              <div className="absolute inset-0 bg-white/20 w-full h-full animate-[shimmer_2s_infinite]" style={{ backgroundImage: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)' }} />
+            </div>
+          </div>
+        </div>
 
-          <Link
-            to={`/mangaka/canvas/${chapterId}`}
-            className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-medium bg-brand/15 text-brand border border-brand/30 hover:bg-brand/20 transition-colors"
-          >
-            → Mở khung vẽ để tiếp tục sản xuất
-          </Link>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+          {/* Left Column: Checklist */}
+          <div className="lg:col-span-3 space-y-4">
+            <h3 className="text-sm font-bold text-text-primary flex items-center gap-2 uppercase tracking-wider">
+              <CheckCircle2 size={16} className="text-brand" />
+              Danh sách kiểm tra
+            </h3>
+            <div className="space-y-3">
+              {readiness.checks.map((item) => (
+                <div
+                  key={item.key}
+                  className={`group flex items-start gap-4 p-4 rounded-2xl border transition-all duration-300 hover:-translate-y-0.5 ${
+                    item.passed
+                      ? 'bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40 hover:shadow-[0_4px_20px_rgba(52,211,153,0.05)]'
+                      : 'bg-bg-primary/50 border-border-custom/50 hover:border-border-custom hover:shadow-lg'
+                  }`}
+                >
+                  <div
+                    className={`mt-1 w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${
+                      item.passed
+                        ? 'bg-emerald-500/20 text-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.25)] scale-110'
+                        : 'bg-bg-surface text-text-muted border border-border-custom group-hover:bg-bg-secondary'
+                    }`}
+                  >
+                    {item.passed ? <CheckCircle2 size={16} strokeWidth={3} /> : <div className="w-2.5 h-2.5 rounded-full bg-text-muted/40 transition-colors group-hover:bg-text-muted/60" />}
+                  </div>
+                  <div className="flex-1 min-w-0 pt-0.5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <span className={`text-sm font-bold transition-colors ${item.passed ? 'text-text-primary' : 'text-text-secondary group-hover:text-text-primary'}`}>
+                        {item.label}
+                      </span>
+                      <span className={`inline-flex items-center justify-center text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md whitespace-nowrap shrink-0 transition-colors ${
+                        item.passed ? 'bg-emerald-500/15 text-emerald-400' : 'bg-bg-surface text-text-muted border border-border-custom/50'
+                      }`}>
+                        {item.passed ? 'Đạt' : 'Chưa đạt'}
+                      </span>
+                    </div>
+                    {item.detail && (
+                      <p className="text-xs text-text-muted mt-2 leading-relaxed pr-4">
+                        {item.detail}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
-          <button
-            type="button"
-            onClick={onSubmit}
-            disabled={!readiness.canSubmit || isSubmitting}
-            className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border-none cursor-pointer transition-all ${
-              !readiness.canSubmit || isSubmitting
-                ? 'bg-brand/30 text-white/50 cursor-not-allowed'
-                : 'bg-brand hover:bg-brand-hover text-white shadow-brand'
-            }`}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                Đang gửi...
-              </>
+          {/* Right Column: Alerts & Actions */}
+          <div className="lg:col-span-2 flex flex-col">
+            {readiness.blockers.length > 0 ? (
+              <div className="rounded-2xl border border-warning/20 bg-warning/5 overflow-hidden shadow-sm transition-all hover:shadow-md hover:border-warning/30 flex flex-col h-full">
+                <div className="h-1.5 w-full bg-gradient-to-r from-warning/60 to-warning/30" />
+                <div className="p-5 flex-1 flex flex-col gap-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-warning/10 flex items-center justify-center shrink-0">
+                      <AlertTriangle size={16} className="text-warning" />
+                    </div>
+                    <h4 className="text-sm font-bold text-warning uppercase tracking-wider">
+                      Cần xử lý trước khi nộp
+                    </h4>
+                  </div>
+                  <ul className="text-sm text-text-secondary space-y-3 pl-1 flex-1">
+                    {readiness.blockers.map((b, idx) => (
+                      <li key={idx} className="flex items-start gap-3 leading-relaxed">
+                        <span className="text-warning mt-1.5 w-1.5 h-1.5 rounded-full bg-warning/60 shrink-0 shadow-[0_0_5px_rgba(234,179,8,0.5)]" />
+                        <span>{b}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  
+                  <Link
+                    to={`/mangaka/canvas/${chapterId}`}
+                    className="mt-4 w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold bg-bg-surface text-text-primary border border-border-custom hover:border-brand/40 hover:text-brand hover:bg-brand/5 transition-all duration-200 shadow-sm group"
+                  >
+                    <MapPin size={18} className="text-text-muted group-hover:text-brand transition-colors" />
+                    Mở khung vẽ để xử lý
+                  </Link>
+                </div>
+              </div>
             ) : (
-              <>
-                <SendHorizonal size={16} />
-                Nộp chương lên biên tập viên
-              </>
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 overflow-hidden shadow-sm transition-all hover:shadow-md hover:border-emerald-500/30 flex flex-col h-full">
+                <div className="h-1.5 w-full bg-gradient-to-r from-emerald-500/60 to-emerald-500/30" />
+                <div className="p-5 flex-1 flex flex-col gap-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(52,211,153,0.2)]">
+                      <CheckCircle2 size={16} className="text-emerald-400" strokeWidth={3} />
+                    </div>
+                    <h4 className="text-sm font-bold text-emerald-400 uppercase tracking-wider">
+                      Đã sẵn sàng nộp
+                    </h4>
+                  </div>
+                  <p className="text-sm text-text-secondary leading-relaxed flex-1">
+                    Tuyệt vời! Bạn đã hoàn thành tất cả các hạng mục yêu cầu. Hãy nộp chương cho biên tập viên ngay bây giờ.
+                  </p>
+                </div>
+              </div>
             )}
-          </button>
-          {!canSubmit && (
-            <p className="text-[11px] text-text-muted text-center">
-              Hoàn thành toàn bộ điều kiện để mở nút nộp.
-            </p>
-          )}
+
+            <div className="pt-5 mt-auto">
+              <button
+                type="button"
+                onClick={onSubmit}
+                disabled={!canSubmit || isSubmitting}
+                className={`w-full relative inline-flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl text-base font-bold border-none transition-all duration-300 overflow-hidden ${
+                  !canSubmit || isSubmitting
+                    ? 'bg-bg-surface text-text-muted/60 cursor-not-allowed shadow-inner border border-border-custom'
+                    : 'bg-gradient-to-r from-brand via-brand-hover to-brand text-white shadow-xl shadow-brand/25 hover:shadow-brand/40 hover:-translate-y-1 cursor-pointer bg-[length:200%_auto] hover:bg-[position:right_center]'
+                }`}
+              >
+                {canSubmit && !isSubmitting && (
+                  <>
+                    <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute -inset-1 bg-brand/30 blur-xl opacity-0 hover:opacity-100 transition-opacity duration-500 rounded-xl" />
+                  </>
+                )}
+                
+                <span className="relative z-10 flex items-center gap-2">
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={20} className="animate-spin" />
+                      Đang gửi dữ liệu...
+                    </>
+                  ) : (
+                    <>
+                      <SendHorizonal size={20} className={canSubmit ? "animate-bounce-x" : ""} />
+                      {canSubmit ? 'Nộp chương ngay' : 'Chưa đủ điều kiện nộp'}
+                    </>
+                  )}
+                </span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

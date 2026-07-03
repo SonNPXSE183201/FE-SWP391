@@ -6,3 +6,4 @@ export { AssistantProfilePage } from './AssistantProfilePage';
 export { AssistantWalletPage } from './AssistantWalletPage';
 export { AssistantSettingsPage } from './AssistantSettingsPage';
 export { SeriesInviteRespondPage } from './SeriesInviteRespondPage';
+export { AssistantInvitesPage } from './AssistantInvitesPage';

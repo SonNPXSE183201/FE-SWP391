@@ -30,6 +30,8 @@ export const seriesTeamApi = {
   respond: (seriesId: string, accept: boolean) =>
     axiosInstance.post<ApiResponse<SeriesAssistantMember>>(`/api/series/${seriesId}/team/respond`, { accept }),
 
-  removeMember: (seriesId: string, assistantId: number) =>
-    axiosInstance.delete<ApiResponse<null>>(`/api/series/${seriesId}/team/${assistantId}`),
+  removeMember: (seriesId: string, assistantId: number, roleToRemove?: string) =>
+    axiosInstance.delete<ApiResponse<null>>(`/api/series/${seriesId}/team/${assistantId}`, {
+      params: roleToRemove ? { roleToRemove } : undefined,
+    }),
 };

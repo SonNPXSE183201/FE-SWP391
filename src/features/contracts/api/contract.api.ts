@@ -6,6 +6,13 @@ type ApprovedSeriesContractDto = components['schemas']['ApprovedSeriesContractDt
 type CreateContractRequestDto = components['schemas']['CreateContractRequestDto'];
 
 /** UI view model mapped from ApprovedSeriesContractDto */
+export interface ContractAddendumView {
+  id: string;
+  newGenkouryoPrice: number;
+  effectiveDate: string;
+  signedDate?: string;
+}
+
 export interface ApprovedSeries {
   id: string;
   title: string;
@@ -16,6 +23,9 @@ export interface ApprovedSeries {
   hasContract: boolean;
   contractId?: string;
   genkouryoPrice?: number;
+  signedDate?: string;
+  contractStatus?: string;
+  addendums?: ContractAddendumView[];
   endDate?: string;
   genres: string[];
 }
@@ -29,6 +39,10 @@ const mapApprovedSeriesContractDto = (dto: ApprovedSeriesContractDto): ApprovedS
   publishSchedule: dto.publishSchedule ?? '',
   hasContract: dto.hasContract ?? false,
   contractId: dto.contractId ?? undefined,
+  genkouryoPrice: (dto as Record<string, unknown>).genkouryoPrice as number | undefined,
+  signedDate: (dto as Record<string, unknown>).signedDate as string | undefined,
+  contractStatus: (dto as Record<string, unknown>).contractStatus as string | undefined,
+  addendums: ((dto as Record<string, unknown>).addendums as ContractAddendumView[] | undefined) ?? [],
   genres: dto.genres ?? [],
 });
 

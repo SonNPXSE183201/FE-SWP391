@@ -24,7 +24,7 @@ import { TaskRegionPreview } from './TaskRegionPreview';
 const DETAIL_CTA: Partial<Record<TaskStatus, { label: string; icon: LucideIcon; cls: string }>> = {
   In_Progress: { label: 'Nộp bài', icon: Upload, cls: 'bg-success hover:bg-green-600 text-white' },
   Revision: { label: 'Xem & nộp lại', icon: RotateCcw, cls: 'bg-danger/90 hover:bg-danger text-white' },
-  Pending_Review: {
+  Submitted: {
     label: 'Xem bài nộp',
     icon: Eye,
     cls: 'bg-bg-surface hover:bg-bg-primary text-text-primary border border-border-custom',
@@ -81,7 +81,7 @@ const getNote = (
     };
   }
   if (!isMyTask) return null;
-  if (task.status === 'Pending_Review') {
+  if (task.status === 'Submitted') {
     return { cls: 'bg-warning/8 text-warning/90 border-warning/15', text: 'Đã nộp — đang chờ Mangaka duyệt' };
   }
   if (task.status === 'Approved') {

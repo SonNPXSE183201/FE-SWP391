@@ -35,6 +35,8 @@ export { PageLightbox } from './components/PageLightbox';
 export { SeriesListFeature } from './components/SeriesListFeature';
 export { SeriesDetailFeature } from './components/SeriesDetailFeature';
 export { SeriesTeamPanel } from './components/SeriesTeamPanel';
+export { AssistantInviteDrawer } from './components/AssistantInviteDrawer';
+export * from './hooks/useBrowseAssistants';
 export { SeriesInviteRespondFeature } from './components/SeriesInviteRespondFeature';
 export * from './hooks/useSeriesTeam';
 export { ManuscriptsFeature } from './components/ManuscriptsFeature';

@@ -1,6 +1,5 @@
 import { useLocation } from 'react-router-dom';
 import {
-  Search,
   Menu,
   ChevronRight,
 } from 'lucide-react';

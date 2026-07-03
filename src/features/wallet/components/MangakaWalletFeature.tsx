@@ -8,6 +8,7 @@ import {
 import { TX_TYPE_CONFIG, TX_FILTER_OPTIONS, formatVND } from '../constants';
 import { WalletActionModal } from './WalletActionModal';
 import { TransactionDetailModal } from './TransactionDetailModal';
+import { LockedFundsModal } from './LockedFundsModal';
 import { useWallet } from '../hooks/useWallet';
 import { useWalletDepositListener } from '../hooks/useWalletDepositListener';
 
@@ -22,6 +23,7 @@ export const MangakaWalletFeature = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [walletAction, setWalletAction] = useState<'deposit' | 'withdraw' | null>(null);
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+  const [isLockedFundsModalOpen, setIsLockedFundsModalOpen] = useState(false);
 
   useWalletDepositListener();
 
@@ -111,7 +113,10 @@ export const MangakaWalletFeature = () => {
             </div>
 
             <div className="flex items-center gap-2 mt-3">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-warning/10 text-warning text-[10px] font-medium">
+              <span 
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-warning/10 text-warning hover:bg-warning/20 text-[10px] font-medium transition-colors cursor-pointer"
+                onClick={() => setIsLockedFundsModalOpen(true)}
+              >
                 <Lock size={10} />
                 Đang khóa: {formatVND(wallet.lockedAmount)}
               </span>
@@ -274,6 +279,11 @@ export const MangakaWalletFeature = () => {
           transaction={selectedTx}
           onClose={() => setSelectedTx(null)}
         />
+      )}
+
+      {/* Locked Funds Modal */}
+      {isLockedFundsModalOpen && (
+        <LockedFundsModal onClose={() => setIsLockedFundsModalOpen(false)} />
       )}
     </div>
   );

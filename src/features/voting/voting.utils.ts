@@ -36,13 +36,19 @@ export const summarizeBoardVotes = (boardVotes?: BoardVoteDto[] | null): VoteRes
   return { approve, reject, total: votes.length };
 };
 
+const normalizeMemberId = (id?: number | string | null): number | null => {
+  if (id == null || id === '') return null;
+  const n = Number(id);
+  return Number.isFinite(n) ? n : null;
+};
+
 export const findMyBoardVote = (
   boardVotes: BoardVoteDto[] | null | undefined,
   boardMemberId?: number | string | null,
 ): BoardVoteDto | undefined => {
-  if (!boardMemberId || !boardVotes?.length) return undefined;
-  const id = Number(boardMemberId);
-  return boardVotes.find((v) => v.boardMemberId === id);
+  const id = normalizeMemberId(boardMemberId);
+  if (id == null || !boardVotes?.length) return undefined;
+  return boardVotes.find((v) => normalizeMemberId(v.boardMemberId) === id);
 };
 
 export const boardVoteToUiChoice = (vote?: BoardVoteDto): VoteUiChoice | undefined => {

@@ -22,7 +22,7 @@ import type { TaskStatus, Task } from '../../../types/entities';
 const mapTaskStatus = (status: unknown): TaskStatus => {
   if (status === 0 || status === '0') return 'Pending';
   if (status === 1 || status === '1') return 'In_Progress';
-  if (status === 2 || status === '2') return 'Pending_Review';
+  if (status === 2 || status === '2') return 'Submitted';
   if (status === 3 || status === '3') return 'Approved';
   if (status === 4 || status === '4') return 'Revision';
   if (status === 5 || status === '5') return 'Disputed';
@@ -173,7 +173,7 @@ export const taskApi = {
     if (USE_MOCK) {
       await mockDelay(300);
       const filtered = MOCK_TASKS.filter((t) => 
-        ['In_Progress', 'Pending_Review', 'Approved', 'Disputed', 'Revision'].includes(t.status) &&
+        ['In_Progress', 'Submitted', 'Approved', 'Disputed', 'Revision'].includes(t.status) &&
         (t.assignedAssistantName === 'Nguyễn Sơn' || t.assignedAssistantName === 'Minh Anh')
       );
       const mappedDtos = filtered.map(mapMockTaskToTasksDto);
@@ -285,7 +285,7 @@ export const taskApi = {
       await mockDelay(600);
       const task = MOCK_TASKS.find((t) => t.id === taskId || t.id === `task-${taskId}`);
       if (task) {
-        task.status = 'Pending_Review';
+        task.status = 'Submitted';
         if (data.image) {
           task.resultImageUrl = URL.createObjectURL(data.image);
         }
@@ -348,6 +348,20 @@ export const taskApi = {
     }
     return axiosInstance.post<ApiResponse<unknown>>(`/api/tasks/${taskId}/reject`, payload);
   },
+
+  reportDispute: async (taskId: string, payload: { reason: string }) => {
+    if (USE_MOCK) {
+      await mockDelay(500);
+      const task = MOCK_TASKS.find((t) => t.id === taskId || t.id === `task-${taskId}`);
+      if (task) {
+        task.status = 'Disputed';
+        task.feedbackComment = payload.reason;
+      }
+      return createMockAxiosResponse(task as unknown as TasksDto, 'Báo cáo tranh chấp thành công');
+    }
+    return axiosInstance.post<ApiResponse<unknown>>(`/api/tasks/${taskId}/dispute`, payload);
+  },
+
 
   // Extension (F2.12) — POST /api/tasks/{id}/request-extension
   requestExtension: async (data: RequestExtensionRequest) => {

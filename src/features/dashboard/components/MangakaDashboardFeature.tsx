@@ -55,7 +55,7 @@ export const MangakaDashboardFeature = () => {
             <span className="text-sm text-text-secondary">{greeting}</span>
           </div>
           <h1 className="text-2xl lg:text-3xl font-bold text-text-primary">
-            {user?.fullName || 'Mangaka'}
+            {user?.fullName || 'Tác giả'}
           </h1>
           <p className="text-sm text-text-muted mt-2 max-w-lg">
             Bạn có <span className="text-warning font-semibold">{stats.pendingChapters} chương chờ duyệt</span> và{' '}
@@ -119,7 +119,7 @@ export const MangakaDashboardFeature = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <ChartCard
             title="Nhuận bút 6 tháng gần đây"
-            subtitle="Tổng genkouryo nhận theo tháng"
+            subtitle="Tổng nhuận bút nhận theo tháng"
             icon={TrendingUp}
             className="lg:col-span-2"
             action={

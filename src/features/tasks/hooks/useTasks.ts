@@ -190,6 +190,20 @@ export const useRequestRevisionTask = () => {
   });
 };
 
+// ─── Report Dispute Task (Mangaka báo cáo tranh chấp) ─────────
+export const useReportDisputeTask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ taskId, reason }: { taskId: string; reason: string }) =>
+      taskApi.reportDispute(taskId, { reason }),
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'mangaka'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'assistant-my'] });
+      queryClient.invalidateQueries({ queryKey: ['task', vars.taskId, 'versions'] });
+    },
+  });
+};
+
 // ─── Request Extension (Assistant xin gia hạn) ─────────────────
 export const useRequestExtension = () => {
   const queryClient = useQueryClient();

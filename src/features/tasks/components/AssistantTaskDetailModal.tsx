@@ -14,7 +14,7 @@ import type { Annotation } from '../../../types/entities';
 import { CanvasViewer } from '../../../components/canvas/CanvasViewer';
 import { TaskRegionPreview } from './TaskRegionPreview';
 import { TaskLayerPreview } from './TaskLayerPreview';
-import { useTaskVersions, useTaskVersionAnnotations, useRequestExtension } from '../hooks/useTasks';
+import { useTaskVersions, useTaskVersionAnnotations, useRequestExtension, useReportDisputeTask } from '../hooks/useTasks';
 import { taskApi } from '../api/task.api';
 import { parseTaskRevisionPins } from '../../canvas/utils/canvas.utils';
 import { ANNOTATION_TYPE_CONFIG } from '../../review/constants';
@@ -36,7 +36,6 @@ interface AssistantTaskDetailModalProps {
 
 const VERSION_STATUS: Record<string, { label: string; cls: string }> = {
   Submitted: { label: 'Chờ duyệt', cls: 'bg-warning/10 text-warning' },
-  Pending_Review: { label: 'Chờ duyệt', cls: 'bg-warning/10 text-warning' },
   Approved: { label: 'Đã duyệt', cls: 'bg-success/10 text-success' },
   Rejected: { label: 'Bị từ chối', cls: 'bg-danger/10 text-danger' },
 };
@@ -63,6 +62,9 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
   const [showExtension, setShowExtension] = useState(false);
   const [extensionReason, setExtensionReason] = useState('');
   const [versionResetSeen, setVersionResetSeen] = useState('');
+  const [showDisputeModal, setShowDisputeModal] = useState(false);
+  const [disputeReason, setDisputeReason] = useState('');
+  const reportDisputeTask = useReportDisputeTask();
 
   if (versionResetKey !== versionResetSeen) {
     const rejectedIdx = versions.findIndex((v) => v.status === 'Rejected');
@@ -173,7 +175,7 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
             {isRevision ? 'Nộp bản sửa' : 'Nộp kết quả'}
           </p>
           <p className="text-[11px] text-text-muted leading-tight">
-            File PNG nền trong suốt, khớp kích thước vùng vẽ.
+            Ảnh định dạng PNG nền trong suốt, khớp kích thước vùng vẽ.
           </p>
         </div>
       </div>
@@ -190,12 +192,12 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
         </div>
         <div className="text-center">
           <p className="text-sm font-medium text-text-primary break-all">
-            {selectedFile ? selectedFile.name : 'Kéo thả hoặc bấm để chọn file PNG'}
+            {selectedFile ? selectedFile.name : 'Kéo thả hoặc bấm để tải lên ảnh PNG'}
           </p>
           <p className="text-[11px] text-text-muted mt-0.5">
             {selectedFile
-              ? `${(selectedFile.size / 1024).toFixed(0)} KB · Bấm để đổi file khác`
-              : 'Chỉ chấp nhận .png có alpha channel (nền trong suốt)'}
+              ? `${(selectedFile.size / 1024).toFixed(0)} KB · Bấm để đổi ảnh khác`
+              : 'Chỉ chấp nhận ảnh .png có nền trong suốt'}
           </p>
         </div>
         <input
@@ -241,7 +243,7 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
           <div className="space-y-2 p-3 bg-bg-surface rounded-xl border border-border-custom">
             <p className="text-xs font-medium text-text-secondary flex items-center gap-1.5">
               <Hourglass size={13} className="text-brand" />
-              Xin gia hạn deadline
+              Xin gia hạn thời gian
             </p>
             <textarea
               value={extensionReason}
@@ -284,7 +286,7 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
             className="w-full py-2.5 text-xs font-medium text-text-secondary bg-bg-surface border border-border-custom rounded-xl cursor-pointer disabled:opacity-50 hover:border-brand/30 hover:text-text-primary transition-colors inline-flex items-center justify-center gap-1.5"
           >
             <Clock size={13} />
-            {task.extensionRequestDays ? 'Đã xin gia hạn' : 'Xin gia hạn deadline'}
+            {task.extensionRequestDays ? 'Đã xin gia hạn' : 'Xin gia hạn thời gian'}
           </button>
         )}
       </div>
@@ -302,14 +304,26 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
       <div className="flex-1 min-h-[240px] lg:min-h-[360px] rounded-xl border border-border-custom overflow-hidden bg-bg-surface relative">
         {refUrl ? (
           <>
-            <TaskRegionPreview
-              pageId={task.pageId}
-              imageUrl={task.pageImageUrl}
-              coordinatesJson={task.regionCoordinatesJson}
-              regionName={task.regionName}
-              heightClassName="h-full min-h-[240px] lg:min-h-[360px]"
-              className="rounded-none border-0"
-            />
+            {!canSubmit && activeUrl ? (
+              <TaskLayerPreview
+                baseImageUrl={task.baseLayerUrl || task.pageImageUrl}
+                overlayImageUrl={activeUrl}
+                coordinatesJson={task.regionCoordinatesJson}
+                regionName={task.regionName}
+                heightClassName="h-full min-h-[240px] lg:min-h-[360px]"
+                className="rounded-none border-0"
+                label="Đã lồng ghép (Preview)"
+              />
+            ) : (
+              <TaskRegionPreview
+                pageId={task.pageId}
+                imageUrl={task.pageImageUrl}
+                coordinatesJson={task.regionCoordinatesJson}
+                regionName={task.regionName}
+                heightClassName="h-full min-h-[240px] lg:min-h-[360px]"
+                className="rounded-none border-0"
+              />
+            )}
             <a
               href={refUrl}
               target="_blank"
@@ -335,7 +349,7 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-5xl max-h-[94vh] overflow-hidden shadow-lg-custom animate-scale-in flex flex-col">
+      <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-5xl max-h-full overflow-hidden shadow-lg-custom animate-scale-in flex flex-col">
         {/* Header */}
         <div className="shrink-0 bg-bg-secondary border-b border-border-custom px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
@@ -353,8 +367,8 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
               </div>
               <p className="text-[11px] text-text-muted mt-0.5">
                 {canSubmit
-                  ? 'Xem brief và nộp file PNG kết quả'
-                  : isReadOnly && task.status === 'Pending_Review'
+                  ? 'Xem mô tả và nộp ảnh kết quả'
+                  : isReadOnly && task.status === 'Submitted'
                     ? 'Bài đã nộp — đang chờ Mangaka duyệt'
                     : 'Xem chi tiết công việc và bài nộp'}
               </p>
@@ -572,6 +586,16 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
           {canSubmit && (
             <button
               type="button"
+              onClick={() => setShowDisputeModal(true)}
+              className="mr-auto px-4 py-2.5 bg-warning/10 border border-warning/30 rounded-xl text-sm font-medium text-warning hover:bg-warning hover:text-white transition-colors cursor-pointer flex items-center gap-2"
+            >
+              <AlertCircle size={15} />
+              Báo cáo tranh chấp
+            </button>
+          )}
+          {canSubmit && (
+            <button
+              type="button"
               onClick={handleSubmit}
               disabled={isSubmitting || !selectedFile || !previewConfirmed}
               className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border-none cursor-pointer transition-all ${
@@ -586,6 +610,57 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
           )}
         </div>
       </div>
+      {showDisputeModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-bg-primary w-full max-w-md rounded-2xl shadow-2xl border border-border-custom p-6">
+            <h3 className="text-lg font-bold text-text-primary mb-2 flex items-center gap-2">
+              <AlertCircle className="text-warning" size={20} />
+              Báo cáo sự cố / Tranh chấp
+            </h3>
+            <p className="text-sm text-text-secondary mb-4">
+              Nếu bạn không thể đạt được thỏa thuận với Mangaka (ví dụ: Mangaka yêu cầu sửa quá vô lý nhiều lần để giam tiền), bạn có thể báo cáo tranh chấp. <strong>Editor sẽ vào cuộc phân xử.</strong>
+            </p>
+            <textarea
+              value={disputeReason}
+              onChange={(e) => setDisputeReason(e.target.value)}
+              placeholder="Nhập lý do chi tiết..."
+              className="w-full bg-bg-surface border border-border-custom rounded-xl p-3 text-sm text-text-primary placeholder:text-text-muted focus:border-brand focus:ring-1 focus:ring-brand outline-none resize-none min-h-[100px]"
+            />
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                type="button"
+                onClick={() => setShowDisputeModal(false)}
+                className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary bg-bg-surface border border-border-custom rounded-xl"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                disabled={!disputeReason.trim() || reportDisputeTask.isPending}
+                onClick={() => {
+                  reportDisputeTask.mutate(
+                    { taskId: taskId.toString(), reason: disputeReason.trim() },
+                    {
+                      onSuccess: () => {
+                        setShowDisputeModal(false);
+                        onClose();
+                      },
+                    }
+                  );
+                }}
+                className={`px-4 py-2 text-sm font-bold rounded-xl flex items-center gap-2 ${
+                  !disputeReason.trim() || reportDisputeTask.isPending
+                    ? 'bg-warning/50 text-white/70 cursor-not-allowed'
+                    : 'bg-warning text-white hover:bg-orange-600'
+                }`}
+              >
+                {reportDisputeTask.isPending && <Loader2 size={14} className="animate-spin" />}
+                Xác nhận báo cáo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>,
     document.body,
   );
@@ -606,38 +681,63 @@ function RevisionPinList({
 }) {
   return (
     <div>
-      <p className="text-xs font-medium text-text-secondary mb-2 flex items-center gap-1.5">
+      <p className="text-xs font-medium text-text-secondary mb-3 flex items-center gap-1.5">
         <MapPin size={13} className="text-danger" />
         Điểm lỗi ({pins.length})
       </p>
       {annotationsLoading ? (
-        <div className="flex items-center gap-2 text-xs text-text-muted py-2">
-          <Loader2 size={14} className="animate-spin" />
+        <div className="flex items-center justify-center gap-2 text-xs text-text-muted py-8">
+          <Loader2 size={16} className="animate-spin text-brand" />
           Đang tải…
         </div>
       ) : pins.length === 0 ? (
-        <p className="text-xs text-text-muted italic">
-          {activeStatus === 'Rejected'
-            ? 'Chưa có điểm ghim — xem nhận xét tổng quát phía trên.'
-            : 'Chọn phiên bản bị từ chối để xem điểm ghim.'}
-        </p>
+        <div className="py-8 text-center bg-bg-surface border border-border-custom border-dashed rounded-xl">
+          <p className="text-xs text-text-muted italic px-4">
+            {activeStatus === 'Rejected'
+              ? 'Chưa có điểm ghim — xem nhận xét tổng quát phía trên.'
+              : 'Chọn phiên bản bị từ chối để xem điểm ghim.'}
+          </p>
+        </div>
       ) : (
-        <div className="space-y-1.5 max-h-[240px] overflow-y-auto">
+        <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1.5 custom-scrollbar">
           {pins.map((p, i) => {
             const cfg = ANNOTATION_TYPE_CONFIG[p.type];
+            const isSelected = selectedPinId === p.id;
+            const bgSolid = cfg.bg.replace('/10', '');
+            const bgMuted = cfg.bg.replace('/10', '/20');
+
             return (
               <button
                 key={p.id}
                 type="button"
                 onClick={() => onSelectPin(p.id)}
-                className={`w-full text-left flex items-start gap-2 px-2.5 py-2 rounded-lg border cursor-pointer transition-colors ${
-                  selectedPinId === p.id ? `${cfg.bg} ${cfg.border}` : 'bg-bg-surface border-border-custom hover:border-brand/20'
+                className={`focus:outline-none w-full text-left flex items-start gap-3 p-3 rounded-xl border cursor-pointer relative overflow-hidden group ${
+                  isSelected
+                    ? `${cfg.bg} ${cfg.border} shadow-md`
+                    : 'bg-bg-surface border-border-custom hover:border-text-muted/30 hover:bg-bg-surface/80'
                 }`}
               >
-                <span className="text-[10px] font-bold text-text-muted w-4">{i + 1}</span>
-                <div className="flex-1 min-w-0">
-                  <span className="text-[10px] font-medium">{cfg.label}</span>
-                  <p className="text-[11px] text-text-secondary mt-0.5 leading-snug">{p.comment}</p>
+                {isSelected && (
+                  <div className={`absolute inset-y-0 left-0 w-[3px] ${bgSolid}`} />
+                )}
+                
+                <div className={`flex items-center justify-center w-5 h-5 mt-0.5 rounded-full shrink-0 text-[10px] font-bold transition-colors ${
+                  isSelected 
+                    ? `${bgMuted} ${cfg.color}` 
+                    : 'bg-bg-secondary text-text-muted group-hover:bg-bg-primary group-hover:text-text-primary'
+                }`}>
+                  {i + 1}
+                </div>
+
+                <div className="flex-1 min-w-0 pt-0.5">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <span className={`text-[11px] font-bold tracking-wide ${isSelected ? cfg.color : 'text-text-primary group-hover:text-brand transition-colors'}`}>
+                      {cfg.label}
+                    </span>
+                  </div>
+                  <p className={`text-[11px] leading-relaxed break-words ${isSelected ? 'text-text-primary' : 'text-text-secondary'}`}>
+                    {p.comment}
+                  </p>
                 </div>
               </button>
             );
