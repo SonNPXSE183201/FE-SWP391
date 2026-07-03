@@ -71,7 +71,7 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
   const active = versions[activeIdx];
   const activeUrl = active?.submittedFileUrl ? resolveMediaUrl(active.submittedFileUrl) : '';
   const pageIdStr = task.pageId ? String(task.pageId) : undefined;
-  const { data: compositeUrl } = useCompositedPageUrl(pageIdStr);
+  const { data: compositeUrl, isFetching: isCompositeLoading } = useCompositedPageUrl(pageIdStr);
   const compositeBase = compositeUrl || (task.baseLayerUrl ? resolveMediaUrl(task.baseLayerUrl) : '') || (task.pageImageUrl ? resolveMediaUrl(task.pageImageUrl) : '');
   const dl = formatDeadline(task.deadline || '');
   const canReview = task.status === 'Pending_Review';
@@ -249,7 +249,11 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
             <div className="grid lg:grid-cols-[1fr_300px] gap-4 flex-1 min-h-0">
               {/* Composite canvas + overlay submission (F2.5) */}
               <div className="relative bg-bg-surface rounded-xl border border-border-custom overflow-hidden h-full min-h-[300px]">
-                {compositeBase ? (
+                {(isCompositeLoading && !compositeUrl) ? (
+                  <div className="h-full flex items-center justify-center">
+                    <Loader2 size={32} className="animate-spin text-brand" />
+                  </div>
+                ) : compositeBase ? (
                   <TaskLayerPreview
                     baseImageUrl={compositeBase}
                     overlayImageUrl={activeUrl}
@@ -351,7 +355,11 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
             <div className="flex flex-col flex-1 min-h-0 gap-3">
               <p className="shrink-0 text-[11px] text-text-muted">Duyệt trên Canvas tổng thể (composite + lớp nộp bài)</p>
               <div className="flex-1 min-h-[400px] relative bg-bg-surface rounded-xl border border-border-custom overflow-hidden flex flex-col">
-                {compositeBase || activeUrl ? (
+                {(isCompositeLoading && !compositeUrl) ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <Loader2 size={32} className="animate-spin text-brand" />
+                  </div>
+                ) : compositeBase || activeUrl ? (
                   <TaskLayerPreview
                     baseImageUrl={compositeBase || task.pageImageUrl}
                     overlayImageUrl={activeUrl}

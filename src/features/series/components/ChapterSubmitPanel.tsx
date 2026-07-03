@@ -274,52 +274,70 @@ export const ChapterSubmitPanel = ({
   }
 
   return (
-    <div className="bg-bg-secondary border border-border-custom/50 rounded-2xl p-5 sm:p-7 shadow-sm relative overflow-hidden">
-      {/* Background elegant gradient hint */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-brand/5 blur-3xl rounded-full pointer-events-none transform translate-x-1/2 -translate-y-1/2" />
+    <div className="bg-bg-secondary border border-border-custom/40 rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden group/panel">
+      {/* Background elegant gradient hints */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-brand/5 blur-[80px] rounded-full pointer-events-none transform translate-x-1/3 -translate-y-1/3 transition-opacity duration-700 opacity-50 group-hover/panel:opacity-100" />
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/5 blur-[60px] rounded-full pointer-events-none transform -translate-x-1/3 translate-y-1/3" />
 
-      <div className="relative flex flex-col gap-6">
+      <div className="relative flex flex-col gap-8">
         {/* Header Section */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand/20 to-brand/5 border border-brand/10 flex items-center justify-center shrink-0 shadow-inner">
-              <SendHorizonal size={22} className="text-brand" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-bg-surface to-bg-primary border border-border-custom/50 flex items-center justify-center shrink-0 shadow-sm relative">
+              <div className="absolute inset-0 bg-brand/10 rounded-2xl opacity-0 group-hover/panel:opacity-100 transition-opacity duration-500" />
+              <SendHorizonal size={24} className="text-brand relative z-10" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-text-primary">Tiến độ nộp chương</h2>
-              <p className="text-xs text-text-muted mt-0.5">
+              <h2 className="text-xl font-extrabold text-text-primary tracking-tight">Tiến độ nộp chương</h2>
+              <p className="text-sm text-text-muted mt-1 max-w-md leading-relaxed">
                 Hoàn tất danh sách kiểm tra bên dưới để có thể nộp chương cho biên tập viên.
               </p>
             </div>
           </div>
-          <span
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider shadow-sm ${
-              canSubmit
-                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                : 'bg-warning/10 text-warning border border-warning/20'
-            }`}
-          >
-            {canSubmit ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}
-            {canSubmit ? 'Sẵn sàng nộp' : 'Chưa thể nộp'}
-          </span>
+          <div className="shrink-0">
+            <span
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-colors duration-300 ${
+                canSubmit
+                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                  : 'bg-bg-surface text-text-secondary border border-border-custom'
+              }`}
+            >
+              {canSubmit ? (
+                <>
+                  <CheckCircle2 size={16} className="text-emerald-400" />
+                  Sẵn sàng nộp
+                </>
+              ) : (
+                <>
+                  <AlertTriangle size={16} className="text-text-muted" />
+                  Chưa thể nộp
+                </>
+              )}
+            </span>
+          </div>
         </div>
 
         {/* Progress Bar */}
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between text-xs font-medium">
-            <span className="text-text-secondary">
-              Hoàn thành: <span className="text-text-primary font-bold">{readyCount}/{totalChecks}</span> hạng mục
-            </span>
-            <span className={`font-bold ${canSubmit ? 'text-emerald-400' : 'text-brand'}`}>
-              {Math.round(progressPercent)}%
-            </span>
+        <div className="space-y-3 bg-bg-primary/30 p-5 rounded-2xl border border-border-custom/30">
+          <div className="flex items-end justify-between">
+            <div className="space-y-1">
+              <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Tiến độ hoàn thành</span>
+              <div className="text-sm text-text-secondary">
+                <span className="text-text-primary font-bold text-lg">{readyCount}</span>
+                <span className="mx-1.5 opacity-50">/</span>
+                <span>{totalChecks} hạng mục</span>
+              </div>
+            </div>
+            <div className={`text-3xl font-black tracking-tighter ${canSubmit ? 'text-emerald-400' : 'text-brand/80'}`}>
+              {Math.round(progressPercent)}<span className="text-lg opacity-60">%</span>
+            </div>
           </div>
-          <div className="h-2.5 rounded-full bg-bg-surface border border-border-custom/30 overflow-hidden shadow-inner">
+          <div className="h-3 rounded-full bg-bg-surface border border-border-custom/40 overflow-hidden shadow-inner relative">
             <div
-              className={`h-full transition-all duration-700 ease-out relative ${
+              className={`absolute top-0 left-0 h-full transition-all duration-1000 ease-out rounded-full ${
                 canSubmit
-                  ? 'bg-gradient-to-r from-emerald-500 to-emerald-400'
-                  : 'bg-gradient-to-r from-brand/80 to-brand'
+                  ? 'bg-gradient-to-r from-emerald-500 to-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.4)]'
+                  : 'bg-gradient-to-r from-brand/80 to-brand shadow-[0_0_15px_rgba(168,85,247,0.3)]'
               }`}
               style={{ width: `${progressPercent}%` }}
             >
@@ -328,45 +346,45 @@ export const ChapterSubmitPanel = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-6 border-t border-border-custom/40">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           {/* Left Column: Checklist */}
-          <div className="space-y-3.5">
-            <h3 className="text-sm font-bold text-text-primary mb-2 flex items-center gap-2">
+          <div className="lg:col-span-3 space-y-4">
+            <h3 className="text-sm font-bold text-text-primary flex items-center gap-2 uppercase tracking-wider">
               <CheckCircle2 size={16} className="text-brand" />
               Danh sách kiểm tra
             </h3>
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {readiness.checks.map((item) => (
                 <div
                   key={item.key}
-                  className={`flex items-start gap-3.5 p-4 rounded-xl border transition-all duration-300 ${
+                  className={`group flex items-start gap-4 p-4 rounded-2xl border transition-all duration-300 hover:-translate-y-0.5 ${
                     item.passed
-                      ? 'bg-emerald-500/5 border-emerald-500/15'
-                      : 'bg-bg-primary/40 border-border-custom/60 shadow-sm'
+                      ? 'bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40 hover:shadow-[0_4px_20px_rgba(52,211,153,0.05)]'
+                      : 'bg-bg-primary/50 border-border-custom/50 hover:border-border-custom hover:shadow-lg'
                   }`}
                 >
                   <div
-                    className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                    className={`mt-1 w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${
                       item.passed
-                        ? 'bg-emerald-500/20 text-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.2)]'
-                        : 'bg-bg-surface text-text-muted border border-border-custom'
+                        ? 'bg-emerald-500/20 text-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.25)] scale-110'
+                        : 'bg-bg-surface text-text-muted border border-border-custom group-hover:bg-bg-secondary'
                     }`}
                   >
-                    {item.passed ? <CheckCircle2 size={14} strokeWidth={3} /> : <div className="w-2 h-2 rounded-full bg-text-muted/30" />}
+                    {item.passed ? <CheckCircle2 size={16} strokeWidth={3} /> : <div className="w-2.5 h-2.5 rounded-full bg-text-muted/40 transition-colors group-hover:bg-text-muted/60" />}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className={`text-sm font-bold ${item.passed ? 'text-text-primary' : 'text-text-secondary'}`}>
+                  <div className="flex-1 min-w-0 pt-0.5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <span className={`text-sm font-bold transition-colors ${item.passed ? 'text-text-primary' : 'text-text-secondary group-hover:text-text-primary'}`}>
                         {item.label}
                       </span>
-                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded whitespace-nowrap shrink-0 ${
-                        item.passed ? 'bg-emerald-500/10 text-emerald-400' : 'bg-bg-surface text-text-muted'
+                      <span className={`inline-flex items-center justify-center text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md whitespace-nowrap shrink-0 transition-colors ${
+                        item.passed ? 'bg-emerald-500/15 text-emerald-400' : 'bg-bg-surface text-text-muted border border-border-custom/50'
                       }`}>
                         {item.passed ? 'Đạt' : 'Chưa đạt'}
                       </span>
                     </div>
                     {item.detail && (
-                      <p className="text-xs text-text-muted mt-1.5 leading-relaxed pr-4">
+                      <p className="text-xs text-text-muted mt-2 leading-relaxed pr-4">
                         {item.detail}
                       </p>
                     )}
@@ -377,84 +395,87 @@ export const ChapterSubmitPanel = ({
           </div>
 
           {/* Right Column: Alerts & Actions */}
-          <div className="flex flex-col">
-            <h3 className="text-sm font-bold text-text-primary mb-3 flex items-center gap-2 opacity-0 select-none hidden lg:flex">
-              Hành động
-            </h3>
-            
+          <div className="lg:col-span-2 flex flex-col">
             {readiness.blockers.length > 0 ? (
-              <div className="rounded-xl border border-warning/20 bg-warning/5 p-4.5 relative overflow-hidden shadow-sm">
-                <div className="absolute top-0 left-0 w-1.5 h-full bg-warning/60" />
-                <div className="flex items-start gap-3 pl-2">
-                  <AlertTriangle size={18} className="text-warning mt-0.5 shrink-0" />
-                  <div>
-                    <h4 className="text-xs font-bold text-warning uppercase tracking-wider mb-2.5">
+              <div className="rounded-2xl border border-warning/20 bg-warning/5 overflow-hidden shadow-sm transition-all hover:shadow-md hover:border-warning/30 flex flex-col h-full">
+                <div className="h-1.5 w-full bg-gradient-to-r from-warning/60 to-warning/30" />
+                <div className="p-5 flex-1 flex flex-col gap-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-warning/10 flex items-center justify-center shrink-0">
+                      <AlertTriangle size={16} className="text-warning" />
+                    </div>
+                    <h4 className="text-sm font-bold text-warning uppercase tracking-wider">
                       Cần xử lý trước khi nộp
                     </h4>
-                    <ul className="text-xs text-text-secondary space-y-2">
-                      {readiness.blockers.map((b, idx) => (
-                        <li key={idx} className="flex items-start gap-2 leading-relaxed">
-                          <span className="text-warning/50 mt-0.5 font-bold">•</span>
-                          <span>{b}</span>
-                        </li>
-                      ))}
-                    </ul>
                   </div>
+                  <ul className="text-sm text-text-secondary space-y-3 pl-1 flex-1">
+                    {readiness.blockers.map((b, idx) => (
+                      <li key={idx} className="flex items-start gap-3 leading-relaxed">
+                        <span className="text-warning mt-1.5 w-1.5 h-1.5 rounded-full bg-warning/60 shrink-0 shadow-[0_0_5px_rgba(234,179,8,0.5)]" />
+                        <span>{b}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  
+                  <Link
+                    to={`/mangaka/canvas/${chapterId}`}
+                    className="mt-4 w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold bg-bg-surface text-text-primary border border-border-custom hover:border-brand/40 hover:text-brand hover:bg-brand/5 transition-all duration-200 shadow-sm group"
+                  >
+                    <MapPin size={18} className="text-text-muted group-hover:text-brand transition-colors" />
+                    Mở khung vẽ để xử lý
+                  </Link>
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4.5 relative overflow-hidden shadow-sm">
-                <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500/60" />
-                <div className="flex items-start gap-3 pl-2">
-                  <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                    <CheckCircle2 size={12} className="text-emerald-400" strokeWidth={3} />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1.5">
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 overflow-hidden shadow-sm transition-all hover:shadow-md hover:border-emerald-500/30 flex flex-col h-full">
+                <div className="h-1.5 w-full bg-gradient-to-r from-emerald-500/60 to-emerald-500/30" />
+                <div className="p-5 flex-1 flex flex-col gap-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(52,211,153,0.2)]">
+                      <CheckCircle2 size={16} className="text-emerald-400" strokeWidth={3} />
+                    </div>
+                    <h4 className="text-sm font-bold text-emerald-400 uppercase tracking-wider">
                       Đã sẵn sàng nộp
                     </h4>
-                    <p className="text-xs text-text-secondary leading-relaxed">
-                      Tuyệt vời! Bạn đã hoàn thành tất cả các hạng mục yêu cầu. Hãy nộp chương cho biên tập viên ngay.
-                    </p>
                   </div>
+                  <p className="text-sm text-text-secondary leading-relaxed flex-1">
+                    Tuyệt vời! Bạn đã hoàn thành tất cả các hạng mục yêu cầu. Hãy nộp chương cho biên tập viên ngay bây giờ.
+                  </p>
                 </div>
               </div>
             )}
 
-            <div className="flex flex-col gap-3 mt-auto pt-6">
-              <Link
-                to={`/mangaka/canvas/${chapterId}`}
-                className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold bg-bg-surface text-text-primary border border-border-custom hover:border-brand/40 hover:text-brand transition-all duration-200 shadow-sm group"
-              >
-                <MapPin size={16} className="text-text-muted group-hover:text-brand transition-colors" />
-                Mở khung vẽ để xử lý
-              </Link>
-
+            <div className="pt-5 mt-auto">
               <button
                 type="button"
                 onClick={onSubmit}
                 disabled={!canSubmit || isSubmitting}
-                className={`w-full relative inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl text-sm font-bold border-none transition-all duration-300 overflow-hidden ${
+                className={`w-full relative inline-flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl text-base font-bold border-none transition-all duration-300 overflow-hidden ${
                   !canSubmit || isSubmitting
-                    ? 'bg-bg-surface text-text-muted/60 cursor-not-allowed shadow-inner'
-                    : 'bg-gradient-to-r from-brand to-brand-hover text-white shadow-lg shadow-brand/25 hover:shadow-brand/40 hover:-translate-y-0.5 cursor-pointer'
+                    ? 'bg-bg-surface text-text-muted/60 cursor-not-allowed shadow-inner border border-border-custom'
+                    : 'bg-gradient-to-r from-brand via-brand-hover to-brand text-white shadow-xl shadow-brand/25 hover:shadow-brand/40 hover:-translate-y-1 cursor-pointer bg-[length:200%_auto] hover:bg-[position:right_center]'
                 }`}
               >
                 {canSubmit && !isSubmitting && (
-                  <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity duration-300" />
+                  <>
+                    <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute -inset-1 bg-brand/30 blur-xl opacity-0 hover:opacity-100 transition-opacity duration-500 rounded-xl" />
+                  </>
                 )}
                 
-                {isSubmitting ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" />
-                    Đang gửi dữ liệu...
-                  </>
-                ) : (
-                  <>
-                    <SendHorizonal size={18} className={canSubmit ? "animate-bounce-x" : ""} />
-                    {canSubmit ? 'Nộp chương ngay' : 'Chưa đủ điều kiện nộp'}
-                  </>
-                )}
+                <span className="relative z-10 flex items-center gap-2">
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={20} className="animate-spin" />
+                      Đang gửi dữ liệu...
+                    </>
+                  ) : (
+                    <>
+                      <SendHorizonal size={20} className={canSubmit ? "animate-bounce-x" : ""} />
+                      {canSubmit ? 'Nộp chương ngay' : 'Chưa đủ điều kiện nộp'}
+                    </>
+                  )}
+                </span>
               </button>
             </div>
           </div>

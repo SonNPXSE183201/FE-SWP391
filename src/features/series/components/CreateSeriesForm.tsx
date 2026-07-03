@@ -32,6 +32,7 @@ import { seriesApi } from '../api/series.api';
 import type { ApiResponse } from '../../../api/axios';
 import type { SeriesDto } from '../../../api/generated/types';
 import { formatVND } from '../../wallet/constants';
+import { formatVNDInput } from '../../../utils/currency';
 
 const QUICK_BUDGETS = [
   { label: '5M', value: 5_000_000 },
@@ -100,12 +101,6 @@ export const CreateSeriesForm = () => {
       }
       handleCoverImage(file);
     }
-  };
-
-  const formatCurrency = (value: string): string => {
-    const numericValue = value.replace(/[^0-9]/g, '');
-    if (!numericValue) return '';
-    return new Intl.NumberFormat('vi-VN').format(Number(numericValue));
   };
 
   const handleBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -386,7 +381,7 @@ export const CreateSeriesForm = () => {
               <input
                 type="text"
                 inputMode="numeric"
-                value={formatCurrency(formData.requestedBudget)}
+                value={formatVNDInput(formData.requestedBudget)}
                 onChange={handleBudgetChange}
                 placeholder="VD: 5.000.000"
                 className={`w-full px-4 py-3 pr-16 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-all ${

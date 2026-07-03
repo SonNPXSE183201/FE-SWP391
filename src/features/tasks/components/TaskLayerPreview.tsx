@@ -66,7 +66,8 @@ export const TaskLayerPreview = (props: TaskLayerPreviewProps) => {
     setLayout(computeObjectContainLayout(rect.width, rect.height, naturalSize.w, naturalSize.h));
   }, [naturalSize]);
 
-  const [imgError, setImgError] = useState(false);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const imgError = failedUrl === baseUrl;
 
   useEffect(() => {
     updateLayout();
@@ -116,15 +117,16 @@ export const TaskLayerPreview = (props: TaskLayerPreviewProps) => {
         className={`group relative overflow-hidden rounded-xl border border-border-custom bg-black/30 ${heightClassName} ${className} ${!disableFullscreen ? 'cursor-pointer' : ''}`}
       >
         <img
+          key={baseUrl}
           src={baseUrl}
           alt="Bản thảo gốc"
           className="absolute inset-0 h-full w-full object-contain"
           onLoad={(e) => {
             const img = e.currentTarget;
             setNaturalSize({ w: img.naturalWidth, h: img.naturalHeight });
-            setImgError(false);
+            setFailedUrl(null);
           }}
-          onError={() => setImgError(true)}
+          onError={() => setFailedUrl(baseUrl)}
         />
 
         {regionStyle && overlayUrl && (

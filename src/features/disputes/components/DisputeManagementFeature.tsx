@@ -25,10 +25,9 @@ import {
 } from 'lucide-react';
 import { useDisputes, useDisputeDetail, useResolveDispute } from '../hooks/useDispute';
 import type { DisputeListItemDto, DisputeEvidenceDto } from '../api/dispute.api';
+import { formatVND } from '../../../utils/currency';
 
 // ─── Helpers ───
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 
 const formatDate = (iso: string): string =>
   new Date(iso).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -224,7 +223,7 @@ export const DisputeManagementFeature = () => {
                 </div>
                 <div className="bg-bg-surface border border-border-custom rounded-lg p-3">
                   <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">Số tiền Lock</p>
-                  <p className="text-sm font-bold text-amber-400">{formatCurrency(lockedAmt)}</p>
+                  <p className="text-sm font-bold text-amber-400">{formatVND(lockedAmt)}</p>
                 </div>
               </div>
             </div>
@@ -335,7 +334,7 @@ export const DisputeManagementFeature = () => {
               <div className="bg-bg-surface border border-border-custom rounded-xl p-4 space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-text-muted">Số tiền Lock</span>
-                  <span className="text-sm font-bold text-text-primary">{formatCurrency(lockedAmt)}</span>
+                  <span className="text-sm font-bold text-text-primary">{formatVND(lockedAmt)}</span>
                 </div>
                 {disputeDetail.status === 'Resolved' && disputeDetail.resolution && (
                   <>
@@ -438,7 +437,7 @@ export const DisputeManagementFeature = () => {
                 {/* Locked Amount */}
                 <div className="bg-bg-surface border border-border-custom rounded-xl p-4 text-center">
                   <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">Tổng tiền Lock</p>
-                  <p className="text-2xl font-bold text-text-primary">{formatCurrency(lockedAmt)}</p>
+                  <p className="text-2xl font-bold text-text-primary">{formatVND(lockedAmt)}</p>
                 </div>
 
                 {/* Slider */}
@@ -471,12 +470,12 @@ export const DisputeManagementFeature = () => {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-bg-surface border border-blue-400/20 rounded-xl p-3 text-center">
                       <p className="text-[10px] text-blue-400 font-medium mb-0.5">→ Assistant nhận</p>
-                      <p className="text-lg font-bold text-blue-400">{formatCurrency(assistantAmount)}</p>
+                      <p className="text-lg font-bold text-blue-400">{formatVND(assistantAmount)}</p>
                       <p className="text-[10px] text-text-muted">{assistantPercent}%</p>
                     </div>
                     <div className="bg-bg-surface border border-orange-400/20 rounded-xl p-3 text-center">
                       <p className="text-[10px] text-orange-400 font-medium mb-0.5">← Mangaka hoàn</p>
-                      <p className="text-lg font-bold text-orange-400">{formatCurrency(mangakaRefund)}</p>
+                      <p className="text-lg font-bold text-orange-400">{formatVND(mangakaRefund)}</p>
                       <p className="text-[10px] text-text-muted">{100 - assistantPercent}%</p>
                     </div>
                   </div>
@@ -658,7 +657,7 @@ export const DisputeManagementFeature = () => {
 
                 {/* Right Info */}
                 <div className="hidden sm:flex flex-col items-end gap-1 flex-shrink-0">
-                  <span className="text-sm font-bold text-text-primary">{formatCurrency(dispute.lockedAmount ?? 0)}</span>
+                  <span className="text-sm font-bold text-text-primary">{formatVND(dispute.lockedAmount ?? 0)}</span>
                   <span className="text-[10px] text-text-muted flex items-center gap-1">
                     <Clock size={10} /> {formatDate(dispute.createdAt ?? '')}
                   </span>

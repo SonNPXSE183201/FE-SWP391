@@ -44,6 +44,7 @@ import {
   type VoteUiChoice,
   type VotingListFilter,
 } from '../voting.utils';
+import { formatVND } from '../../../utils/currency';
 
 const FILTER_TABS: { value: VotingListFilter; label: string }[] = [
   { value: 'All', label: 'Tất cả' },
@@ -52,8 +53,6 @@ const FILTER_TABS: { value: VotingListFilter; label: string }[] = [
   { value: 'Closed', label: 'Đã đóng' },
 ];
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 
 const getVoteDecisionConfig = (decision: VoteUiChoice) => {
   switch (decision) {
@@ -264,7 +263,7 @@ export const VotingFeature = () => {
               </div>
               <div className="bg-bg-surface border border-border-custom rounded-xl p-4">
                 <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-1">{MANGAKA_PROPOSED_LABEL}</p>
-                <p className="text-2xl font-bold text-text-primary">{formatCurrency(selectedItem.estimatedProductionBudget ?? 0)}</p>
+                <p className="text-2xl font-bold text-text-primary">{formatVND(selectedItem.estimatedProductionBudget ?? 0)}</p>
               </div>
             </div>
 
@@ -534,7 +533,7 @@ export const VotingFeature = () => {
                       <div className="flex flex-wrap items-center justify-between gap-3 mt-3 pt-3 border-t border-border-custom/60">
                         <div className="inline-flex items-center gap-1.5 text-sm font-semibold text-text-primary">
                           <Banknote size={14} className="text-brand" />
-                          {formatCurrency(item.estimatedProductionBudget ?? 0)}
+                          {formatVND(item.estimatedProductionBudget ?? 0)}
                         </div>
                         <VoteProgressBar
                           approve={voteResults.approve}

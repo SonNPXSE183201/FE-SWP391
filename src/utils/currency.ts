@@ -1,14 +1,8 @@
 /**
  * Bộ tiện ích định dạng tiền VND dùng chung cho toàn hệ thống.
  * Chuẩn hiển thị: nhóm hàng nghìn bằng dấu chấm theo locale `vi-VN`
- * (vd: 200000 → "200.000", có ký hiệu → "200.000 ₫").
+ * (vd: 200000 → "200.000", có ký hiệu → "200.000 VND").
  */
-
-const CURRENCY_FORMATTER = new Intl.NumberFormat('vi-VN', {
-  style: 'currency',
-  currency: 'VND',
-  maximumFractionDigits: 0,
-});
 
 const NUMBER_FORMATTER = new Intl.NumberFormat('vi-VN', {
   maximumFractionDigits: 0,
@@ -23,8 +17,9 @@ const toNumber = (value: Numeric): number => {
   return Number.isFinite(n) ? n : 0;
 };
 
-/** Định dạng có ký hiệu tiền tệ: 200000 → "200.000 ₫". */
-export const formatVND = (value: Numeric): string => CURRENCY_FORMATTER.format(toNumber(value));
+/** Định dạng có ký hiệu tiền tệ: 200000 → "200.000 VND". */
+export const formatVND = (value: Numeric): string =>
+  `${NUMBER_FORMATTER.format(toNumber(value))} VND`;
 
 /** Định dạng số có dấu chấm, KHÔNG kèm ký hiệu: 200000 → "200.000". */
 export const formatVNDNumber = (value: Numeric): string => NUMBER_FORMATTER.format(toNumber(value));
