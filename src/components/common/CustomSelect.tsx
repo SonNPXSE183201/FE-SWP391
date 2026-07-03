@@ -14,6 +14,7 @@ interface CustomSelectProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  searchPlaceholder?: string;
   disabled?: boolean;
   error?: boolean;
   icon?: React.ReactNode;
@@ -36,6 +37,7 @@ export const CustomSelect = ({
   menuAlign = 'left',
   size = 'md',
   searchable = false,
+  searchPlaceholder = 'Tìm kiếm...',
 }: CustomSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState(-1);
@@ -206,7 +208,7 @@ export const CustomSelect = ({
                 <input
                   ref={searchInputRef}
                   type="text"
-                  placeholder="Tìm kiếm ngân hàng..."
+                  placeholder={searchPlaceholder}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyDown={(e) => {
@@ -220,7 +222,7 @@ export const CustomSelect = ({
               </div>
             </div>
           )}
-          <div className="py-1 overflow-y-auto flex-1">
+          <div className="py-1 overflow-y-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {filteredOptions.length === 0 ? (
               <div className="px-3 py-3 text-center text-xs text-text-muted">
                 Không tìm thấy kết quả

@@ -7,6 +7,8 @@ const invalidateAdminUserRelatedQueries = (queryClient: ReturnType<typeof useQue
   queryClient.invalidateQueries({ queryKey: ["admin-users"] });
   queryClient.invalidateQueries({ queryKey: ["admin-editors"] });
   queryClient.invalidateQueries({ queryKey: ["dashboard", "admin"] });
+  queryClient.invalidateQueries({ queryKey: ["admin", "board-voting"] });
+  queryClient.invalidateQueries({ queryKey: ["admin", "board-members"] });
 };
 
 interface UseAdminUsersOptions {

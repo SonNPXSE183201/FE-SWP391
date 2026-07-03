@@ -40,21 +40,11 @@ import {
 
 } from '../voting.utils';
 
+import { formatVND, formatVNDInput } from '../../../utils/currency';
+
 import type { VotingSeriesDto } from '../api/voting.api';
 
 import { MANGAKA_ROLE_LABEL, NEMU_BUDGET_LABEL } from '../../series/constants/seriesCopy';
-
-
-
-const formatCurrency = (value: number): string =>
-
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-
-
-
-const formatVndInput = (value: number): string =>
-
-  value > 0 ? new Intl.NumberFormat('vi-VN').format(value) : '';
 
 
 
@@ -380,7 +370,7 @@ export const VoteModal = ({
 
                         </p>
 
-                        <p className="text-lg font-bold text-text-primary mt-0.5">{formatCurrency(authorBudget)}</p>
+                        <p className="text-lg font-bold text-text-primary mt-0.5">{formatVND(authorBudget)}</p>
 
                       </div>
 
@@ -402,7 +392,7 @@ export const VoteModal = ({
 
                         </p>
 
-                        <p className="text-base font-semibold text-amber-400 mt-0.5">{formatCurrency(editorBudget)}</p>
+                        <p className="text-base font-semibold text-amber-400 mt-0.5">{formatVND(editorBudget)}</p>
 
                       </div>
 
@@ -450,7 +440,7 @@ export const VoteModal = ({
 
                         inputMode="numeric"
 
-                        value={formatVndInput(voteBudget)}
+                        value={formatVNDInput(voteBudget)}
 
                         onChange={(e) => setVoteBudget(parseVndInput(e.target.value))}
 
@@ -466,7 +456,7 @@ export const VoteModal = ({
 
                       <p className="text-[11px] text-text-muted mt-1.5">
 
-                        Cho phép: {formatCurrency(budgetRange.min)} – {formatCurrency(budgetRange.max)} (50%–150%)
+                        Cho phép: {formatVND(budgetRange.min)} – {formatVND(budgetRange.max)} (50%–150%)
 
                       </p>
 
@@ -574,7 +564,7 @@ export const VoteModal = ({
 
                   {voteDecision === 'Approve' && voteBudget > 0 && (
 
-                    <> với ngân sách <strong className="text-success">{formatCurrency(voteBudget)}</strong></>
+                    <> với ngân sách <strong className="text-success">{formatVND(voteBudget)}</strong></>
 
                   )}
 

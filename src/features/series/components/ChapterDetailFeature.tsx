@@ -150,21 +150,30 @@ export const ChapterDetailFeature = () => {
         </button>
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-brand/10 flex items-center justify-center">
-              <Image size={22} className="text-brand" />
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand/20 to-brand/5 border border-brand/20 flex items-center justify-center shadow-sm">
+              <Image size={24} className="text-brand" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-text-primary">
-                Ch.{chapter.chapterNumber}: {chapter.title}
+            <div className="flex flex-col justify-center">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[11px] font-bold text-brand uppercase tracking-wider">
+                  {chapter.seriesTitle}
+                </span>
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${chapterStatusCfg.bg} ${chapterStatusCfg.color}`}>
+                  <ChapterStatusIcon size={12} strokeWidth={2.5} />
+                  {chapterStatusCfg.label}
+                </span>
+              </div>
+              <h1 className="text-2xl font-bold text-text-primary flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span className="text-text-secondary/70 font-semibold">Chương {chapter.chapterNumber}:</span>
+                <span className="text-text-primary">{chapter.title}</span>
               </h1>
-              <p className="text-xs text-text-muted mt-0.5">
-                {chapter.seriesTitle} · {allPages.length} trang
-              </p>
-              <span className={`inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${chapterStatusCfg.bg} ${chapterStatusCfg.color}`}>
-                <ChapterStatusIcon size={11} />
-                {chapterStatusCfg.label}
-              </span>
+              <div className="flex items-center gap-3 mt-1 text-xs font-medium text-text-muted">
+                <span className="flex items-center gap-1.5">
+                  <Image size={13} />
+                  {allPages.length} trang
+                </span>
+              </div>
             </div>
           </div>
 

@@ -8,21 +8,32 @@ import { isChapterSubmittableStatus } from '../../../utils/status';
 
 export { isChapterSubmittableStatus };
 
-const mapReadiness = (raw: Record<string, unknown>): ChapterProductionReadiness => ({
-  chapterId: Number(raw.chapterId ?? raw.ChapterId ?? 0),
-  status: String(raw.status ?? raw.Status ?? ''),
-  canSubmit: Boolean(raw.canSubmit ?? raw.CanSubmit),
-  totalPages: Number(raw.totalPages ?? raw.TotalPages ?? 0),
-  pagesReady: Number(raw.pagesReady ?? raw.PagesReady ?? 0),
-  openTaskCount: Number(raw.openTaskCount ?? raw.OpenTaskCount ?? 0),
-  checks: ((raw.checks ?? raw.Checks) as Record<string, unknown>[] | undefined)?.map((c) => ({
-    key: String(c.key ?? c.Key ?? ''),
-    label: String(c.label ?? c.Label ?? ''),
-    passed: Boolean(c.passed ?? c.Passed),
-    detail: (c.detail ?? c.Detail) as string | null | undefined,
-  })) ?? [],
-  blockers: ((raw.blockers ?? raw.Blockers) as string[] | undefined) ?? [],
-});
+const mapReadiness = (raw: Record<string, unknown>): ChapterProductionReadiness => {
+  const translateText = (text: string) => {
+    if (!text) return text;
+    return text
+      .replace(/Assistant/g, 'Trợ lý')
+      .replace(/task/gi, 'công việc')
+      .replace(/Canvas/g, 'Khung vẽ')
+      .replace(/Editor/g, 'Biên tập viên');
+  };
+
+  return {
+    chapterId: Number(raw.chapterId ?? raw.ChapterId ?? 0),
+    status: String(raw.status ?? raw.Status ?? ''),
+    canSubmit: Boolean(raw.canSubmit ?? raw.CanSubmit),
+    totalPages: Number(raw.totalPages ?? raw.TotalPages ?? 0),
+    pagesReady: Number(raw.pagesReady ?? raw.PagesReady ?? 0),
+    openTaskCount: Number(raw.openTaskCount ?? raw.OpenTaskCount ?? 0),
+    checks: ((raw.checks ?? raw.Checks) as Record<string, unknown>[] | undefined)?.map((c) => ({
+      key: String(c.key ?? c.Key ?? ''),
+      label: translateText(String(c.label ?? c.Label ?? '')),
+      passed: Boolean(c.passed ?? c.Passed),
+      detail: c.detail || c.Detail ? translateText(String(c.detail ?? c.Detail)) : undefined,
+    })) ?? [],
+    blockers: ((raw.blockers ?? raw.Blockers) as string[] | undefined)?.map(translateText) ?? [],
+  };
+};
 
 export const useChapterProductionReadiness = (chapterId?: string, enabled = true) =>
   useQuery({
@@ -53,7 +64,7 @@ export const useSubmitChapterForReview = () => {
         }
         return apiData;
       } catch (err) {
-        throw new Error(getAxiosErrorMessage(err, 'Nộp chapter thất bại'));
+        throw new Error(getAxiosErrorMessage(err, 'Nộp chapter thất bại'), { cause: err });
       }
     },
     onSuccess: (_data, chapterId) => {
@@ -82,7 +93,7 @@ export const useReplacePageImage = (chapterId: string) => {
         }
         return apiData;
       } catch (err) {
-        throw new Error(getAxiosErrorMessage(err, 'Tải lại ảnh trang thất bại'));
+        throw new Error(getAxiosErrorMessage(err, 'Tải lại ảnh trang thất bại'), { cause: err });
       }
     },
     onSuccess: (_data, { pageId }) => {

@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  ArrowLeft, MapPin, ChevronLeft, ChevronRight, Loader2, ImageOff,
-  Trash2, RotateCcw, CheckCircle2, AlertCircle, Banknote, Send, X,
-  ClipboardCheck, Ban,
+  ArrowLeft, MapPin, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Loader2, ImageOff,
+  RotateCcw, CheckCircle2, AlertCircle, Banknote, Send, X,
+  ClipboardCheck, Ban, Minus, Plus, Layers, User, FileText,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CanvasViewer } from '../../../components/canvas/CanvasViewer';
 import { CanvasToolbar } from '../../../components/canvas/CanvasToolbar';
+import { AnnotationPinPanel } from '../../../components/canvas/AnnotationPinPanel';
 import { MobileCanvasWarning } from '../../../components/canvas/MobileCanvasWarning';
 import { useCanvasStore } from '../../../stores/canvasStore';
 import type { CanvasViewerHandle } from '../../../components/canvas/CanvasViewer';
@@ -15,6 +16,7 @@ import type { Annotation, AnnotationType } from '../../../types/entities';
 import { useChapterReview, useApproveChapter, useRequireChapterRevision } from '../hooks/useReview';
 import { reviewApi, type AnnotationDto } from '../api/review.api';
 import { ANNOTATION_TYPE_CONFIG, QC_CHECKLIST_ITEMS, formatVND } from '../constants';
+import { HelpTip } from '../../../components/common/HelpTip';
 import type { PageDto } from '../../../api/generated/types';
 import { Point } from 'fabric';
 
@@ -40,6 +42,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
   const [showApprove, setShowApprove] = useState(false);
   const [showRevision, setShowRevision] = useState(false);
   const [revisionReason, setRevisionReason] = useState('');
+  const [manualValidPageCount, setManualValidPageCount] = useState<number | null>(null);
   const [checklist, setChecklist] = useState<boolean[]>(QC_CHECKLIST_ITEMS.map(() => false));
   const canvasRef = useRef<CanvasViewerHandle>(null);
   const revisionTemplates = [
@@ -83,7 +86,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
       id: String(dto.id ?? `anno-${Date.now()}`),
       pageId: String(dto.pageId ?? ''),
       editorId: String(dto.createdByUserId ?? '0'),
-      editorName: dto.createdByUserName || 'Editor',
+      editorName: dto.createdByUserName || 'Biên tập viên',
       type: normalizedType,
       x: coords.x,
       y: coords.y,
@@ -109,7 +112,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
       id: String(a.Id),
       pageId: String(a.PageId),
       editorId: String(a.EditorId),
-      editorName: (a.Editor as Record<string, string>)?.FullName || 'Editor',
+      editorName: (a.Editor as Record<string, string>)?.FullName || 'Biên tập viên',
       type: a.Type as AnnotationType,
       x: a.X as number,
       y: a.Y as number,
@@ -167,12 +170,15 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
     [annotations],
   );
 
-  const validPageCount = useMemo(
+  const autoValidPageCount = useMemo(
     () => pages.filter((p: PageDto) => !pageHasError(String(p.id))).length,
     [pages, pageHasError],
   );
+  
+  const validPageCount = manualValidPageCount !== null ? manualValidPageCount : autoValidPageCount;
 
-  const genkouryo = validPageCount * (chapter?.appliedGenkouryoPrice ?? 0);
+  const genkouryoUnitPrice = chapter?.appliedGenkouryoPrice ?? 0;
+  const genkouryo = validPageCount * genkouryoUnitPrice;
   const totalUnresolved = annotations.filter((a) => !a.resolved).length;
   const invalidPageCount = pages.length - validPageCount;
   const reviewProgress = pages.length > 0 ? Math.round((validPageCount / pages.length) * 100) : 0;
@@ -202,10 +208,10 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
     return `Vui lòng chỉnh sửa theo các lỗi đã ghim:\n${lines.join('\n')}`.slice(0, 500);
   }, [pages, unresolvedAnnotations]);
 
-  useEffect(() => {
-    if (!showRevision || revisionReason.trim() || !autoRevisionSummary) return;
-    setRevisionReason(autoRevisionSummary);
-  }, [showRevision, revisionReason, autoRevisionSummary]);
+  const openRevisionModal = useCallback(() => {
+    setShowRevision(true);
+    setRevisionReason((current) => current.trim() || autoRevisionSummary || '');
+  }, [autoRevisionSummary]);
 
   // ─── Handlers ───
   const handleCreate = useCallback(
@@ -265,11 +271,11 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
       { chapterId, validPageCount, genkouryo, qcChecklist },
       {
         onSuccess: () => {
-          toast.success(`Đã duyệt Chapter · Giải ngân ${formatVND(genkouryo)} nhuận bút`, { duration: 4000 });
+          toast.success(`Đã duyệt chương · Giải ngân ${formatVND(genkouryo)} nhuận bút`, { duration: 4000 });
           setShowApprove(false);
           onBack();
         },
-        onError: () => toast.error('Có lỗi khi duyệt Chapter'),
+        onError: () => toast.error('Có lỗi khi duyệt chương'),
       },
     );
   };
@@ -284,7 +290,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
       { chapterId, reason: finalReason },
       {
         onSuccess: () => {
-          toast.success('Đã trả Chapter về cho Mangaka chỉnh sửa');
+          toast.success('Đã trả chương về cho Mangaka chỉnh sửa');
           setShowRevision(false);
           onBack();
         },
@@ -333,6 +339,19 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
   }, [setActiveTool]);
 
   const allChecked = checklist.every(Boolean);
+  const checklistDoneCount = checklist.filter(Boolean).length;
+  const checklistTotal = QC_CHECKLIST_ITEMS.length;
+  const isManualPageCount = manualValidPageCount !== null;
+  const canDisburse = genkouryoUnitPrice > 0 && validPageCount > 0;
+
+  useEffect(() => {
+    if (!showApprove) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowApprove(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [showApprove]);
 
   if (isLoading) {
     return (
@@ -346,7 +365,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
         <ImageOff size={48} className="text-text-muted" />
-        <p className="text-text-secondary">Không tìm thấy chapter để review</p>
+        <p className="text-text-secondary">Không tìm thấy chương để kiểm duyệt</p>
         <button onClick={onBack} className="text-brand text-sm hover:underline cursor-pointer">
           ← Quay lại hàng đợi
         </button>
@@ -370,10 +389,10 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
             </button>
             <div className="min-w-0">
               <h1 className="text-sm font-bold text-text-primary truncate">
-                {chapter.series?.title || `Series #${chapter.seriesId}`} · Ch.{chapter.chapterNumber}
+                {chapter.series?.title || `Bộ truyện #${chapter.seriesId}`} · Chương {chapter.chapterNumber}
               </h1>
               <p className="text-[11px] text-text-secondary truncate">
-                {chapter.title} — {chapter.series?.mangaka?.fullName || 'Unknown Mangaka'}
+                {chapter.title} — {chapter.series?.mangaka?.fullName || 'Chưa xác định'}
               </p>
             </div>
           </div>
@@ -412,7 +431,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
 
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
-              onClick={() => setShowRevision(true)}
+              onClick={openRevisionModal}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-bg-primary border border-border-custom rounded-lg text-xs text-text-secondary hover:text-text-primary hover:border-amber-500/30 transition-all cursor-pointer"
             >
               <RotateCcw size={13} /> Yêu cầu sửa
@@ -421,7 +440,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
               onClick={() => setShowApprove(true)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-medium shadow-brand transition-all cursor-pointer"
             >
-              <CheckCircle2 size={13} /> Duyệt Chapter
+              <CheckCircle2 size={13} /> Duyệt chương
             </button>
           </div>
         </div>
@@ -429,44 +448,91 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
         {/* ─── Workspace ─── */}
         <div className="flex gap-3 flex-1 min-h-0">
           {/* Page filmstrip — vertical */}
-          <div className="w-[76px] flex-shrink-0 flex flex-col gap-2 overflow-y-auto pr-0.5">
+          <div className="w-[76px] flex-shrink-0 flex flex-col gap-1.5 overflow-hidden">
             <p className="text-[9px] uppercase tracking-wider text-text-muted font-medium text-center shrink-0">
               Trang
             </p>
-            {pages.map((p: PageDto, idx: number) => {
-              const invalid = pageHasError(String(p.id));
-              const isActive = idx === currentPageIndex;
+            {/* Nút điều hướng lên */}
+            <button
+              onClick={() => {
+                const target = Math.max(0, currentPageIndex - 1);
+                setCurrentPageIndex(target);
+              }}
+              disabled={currentPageIndex === 0}
+              className="w-full h-6 rounded-md bg-bg-secondary border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary hover:border-brand/30 disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer transition-all flex-shrink-0"
+            >
+              <ChevronUp size={14} />
+            </button>
+            {/* Hiển thị tối đa 6 trang xung quanh trang hiện tại */}
+            {(() => {
+              const maxVisible = 6;
+              let start = Math.max(0, currentPageIndex - Math.floor(maxVisible / 2));
+              const end = Math.min(pages.length, start + maxVisible);
+              if (end - start < maxVisible) start = Math.max(0, end - maxVisible);
+              const visiblePages = pages.slice(start, end);
+              const hasHiddenAbove = start > 0;
+              const hasHiddenBelow = end < pages.length;
               return (
-                <button
-                  key={p.id}
-                  onClick={() => setCurrentPageIndex(idx)}
-                  className={`relative flex-shrink-0 w-full aspect-[3/4] rounded-lg overflow-hidden border-2 transition-all cursor-pointer group ${
-                    isActive
-                      ? 'border-brand ring-2 ring-brand/20'
-                      : 'border-border-custom/50 hover:border-border-custom'
-                  }`}
-                  title={`Trang ${p.pageNumber} — ${invalid ? 'Cần sửa' : 'Hợp lệ'}`}
-                >
-                  <img
-                    src={p.compositeImageUrl || p.rawImageUrl || ''}
-                    alt={`Trang ${p.pageNumber}`}
-                    className="w-full h-full object-cover"
-                  />
-                  <span
-                    className={`absolute top-1 right-1 w-2 h-2 rounded-full border border-bg-secondary ${
-                      invalid ? 'bg-danger' : 'bg-success'
-                    }`}
-                  />
-                  <span
-                    className={`absolute bottom-0 inset-x-0 text-[10px] font-semibold text-center py-0.5 ${
-                      isActive ? 'bg-brand/90 text-white' : 'bg-black/60 text-white/90'
-                    }`}
-                  >
-                    {p.pageNumber}
-                  </span>
-                </button>
+                <>
+                  {hasHiddenAbove && (
+                    <div className="text-center">
+                      <span className="text-[8px] text-text-muted font-medium">+{start} trang</span>
+                    </div>
+                  )}
+                  {visiblePages.map((p: PageDto, localIdx: number) => {
+                    const globalIdx = start + localIdx;
+                    const invalid = pageHasError(String(p.id));
+                    const isActive = globalIdx === currentPageIndex;
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => setCurrentPageIndex(globalIdx)}
+                        className={`relative flex-shrink-0 w-full aspect-[3/4] rounded-lg overflow-hidden border-2 transition-all cursor-pointer group ${
+                          isActive
+                            ? 'border-brand ring-2 ring-brand/20 scale-[1.02]'
+                            : 'border-border-custom/50 hover:border-border-custom'
+                        }`}
+                        title={`Trang ${p.pageNumber} — ${invalid ? 'Cần sửa' : 'Hợp lệ'}`}
+                      >
+                        <img
+                          src={p.compositeImageUrl || p.rawImageUrl || ''}
+                          alt={`Trang ${p.pageNumber}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <span
+                          className={`absolute top-1 right-1 w-2 h-2 rounded-full border border-bg-secondary ${
+                            invalid ? 'bg-danger' : 'bg-success'
+                          }`}
+                        />
+                        <span
+                          className={`absolute bottom-0 inset-x-0 text-[10px] font-semibold text-center py-0.5 ${
+                            isActive ? 'bg-brand/90 text-white' : 'bg-black/60 text-white/90'
+                          }`}
+                        >
+                          {p.pageNumber}
+                        </span>
+                      </button>
+                    );
+                  })}
+                  {hasHiddenBelow && (
+                    <div className="text-center">
+                      <span className="text-[8px] text-text-muted font-medium">+{pages.length - end} trang</span>
+                    </div>
+                  )}
+                </>
               );
-            })}
+            })()}
+            {/* Nút điều hướng xuống */}
+            <button
+              onClick={() => {
+                const target = Math.min(pages.length - 1, currentPageIndex + 1);
+                setCurrentPageIndex(target);
+              }}
+              disabled={currentPageIndex === pages.length - 1}
+              className="w-full h-6 rounded-md bg-bg-secondary border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary hover:border-brand/30 disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer transition-all flex-shrink-0"
+            >
+              <ChevronDown size={14} />
+            </button>
           </div>
 
           {/* Canvas column */}
@@ -554,7 +620,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
                   <ClipboardCheck size={13} className="text-brand" />
-                  Tổng kết QC
+                  Tổng kết kiểm duyệt
                 </h3>
                 <span className="text-[10px] text-text-muted lg:hidden">{reviewProgress}%</span>
               </div>
@@ -578,216 +644,288 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
               </div>
             </div>
 
-            {/* Pin error panel */}
-            <div className="bg-bg-secondary border border-border-custom rounded-xl flex flex-col flex-1 min-h-0">
-              <div className="p-3 border-b border-border-custom flex-shrink-0">
-                <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
-                    <MapPin size={13} className="text-red-400" />
-                    Ghim lỗi · Trang {currentPage?.pageNumber}
-                  </h3>
-                  {activeTool !== 'annotate' ? (
-                    <button
-                      type="button"
-                      onClick={startPinning}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-brand/10 border border-brand/25 text-[10px] font-semibold text-brand hover:bg-brand/20 transition-colors cursor-pointer"
-                    >
-                      <MapPin size={10} />
-                      Bắt đầu
-                    </button>
-                  ) : (
-                    <span className="text-[10px] font-medium text-brand">Đang ghim</span>
-                  )}
-                </div>
-
-                <ol className="mt-2 space-y-0.5 text-[10px] text-text-secondary list-decimal list-inside">
-                  <li>Chọn loại lỗi</li>
-                  <li>Nhập mô tả ngắn</li>
-                  <li>Click lên ảnh để đặt ghim</li>
-                </ol>
-
-                <div className={`mt-3 space-y-2 transition-opacity ${activeTool === 'annotate' ? 'opacity-100' : 'opacity-60'}`}>
-                  <div className="flex gap-1">
-                    {(Object.keys(ANNOTATION_TYPE_CONFIG) as AnnotationType[]).map((type) => {
-                      const cfg = ANNOTATION_TYPE_CONFIG[type];
-                      return (
-                        <button
-                          key={type}
-                          type="button"
-                          onClick={() => {
-                            setAnnotationType(type);
-                            startPinning();
-                          }}
-                          className={`flex-1 flex flex-col items-center gap-0.5 px-1.5 py-1.5 rounded-lg text-[9px] font-medium border transition-all cursor-pointer ${
-                            annotationType === type
-                              ? `${cfg.bg} ${cfg.color} ${cfg.border}`
-                              : 'bg-bg-primary border-border-custom text-text-secondary hover:border-border-custom'
-                          }`}
-                        >
-                          <span className="text-sm leading-none">{cfg.icon}</span>
-                          <span>{cfg.short}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <textarea
-                    value={annoComment}
-                    onChange={(e) => setAnnoComment(e.target.value)}
-                    onFocus={startPinning}
-                    placeholder="Mô tả lỗi... (bắt buộc)"
-                    rows={2}
-                    className="w-full px-2.5 py-2 text-xs bg-bg-primary border border-border-custom rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 resize-none"
-                    maxLength={200}
-                  />
-                  <div className="flex items-center justify-between text-[9px] text-text-muted">
-                    <span>Click ảnh để ghim vị trí</span>
-                    <span className="tabular-nums">{annoComment.length}/200</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-2 space-y-1.5 min-h-0">
-                {pageAnnotations.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-10 gap-2 text-text-muted">
-                    <CheckCircle2 size={20} className="text-success/70" />
-                    <p className="text-[11px] text-center text-text-secondary leading-relaxed">
-                      Trang này chưa có lỗi.
-                      <br />
-                      Nhấn <span className="text-brand font-medium">Bắt đầu</span> để ghim lỗi.
-                    </p>
-                  </div>
-                ) : (
-                  pageAnnotations.map((a) => {
-                    const cfg = ANNOTATION_TYPE_CONFIG[a.type];
-                    return (
-                      <div
-                        key={a.id}
-                        onClick={() => setSelectedAnnotation(a.id === selectedAnnotationId ? null : a.id)}
-                        className={`group p-2.5 rounded-lg border transition-all cursor-pointer ${
-                          a.id === selectedAnnotationId
-                            ? 'border-brand/40 bg-brand/5'
-                            : a.resolved
-                              ? 'border-border-custom/30 bg-bg-primary/40 opacity-60'
-                              : 'border-border-custom/50 bg-bg-primary hover:border-brand/20'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <span className={`text-[10px] font-medium flex items-center gap-1 ${cfg.color}`}>
-                            {cfg.icon} {cfg.label}
-                          </span>
-                          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleToggleResolved(a.id); }}
-                              className="w-6 h-6 rounded flex items-center justify-center text-success hover:bg-success/10 cursor-pointer bg-transparent border-none"
-                              title={a.resolved ? 'Mở lại lỗi' : 'Đánh dấu đã xử lý'}
-                            >
-                              {a.resolved ? <RotateCcw size={11} /> : <CheckCircle2 size={11} />}
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); void handleDelete(a.id); }}
-                              className="w-6 h-6 rounded flex items-center justify-center text-danger hover:bg-danger/10 cursor-pointer bg-transparent border-none"
-                            >
-                              <Trash2 size={11} />
-                            </button>
-                          </div>
-                        </div>
-                        <p className="text-[11px] text-text-primary mt-1 line-clamp-2 leading-snug">{a.comment}</p>
-                        <div className="flex items-center justify-between mt-1">
-                          <span className="text-[9px] text-text-muted">{a.editorName}</span>
-                          {a.resolved && (
-                            <span className="text-[9px] text-success flex items-center gap-0.5">
-                              <CheckCircle2 size={8} /> Đã xử lý
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
+            <AnnotationPinPanel
+              contextLabel={`Trang ${currentPage?.pageNumber ?? '?'}`}
+              annotations={pageAnnotations.map((a) => ({
+                id: a.id,
+                type: a.type,
+                comment: a.comment,
+                resolved: a.resolved,
+                meta: a.editorName,
+              }))}
+              annotationType={annotationType}
+              onAnnotationTypeChange={setAnnotationType}
+              comment={annoComment}
+              onCommentChange={setAnnoComment}
+              isPinningActive={activeTool === 'annotate'}
+              onStartPinning={startPinning}
+              selectedId={selectedAnnotationId}
+              onSelect={setSelectedAnnotation}
+              onDelete={(id) => { void handleDelete(id); }}
+              onToggleResolved={handleToggleResolved}
+              showResolvedToggle
+            />
           </div>
         </div>
       </div>
 
       {/* ─── Approve Modal (F3.6) ─── */}
       {showApprove && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="approve-chapter-title"
+        >
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowApprove(false)} />
-          <div className="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-xl w-full max-w-md animate-fade-in max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-5 border-b border-border-custom sticky top-0 bg-bg-secondary">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
-                  <CheckCircle2 size={16} className="text-success" />
+          <div className="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-lg-custom w-full max-w-4xl max-h-[min(90vh,720px)] flex flex-col animate-modal-enter">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3 p-5 border-b border-border-custom shrink-0">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
+                  <CheckCircle2 size={18} className="text-success" />
                 </div>
-                <h3 className="text-base font-semibold text-text-primary">Duyệt Chapter & Giải ngân</h3>
+                <div className="min-w-0">
+                  <h3 id="approve-chapter-title" className="text-base font-semibold text-text-primary">
+                    Duyệt chương & Giải ngân
+                  </h3>
+                  <p className="text-xs text-text-muted mt-0.5 truncate">
+                    {chapter.series?.title || `Bộ #${chapter.seriesId}`} · Chương {chapter.chapterNumber}
+                  </p>
+                  <p className="text-[11px] text-text-secondary truncate mt-0.5">
+                    {chapter.title}
+                  </p>
+                </div>
               </div>
-              <button onClick={() => setShowApprove(false)} className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-surface cursor-pointer bg-transparent border-none">
+              <button
+                type="button"
+                onClick={() => setShowApprove(false)}
+                className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-surface cursor-pointer bg-transparent border-none shrink-0"
+                aria-label="Đóng"
+              >
                 <X size={18} />
               </button>
             </div>
-            <div className="p-5 space-y-4">
-              {totalUnresolved > 0 && (
-                <div className="flex items-start gap-2 p-3 bg-amber-500/5 border border-amber-500/20 rounded-lg">
-                  <AlertCircle size={14} className="text-amber-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-[11px] text-amber-400">
-                    Còn {totalUnresolved} lỗi chưa xử lý → {invalidPageCount} trang cần sửa và sẽ không được trả nhuận bút.
-                  </p>
-                </div>
-              )}
 
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-2">
-                  QC Checklist (bắt buộc)
-                </p>
-                <div className="space-y-1">
-                  {QC_CHECKLIST_ITEMS.map((item, idx) => (
-                    <label key={idx} className="flex items-start gap-2.5 p-2 rounded-lg hover:bg-bg-surface cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={checklist[idx]}
-                        onChange={(e) =>
-                          setChecklist((prev) => prev.map((v, i) => (i === idx ? e.target.checked : v)))
-                        }
-                        className="mt-0.5 w-4 h-4 rounded accent-brand cursor-pointer flex-shrink-0"
+            {/* Body — scrollable */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
+                
+                {/* ─── LEFT COLUMN: CHECKLIST ─── */}
+                <div className="flex flex-col">
+                  <div className="flex items-center justify-between gap-2 mb-4">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <ClipboardCheck size={16} className="text-text-muted shrink-0" />
+                      <p className="text-xs uppercase tracking-wider text-text-muted font-semibold">
+                        Danh mục kiểm tra (bắt buộc)
+                      </p>
+                      <HelpTip 
+                        title="Lưu ý quan trọng"
+                        content="Tất cả các hạng mục trong checklist này phải được kiểm tra và đánh dấu tích chọn thì nút Giải Ngân mới có thể được kích hoạt."
+                        size="sm"
                       />
-                      <span className="text-xs text-text-secondary">{item}</span>
-                    </label>
-                  ))}
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className={`text-xs font-bold tabular-nums px-2.5 py-0.5 rounded-full ${
+                        allChecked ? 'bg-success/10 text-success' : 'bg-bg-surface text-text-muted border border-border-custom'
+                      }`}>
+                        {checklistDoneCount}/{checklistTotal}
+                      </span>
+                      {!allChecked && (
+                        <button
+                          type="button"
+                          onClick={() => setChecklist(QC_CHECKLIST_ITEMS.map(() => true))}
+                          className="text-xs font-medium text-brand hover:text-brand-hover cursor-pointer bg-transparent border-none px-1"
+                        >
+                          Chọn tất cả
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="h-1.5 rounded-full bg-bg-surface overflow-hidden mb-4 border border-border-custom/50">
+                    <div
+                      className="h-full bg-gradient-to-r from-brand to-success transition-all duration-300"
+                      style={{ width: `${(checklistDoneCount / checklistTotal) * 100}%` }}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2 flex-1">
+                    {QC_CHECKLIST_ITEMS.map((item, idx) => {
+                      const isChecked = checklist[idx];
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() =>
+                            setChecklist((prev) => prev.map((v, i) => (i === idx ? !v : v)))
+                          }
+                          className={`flex items-start gap-3 p-3.5 rounded-xl cursor-pointer transition-all border ${
+                            isChecked
+                              ? 'bg-success/10 border-success/30 shadow-[0_0_12px_rgba(16,185,129,0.1)]'
+                              : 'bg-bg-surface border-border-custom hover:border-text-muted/30'
+                          }`}
+                        >
+                          <div className="mt-0.5 flex-shrink-0 transition-transform hover:scale-110">
+                            {isChecked ? (
+                              <CheckCircle2 size={18} className="text-success" />
+                            ) : (
+                              <div className="w-4 h-4 mt-0.5 rounded-full border border-border-custom bg-bg-primary" />
+                            )}
+                          </div>
+                          <span className={`text-[13px] leading-relaxed mt-0.5 ${
+                            isChecked ? 'text-success font-semibold' : 'text-text-secondary'
+                          }`}>
+                            {item}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
 
-              <div className="bg-bg-surface border border-border-custom rounded-xl p-3 space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-text-secondary">Số trang hợp lệ (ValidPageCount)</span>
-                  <span className="font-semibold text-text-primary">{validPageCount} / {pages.length}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-text-secondary">Đơn giá nhuận bút</span>
-                  <span className="font-semibold text-text-primary">{formatVND(chapter.appliedGenkouryoPrice || 0)}/trang</span>
-                </div>
-                <div className="flex items-center justify-between pt-2 border-t border-border-custom">
-                  <span className="text-xs text-text-secondary font-medium">Tổng giải ngân</span>
-                  <span className="text-base font-bold text-success">{formatVND(genkouryo)}</span>
+                {/* ─── RIGHT COLUMN: DETAILS & CALCULATION ─── */}
+                <div className="flex flex-col space-y-6">
+                  {/* Chapter summary */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-bg-surface border border-border-custom rounded-xl px-4 py-3">
+                      <p className="text-[10px] uppercase tracking-wider text-text-muted font-semibold flex items-center gap-1.5">
+                        <User size={12} /> Mangaka
+                      </p>
+                      <p className="text-sm font-semibold text-text-primary mt-1.5 truncate">
+                        {chapter.series?.mangaka?.fullName || 'Chưa xác định'}
+                      </p>
+                    </div>
+                    <div className="bg-bg-surface border border-border-custom rounded-xl px-4 py-3">
+                      <p className="text-[10px] uppercase tracking-wider text-text-muted font-semibold flex items-center gap-1.5">
+                        <Layers size={12} /> Tiến độ QC
+                      </p>
+                      <p className="text-sm font-semibold text-text-primary mt-1.5">
+                        {validPageCount}/{pages.length} trang hợp lệ
+                      </p>
+                    </div>
+                  </div>
+
+                  {totalUnresolved > 0 && (
+                    <div className="flex items-start gap-3 p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl">
+                      <AlertCircle size={18} className="text-amber-400 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-sm font-bold text-amber-400">Còn lỗi chưa xử lý</p>
+                        <p className="text-xs text-amber-400/90 mt-1 leading-relaxed">
+                          {totalUnresolved} ghim lỗi mở → {invalidPageCount} trang không được tính nhuận bút.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Disbursement calculator */}
+                  <div className="bg-bg-surface border border-border-custom rounded-xl p-5 space-y-4 flex-1 flex flex-col justify-center">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-text-secondary font-medium">Số trang hợp lệ</span>
+                      <div className="flex items-center gap-2">
+                        {isManualPageCount && (
+                          <button
+                            type="button"
+                            onClick={() => setManualValidPageCount(null)}
+                            className="text-[11px] font-semibold text-brand hover:text-brand-hover cursor-pointer bg-transparent border-none mr-2"
+                          >
+                            Tự động tính
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setManualValidPageCount(Math.max(0, validPageCount - 1))}
+                          disabled={validPageCount <= 0}
+                          className="w-7 h-7 rounded-md bg-bg-primary border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary hover:border-brand/30 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <div className="min-w-[4.5rem] text-center">
+                          <span className="text-base font-bold text-text-primary tabular-nums">{validPageCount}</span>
+                          <span className="text-xs text-text-muted ml-0.5">/ {pages.length}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setManualValidPageCount(Math.min(pages.length, validPageCount + 1))}
+                          disabled={validPageCount >= pages.length}
+                          className="w-7 h-7 rounded-md bg-bg-primary border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary hover:border-brand/30 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-text-secondary font-medium">Đơn giá nhuận bút</span>
+                      <span className="font-bold text-text-primary tabular-nums">
+                        {formatVND(genkouryoUnitPrice)}
+                        <span className="text-text-muted font-normal text-xs"> /trang</span>
+                      </span>
+                    </div>
+
+                    {genkouryoUnitPrice === 0 && (
+                      <div className="flex items-start gap-2 p-3 rounded-lg bg-warning/10 border border-warning/20">
+                        <AlertCircle size={15} className="text-warning mt-0.5 shrink-0" />
+                        <p className="text-xs text-warning leading-relaxed font-medium">
+                          Chưa lấy được đơn giá từ hợp đồng. Vui lòng kiểm tra lại.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between pt-4 mt-2 border-t border-border-custom">
+                      <span className="text-sm text-text-secondary font-bold uppercase tracking-wider">
+                        Tổng giải ngân
+                      </span>
+                      <span className={`text-2xl font-black tabular-nums ${
+                        canDisburse ? 'text-success drop-shadow-[0_0_12px_rgba(16,185,129,0.3)]' : 'text-text-muted'
+                      }`}>
+                        {formatVND(genkouryo)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-end gap-2 px-5 pb-5">
-              <button onClick={() => setShowApprove(false)} className="px-4 py-2 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-secondary hover:text-text-primary cursor-pointer">
-                Hủy
-              </button>
-              <button
-                onClick={handleApprove}
-                disabled={!allChecked || approveChapter.isPending}
-                className={`inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium border-none transition-all ${!allChecked || approveChapter.isPending
-                    ? 'bg-success/40 text-white/60 cursor-not-allowed'
-                    : 'bg-success hover:brightness-110 text-white cursor-pointer'
+
+            {/* Footer — sticky */}
+            <div className="shrink-0 border-t border-border-custom p-5 bg-bg-secondary/95 backdrop-blur-sm rounded-b-2xl">
+              {!allChecked && (
+                <p className="text-[11px] text-text-muted mb-3 flex items-center gap-1.5">
+                  <FileText size={12} />
+                  Còn {checklistTotal - checklistDoneCount} mục checklist chưa hoàn thành
+                </p>
+              )}
+              {allChecked && genkouryoUnitPrice === 0 && (
+                <p className="text-[11px] text-warning mb-3 flex items-center gap-1.5">
+                  <AlertCircle size={12} />
+                  Không thể giải ngân khi chưa có đơn giá hợp đồng
+                </p>
+              )}
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowApprove(false)}
+                  className="px-4 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-secondary hover:text-text-primary cursor-pointer"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  onClick={handleApprove}
+                  disabled={!allChecked || approveChapter.isPending || genkouryoUnitPrice === 0}
+                  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border-none transition-all ${
+                    !allChecked || approveChapter.isPending || genkouryoUnitPrice === 0
+                      ? 'bg-success/40 text-white/60 cursor-not-allowed'
+                      : 'bg-success hover:brightness-110 text-white cursor-pointer shadow-[0_0_16px_rgba(16,185,129,0.25)]'
                   }`}
-                title={!allChecked ? 'Cần tick hết QC Checklist' : undefined}
-              >
-                {approveChapter.isPending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                Duyệt & Giải ngân
-              </button>
+                >
+                  {approveChapter.isPending ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Send size={14} />
+                  )}
+                  Duyệt & Giải ngân {canDisburse ? `· ${formatVND(genkouryo)}` : ''}
+                </button>
+              </div>
             </div>
           </div>
         </div>,
@@ -804,7 +942,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                 <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
                   <Ban size={16} className="text-amber-400" />
                 </div>
-                <h3 className="text-base font-semibold text-text-primary">Yêu cầu sửa Chapter</h3>
+                <h3 className="text-base font-semibold text-text-primary">Yêu cầu sửa chương</h3>
               </div>
               <button onClick={() => setShowRevision(false)} className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-surface cursor-pointer bg-transparent border-none">
                 <X size={18} />
@@ -812,7 +950,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
             </div>
             <div className="p-5 space-y-4">
               <p className="text-sm text-text-secondary">
-                Chapter sẽ được trả về cho <span className="text-text-primary font-medium">{chapter.series?.mangaka?.fullName || 'Unknown Mangaka'}</span> kèm {totalUnresolved} lỗi đã ghim để chỉnh sửa.
+                Chương sẽ được trả về cho <span className="text-text-primary font-medium">{chapter.series?.mangaka?.fullName || 'Chưa xác định'}</span> kèm {totalUnresolved} lỗi đã ghim để chỉnh sửa.
               </p>
               {unresolvedAnnotations.length > 0 && (
                 <div className="rounded-xl border border-border-custom bg-bg-surface p-3">
@@ -828,7 +966,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                       Dùng tóm tắt tự động
                     </button>
                   </div>
-                  <ul className="mt-2 space-y-1.5 text-[11px] text-text-secondary max-h-24 overflow-y-auto pr-1">
+                  <ul className="mt-2 space-y-1.5 text-[11px] text-text-secondary">
                     {unresolvedAnnotations.slice(0, 6).map((item) => {
                       const page = pages.find((p: PageDto) => String(p.id) === item.pageId);
                       return (

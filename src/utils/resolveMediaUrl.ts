@@ -3,7 +3,7 @@
  */
 export const resolveMediaUrl = (url: string): string => {
   if (!url) return '';
-  if (url.startsWith('data:')) return url;
+  if (url.startsWith('data:') || url.startsWith('blob:')) return url;
 
   if (import.meta.env.DEV) {
     if (url.startsWith('/uploads') || url.startsWith('/manga-publishing')) {

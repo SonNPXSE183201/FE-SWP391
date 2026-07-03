@@ -1,6 +1,6 @@
 import type { AnnotationType } from '../../types/entities';
 
-// ─── Annotation (QC error) classification — F3.2 ─────────────
+// ─── Phân loại ghim lỗi (kiểm duyệt) — F3.2 ─────────────
 export const ANNOTATION_TYPE_CONFIG: Record<
   AnnotationType,
   { color: string; bg: string; border: string; icon: string; label: string; short: string }
@@ -11,7 +11,7 @@ export const ANNOTATION_TYPE_CONFIG: Record<
     border: 'border-red-500/40',
     icon: '🔴',
     label: 'Lỗi kỹ thuật',
-    short: 'Technical',
+    short: 'Kỹ thuật',
   },
   Art: {
     color: 'text-yellow-400',
@@ -19,7 +19,7 @@ export const ANNOTATION_TYPE_CONFIG: Record<
     border: 'border-yellow-500/40',
     icon: '🟡',
     label: 'Lỗi mỹ thuật',
-    short: 'Art',
+    short: 'Mỹ thuật',
   },
   Content: {
     color: 'text-blue-400',
@@ -27,24 +27,24 @@ export const ANNOTATION_TYPE_CONFIG: Record<
     border: 'border-blue-500/40',
     icon: '🔵',
     label: 'Lỗi nội dung',
-    short: 'Content',
+    short: 'Nội dung',
   },
 };
 
-// ─── QC Checklist items — F3.6 (must all be ticked to Approve) ─
+// ─── Danh mục kiểm tra chất lượng — F3.6 (phải tick hết để duyệt) ─
 export const QC_CHECKLIST_ITEMS: string[] = [
   'Tất cả lỗi đã ghim được Mangaka xử lý hoặc chấp nhận bỏ qua',
   'Chất lượng nét vẽ & tô màu đạt chuẩn xuất bản',
   'Thoại khớp kịch bản, không sai chính tả',
   'Bố cục trang & thứ tự đọc chính xác',
-  'Số trang hợp lệ (ValidPageCount) đã được xác nhận',
+  'Số trang hợp lệ đã được xác nhận',
 ];
 
 export { formatVND } from '../../utils/currency';
 
 /**
- * Deadline status for F3.5 tracking.
- * Returns days remaining and whether an alert should be shown (<= 2 days).
+ * Trạng thái deadline cho theo dõi F3.5.
+ * Trả về số ngày còn lại và cần hiển thị cảnh báo hay không (<= 2 ngày).
  */
 export const getDeadlineStatus = (deadline: string) => {
   const now = new Date();

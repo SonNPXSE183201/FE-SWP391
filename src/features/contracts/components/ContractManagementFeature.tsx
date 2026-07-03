@@ -18,22 +18,26 @@ import {
   RefreshCw,
   Zap,
   CalendarClock,
+  Eye,
+  Hash,
+  FileText,
 } from 'lucide-react';
 
 import { CustomSelect } from '../../../components/common/CustomSelect';
 import type { SelectOption } from '../../../components/common/CustomSelect';
 import { CustomDatePicker } from '../../../components/common/CustomDatePicker';
 import { useApprovedSeries, useCreateContract, useUpdateContract } from '../hooks/useContract';
-import type { ApprovedSeries } from '../api/contract.api';
+import type { ApprovedSeries, ContractAddendumView } from '../api/contract.api';
+import { formatVND, formatVNDInput } from '../../../utils/currency';
 
 type FilterStatus = 'all' | 'pending' | 'contracted';
 type EffectiveDateMode = 'immediate' | 'scheduled';
 
-const PRICE_PRESET_OPTIONS: SelectOption[] = [
-  { value: '400000', label: '400.000 ₫ / trang' },
-  { value: '500000', label: '500.000 ₫ / trang' },
-  { value: '600000', label: '600.000 ₫ / trang' },
+const PRESET_PRICES: SelectOption[] = [
   { value: 'custom', label: 'Nhập thủ công...' },
+  { value: '400000', label: '400.000 VND / trang' },
+  { value: '500000', label: '500.000 VND / trang' },
+  { value: '600000', label: '600.000 VND / trang' },
 ];
 
 const EFFECTIVE_DATE_OPTIONS: SelectOption[] = [
@@ -48,14 +52,6 @@ const toDateInputValue = (date: Date): string => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-
-const formatCurrencyInput = (value: string): string => {
-  const numericValue = value.replace(/[^0-9]/g, '');
-  if (!numericValue) return '';
-  return new Intl.NumberFormat('vi-VN').format(Number(numericValue));
-};
 
 const formatApprovedDate = (iso: string): string => {
   if (!iso) return '—';
@@ -81,24 +77,25 @@ const getEmptyMessage = (filter: FilterStatus, search: string): { title: string;
   if (search.trim()) {
     return {
       title: `Không tìm thấy kết quả cho "${search.trim()}"`,
-      hint: 'Thử tìm bằng tên series hoặc tên Mangaka khác.',
+      hint: 'Thử tìm bằng tên bộ truyện hoặc tên Mangaka khác.',
     };
   }
   if (filter === 'pending') {
     return {
-      title: 'Không có series nào đang chờ lập hợp đồng',
-      hint: 'Series cần được Hội đồng phê duyệt (Fund_Pending) trước khi xuất hiện tại đây.',
+      title: 'Không có bộ truyện nào đang chờ lập hợp đồng',
+      hint: 'Bộ truyện cần được Hội đồng phê duyệt (Fund_Pending) trước khi xuất hiện tại đây.',
     };
   }
   if (filter === 'contracted') {
     return {
-      title: 'Chưa có series nào đã lập hợp đồng',
-      hint: 'Các hợp đồng đã tạo sẽ hiển thị tại tab này.',
+      title: 'Chưa có bộ truyện nào đã lập hợp đồng',
+      hint: 'Hợp đồng sau khi tạo sẽ được quản lý tại đây.',
     };
   }
+
   return {
-    title: 'Danh sách trống',
-    hint: 'Chưa có series nào đủ điều kiện lập hợp đồng.',
+    title: 'Chưa có bộ truyện nào',
+    hint: 'Chưa có bộ truyện nào đủ điều kiện lập hợp đồng.',
   };
 };
 
@@ -107,6 +104,7 @@ export const ContractManagementFeature = () => {
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [showContractModal, setShowContractModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedSeries, setSelectedSeries] = useState<ApprovedSeries | null>(null);
   const [baseGenkouryoPrice, setBaseGenkouryoPrice] = useState('');
   const [createPricePreset, setCreatePricePreset] = useState('custom');
@@ -169,6 +167,11 @@ export const ContractManagementFeature = () => {
     }
   };
 
+  const handleOpenDetailModal = (series: ApprovedSeries) => {
+    setSelectedSeries(series);
+    setShowDetailModal(true);
+  };
+
   const handleOpenContractModal = (series: ApprovedSeries) => {
     setSelectedSeries(series);
     setBaseGenkouryoPrice('');
@@ -179,7 +182,7 @@ export const ContractManagementFeature = () => {
   const handleOpenUpdateModal = (series: ApprovedSeries) => {
     setSelectedSeries(series);
     const existingPrice = series.genkouryoPrice ? String(series.genkouryoPrice) : '';
-    const matchedPreset = PRICE_PRESET_OPTIONS.find(
+    const matchedPreset = PRESET_PRICES.find(
       (opt) => opt.value !== 'custom' && opt.value === existingPrice,
     );
     setUpdateGenkouryoPrice(existingPrice);
@@ -256,7 +259,7 @@ export const ContractManagementFeature = () => {
           <div>
             <h1 className="page-header__title">Quản lý Hợp đồng</h1>
             <p className="page-header__subtitle">
-              Lập hợp đồng nhuận bút và quản lý phụ lục cho series đã được Hội đồng phê duyệt
+              Lập hợp đồng nhuận bút và quản lý phụ lục cho bộ truyện đã được Hội đồng phê duyệt
             </p>
           </div>
         </div>
@@ -270,7 +273,7 @@ export const ContractManagementFeature = () => {
             <span className="text-[10px] uppercase tracking-wider font-medium">Chờ lập HĐ</span>
           </div>
           <p className="text-2xl font-bold text-warning mt-2">{pendingCount}</p>
-          <p className="text-[11px] text-text-muted mt-1">Series đã duyệt, chưa có hợp đồng</p>
+          <p className="text-[11px] text-text-muted mt-1">Bộ truyện đã duyệt, chưa có hợp đồng</p>
         </div>
         <div className="bg-bg-secondary border border-border-custom rounded-xl p-4">
           <div className="flex items-center gap-2 text-text-muted">
@@ -285,8 +288,8 @@ export const ContractManagementFeature = () => {
             <Banknote size={14} />
             <span className="text-[10px] uppercase tracking-wider font-medium">Tổng ngân sách duyệt</span>
           </div>
-          <p className="text-lg font-bold text-text-primary mt-2">{formatCurrency(totalBudget)}</p>
-          <p className="text-[11px] text-text-muted mt-1">Tổng ngân sách Board đã phê duyệt</p>
+          <p className="text-lg font-bold text-text-primary mt-2">{formatVND(totalBudget)}</p>
+          <p className="text-[11px] text-text-muted mt-1">Tổng ngân sách Hội đồng đã phê duyệt</p>
         </div>
       </div>
 
@@ -298,7 +301,7 @@ export const ContractManagementFeature = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm theo tên series hoặc Mangaka..."
+            placeholder="Tìm theo tên bộ truyện hoặc Mangaka..."
             className="w-full pl-9 pr-4 py-2.5 bg-bg-secondary border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 transition-colors"
           />
         </div>
@@ -342,12 +345,12 @@ export const ContractManagementFeature = () => {
         </div>
       </div>
 
-      {/* Table */}
+      {/* List */}
       <div className="bg-bg-secondary border border-border-custom rounded-xl overflow-hidden">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-16 text-text-muted">
             <Loader2 size={28} className="animate-spin text-brand mb-3" />
-            <span className="text-sm">Đang tải danh sách series...</span>
+            <span className="text-sm">Đang tải danh sách bộ truyện...</span>
           </div>
         ) : isError ? (
           <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
@@ -381,125 +384,148 @@ export const ContractManagementFeature = () => {
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-border-custom text-[11px] uppercase tracking-wider text-text-muted bg-bg-surface/40">
-                  <th className="px-5 py-3.5 font-medium min-w-[220px]">Series</th>
-                  <th className="px-5 py-3.5 font-medium">Mangaka</th>
-                  <th className="px-5 py-3.5 font-medium">Ngân sách duyệt</th>
-                  <th className="px-5 py-3.5 font-medium">Lịch XB</th>
-                  <th className="px-5 py-3.5 font-medium">Ngày duyệt</th>
-                  <th className="px-5 py-3.5 font-medium">Trạng thái</th>
-                  <th className="px-5 py-3.5 font-medium text-right">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredData.map((series) => {
-                  const schedule = formatSchedule(series.publishSchedule);
-                  return (
-                    <tr
-                      key={series.id}
-                      className="border-b border-border-custom/60 hover:bg-bg-surface/40 transition-colors last:border-b-0"
-                    >
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">
-                            <BookOpen size={14} className="text-brand" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-medium text-text-primary truncate">{series.title}</p>
-                            {series.genres.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {series.genres.slice(0, 3).map((g) => (
-                                  <span
-                                    key={g}
-                                    className="px-1.5 py-0.5 rounded bg-brand/8 text-brand text-[10px] font-medium"
-                                  >
-                                    {g}
-                                  </span>
-                                ))}
-                                {series.genres.length > 3 && (
-                                  <span className="text-[10px] text-text-muted">
-                                    +{series.genres.length - 3}
-                                  </span>
-                                )}
-                              </div>
+          <div className="divide-y divide-border-custom/60">
+            {filteredData.map((series) => {
+              const schedule = formatSchedule(series.publishSchedule);
+              const isContracted = series.hasContract;
+
+              return (
+                <div
+                  key={series.id}
+                  onClick={() => isContracted && handleOpenDetailModal(series)}
+                  className={`
+                    group relative px-5 py-4 transition-all
+                    ${isContracted
+                      ? 'cursor-pointer hover:bg-bg-surface/60 border-l-2 border-l-emerald-500/40 hover:border-l-emerald-400'
+                      : 'border-l-2 border-l-transparent hover:bg-bg-surface/30'
+                    }
+                  `}
+                >
+                  <div className="flex items-center gap-5">
+                    {/* Series info — main content area */}
+                    <div className="flex items-center gap-3 min-w-0 w-[260px] shrink-0">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isContracted ? 'bg-emerald-500/10' : 'bg-brand/10'}`}>
+                        <BookOpen size={15} className={isContracted ? 'text-emerald-400' : 'text-brand'} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm text-text-primary truncate group-hover:text-brand transition-colors">
+                          {series.title}
+                        </p>
+                        {series.genres.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {series.genres.slice(0, 3).map((g) => (
+                              <span
+                                key={g}
+                                className="px-1.5 py-0.5 rounded-md bg-bg-surface text-text-muted text-[10px] font-medium"
+                              >
+                                {g}
+                              </span>
+                            ))}
+                            {series.genres.length > 3 && (
+                              <span className="text-[10px] text-text-muted">
+                                +{series.genres.length - 3}
+                              </span>
                             )}
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-2">
-                          <User size={13} className="text-text-muted shrink-0" />
-                          <span className="text-text-secondary">{series.mangakaName}</span>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <span className="font-semibold text-text-primary whitespace-nowrap">
-                          {formatCurrency(series.approvedBudget)}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-1.5">
-                          <Calendar size={12} className="text-text-muted shrink-0" />
-                          <span
-                            className={`text-xs whitespace-nowrap ${
-                              schedule.muted ? 'text-text-muted italic' : 'text-text-secondary'
-                            }`}
-                          >
-                            {schedule.label}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5 text-xs text-text-muted whitespace-nowrap">
-                        {formatApprovedDate(series.approvedAt)}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        {series.hasContract ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                            <Check size={11} />
-                            Đã có HĐ
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-warning/10 text-warning border border-warning/20">
-                            <Clock size={11} />
-                            Chờ lập HĐ
-                          </span>
                         )}
-                      </td>
-                      <td className="px-5 py-3.5 text-right">
-                        {series.hasContract ? (
+                      </div>
+                    </div>
+
+                    {/* Mangaka */}
+                    <div className="hidden lg:flex items-center gap-1.5 w-[140px] shrink-0">
+                      <div className="w-6 h-6 rounded-full bg-bg-surface flex items-center justify-center shrink-0">
+                        <User size={11} className="text-text-muted" />
+                      </div>
+                      <span className="text-xs text-text-secondary truncate">{series.mangakaName}</span>
+                    </div>
+
+                    {/* Budget + Price — key financial info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-4">
+                        <div className="min-w-0">
+                          <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Ngân sách</p>
+                          <p className="text-sm font-semibold text-text-primary whitespace-nowrap mt-0.5">
+                            {formatVND(series.approvedBudget)}
+                          </p>
+                        </div>
+                        {isContracted && series.genkouryoPrice && (
+                          <>
+                            <div className="w-px h-8 bg-border-custom" />
+                            <div className="min-w-0">
+                              <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Nhuận bút</p>
+                              <p className="text-sm font-semibold text-emerald-400 whitespace-nowrap mt-0.5">
+                                {formatVND(series.genkouryoPrice)}<span className="text-text-muted font-normal text-[10px]"> /trang</span>
+                              </p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Schedule + Date */}
+                    <div className="hidden xl:flex flex-col items-end gap-1 w-[120px] shrink-0">
+                      <div className="flex items-center gap-1">
+                        <Calendar size={10} className="text-text-muted" />
+                        <span className={`text-[11px] whitespace-nowrap ${schedule.muted ? 'text-text-muted italic' : 'text-text-secondary'}`}>
+                          {schedule.label}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-text-muted whitespace-nowrap">
+                        {formatApprovedDate(series.approvedAt)}
+                      </span>
+                    </div>
+
+                    {/* Status + Action */}
+                    <div className="flex items-center gap-3 shrink-0">
+                      {isContracted ? (
+                        <>
+                          <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <Check size={10} />
+                            Đã ký HĐ
+                          </span>
                           <button
                             type="button"
-                            onClick={() => handleOpenUpdateModal(series)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-bg-surface hover:bg-brand/10 text-text-secondary hover:text-brand rounded-lg text-xs font-medium border border-border-custom cursor-pointer transition-colors"
+                            onClick={(e) => { e.stopPropagation(); handleOpenUpdateModal(series); }}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-bg-surface hover:bg-brand/10 text-text-secondary hover:text-brand rounded-xl text-xs font-medium border border-border-custom cursor-pointer transition-all hover:border-brand/30 hover:shadow-sm"
                           >
                             <Pencil size={12} />
                             Phụ lục
                           </button>
-                        ) : (
+                        </>
+                      ) : (
+                        <>
+                          <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold bg-warning/10 text-warning border border-warning/20">
+                            <Clock size={10} />
+                            Chờ HĐ
+                          </span>
                           <button
                             type="button"
                             onClick={() => handleOpenContractModal(series)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-medium border-none cursor-pointer transition-colors shadow-sm shadow-brand/20"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-brand hover:bg-brand-hover text-white rounded-xl text-xs font-semibold border-none cursor-pointer transition-all shadow-sm shadow-brand/25 hover:shadow-md hover:shadow-brand/30"
                           >
-                            <Plus size={12} />
+                            <Plus size={13} strokeWidth={2.5} />
                             Tạo HĐ
                           </button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                </div>
+              );
+            })}
           </div>
         )}
 
         {!isLoading && !isError && filteredData.length > 0 && (
-          <div className="px-5 py-3 border-t border-border-custom bg-bg-surface/30 text-xs text-text-muted">
-            Hiển thị {filteredData.length} / {seriesList.length} series
+          <div className="px-5 py-3 border-t border-border-custom bg-bg-surface/30 text-xs text-text-muted flex items-center justify-between">
+            <span>Hiển thị {filteredData.length} / {seriesList.length} bộ truyện</span>
+            {contractedCount > 0 && (
+              <span className="text-[10px] text-text-muted flex items-center gap-1">
+                <Eye size={10} />
+                Nhấn vào dòng đã có HĐ để xem chi tiết
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -559,7 +585,7 @@ export const ContractManagementFeature = () => {
                       Ngân sách Board đã duyệt
                     </p>
                     <p className="text-xl font-bold text-text-primary mt-1">
-                      {formatCurrency(selectedSeries.approvedBudget)}
+                      {formatVND(selectedSeries.approvedBudget)}
                     </p>
                   </div>
                   <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
@@ -570,10 +596,10 @@ export const ContractManagementFeature = () => {
 
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                  Đơn giá nhuận bút cơ bản / trang (VNĐ) <span className="text-danger">*</span>
+                  Đơn giá nhuận bút cơ bản / trang (VND) <span className="text-danger">*</span>
                 </label>
                 <CustomSelect
-                  options={PRICE_PRESET_OPTIONS}
+                  options={PRESET_PRICES}
                   value={createPricePreset}
                   onChange={handleCreatePricePresetChange}
                   placeholder="Chọn mức giá..."
@@ -584,19 +610,19 @@ export const ContractManagementFeature = () => {
                     <input
                       type="text"
                       inputMode="numeric"
-                      value={baseGenkouryoPrice ? formatCurrencyInput(baseGenkouryoPrice) : ''}
+                      value={baseGenkouryoPrice ? formatVNDInput(baseGenkouryoPrice) : ''}
                       onChange={handlePriceInputChange}
                       placeholder="VD: 50.000"
                       className="w-full px-4 py-2.5 pr-20 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 transition-colors"
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-text-muted">
-                      VNĐ/trang
+                      VND/trang
                     </span>
                   </div>
                 )}
                 {createPricePreset !== 'custom' && baseGenkouryoPrice && (
                   <p className="text-[11px] text-brand/80 mt-1.5 font-medium">
-                    Đã chọn: {formatCurrency(Number(baseGenkouryoPrice))} / trang
+                    Đã chọn: {formatVND(Number(baseGenkouryoPrice.replace(/\D/g, '')))} / trang
                   </p>
                 )}
                 <p className="text-[11px] text-text-muted mt-1.5">
@@ -690,7 +716,7 @@ export const ContractManagementFeature = () => {
                   Đơn giá nhuận bút mới <span className="text-danger">*</span>
                 </label>
                 <CustomSelect
-                  options={PRICE_PRESET_OPTIONS}
+                  options={PRESET_PRICES}
                   value={updatePricePreset}
                   onChange={handleUpdatePricePresetChange}
                   placeholder="Chọn mức giá..."
@@ -701,19 +727,19 @@ export const ContractManagementFeature = () => {
                     <input
                       type="text"
                       inputMode="numeric"
-                      value={updateGenkouryoPrice ? formatCurrencyInput(updateGenkouryoPrice) : ''}
+                      value={updateGenkouryoPrice ? formatVNDInput(updateGenkouryoPrice) : ''}
                       onChange={(e) => setUpdateGenkouryoPrice(e.target.value.replace(/[^0-9]/g, ''))}
                       placeholder="VD: 60.000"
                       className="w-full px-4 py-2.5 pr-20 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 transition-colors"
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-text-muted">
-                      VNĐ/trang
+                      VND/trang
                     </span>
                   </div>
                 )}
                 {updatePricePreset !== 'custom' && updateGenkouryoPrice && (
                   <p className="text-[11px] text-brand/80 mt-1.5 font-medium">
-                    Đã chọn: {formatCurrency(Number(updateGenkouryoPrice))} / trang
+                    Đã chọn: {formatVND(Number(updateGenkouryoPrice.replace(/\D/g, '')))} / trang
                   </p>
                 )}
               </div>
@@ -768,6 +794,184 @@ export const ContractManagementFeature = () => {
               >
                 {updateContract.isPending && <Loader2 size={14} className="animate-spin" />}
                 {updateContract.isPending ? 'Đang lưu...' : 'Lưu phụ lục'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
+
+      {/* Contract Detail Modal */}
+      {showDetailModal && selectedSeries && selectedSeries.hasContract && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowDetailModal(false)}
+          />
+          <div className="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-lg-custom w-full max-w-lg animate-modal-enter max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border-custom shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-info/10 flex items-center justify-center">
+                  <FileText size={16} className="text-info" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-text-primary">Chi tiết Hợp đồng</h3>
+                  <p className="text-xs text-text-muted mt-0.5">{selectedSeries.title}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDetailModal(false)}
+                className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-surface border-none bg-transparent cursor-pointer transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-5 overflow-y-auto">
+              {/* Contract info grid */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-bg-surface border border-border-custom rounded-xl px-3 py-2.5">
+                  <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium flex items-center gap-1">
+                    <Hash size={10} />
+                    Mã hợp đồng
+                  </p>
+                  <p className="text-sm font-semibold text-text-primary mt-1 font-mono">#{selectedSeries.contractId}</p>
+                </div>
+                <div className="bg-bg-surface border border-border-custom rounded-xl px-3 py-2.5">
+                  <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium flex items-center gap-1">
+                    <Check size={10} />
+                    Trạng thái
+                  </p>
+                  <p className="text-sm mt-1">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      <Check size={10} />
+                      {selectedSeries.contractStatus || 'Active'}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Mangaka & Series */}
+              <div className="bg-bg-surface border border-border-custom rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs text-text-secondary flex items-center gap-2">
+                    <User size={13} className="text-text-muted" />
+                    Mangaka
+                  </span>
+                  <span className="text-sm font-medium text-text-primary">{selectedSeries.mangakaName}</span>
+                </div>
+                <div className="h-px bg-border-custom" />
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs text-text-secondary flex items-center gap-2">
+                    <BookOpen size={13} className="text-text-muted" />
+                    Series
+                  </span>
+                  <span className="text-sm font-medium text-text-primary">{selectedSeries.title}</span>
+                </div>
+                <div className="h-px bg-border-custom" />
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs text-text-secondary flex items-center gap-2">
+                    <Calendar size={13} className="text-text-muted" />
+                    Lịch xuất bản
+                  </span>
+                  <span className="text-sm font-medium text-text-primary">
+                    {formatSchedule(selectedSeries.publishSchedule).label}
+                  </span>
+                </div>
+              </div>
+
+              {/* Pricing */}
+              <div className="bg-brand/5 border border-brand/20 rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">
+                      Đơn giá nhuận bút cơ bản
+                    </p>
+                    <p className="text-xl font-bold text-text-primary mt-1">
+                      {selectedSeries.genkouryoPrice ? formatVND(selectedSeries.genkouryoPrice).replace(' VND', '') : '—'}
+                      <span className="text-xs font-normal text-text-muted ml-1">VND / trang</span>
+                    </p>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
+                    <Banknote size={20} className="text-brand" />
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-brand/10 grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Ngân sách duyệt</p>
+                    <p className="text-sm font-semibold text-text-primary mt-0.5">{formatVND(selectedSeries.approvedBudget)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Ngày ký</p>
+                    <p className="text-sm font-semibold text-text-primary mt-0.5">
+                      {selectedSeries.signedDate ? formatApprovedDate(selectedSeries.signedDate) : '—'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Addendums history */}
+              {selectedSeries.addendums && selectedSeries.addendums.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-text-secondary mb-2 flex items-center gap-1.5">
+                    <FileSignature size={12} />
+                    Lịch sử phụ lục ({selectedSeries.addendums.length})
+                  </p>
+                  <div className="space-y-2">
+                    {selectedSeries.addendums.map((addendum: ContractAddendumView, idx: number) => (
+                      <div
+                        key={addendum.id}
+                        className="bg-bg-surface border border-border-custom rounded-xl px-4 py-3 flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 rounded-lg bg-warning/10 flex items-center justify-center text-[10px] font-bold text-warning">
+                            {idx + 1}
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-text-primary">
+                              {formatVND(addendum.newGenkouryoPrice)} / trang
+                            </p>
+                            <p className="text-[10px] text-text-muted mt-0.5">
+                              Hiệu lực: {formatApprovedDate(addendum.effectiveDate)}
+                              {addendum.signedDate && ` · Ký: ${formatApprovedDate(addendum.signedDate)}`}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(!selectedSeries.addendums || selectedSeries.addendums.length === 0) && (
+                <div className="text-center py-4">
+                  <p className="text-xs text-text-muted">Chưa có phụ lục nào được tạo.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border-custom bg-bg-secondary/80 rounded-b-2xl shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDetailModal(false);
+                  handleOpenUpdateModal(selectedSeries);
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium border-none cursor-pointer transition-colors shadow-sm shadow-brand/20"
+              >
+                <Pencil size={14} />
+                Tạo phụ lục mới
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDetailModal(false)}
+                className="px-4 py-2.5 border border-border-custom hover:bg-bg-surface rounded-xl text-sm bg-transparent cursor-pointer text-text-secondary transition-colors"
+              >
+                Đóng
               </button>
             </div>
           </div>

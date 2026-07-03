@@ -77,7 +77,7 @@ export const MangakaTasksFeature = () => {
   const stats = useMemo(() => ({
     total: tasks.length,
     inProgress: tasks.filter((t) => normalizeTaskStatus(t.status) === 'In_Progress').length,
-    pendingReview: tasks.filter((t) => normalizeTaskStatus(t.status) === 'Pending_Review').length,
+    pendingReview: tasks.filter((t) => normalizeTaskStatus(t.status) === 'Submitted').length,
     totalLocked: tasks
       .filter((t) => t.status && OPEN_TASK_STATUSES.includes(normalizeTaskStatus(t.status)))
       .reduce((sum, t) => sum + (t.paymentAmount || 0), 0),
@@ -137,8 +137,8 @@ export const MangakaTasksFeature = () => {
         </div>
       </div>
 
-      {/* Stats (compact pills) */}
-      <div className="mt-6 bg-bg-secondary border border-border-custom rounded-xl p-3 flex flex-wrap items-center gap-2">
+      {/* Stats (Dashboard cards) */}
+      <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatPill label="Tổng công việc" value={String(stats.total)} icon={ClipboardList} tone="text-brand" />
         <StatPill label="Đang làm" value={String(stats.inProgress)} icon={Clock} tone="text-info" />
         <StatPill label="Chờ duyệt" value={String(stats.pendingReview)} icon={Eye} tone="text-warning" />
@@ -186,7 +186,7 @@ export const MangakaTasksFeature = () => {
               <CustomSelect
                 options={[
                   { value: 'newest', label: 'Mới nhất' },
-                  { value: 'deadline', label: 'Deadline' },
+                  { value: 'deadline', label: 'Hạn chót' },
                   { value: 'amount', label: 'Số tiền' },
                 ]}
                 value={sortBy}
@@ -227,116 +227,129 @@ export const MangakaTasksFeature = () => {
         </div>
       </div>
 
-      {/* Task List */}
-      <div className="space-y-3 mt-3">
-        {pagination.paginatedData.map((task) => {
-          const statusCfg = getTaskStatusConfig(task.status);
-          const StatusIcon = statusCfg.icon;
-          const dl = formatDeadline(task.deadline || '');
+      {/* Task Table */}
+      <div className="bg-bg-secondary border border-border-custom rounded-xl overflow-hidden mt-4 shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-border-custom bg-bg-surface text-[11px] uppercase tracking-wider text-text-muted">
+                <th className="px-4 py-3 font-semibold w-[35%]">Công việc</th>
+                <th className="px-4 py-3 font-semibold">Trạng thái</th>
+                <th className="px-4 py-3 font-semibold">Trợ lý</th>
+                <th className="px-4 py-3 font-semibold">Số tiền</th>
+                <th className="px-4 py-3 font-semibold">Hạn chót</th>
+                <th className="px-4 py-3 font-semibold text-right">Hành động</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border-custom">
+              {pagination.paginatedData.map((task) => {
+                const statusCfg = getTaskStatusConfig(task.status);
+                const dl = formatDeadline(task.deadline || '');
+                const reviewable = REVIEWABLE_TASK_STATUSES.includes(normalizeTaskStatus(task.status));
 
-          const reviewable = REVIEWABLE_TASK_STATUSES.includes(normalizeTaskStatus(task.status));
-
-          return (
-            <div
-              key={task.id}
-              onClick={() => reviewable && setReviewTask(task)}
-              className={`group bg-bg-secondary border border-border-custom rounded-xl p-4 hover:border-brand/20 transition-all ${reviewable ? 'cursor-pointer' : ''}`}
-            >
-              <div className="flex items-start gap-4">
-                {/* Left: Icon + Info */}
-                <div className={`w-10 h-10 rounded-xl ${statusCfg.bg} flex items-center justify-center flex-shrink-0`}>
-                  <StatusIcon size={18} className={statusCfg.color} />
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-sm font-semibold text-text-primary group-hover:text-brand transition-colors">
-                      {task.description || `Công việc ${task.id} - Vùng ${task.regionId}`}
-                    </h3>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusCfg.bg} ${statusCfg.color}`}>
-                      {statusCfg.label}
-                    </span>
-                    {!!task.extensionRequestDays && (
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-warning/10 text-warning text-[9px] font-medium">
-                        Đã gia hạn
+                const mainRow = (
+                  <tr
+                    key={task.id}
+                    onClick={() => reviewable && setReviewTask(task)}
+                    className={`group hover:bg-bg-surface transition-colors ${reviewable ? 'cursor-pointer' : ''}`}
+                  >
+                    <td className="px-4 py-3 align-top">
+                      <div className="flex flex-col gap-1.5">
+                        <h3 className="text-sm font-semibold text-text-primary group-hover:text-brand transition-colors">
+                          {task.description || `Công việc ${task.id}`}
+                        </h3>
+                        <p className="text-[11px] text-text-muted mt-0.5">
+                          {[`Vùng ${task.regionId}`, `Trang ${task.pageNumber || '—'}`].filter(Boolean).join(' · ')}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${statusCfg.bg} ${statusCfg.color}`}>
+                          {statusCfg.label}
+                        </span>
+                        {!!task.extensionRequestDays && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded border border-warning/30 text-warning text-[9px] font-medium">
+                            Đã gia hạn
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      <span className="inline-flex items-center gap-1.5 text-xs text-text-secondary">
+                        <UserCheck size={14} className="text-text-muted" />
+                        {task.assistantName ? (
+                          <span>{task.assistantName} <span className="text-text-muted text-[10px]">#{task.assistantId}</span></span>
+                        ) : (
+                          <span className="text-text-muted italic">Chờ nhận việc</span>
+                        )}
                       </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-text-muted mt-1">
-                    {[`Vùng ${task.regionId}`, `Trang ${task.pageNumber || '—'}`, task.assistantId ? `Trợ lý #${task.assistantId}` : ''].filter(Boolean).join(' · ')}
-                  </p>
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-text-primary">
+                        {formatVND(task.paymentAmount || 0)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${dl.urgent ? 'text-danger' : 'text-text-muted'}`}>
+                        <Calendar size={13} />
+                        {dl.text}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 align-top text-right">
+                      {task.status === 'Submitted' && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setReviewTask(task); }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand/10 text-brand text-[11px] font-medium hover:bg-brand/20 transition-colors border-none cursor-pointer"
+                        >
+                          <Eye size={13} />
+                          Xem bài
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
 
-                  {/* Bottom row */}
-                  <div className="flex items-center gap-4 mt-2.5 flex-wrap">
-                    {/* Assistant */}
-                    <span className="inline-flex items-center gap-1 text-[11px] text-text-secondary">
-                      <UserCheck size={12} />
-                      {task.assistantName || <span className="text-text-muted italic">Chờ Trợ lý nhận việc</span>}
-                    </span>
-
-                    {/* Amount */}
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-text-primary">
-                      <DollarSign size={12} className="text-text-muted" />
-                      {formatVND(task.paymentAmount || 0)}
-                    </span>
-
-                    {/* Deadline */}
-                    <span className={`inline-flex items-center gap-1 text-[11px] font-medium ${dl.urgent ? 'text-danger' : 'text-text-muted'}`}>
-                      <Calendar size={12} />
-                      {dl.text}
-                    </span>
-                  </div>
-
-                  {task.extensionStatus === 'Pending' && (
-                    <div className="mt-3 p-3 rounded-lg bg-warning/5 border border-warning/20">
-                      <div className="flex items-start gap-2">
-                        <Clock size={14} className="text-warning mt-0.5 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[11px] font-semibold text-warning">Yêu cầu gia hạn deadline</p>
-                          <p className="text-[11px] text-text-secondary mt-0.5">
+                const extensionRow = task.extensionStatus === 'Pending' ? (
+                  <tr key={`${task.id}-ext`} className="border-b border-border-custom group-hover:bg-bg-surface-hover/50">
+                    <td colSpan={6} className="px-4 pb-4 pt-1">
+                      <div className="flex items-center justify-between gap-4 bg-warning/5 border border-warning/20 rounded-lg px-4 py-2.5 ml-2 mr-2">
+                        <div className="flex items-center gap-2.5">
+                          <div className="p-1 rounded bg-warning/10">
+                            <Clock size={14} className="text-warning flex-shrink-0" />
+                          </div>
+                          <span className="text-[11px] font-semibold text-warning">Yêu cầu gia hạn:</span>
+                          <span className="text-[11px] text-text-secondary">
                             +{task.extensionRequestDays ?? '?'} ngày
                             {task.extensionReason ? ` — ${task.extensionReason}` : ''}
-                          </p>
+                          </span>
                         </div>
-                        <div className="flex gap-1.5 flex-shrink-0">
+                        <div className="flex gap-2 flex-shrink-0">
                           <button
                             onClick={(e) => { e.stopPropagation(); handleApproveExtension(String(task.id), true); }}
                             disabled={extensionMutation.isPending}
-                            className="px-2.5 py-1 rounded-lg bg-success/10 text-success text-[10px] font-medium hover:bg-success/20 transition-colors border-none cursor-pointer disabled:opacity-50"
+                            className="px-3 py-1.5 rounded-md bg-success hover:bg-[#20904E] text-white text-[11px] font-medium shadow-sm transition-colors border-none cursor-pointer disabled:opacity-50"
                           >
-                            Duyệt GH
+                            Duyệt
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleApproveExtension(String(task.id), false); }}
                             disabled={extensionMutation.isPending}
-                            className="px-2.5 py-1 rounded-lg bg-danger/10 text-danger text-[10px] font-medium hover:bg-danger/20 transition-colors border-none cursor-pointer disabled:opacity-50"
+                            className="px-3 py-1.5 rounded-md bg-danger/10 text-danger hover:bg-danger/20 text-[11px] font-medium transition-colors border-none cursor-pointer disabled:opacity-50"
                           >
                             Từ chối
                           </button>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    </td>
+                  </tr>
+                ) : null;
 
-                  {/* Removed Result Image Preview as not present in TasksDto */}
-                </div>
-
-                {/* Action: xem bài nộp rồi mới duyệt/sửa đổi */}
-                {task.status === 'Pending_Review' && (
-                  <div className="flex gap-1.5 flex-shrink-0">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setReviewTask(task); }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand/10 text-brand text-[11px] font-medium hover:bg-brand/20 transition-colors border-none cursor-pointer"
-                    >
-                      <Eye size={13} />
-                      Xem bài nộp
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
+                return [mainRow, extensionRow];
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {filtered.length === 0 && (
@@ -387,22 +400,27 @@ const StatPill = ({
   tone: string;
   help?: React.ReactNode;
 }) => (
-  <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-bg-primary/40 border border-border-custom">
-    <div className={`w-8 h-8 rounded-lg bg-bg-surface flex items-center justify-center ${tone}`}>
-      <Icon size={16} />
+  <div className="relative overflow-hidden group flex items-center gap-4 px-5 py-4 rounded-2xl bg-bg-secondary border border-border-custom shadow-sm hover:border-brand/30 hover:shadow-md transition-all duration-300">
+    {/* Decorative background circle */}
+    <div className={`absolute right-0 top-0 w-24 h-24 rounded-full ${tone.replace('text-', 'bg-')}/5 -mr-8 -mt-8 transition-transform duration-500 group-hover:scale-110`} />
+    
+    <div className={`w-12 h-12 rounded-xl bg-bg-surface flex items-center justify-center flex-shrink-0 ${tone} shadow-sm group-hover:scale-105 transition-transform duration-300`}>
+      <Icon size={24} />
     </div>
-    <div className="leading-tight">
-      <div className="text-sm font-bold text-text-primary">{value}</div>
-      <div className="text-[10px] text-text-muted inline-flex items-center gap-1">
+    <div className="flex-col relative z-10">
+      <div className="text-2xl font-bold text-text-primary tracking-tight">{value}</div>
+      <div className="text-[11px] font-medium text-text-muted mt-0.5 inline-flex items-center gap-1.5 uppercase tracking-wide">
         {label}
         {help && (
-          <HelpTip
-            title={label}
-            ariaLabel={`Giải thích ${label}`}
-            placement="bottom-start"
-            width="20rem"
-            content={help}
-          />
+          <div className="text-text-muted hover:text-text-primary transition-colors">
+            <HelpTip
+              title={label}
+              ariaLabel={`Giải thích ${label}`}
+              placement="bottom-start"
+              width="20rem"
+              content={help}
+            />
+          </div>
         )}
       </div>
     </div>
