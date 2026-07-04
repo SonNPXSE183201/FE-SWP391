@@ -22,7 +22,7 @@ export const RankingPage = () => {
       <div className="flex gap-2 border-b border-border-custom">
         {([
           { id: 'ranking' as const, label: 'Bảng xếp hạng' },
-          { id: 'data-entry' as const, label: 'Nhập liệu (F4.4)' },
+          { id: 'data-entry' as const, label: 'Nhập liệu' },
         ]).map((t) => (
           <button
             key={t.id}
