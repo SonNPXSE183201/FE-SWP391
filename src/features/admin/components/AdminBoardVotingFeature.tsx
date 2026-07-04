@@ -35,7 +35,7 @@ import {
 } from '../hooks/useBoardVotingAdmin';
 import type { BoardVotingConfigDto } from '../api/boardVoting.api';
 import { formatVND } from '../../../utils/currency';
-import { calcBoardVotesRequired, calcEffectiveThresholdPercent } from '../../voting/voting.utils';
+import { calcBoardVotesRequired, calcEffectiveThresholdPercent } from '../../voting';
 
 const PRESETS = [
   { label: 'Đa số đơn giản (51%)', approve: 51 },

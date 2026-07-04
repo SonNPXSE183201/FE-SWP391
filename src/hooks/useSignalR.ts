@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/refs */
-import { useEffect, useRef, useCallback } from 'react';
-import {
+import { useEffect, useRef, useCallback } from 'react';import {
   HubConnectionBuilder,
   HubConnection,
   LogLevel,
@@ -14,6 +12,23 @@ import type { NotificationItem } from '../stores/notificationStore';
 import { toApiDateIso } from '../utils/parseApiDate';
 import { getNotificationTitle, stripSeriesIdPrefix } from '../utils/notificationLink';
 import { showNotificationToast } from '../utils/appToast';
+import type {
+  SignalRNotificationPayload,
+  SignalRTaskStatusChangedPayload,
+  SignalRUnreadCountPayload,
+  SignalRWalletUpdatedPayload,
+} from './signalr.types';
+import { getNotificationRawType, getUnreadCount } from './signalr.types';
+
+const isDev = import.meta.env.DEV;
+
+const logSignalR = (...args: unknown[]) => {
+  if (isDev) console.log('[SignalR]', ...args);
+};
+
+const warnSignalR = (...args: unknown[]) => {
+  if (isDev) console.warn('[SignalR]', ...args);
+};
 
 /**
  * SignalR hub URL — connects to ASP.NET Core Notification Hub.
@@ -40,18 +55,18 @@ const getHubUrl = () => {
  * Maps a SignalR notification event payload to our NotificationItem type.
  * Backend sends PascalCase properties.
  */
-const mapSignalRPayload = (payload: any): NotificationItem => {
-  const rawType = payload.Type || payload.type || 'SystemAlert';
-  const rawMessage = payload.Message || payload.message || payload.Content || payload.content || '';
+const mapSignalRPayload = (payload: SignalRNotificationPayload): NotificationItem => {
+  const rawType = getNotificationRawType(payload);
+  const rawMessage = payload.Message ?? payload.message ?? payload.Content ?? payload.content ?? '';
   return {
-    id: String(payload.Id || payload.id || crypto.randomUUID()),
-    title: payload.Title || payload.title || getNotificationTitle(rawType),
+    id: String(payload.Id ?? payload.id ?? crypto.randomUUID()),
+    title: payload.Title ?? payload.title ?? getNotificationTitle(rawType),
     message: stripSeriesIdPrefix(rawMessage),
     isRead: false,
-    link: payload.Link || payload.link,
+    link: payload.Link ?? payload.link,
     rawType,
     type: normalizeNotificationType(rawType),
-    createdAt: toApiDateIso(payload.CreateAt || payload.createAt),
+    createdAt: toApiDateIso(payload.CreateAt ?? payload.createAt),
   };
 };
 
@@ -143,7 +158,7 @@ export const useSignalR = () => {
         accessTokenFactory: () => token,
       })
       .withAutomaticReconnect([0, 2000, 10000, 30000])
-      .configureLogging(LogLevel.Information)
+      .configureLogging(isDev ? LogLevel.Information : LogLevel.Warning)
       .build();
 
     connectionRef.current = connection;
@@ -151,9 +166,9 @@ export const useSignalR = () => {
     // ─── Register event handlers ──────────────────────────────
 
     // NewNotification: generic notification from server
-    connection.on('NewNotification', (payload: any) => {
-      console.log('[SignalR] NewNotification received:', payload);
-      const rawType = payload.Type || payload.type || 'SystemAlert';
+    connection.on('NewNotification', (payload: SignalRNotificationPayload) => {
+      logSignalR('NewNotification received:', payload);
+      const rawType = getNotificationRawType(payload);
       const item = mapSignalRPayload(payload);
       addNotification(item);
       if (shouldShowNotificationToast(rawType)) {
@@ -192,7 +207,7 @@ export const useSignalR = () => {
 
     // ReceiveNotification: older generic notification format (content, type)
     connection.on('ReceiveNotification', (content: string, type: string) => {
-      console.log('[SignalR] ReceiveNotification received:', { content, type });
+      logSignalR('ReceiveNotification received:', { content, type });
       const normalizedType = normalizeNotificationType(type);
       const item: NotificationItem = {
         id: crypto.randomUUID(),
@@ -227,28 +242,27 @@ export const useSignalR = () => {
     });
 
     // TaskStatusChanged: task status update → refresh task data (F1.6)
-    connection.on('TaskStatusChanged', (payload: any) => {
-      console.log('[SignalR] TaskStatusChanged received (refreshing queries):', payload);
+    connection.on('TaskStatusChanged', (payload: SignalRTaskStatusChangedPayload) => {
+      logSignalR('TaskStatusChanged received (refreshing queries):', payload);
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['canvas'] });
     });
 
     // WalletUpdated: wallet balance change → notify + refresh wallet data (F1.6)
-    connection.on('WalletUpdated', (payload: any) => {
-      console.log('[SignalR] WalletUpdated received:', payload);
+    connection.on('WalletUpdated', (payload: SignalRWalletUpdatedPayload) => {
+      logSignalR('WalletUpdated received:', payload);
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
     });
 
     // UnreadCountUpdated: server pushes fresh unread count
-    connection.on('UnreadCountUpdated', (payload: any) => {
-      console.log('[SignalR] UnreadCountUpdated received:', payload);
-      const newCount = payload.Count ?? payload.count ?? 0;
-      setUnreadCount(newCount);
+    connection.on('UnreadCountUpdated', (payload: SignalRUnreadCountPayload) => {
+      logSignalR('UnreadCountUpdated received:', payload);
+      setUnreadCount(getUnreadCount(payload));
     });
 
     // BoardDataChanged: vote, config, or board membership changed
     connection.on('BoardDataChanged', () => {
-      console.log('[SignalR] BoardDataChanged received (refreshing queries)');
+      logSignalR('BoardDataChanged received (refreshing queries)');
       queryClient.invalidateQueries({ queryKey: ['voting'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'board-voting'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'board-members'] });
@@ -256,28 +270,28 @@ export const useSignalR = () => {
 
     // ─── Lifecycle logging ────────────────────────────────────
     connection.onreconnecting((error) => {
-      console.warn('[SignalR] Đang kết nối lại...', error);
+      warnSignalR('Đang kết nối lại...', error);
     });
 
     connection.onreconnected((connectionId) => {
-      console.log('[SignalR] Đã kết nối lại thành công! ConnectionId:', connectionId);
+      logSignalR('Đã kết nối lại thành công! ConnectionId:', connectionId);
     });
 
     connection.onclose((error) => {
-      console.warn('[SignalR] Mất kết nối.', error);
+      warnSignalR('Mất kết nối.', error);
     });
 
     // ─── Start connection ─────────────────────────────────────
     connection
       .start()
       .then(() => {
-        console.log('[SignalR] Đã kết nối thành công với Hub!');
+        logSignalR('Đã kết nối thành công với Hub!');
       })
       .catch((err) => {
         const msg = err.message || '';
         if (err.name === 'AbortError' || msg.includes('stopped during negotiation') || msg.includes('stop() was called')) {
-          console.log('[SignalR] Kết nối bị hủy sớm (thường do React Strict Mode unmount).');
-        } else {
+          logSignalR('Kết nối bị hủy sớm (thường do React Strict Mode unmount).');
+        } else if (isDev) {
           console.error('[SignalR] Lỗi kết nối:', err);
         }
       });
@@ -286,7 +300,7 @@ export const useSignalR = () => {
     return () => {
       if (connection.state !== HubConnectionState.Disconnected) {
         connection.stop().then(() => {
-          console.log('[SignalR] Đã ngắt kết nối.');
+          logSignalR('Đã ngắt kết nối.');
         });
       }
       connectionRef.current = null;
@@ -297,24 +311,24 @@ export const useSignalR = () => {
   const isConnected = connectionRef.current?.state === HubConnectionState.Connected;
 
   const invoke = useCallback(
-    async (methodName: string, ...args: any[]) => {
+    async (methodName: string, ...args: unknown[]) => {
       if (connectionRef.current?.state === HubConnectionState.Connected) {
         return connectionRef.current.invoke(methodName, ...args);
       }
-      console.warn(`[SignalR] Không thể gọi ${methodName} — chưa kết nối`);
+      warnSignalR(`Không thể gọi ${methodName} — chưa kết nối`);
     },
     []
   );
 
   const on = useCallback(
-    (eventName: string, callback: (...args: any[]) => void) => {
+    (eventName: string, callback: (...args: unknown[]) => void) => {
       connectionRef.current?.on(eventName, callback);
     },
     []
   );
 
   const off = useCallback(
-    (eventName: string, callback: (...args: any[]) => void) => {
+    (eventName: string, callback: (...args: unknown[]) => void) => {
       connectionRef.current?.off(eventName, callback);
     },
     []

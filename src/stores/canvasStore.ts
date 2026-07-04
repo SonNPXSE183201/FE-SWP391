@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import type { AnnotationType } from '../types/entities';
+import type { AnnotationType } from '../types/status.types';
 
 // ─── Canvas Tool Types ───────────────────────────────────────
 

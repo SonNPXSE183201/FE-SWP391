@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { adminApi } from '../../admin/api/admin.api';
+import { adminApi } from '../../admin';
 
 /** Active Tantou Editors for Mangaka assignment (Phương án 3). */
 export const useEditors = () => {

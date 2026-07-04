@@ -7,43 +7,10 @@ import {
   type VotingSeriesDto,
 } from '../voting.utils';
 
-const USE_MOCK = false;
-
-const mockDelay = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms));
-
 type PendingBoardVotesPayload = {
   rules?: BoardVotingRulesDto;
   series?: VotingSeriesDto[];
 };
-
-const MOCK_RULES: BoardVotingRulesDto = {
-  boardMemberCount: 6,
-  approveRequired: 4,
-  totalWeight: 7,
-  chairWeight: 2,
-  approvalThresholdPercent: 51,
-  autoResolveHours: 48,
-  rulesSummary:
-    'Cần ≥4/7 trọng số phiếu Đồng ý (51%). Chủ tịch HĐ = 2 phiếu. Tự chốt sau 48h.',
-};
-
-const MOCK_VOTING_SERIES: VotingSeriesDto[] = [
-  {
-    id: 1,
-    title: 'Huyền Thoại Samurai',
-    mangakaName: 'Nguyễn Minh Hùng',
-    synopsis: 'Câu chuyện về một samurai trẻ tuổi lưu lạc qua nhiều vùng đất.',
-    coverArtworkUrl:
-      'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=300&auto=format&fit=crop&q=60',
-    genre: 'Action, Adventure',
-    estimatedProductionBudget: 150_000_000,
-    editorName: 'Trần Văn Editor',
-    status: 'Pending_Board_Vote',
-    createAt: '2026-06-10T08:00:00Z',
-    updateAt: '2026-06-20T23:59:59Z',
-    boardVotes: [],
-  },
-];
 
 const unwrap = <T>(body: ApiResponse<T> | undefined): T | undefined =>
   body?.data ?? (body as ApiResponse<T> & { Data?: T })?.Data;
@@ -79,42 +46,20 @@ export const votingApi = {
     filter?: VotingListFilter,
     boardMemberId?: number | string | null,
   ): Promise<VotingListResult> => {
-    if (USE_MOCK) {
-      await mockDelay();
-      let series = [...MOCK_VOTING_SERIES];
-      if (filter && filter !== 'All') {
-        series = series.filter((item) => matchesVotingFilter(item, filter, boardMemberId));
-      }
-      return { rules: MOCK_RULES, series };
+    const res = await axiosInstance.get<ApiResponse<PendingBoardVotesPayload | SeriesDto[]>>(
+      '/api/votes/pending',
+    );
+    const { rules, series } = extractPendingPayload(res.data);
+    let items = series;
+    if (filter && filter !== 'All') {
+      items = items.filter((item) => matchesVotingFilter(item, filter, boardMemberId));
     }
-
-    try {
-      const res = await axiosInstance.get<ApiResponse<PendingBoardVotesPayload | SeriesDto[]>>(
-        '/api/votes/pending',
-      );
-      const { rules, series } = extractPendingPayload(res.data);
-      let items = series;
-      if (filter && filter !== 'All') {
-        items = items.filter((item) => matchesVotingFilter(item, filter, boardMemberId));
-      }
-      if (items.length > 0 || rules) return { rules, series: items };
-      if (import.meta.env.DEV) return { rules: MOCK_RULES, series: MOCK_VOTING_SERIES };
-      return { rules, series: items };
-    } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error('[voting] fetchVotingList failed:', error);
-      }
-      throw new Error('Không tải được danh sách biểu quyết');
-    }
+    return { rules, series: items };
   },
 
   fetchVotingRules: async (): Promise<BoardVotingRulesDto | null> => {
-    try {
-      const res = await axiosInstance.get<ApiResponse<BoardVotingRulesDto>>('/api/votes/rules');
-      return unwrap(res.data) ?? null;
-    } catch {
-      return null;
-    }
+    const res = await axiosInstance.get<ApiResponse<BoardVotingRulesDto>>('/api/votes/rules');
+    return unwrap(res.data) ?? null;
   },
 
   fetchVotingDetail: async (
@@ -129,11 +74,6 @@ export const votingApi = {
     seriesId: number | string,
     body: VoteSeriesRequestDto & { voteChoice?: string },
   ): Promise<{ success: boolean; message: string }> => {
-    if (USE_MOCK) {
-      await mockDelay(500);
-      return { success: true, message: 'Bỏ phiếu thành công!' };
-    }
-
     const res = await axiosInstance.post<ApiResponse<unknown>>(`/api/series/${seriesId}/vote`, body);
     const data = res.data;
     return {

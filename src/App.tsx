@@ -9,7 +9,6 @@ import { LoginPage } from './pages/auth/LoginPage';
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 import { DepositCallbackPage } from './pages/wallet/DepositCallbackPage';
-//import { UserManagementTable } from './features/user-management/UserManagementTable';
 
 // ─── Mangaka Pages ───
 import {
@@ -100,10 +99,7 @@ function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
-        <Route path="/unauthorized" element={<UnauthorizedPage />}
-        />
-        {/* BẠN CHÈN TẠM DÒNG NÀY VÀO ĐÂY */}
-        {/* <Route path="/admin/users" element={<UserManagementTable />} /> */}
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
         {/* Auth routes — wrapped in AuthLayout */}
         <Route element={<AuthLayout />}>
@@ -171,7 +167,6 @@ function App() {
           </Route>
         </Route>
 
-        {/* ─── Admin Routes ─── */}
         {/* ─── Admin Routes ─── */}
         <Route element={<RoleGuard allowedRoles={['Admin']} />}>
           <Route element={<MainLayout />}>

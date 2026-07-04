@@ -8,7 +8,8 @@ import {
 } from 'lucide-react';
 
 import type { TasksDto } from '../../../api/generated/types';
-import type { Annotation, AnnotationType } from '../../../types/entities';
+import type { AnnotationType } from '../../../types/status.types';
+import type { CanvasAnnotation } from '../../canvas/types/canvas.types';
 import { CanvasViewer } from '../../../components/canvas/CanvasViewer';
 import { CanvasToolbar } from '../../../components/canvas/CanvasToolbar';
 import { AnnotationPinPanel } from '../../../components/canvas/AnnotationPinPanel';
@@ -84,7 +85,7 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
   const isPinningActive = activeTool === 'annotate';
   const contextLabel = task.regionName ? task.regionName : `Vùng ${task.regionId}`;
 
-  const viewerAnnotations = useMemo<Annotation[]>(
+  const viewerAnnotations = useMemo<CanvasAnnotation[]>(
     () => pins.map((p) => ({
       id: p.id,
       pageId: '',

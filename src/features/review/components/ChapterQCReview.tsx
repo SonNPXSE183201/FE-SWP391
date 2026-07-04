@@ -12,7 +12,8 @@ import { AnnotationPinPanel } from '../../../components/canvas/AnnotationPinPane
 import { MobileCanvasWarning } from '../../../components/canvas/MobileCanvasWarning';
 import { useCanvasStore } from '../../../stores/canvasStore';
 import type { CanvasViewerHandle } from '../../../components/canvas/CanvasViewer';
-import type { Annotation, AnnotationType } from '../../../types/entities';
+import type { AnnotationType } from '../../../types/status.types';
+import type { CanvasAnnotation } from '../../canvas/types/canvas.types';
 import { useChapterReview, useApproveChapter, useRequireChapterRevision } from '../hooks/useReview';
 import { reviewApi, type AnnotationDto } from '../api/review.api';
 import { ANNOTATION_TYPE_CONFIG, QC_CHECKLIST_ITEMS, formatVND } from '../constants';
@@ -36,7 +37,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
     setActiveTool, setZoomLevel, setAnnotationType, setSelectedAnnotation, resetCanvas,
   } = useCanvasStore();
 
-  const [annotations, setAnnotations] = useState<Annotation[]>([]);
+  const [annotations, setAnnotations] = useState<CanvasAnnotation[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [annoComment, setAnnoComment] = useState('');
   const [showApprove, setShowApprove] = useState(false);
@@ -51,7 +52,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
     'Hiệu ứng ánh sáng/bóng đổ chưa đồng nhất giữa các trang.',
   ];
 
-  const toAnnotationEntity = useCallback((dto: AnnotationDto): Annotation => {
+  const toAnnotationEntity = useCallback((dto: AnnotationDto): CanvasAnnotation => {
     const coords = (() => {
       try {
         const parsed = JSON.parse(dto.coordinatesJson ?? '{}') as {
@@ -139,7 +140,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
         const list = await Promise.all(
           pages.map(async (p: PageDto) => {
             const pid = String(p.id ?? '');
-            if (!pid) return [] as Annotation[];
+            if (!pid) return [] as CanvasAnnotation[];
             const res = await reviewApi.listAnnotations({ pageId: pid });
             const rows = res.data?.data ?? [];
             return rows.map(toAnnotationEntity);
@@ -188,7 +189,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
   );
   const autoRevisionSummary = useMemo(() => {
     if (!unresolvedAnnotations.length) return '';
-    const byPage = new Map<string, Annotation[]>();
+    const byPage = new Map<string, CanvasAnnotation[]>();
     unresolvedAnnotations.forEach((a) => {
       const list = byPage.get(a.pageId) ?? [];
       list.push(a);

@@ -30,8 +30,8 @@ export interface TeamCompositionSummary {
 
 interface TeamMemberLike {
   assistantId?: number;
-  roleInTeam: string;
-  status: string;
+  roleInTeam?: string | null;
+  status?: string | null;
   assistantName?: string | null;
 }
 
@@ -41,13 +41,13 @@ export const getTeamComposition = (members: TeamMemberLike[]): TeamCompositionSu
   const items: TeamRoleCompositionItem[] = TEAM_ROLE_DEFINITIONS.map((def) => {
     const roleMembers = members.filter(
       (m) => {
-        if (m.status === 'Removed') return false;
-        const roles = (m.roleInTeam || '').split(',').map(normalizeRole);
+        if ((m.status ?? '') === 'Removed') return false;
+        const roles = (m.roleInTeam ?? '').split(',').map(normalizeRole);
         return roles.includes(def.role);
       }
     );
-    const active = roleMembers.filter((m) => m.status === 'Active');
-    const pending = roleMembers.filter((m) => m.status === 'Pending');
+    const active = roleMembers.filter((m) => (m.status ?? '') === 'Active');
+    const pending = roleMembers.filter((m) => (m.status ?? '') === 'Pending');
 
     let status: TeamRoleStatus = 'missing';
     if (active.length > 0) status = 'filled';
@@ -63,7 +63,7 @@ export const getTeamComposition = (members: TeamMemberLike[]): TeamCompositionSu
       roleMembers: roleMembers.map((m) => ({
         assistantId: m.assistantId ?? 0,
         assistantName: fixMojibake(m.assistantName),
-        status: m.status,
+        status: m.status ?? '',
       })),
     };
   });

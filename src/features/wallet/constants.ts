@@ -1,4 +1,4 @@
-import type { TransactionType } from '../../types/entities';
+import type { TransactionType } from '../../types/status.types';
 import { NEMU_FUNDING_LABEL } from '../series/constants/seriesCopy';
 import {
   Wallet,

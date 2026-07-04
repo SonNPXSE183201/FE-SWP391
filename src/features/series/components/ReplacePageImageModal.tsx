@@ -1,10 +1,10 @@
 import { useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Upload, X, ImagePlus } from 'lucide-react';
-import type { Page } from '../../../types/entities';
+import type { PageDto } from '../../../api/generated/types';
 
 interface ReplacePageImageModalProps {
-  page: Page;
+  page: Pick<PageDto, 'pageNumber'> & { id?: string | number };
   isSubmitting: boolean;
   onClose: () => void;
   onSubmit: (file: File) => void;

@@ -1,4 +1,4 @@
-import { ManuscriptsFeature } from '../../features/series/components/ManuscriptsFeature';
+import { ManuscriptsFeature } from '../../features/series';
 
 export const ManuscriptsPage = () => {
   return <ManuscriptsFeature />;
