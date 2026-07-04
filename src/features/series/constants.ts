@@ -1,4 +1,4 @@
-import type { SeriesStatus, ChapterStatus, PageStatus } from '../../types/entities';
+import type { SeriesStatus, ChapterStatus, PageStatus } from '../../types/status.types';
 import {
   FileText, Upload, Eye, CheckCircle2, RotateCcw,
 } from 'lucide-react';

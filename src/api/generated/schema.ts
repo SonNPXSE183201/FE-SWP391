@@ -4039,6 +4039,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tasks/{id}/dispute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateDisputeDto"];
+                    "text/json": components["schemas"]["CreateDisputeDto"];
+                    "application/*+json": components["schemas"]["CreateDisputeDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tasks/{id}/extension-approval": {
         parameters: {
             query?: never;
@@ -4944,6 +4989,11 @@ export interface components {
             publishSchedule?: string | null;
             hasContract?: boolean;
             contractId?: string | null;
+            /** Format: double */
+            genkouryoPrice?: number | null;
+            signedDate?: string | null;
+            contractStatus?: string | null;
+            addendums?: components["schemas"]["ContractAddendumDto"][] | null;
             genres?: string[] | null;
         };
         ApprovedSeriesContractDtoListApiResponse: {
@@ -5380,6 +5430,13 @@ export interface components {
             signedDate?: string | null;
             contract?: components["schemas"]["Contract"];
         };
+        ContractAddendumDto: {
+            id?: string | null;
+            /** Format: double */
+            newGenkouryoPrice?: number;
+            effectiveDate?: string | null;
+            signedDate?: string | null;
+        };
         ContractDto: {
             /** Format: int32 */
             id?: number;
@@ -5454,6 +5511,9 @@ export interface components {
             errors?: {
                 [key: string]: string[] | null;
             } | null;
+        };
+        CreateDisputeDto: {
+            reason?: string | null;
         };
         CreatePortfolioSampleDto: {
             title?: string | null;

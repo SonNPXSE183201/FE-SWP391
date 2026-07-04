@@ -10,7 +10,8 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 
 import type { TasksDto } from '../../../api/generated/types';
-import type { Annotation } from '../../../types/entities';
+import type { CanvasAnnotation } from '../../canvas/types/canvas.types';
+import type { AnnotationType, TaskStatus } from '../../../types/status.types';
 import { CanvasViewer } from '../../../components/canvas/CanvasViewer';
 import { TaskRegionPreview } from './TaskRegionPreview';
 import { TaskLayerPreview } from './TaskLayerPreview';
@@ -22,7 +23,6 @@ import { TASK_STATUS_CONFIG, formatDeadline } from '../constants';
 import { formatVND } from '../../wallet';
 import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
 import { validatePngTransparent } from '../../../utils/validatePngTransparent';
-import type { TaskStatus } from '../../../types/entities';
 
 interface AssistantTaskDetailModalProps {
   task: TasksDto & {
@@ -84,7 +84,7 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
   const dl = formatDeadline(task.deadline || '');
 
   const pins = useMemo(() => {
-    const all: Array<{ id: string; x: number; y: number; type: Annotation['type']; comment: string }> = [];
+    const all: Array<{ id: string; x: number; y: number; type: AnnotationType; comment: string }> = [];
     annotationRecords.forEach((record, ri) => {
       parseTaskRevisionPins(record.coordinatesJson).forEach((p, pi) => {
         all.push({ ...p, id: `pin-${ri}-${pi}` });
@@ -93,7 +93,7 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
     return all;
   }, [annotationRecords]);
 
-  const viewerAnnotations = useMemo<Annotation[]>(
+  const viewerAnnotations = useMemo<CanvasAnnotation[]>(
     () => pins.map((p) => ({
       id: p.id,
       pageId: '',
@@ -673,7 +673,7 @@ function RevisionPinList({
   selectedPinId,
   onSelectPin,
 }: {
-  pins: Array<{ id: string; type: Annotation['type']; comment: string }>;
+  pins: Array<{ id: string; type: AnnotationType; comment: string }>;
   annotationsLoading: boolean;
   activeStatus?: string | null;
   selectedPinId: string | null;

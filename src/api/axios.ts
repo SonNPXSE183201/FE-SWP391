@@ -10,7 +10,6 @@ export {
   unwrapPaged,
   unwrapApiData,
   getAxiosErrorMessage,
-  createMockApiResponse,
 } from './apiResponse';
 
 const resolveApiBaseUrl = (): string => {
@@ -103,7 +102,7 @@ axiosInstance.interceptors.response.use(
         try {
           // Dynamic import to avoid potential circular dependencies
           const { authApi } = await import('../features/auth/api/auth.api');
-          const response = await authApi.refreshToken({ token, refreshToken });
+          const response = await authApi.refreshToken({ accessToken: token, refreshToken });
 
           if (response.success && response.data) {
             const newToken = response.data.token;

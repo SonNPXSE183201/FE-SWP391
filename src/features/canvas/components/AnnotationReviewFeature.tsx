@@ -13,7 +13,8 @@ import {
   useCanvasPages, useAnnotations, useRegions,
   useCreateAnnotation, useDeleteAnnotation,
 } from '../hooks/useCanvasData';
-import type { AnnotationType, Annotation } from '../../../types/entities';
+import type { AnnotationType } from '../../../types/status.types';
+import type { CanvasAnnotation } from '../types/canvas.types';
 
 interface AnnotationReviewFeatureProps {
   chapterId?: string;
@@ -222,7 +223,7 @@ export const AnnotationReviewFeature = ({ chapterId = 'ch-1' }: AnnotationReview
                   <p className="text-xs text-center">Chưa có annotation nào.<br />Chọn công cụ Annotate để bắt đầu.</p>
                 </div>
               ) : (
-                annotations.map((anno: Annotation) => {
+                annotations.map((anno: CanvasAnnotation) => {
                   const cfg = ANNOTATION_TYPE_CONFIG[anno.type as AnnotationType];
                   return (
                     <div

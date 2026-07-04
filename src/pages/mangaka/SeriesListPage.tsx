@@ -1,4 +1,4 @@
-import { SeriesListFeature } from '../../features/series/components/SeriesListFeature';
+import { SeriesListFeature } from '../../features/series';
 
 export const SeriesListPage = () => {
   return <SeriesListFeature />;

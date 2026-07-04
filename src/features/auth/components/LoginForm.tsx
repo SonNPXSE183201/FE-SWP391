@@ -30,7 +30,7 @@ export const LoginForm: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await authApi.login({ email, password });
+      const response = await authApi.login({ identifier: email, password });
 
       if (response.success && response.data && response.data.token) {
         persistRememberedEmail(email, rememberMe);

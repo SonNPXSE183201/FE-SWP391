@@ -13,8 +13,8 @@ import {
 type DashboardStatsDto = components['schemas']['DashboardStatsResponseDto'];
 type AdminDashboardDto = components['schemas']['AdminDashboardResponseDto'];
 
-// SeriesStatus from entities.ts — kept as string literal since dashboard uses it for UI display
-type SeriesStatus = 'Draft' | 'PendingApproval' | 'PendingBoardVote' | 'Approved' | 'Published' | 'OnHold' | 'Cancelled';
+import { normalizeSeriesStatus } from '../../../utils/status';
+import type { SeriesStatus } from '../../../types/status.types';
 
 // Donut slice colors (hex mirrors the theme palette in charts/chartTheme.ts).
 const C = {
@@ -189,8 +189,6 @@ const statNum = (dto: DashboardStatsDto, key: keyof DashboardStatsDto): number =
   const val = dto[key];
   return val == null ? 0 : Number(val);
 };
-
-import { normalizeSeriesStatus } from '../../../utils/status';
 
 // Map SeriesStatus → human label + slice color for status donuts.
 const SERIES_STATUS_SLICE: Record<SeriesStatus, { label: string; color: string }> = {

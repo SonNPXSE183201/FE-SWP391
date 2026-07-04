@@ -1,76 +1,53 @@
 import { useQuery } from '@tanstack/react-query';
 import { seriesApi } from '../api/series.api';
-import type { Series, Chapter, Page } from '../../../types/entities';
-import { components } from '../../../api/generated/schema';
-
 import type { ApiResponse, SeriesDto, PageDto, ChapterDto, PagedResult } from '../../../api/generated/types';
+import type { ChapterStatus, PageStatus, SeriesStatus } from '../../../types/status.types';
 import { getPagedItems, isApiSuccess } from '../../../api/apiResponse';
-import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
 import { parseApiDate } from '../../../utils/parseApiDate';
 import { normalizeSeriesStatus, normalizeChapterStatus, normalizePageStatus } from '../../../utils/status';
 
-// ─── Mapper ──────────────────────────────────────────────────
-export const mapSeriesDtoToEntity = (dto: components['schemas']['SeriesDto']): Series => ({  id: dto.id?.toString() || '',
-  title: dto.title || '',
-  synopsis: dto.synopsis || '',
-  genre: dto.genre ? dto.genre.split(',') : [],
-  coverImageUrl: resolveMediaUrl(dto.coverArtworkUrl || ''),
-  resourceFolderUrl: dto.resourceFolderUrl ?? undefined,
-  estimatedProductionBudget: dto.estimatedProductionBudget ?? 0,
-  approvedProductionBudget: dto.approvedProductionBudget ?? 0,
-  mangakaId: dto.mangakaId?.toString() || '',
-  mangakaName: dto.mangakaName || '',
+export type NormalizedSeriesDto = SeriesDto & { status: SeriesStatus };
+export type NormalizedChapterDto = ChapterDto & { status: ChapterStatus };
+export type NormalizedPageDto = PageDto & { status: PageStatus };
+export type ChapterWithSeriesTitle = NormalizedChapterDto & { seriesTitle: string };
+
+export const normalizeSeriesDto = (dto: SeriesDto): NormalizedSeriesDto => ({
+  ...dto,
   status: normalizeSeriesStatus(dto.status),
-  chapterCount: 0,
-  createdAt: dto.createAt || new Date().toISOString(),
-  updatedAt: dto.updateAt || new Date().toISOString(),
-  hasContract: dto.hasContract,
-  editorNote: dto.editorNote ?? undefined,
-  mangakaSubmissionNote: (dto as any).mangakaSubmissionNote ?? undefined,
 });
 
-export const mapChapterDtoToEntity = (dto: ChapterDto, seriesTitle = ''): Chapter => ({  id: dto.id?.toString() || '',
-  seriesId: dto.seriesId?.toString() || '',
-  seriesTitle,
-  chapterNumber: dto.chapterNumber ?? 0,
-  title: dto.title || '',
+export const normalizeChapterDto = (
+  dto: ChapterDto,
+  seriesTitle = '',
+): ChapterWithSeriesTitle => ({
+  ...dto,
   status: normalizeChapterStatus(dto.status),
-  pageCount: dto.validPageCount ?? 0,
-  validPageCount: dto.validPageCount ?? 0,
-  createdAt: dto.createAt || new Date().toISOString(),
-  updatedAt: dto.updateAt || dto.createAt || new Date().toISOString(),
-  submittedAt: dto.updateAt ?? undefined,
+  seriesTitle,
 });
 
-export const formatChapterDate = (chapter: Chapter): string => {
-  const raw = chapter.submittedAt || chapter.createdAt;
-  const parsed = parseApiDate(raw);
+export const normalizePageDto = (dto: PageDto): NormalizedPageDto => ({
+  ...dto,
+  status: normalizePageStatus(dto.status),
+});
+
+export const formatChapterDate = (chapter: ChapterDto): string => {
+  const raw = chapter.updateAt || chapter.createAt;
+  const parsed = parseApiDate(raw ?? '');
   if (Number.isNaN(parsed.getTime())) return '—';
   return parsed.toLocaleDateString('vi-VN');
 };
 
 export { normalizePageStatus as mapPageStatus } from '../../../utils/status';
 
-export const mapPageDtoToEntity = (dto: PageDto): Page => ({  id: dto.id?.toString() || '',
-  chapterId: dto.chapterId?.toString() || '',
-  pageNumber: dto.pageNumber || 1,
-  imageUrl: resolveMediaUrl(dto.rawImageUrl || dto.compositeImageUrl || ''),
-  compositeImageUrl: dto.compositeImageUrl ? resolveMediaUrl(dto.compositeImageUrl) : undefined,
-  status: normalizePageStatus(dto.status),
-  regionCount: 0,
-  createdAt: dto.createAt || new Date().toISOString(),
-  updatedAt: dto.updateAt || new Date().toISOString(),
-});
-
 // ─── Series List ─────────────────────────────────────────────
 export const useSeriesList = (params?: { page?: number; pageSize?: number; status?: string }) => {
-  return useQuery<Series[], Error>({
+  return useQuery<NormalizedSeriesDto[], Error>({
     queryKey: ['series', params],
     queryFn: async () => {
       const res = await seriesApi.getAll(params);
-      const apiData = res.data as ApiResponse<components['schemas']['SeriesDto'][] | PagedResult<components['schemas']['SeriesDto']>>;
-      const dtoArray = getPagedItems<components['schemas']['SeriesDto']>(apiData.data);
-      return dtoArray.map(mapSeriesDtoToEntity);
+      const apiData = res.data as ApiResponse<SeriesDto[] | PagedResult<SeriesDto>>;
+      const dtoArray = getPagedItems<SeriesDto>(apiData.data);
+      return dtoArray.map(normalizeSeriesDto);
     },
     staleTime: 1000 * 60,
     retry: 1,
@@ -79,14 +56,14 @@ export const useSeriesList = (params?: { page?: number; pageSize?: number; statu
 
 // ─── Series Detail ───────────────────────────────────────────
 export const useSeriesDetail = (id?: string) => {
-  return useQuery<Series | null, Error>({
+  return useQuery<NormalizedSeriesDto | null, Error>({
     queryKey: ['series', id],
     queryFn: async () => {
       const res = await seriesApi.getById(id as string);
-      const apiData = res.data as ApiResponse<components['schemas']['SeriesDto']>;
+      const apiData = res.data as ApiResponse<SeriesDto>;
       const data = apiData.data;
       if (!isApiSuccess(apiData) || !data) return null;
-      return mapSeriesDtoToEntity(data);
+      return normalizeSeriesDto(data);
     },
     enabled: !!id,
     retry: 1,
@@ -102,13 +79,13 @@ export const useSeriesDetail = (id?: string) => {
 
 // ─── My Series (Mangaka) ─────────────────────────────────────
 export const useMySeries = (params?: { page?: number; pageSize?: number }) => {
-  return useQuery<Series[], Error>({
+  return useQuery<NormalizedSeriesDto[], Error>({
     queryKey: ['series', 'my', params],
     queryFn: async () => {
       const res = await seriesApi.getMySeries(params);
-      const apiData = res.data as ApiResponse<components['schemas']['SeriesDto'][] | PagedResult<components['schemas']['SeriesDto']>>;
-      const dtoArray = getPagedItems<components['schemas']['SeriesDto']>(apiData.data);
-      return dtoArray.map(mapSeriesDtoToEntity);
+      const apiData = res.data as ApiResponse<SeriesDto[] | PagedResult<SeriesDto>>;
+      const dtoArray = getPagedItems<SeriesDto>(apiData.data);
+      return dtoArray.map(normalizeSeriesDto);
     },
     staleTime: 1000 * 60,
     retry: 1,
@@ -117,13 +94,13 @@ export const useMySeries = (params?: { page?: number; pageSize?: number }) => {
 
 // ─── Chapters for Series ─────────────────────────────────────
 export const useChapters = (seriesId?: string, params?: { page?: number; pageSize?: number }) => {
-  return useQuery<Chapter[], Error>({
+  return useQuery<NormalizedChapterDto[], Error>({
     queryKey: ['chapters', seriesId, params],
     queryFn: async () => {
       const res = await seriesApi.getChapters(seriesId as string, params);
       const apiData = res.data as ApiResponse<ChapterDto[] | PagedResult<ChapterDto>>;
       const dtoList = getPagedItems(apiData.data);
-      return dtoList.map((dto) => mapChapterDtoToEntity(dto as ChapterDto));
+      return dtoList.map((dto) => normalizeChapterDto(dto as ChapterDto));
     },
     enabled: !!seriesId,
     staleTime: 1000 * 60,
@@ -133,17 +110,14 @@ export const useChapters = (seriesId?: string, params?: { page?: number; pageSiz
 
 // ─── All Chapters (across all series — for Manuscripts) ──────
 export const useAllChapters = () => {
-  return useQuery<(Chapter & { seriesTitle: string })[], Error>({
+  return useQuery<ChapterWithSeriesTitle[], Error>({
     queryKey: ['chapters', 'all'],
     queryFn: async () => {
-      // In mock mode, seriesApi.getChapters with empty seriesId won't work.
-      // Instead, use getMySeries to get all series, then get chapters for each.
-      // For simplicity with USE_MOCK, we call getAll and getChapters directly.
       const seriesRes = await seriesApi.getMySeries({ pageSize: 100 });
       const resData = seriesRes.data as ApiResponse<SeriesDto[] | PagedResult<SeriesDto>>;
       const seriesData = getPagedItems<SeriesDto>(resData.data);
 
-      const allChapters: (Chapter & { seriesTitle: string })[] = [];
+      const allChapters: ChapterWithSeriesTitle[] = [];
       for (const series of seriesData) {
         if (!series.id) continue;
         const chapRes = await seriesApi.getChapters(series.id.toString(), { pageSize: 100 });
@@ -151,9 +125,7 @@ export const useAllChapters = () => {
         const chapData = getPagedItems(chapResData.data);
 
         for (const dto of chapData) {
-          allChapters.push(
-            mapChapterDtoToEntity(dto as ChapterDto, series.title || ''),
-          );
+          allChapters.push(normalizeChapterDto(dto as ChapterDto, series.title || ''));
         }
       }
       return allChapters;
@@ -165,13 +137,13 @@ export const useAllChapters = () => {
 
 // ─── Chapter Detail ──────────────────────────────────────────
 export const useChapterDetail = (chapterId?: string) => {
-  return useQuery<(Chapter & { seriesTitle: string }) | null, Error>({
+  return useQuery<ChapterWithSeriesTitle | null, Error>({
     queryKey: ['chapter', chapterId],
     queryFn: async () => {
       const res = await seriesApi.getChapterById(chapterId as string);
       const apiData = res.data as ApiResponse<ChapterDto>;
       if (!isApiSuccess(apiData) || !apiData.data) return null;
-      return mapChapterDtoToEntity(apiData.data);
+      return normalizeChapterDto(apiData.data);
     },
     enabled: !!chapterId,
     retry: 1,
@@ -180,13 +152,13 @@ export const useChapterDetail = (chapterId?: string) => {
 
 // ─── Pages for Chapter ───────────────────────────────────────
 export const useChapterPages = (chapterId?: string) => {
-  return useQuery<Page[], Error>({
+  return useQuery<NormalizedPageDto[], Error>({
     queryKey: ['pages', chapterId],
     queryFn: async () => {
       const res = await seriesApi.getPages(chapterId as string);
       const apiData = res.data as ApiResponse<PageDto[]>;
       if (!isApiSuccess(apiData)) return [];
-      return (apiData.data ?? []).map(mapPageDtoToEntity);
+      return (apiData.data ?? []).map(normalizePageDto);
     },
     enabled: !!chapterId,
     staleTime: 1000 * 60,

@@ -12,13 +12,15 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { usePortfolioStats, usePortfolioSamples, useUploadPortfolioSample } from '../hooks/usePortfolio';
-import type { PortfolioSample } from '../api/portfolio.api';
+import type { PortfolioSampleDto } from '../api/portfolio.api';
 import { getPagedItems } from '../../../api/apiResponse';
 import { taskApi } from '../../tasks/api/task.api';
 import { formatVND } from '../../wallet';
-import type { Task } from '../../../types';
+import type { TasksDto } from '../../../api/generated/types';
 
-interface PortfolioHistoryTask extends Pick<Task, 'id' | 'amount' | 'deadline' | 'status'> {
+interface PortfolioHistoryTask extends Pick<TasksDto, 'id' | 'deadline' | 'status'> {
+  amount?: number;
+  paymentAmount?: number;
   title?: string;
   taskName?: string;
   seriesTitle?: string;
@@ -84,7 +86,7 @@ export const PortfolioFeature = () => {
 
   const filteredSamples = selectedCategory === 'All'
     ? samples
-    : samples.filter((s: PortfolioSample) => s.category === selectedCategory);
+    : samples.filter((s: PortfolioSampleDto) => s.category === selectedCategory);
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -210,7 +212,7 @@ export const PortfolioFeature = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredSamples.map((sample: PortfolioSample) => (
+                {filteredSamples.map((sample: PortfolioSampleDto) => (
                   <div
                     key={sample.id}
                     className="group relative bg-bg-secondary border border-border-custom rounded-xl overflow-hidden shadow-sm hover:border-brand/35 transition-all duration-300"
@@ -218,14 +220,14 @@ export const PortfolioFeature = () => {
                     {/* Media Container */}
                     <div className="aspect-[4/3] bg-bg-surface overflow-hidden relative">
                       <img
-                        src={sample.imageUrl}
-                        alt={sample.title}
+                        src={sample.imageUrl ?? ''}
+                        alt={sample.title ?? ''}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       {/* Overlay */}
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                         <a
-                          href={sample.imageUrl}
+                          href={sample.imageUrl ?? '#'}
                           target="_blank"
                           rel="noreferrer"
                           className="w-9 h-9 rounded-lg bg-bg-surface hover:bg-bg-primary text-text-primary flex items-center justify-center transition-colors"
@@ -242,7 +244,7 @@ export const PortfolioFeature = () => {
                         <span className="px-2 py-0.5 rounded bg-brand/10 border border-brand/20 text-brand text-[10px] font-semibold">
                           {sample.category}
                         </span>
-                        <span className="text-[10px] text-text-muted">{sample.createdAt}</span>
+                        <span className="text-[10px] text-text-muted">{sample.createAt ?? '—'}</span>
                       </div>
                     </div>
                   </div>
@@ -279,7 +281,7 @@ export const PortfolioFeature = () => {
                           {task.title ?? task.taskName ?? `${task.seriesTitle ?? 'Series'} - Task`}
                         </td>
                         <td className="px-6 py-4 font-semibold text-text-primary">
-                          {formatVND(task.amount)}
+                          {formatVND(task.paymentAmount ?? task.amount ?? 0)}
                         </td>
                         <td className="px-6 py-4 text-xs">
                           {new Date(task.deadline).toLocaleDateString('vi-VN')}

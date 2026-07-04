@@ -62,7 +62,7 @@ export const InviteConfirmPopover = ({
   const seriesOptions = useMemo(
     () => mySeries
       .filter((s) => s.status === 'Published')
-      .map((s) => ({ value: s.id, label: s.title })),
+      .map((s) => ({ value: String(s.id ?? ''), label: s.title ?? '' })),
     [mySeries],
   );
 
@@ -81,7 +81,7 @@ export const InviteConfirmPopover = ({
     () => {
       if (!memberEntry) return [];
       if (memberEntry.status !== 'Active' && memberEntry.status !== 'Pending') return [];
-      return memberEntry.roleInTeam.split(',').map(r => r.trim());
+      return (memberEntry.roleInTeam ?? '').split(',').map(r => r.trim());
     },
     [memberEntry]
   );

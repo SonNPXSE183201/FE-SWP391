@@ -143,7 +143,7 @@ export const SeriesTeamPanel = ({ seriesId, canManage = true }: SeriesTeamPanelP
               {showMembers && (
                 <div className="space-y-1.5 animate-fade-in-up">
                   {activeMembers.map((m) => {
-                    const status = memberStatusLabel[m.status];
+                    const status = memberStatusLabel[m.status ?? ''] ?? { text: m.status ?? '—', cls: 'bg-bg-surface text-text-muted' };
                     return (
                       <div
                         key={`${m.seriesId}-${m.assistantId}`}
@@ -166,7 +166,7 @@ export const SeriesTeamPanel = ({ seriesId, canManage = true }: SeriesTeamPanelP
                         {canManage && m.status !== 'Removed' && (
                           <button
                             type="button"
-                            onClick={() => handleRemove(m.assistantId)}
+                            onClick={() => m.assistantId != null && handleRemove(m.assistantId)}
                             className="p-1 rounded text-text-muted hover:text-danger hover:bg-danger/10 border-none bg-transparent cursor-pointer shrink-0"
                             aria-label="Gỡ thành viên"
                           >

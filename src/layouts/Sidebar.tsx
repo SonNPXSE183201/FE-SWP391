@@ -24,6 +24,7 @@ import {
   Mailbox,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { useAssistantInvites } from "../features/assistant-management";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -267,8 +268,6 @@ const getNavSections = (role: UserRole, invitesCount: number = 0): NavSectionCon
       return [];
   }
 };
-
-import { useAssistantInvites } from "../features/assistant-management/hooks/useAssistantInvites";
 
 export const Sidebar = ({
   collapsed,

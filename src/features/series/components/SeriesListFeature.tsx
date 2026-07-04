@@ -15,6 +15,7 @@ import { Pagination } from '../../../components/common/Pagination';
 import { CustomSelect } from '../../../components/common/CustomSelect';
 import { useMySeries, useAllChapters } from '../hooks/useSeries';
 import { seriesStatusMatchesFilter, toSelectFilterOptions } from '../../../utils/status';
+import { parseGenreList } from '../utils/series.utils';
 
 export const SeriesListFeature = () => {
   const navigate = useNavigate();
@@ -27,18 +28,19 @@ export const SeriesListFeature = () => {
 
   const series = useMemo(() => {
     return rawSeries.map(s => {
-      const chapterCount = allChapters.filter(c => c.seriesId === s.id).length;
+      const chapterCount = allChapters.filter(c => String(c.seriesId) === String(s.id)).length;
       return { ...s, chapterCount };
     });
   }, [rawSeries, allChapters]);
 
   const filteredSeries = useMemo(() => {
     return series.filter((s) => {
+      const genres = parseGenreList(s.genre);
       const matchesSearch =
         !searchQuery ||
-        s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.synopsis.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.genre.some((g) => g.toLowerCase().includes(searchQuery.toLowerCase()));
+        (s.title ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (s.synopsis ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        genres.some((g) => g.toLowerCase().includes(searchQuery.toLowerCase()));
       const matchesStatus = seriesStatusMatchesFilter(s.status, statusFilter);
       return matchesSearch && matchesStatus;
     });

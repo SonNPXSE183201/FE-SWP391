@@ -1,3 +1,3 @@
-import { AdminBoardVotingFeature } from '../../features/admin/components/AdminBoardVotingFeature';
+import { AdminBoardVotingFeature } from '../../features/admin';
 
 export const AdminBoardVotingPage = () => <AdminBoardVotingFeature />;

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X, UserPlus, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminApi } from '../../admin/api/admin.api';
+import { adminApi } from '../../admin';
 import type { CreateUserByAdminDto } from '../../../api/generated/types';
 import type { ApiResponse } from '../../../api/axios';
 import { CustomSelect } from '../../../components/common/CustomSelect';

@@ -1,5 +1,5 @@
 import { CheckCircle2, Clock, Circle } from 'lucide-react';
-import type { SeriesStatus } from '../../../types/entities';
+import type { SeriesStatus } from '../../../types/status.types';
 import { SERIES_STATUS_STEPS, getStepState } from '../constants';
 
 interface StatusTimelineProps {

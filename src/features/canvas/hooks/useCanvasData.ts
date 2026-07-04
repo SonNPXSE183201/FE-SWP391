@@ -2,41 +2,47 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { canvasApi } from '../api/canvas.api';
 import type { AnnotationDto, PageDto, RegionDto } from '../../../api/generated/types';
-import type { AnnotationType, Page, Region } from '../../../types/entities';
-import { mapPageDtoToEntity } from '../../series/hooks/useSeries';
+import type { AnnotationType } from '../../../types/status.types';
+import type { CanvasPage, CanvasRegion } from '../types/canvas.types';
+import { normalizePageDto } from '../../series/hooks/useSeries';
 import { isApiSuccess, getAxiosErrorMessage } from '../../../api/apiResponse';
 import type { ApiResponse } from '../../../api/generated/types';
 import {
   mapAnnotationDtoToEntity,
   mapRegionDtoToEntity,
-  resolvePageImageUrl,
 } from '../utils/canvas.utils';
+import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
 
 const KEYS = {
   pages: (chapterId: string) => ['canvas', 'pages', chapterId] as const,
-  page: (pageId: string) => ['canvas', 'page', pageId] as const,
   regions: (pageId: string) => ['canvas', 'regions', pageId] as const,
   annotations: (pageId: string) => ['canvas', 'annotations', pageId] as const,
 };
 
-const mapPagesResponse = (res: { data?: { data?: unknown } }): Page[] => {
+const mapPagesResponse = (res: { data?: { data?: unknown } }): CanvasPage[] => {
   const raw = res.data?.data;
   if (!Array.isArray(raw)) return [];
   if (raw.length > 0 && typeof raw[0] === 'object' && raw[0] !== null && 'pageNumber' in raw[0]) {
     return (raw as PageDto[]).map((dto) => {
-      const page = mapPageDtoToEntity(dto);
-      const rawUrl = resolvePageImageUrl(page.imageUrl);
-      const compositeUrl = page.compositeImageUrl
-        ? resolvePageImageUrl(page.compositeImageUrl)
+      const page = normalizePageDto(dto);
+      const rawUrl = resolveMediaUrl(dto.rawImageUrl || '');
+      const compositeUrl = dto.compositeImageUrl
+        ? resolveMediaUrl(dto.compositeImageUrl)
         : undefined;
       return {
-        ...page,
+        id: String(page.id ?? ''),
+        chapterId: String(page.chapterId ?? ''),
+        pageNumber: page.pageNumber ?? 1,
         imageUrl: rawUrl,
         compositeImageUrl: compositeUrl,
+        status: page.status,
+        regionCount: 0,
+        createdAt: page.createAt || new Date().toISOString(),
+        updatedAt: page.updateAt || new Date().toISOString(),
       };
     });
   }
-  return raw as Page[];
+  return raw as CanvasPage[];
 };
 
 export const useCanvasPages = (chapterId: string) =>
@@ -45,14 +51,6 @@ export const useCanvasPages = (chapterId: string) =>
     queryFn: () => canvasApi.getPagesByChapterId(chapterId),
     select: mapPagesResponse,
     enabled: !!chapterId,
-  });
-
-export const useCanvasPage = (pageId: string) =>
-  useQuery({
-    queryKey: KEYS.page(pageId),
-    queryFn: () => canvasApi.getPageById(pageId),
-    select: (res) => (res.data?.data ?? null) as Page | null,
-    enabled: !!pageId,
   });
 
 export const useRegions = (pageId: string) =>
@@ -79,7 +77,7 @@ export const useCreateRegion = (pageId: string) => {
 export const useUpdateRegion = (pageId: string) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ regionId, data }: { regionId: string; data: Partial<Region> }) =>
+    mutationFn: ({ regionId, data }: { regionId: string; data: Partial<CanvasRegion> }) =>
       canvasApi.updateRegion(regionId, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.regions(pageId) }),
   });
@@ -134,7 +132,7 @@ export const useMarkPageReady = (chapterId: string) => {
         }
         return apiData;
       } catch (err) {
-        throw new Error(getAxiosErrorMessage(err, 'Không thể đánh dấu trang sẵn sàng'));
+        throw new Error(getAxiosErrorMessage(err, 'Không thể đánh dấu trang sẵn sàng'), { cause: err });
       }
     },
     onSuccess: (_data, pageId) => {

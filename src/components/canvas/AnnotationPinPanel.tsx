@@ -1,8 +1,8 @@
 import {
   MapPin, CheckCircle2, RotateCcw, Trash2,
 } from 'lucide-react';
-import type { AnnotationType } from '../../types/entities';
-import { ANNOTATION_TYPE_CONFIG } from '../../features/review/constants';
+import type { AnnotationType } from '../../types/status.types';
+import { ANNOTATION_TYPE_CONFIG } from '../../features/review';
 
 export interface PinListItem {
   id: string;
