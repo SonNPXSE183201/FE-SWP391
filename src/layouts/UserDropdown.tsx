@@ -46,9 +46,13 @@ export const UserDropdown = () => {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 p-1 pr-3 rounded-full hover:bg-bg-surface transition-colors border-none cursor-pointer bg-transparent"
       >
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-secondary flex items-center justify-center text-sm font-bold text-white shadow-sm ring-2 ring-bg-primary">
-          {initials}
-        </div>
+        {user.avatarUrl ? (
+          <img src={user.avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full object-cover shadow-sm ring-2 ring-bg-primary" />
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-secondary flex items-center justify-center text-sm font-bold text-white shadow-sm ring-2 ring-bg-primary">
+            {initials}
+          </div>
+        )}
         <div className="hidden md:flex flex-col items-start text-left">
           <span className="text-[13px] font-semibold text-text-primary leading-tight">{user.fullName}</span>
           <span className="text-[11px] text-text-muted leading-tight">{roleDisplayNames[user.role] || user.role}</span>
@@ -58,9 +62,13 @@ export const UserDropdown = () => {
       {isOpen && (
         <div className="absolute right-0 top-full mt-2 w-56 bg-bg-secondary border border-border-custom rounded-xl shadow-xl py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
           <div className="px-4 py-3 border-b border-border-custom mb-1 flex items-center gap-3 md:hidden">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand to-secondary flex items-center justify-center text-sm font-bold text-white shadow-sm ring-2 ring-bg-primary">
-              {initials}
-            </div>
+            {user.avatarUrl ? (
+              <img src={user.avatarUrl} alt="Avatar" className="w-10 h-10 rounded-full object-cover shadow-sm ring-2 ring-bg-primary" />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand to-secondary flex items-center justify-center text-sm font-bold text-white shadow-sm ring-2 ring-bg-primary">
+                {initials}
+              </div>
+            )}
             <div className="flex flex-col min-w-0">
               <span className="text-[14px] font-semibold text-text-primary truncate">{user.fullName}</span>
               <span className="text-[12px] text-text-muted truncate">{roleDisplayNames[user.role] || user.role}</span>
