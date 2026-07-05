@@ -13,6 +13,7 @@ export interface User {
   penName?: string;
   portfolioUrl?: string;
   skills?: string;
+  phoneNumber?: string;
 }
 
 interface AuthState {
