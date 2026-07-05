@@ -19,6 +19,7 @@ import {
   Camera,
   Save,
   X,
+  Loader2,
 } from 'lucide-react';
 import { useAuthStore, type UserRole } from '../../../stores/authStore';
 import { ChangePasswordModal } from '../../auth';
@@ -168,6 +169,7 @@ export const SettingsFeature = () => {
   
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [editForm, setEditForm] = useState({
     fullName: user?.fullName || '',
     penName: user?.penName || '',
@@ -232,11 +234,27 @@ export const SettingsFeature = () => {
     }
   };
 
-  const handleSaveProfile = () => {
-    // Fake API call (Option 2: Using local storage mock)
-    updateUser(editForm);
-    toast.success('Đã lưu thông tin hồ sơ!');
-    setIsEditingProfile(false);
+  const handleSaveProfile = async () => {
+    try {
+      setIsSavingProfile(true);
+      // Gọi API thật để lưu thông tin xuống Database
+      await axiosInstance.put('/api/profile', {
+        fullName: editForm.fullName,
+        penName: editForm.penName,
+        portfolioUrl: editForm.portfolioUrl,
+        skills: editForm.skills,
+      });
+
+      // Update local state in Zustand
+      updateUser(editForm);
+      toast.success('Đã cập nhật thông tin hồ sơ thành công!');
+      setIsEditingProfile(false);
+    } catch (error) {
+      toast.error('Lỗi khi lưu thông tin. Vui lòng thử lại!');
+      console.error(error);
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
   // ─── Profile Hero ──────────────────────────────────────────
@@ -396,10 +414,11 @@ export const SettingsFeature = () => {
               </button>
               <button
                 onClick={handleSaveProfile}
-                className="flex items-center gap-2 px-6 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition-colors shadow-sm shadow-brand/20 border-none cursor-pointer"
+                disabled={isSavingProfile}
+                className="flex items-center gap-2 px-6 py-2.5 bg-brand hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-sm font-medium transition-colors shadow-sm shadow-brand/20 border-none cursor-pointer"
               >
-                <Save size={16} />
-                Lưu thay đổi
+                {isSavingProfile ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                {isSavingProfile ? 'Đang lưu...' : 'Lưu thay đổi'}
               </button>
             </div>
           </div>
