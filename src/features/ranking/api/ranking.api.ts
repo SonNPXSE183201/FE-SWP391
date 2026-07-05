@@ -115,12 +115,13 @@ export type { RankingRecord, VoteRankingRequestDto };
 
 export const rankingApi = {
   fetchRanking: async (params?: { period?: string; genre?: string }): Promise<RankingRecord[]> => {
-    const period = params?.period ?? 'month';
+    // BE expects period as YYYY-MM-DD, while UI passes 'month', 'week' etc.
+    const todayStr = new Date().toISOString().split('T')[0];
     let items: RankingRecord[] = [];
 
     try {
       const res = await axiosInstance.get<ApiResponse<RankingRecord[]>>('/api/rankings', {
-        params: { period },
+        params: { period: todayStr },
       });
       items = sortRankingByPosition(res.data?.data ?? []);
     } catch {
