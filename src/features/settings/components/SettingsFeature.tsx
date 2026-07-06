@@ -129,8 +129,8 @@ interface ToggleSwitchProps {
 }
 
 
-const getProfileCompletion = (user: { fullName?: string; email?: string; penName?: string; avatarUrl?: string } | null) => {
-  const fields = [user?.fullName, user?.email, user?.penName, user?.avatarUrl];
+const getProfileCompletion = (user: { fullName?: string; email?: string; penName?: string; avatarUrl?: string; phoneNumber?: string } | null) => {
+  const fields = [user?.fullName, user?.email, user?.penName, user?.avatarUrl, user?.phoneNumber];
   const filled = fields.filter(Boolean).length;
   return { filled, total: fields.length, percent: Math.round((filled / fields.length) * 100) };
 };
@@ -175,6 +175,7 @@ export const SettingsFeature = () => {
     penName: user?.penName || '',
     skills: user?.skills || '',
     portfolioUrl: user?.portfolioUrl || '',
+    phoneNumber: user?.phoneNumber || '',
   });
   const { isOnLeave, toggleOnLeave, isPending: isOnLeavePending } = useMangakaOnLeave();
   const [notificationPrefs, setNotificationPrefs] = useState<NotificationPref[]>(() =>
@@ -223,7 +224,19 @@ export const SettingsFeature = () => {
       });
       
       if (res.data.success) {
-        updateUser({ avatarUrl: res.data.data });
+        const newAvatarUrl = res.data.data;
+        
+        // Gọi API cập nhật ngay lập tức cho ảnh đại diện
+        await axiosInstance.put('/api/profile', {
+          fullName: user?.fullName,
+          penName: user?.penName,
+          portfolioUrl: user?.portfolioUrl,
+          skills: user?.skills,
+          phoneNumber: user?.phoneNumber,
+          avatarUrl: newAvatarUrl
+        });
+
+        updateUser({ avatarUrl: newAvatarUrl });
         toast.success('Cập nhật ảnh đại diện thành công!');
       }
     } catch (error) {
@@ -243,6 +256,8 @@ export const SettingsFeature = () => {
         penName: editForm.penName,
         portfolioUrl: editForm.portfolioUrl,
         skills: editForm.skills,
+        phoneNumber: editForm.phoneNumber,
+        avatarUrl: user?.avatarUrl
       });
 
       // Update local state in Zustand
@@ -375,6 +390,17 @@ export const SettingsFeature = () => {
                   onChange={(e) => setEditForm(prev => ({ ...prev, penName: e.target.value }))}
                   className="w-full px-4 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all"
                   placeholder="Nhập bút danh"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-text-primary">Số điện thoại</label>
+                <input
+                  type="tel"
+                  value={editForm.phoneNumber}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                  className="w-full px-4 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all"
+                  placeholder="Nhập số điện thoại"
                 />
               </div>
 
