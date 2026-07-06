@@ -1,4 +1,4 @@
-import { SeriesDetailFeature } from '../../features/series/components/SeriesDetailFeature';
+import { SeriesDetailFeature } from '../../features/series';
 
 export const SeriesDetailPage = () => {
   return <SeriesDetailFeature />;

@@ -1,5 +1,5 @@
 const ROLE_LABELS: Record<string, string> = {
-  Mangaka: 'Mangaka',
+  Mangaka: 'Tác giả',
   Assistant: 'Trợ lý vẽ',
   Editor: 'Biên tập viên',
   Board: 'Hội đồng BT',

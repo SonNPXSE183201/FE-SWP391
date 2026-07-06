@@ -27,8 +27,9 @@ import { CustomSelect } from '../../../components/common/CustomSelect';
 import type { SelectOption } from '../../../components/common/CustomSelect';
 import { CustomDatePicker } from '../../../components/common/CustomDatePicker';
 import { useApprovedSeries, useCreateContract, useUpdateContract } from '../hooks/useContract';
-import type { ApprovedSeries, ContractAddendumView } from '../api/contract.api';
+import type { ApprovedSeriesContractDto, ContractAddendumDto } from '../api/contract.api';
 import { formatVND, formatVNDInput } from '../../../utils/currency';
+import { getGenreLabel } from '../../series/constants/genres';
 
 type FilterStatus = 'all' | 'pending' | 'contracted';
 type EffectiveDateMode = 'immediate' | 'scheduled';
@@ -66,11 +67,18 @@ const formatApprovedDate = (iso: string): string => {
   }
 };
 
+const SCHEDULE_LABELS: Record<string, string> = {
+  Weekly: 'Hàng tuần',
+  'Bi-weekly': '2 tuần 1 lần',
+  Monthly: 'Hàng tháng',
+};
+
 const formatSchedule = (schedule: string) => {
   if (!schedule || schedule === 'Chưa thiết lập') {
     return { label: 'Chưa thiết lập', muted: true };
   }
-  return { label: schedule.split(' (')[0], muted: false };
+  const cleanSchedule = schedule.split(' (')[0];
+  return { label: SCHEDULE_LABELS[cleanSchedule] || cleanSchedule, muted: false };
 };
 
 const getEmptyMessage = (filter: FilterStatus, search: string): { title: string; hint: string } => {
@@ -105,7 +113,7 @@ export const ContractManagementFeature = () => {
   const [showContractModal, setShowContractModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedSeries, setSelectedSeries] = useState<ApprovedSeries | null>(null);
+  const [selectedSeries, setSelectedSeries] = useState<ApprovedSeriesContractDto | null>(null);
   const [baseGenkouryoPrice, setBaseGenkouryoPrice] = useState('');
   const [createPricePreset, setCreatePricePreset] = useState('custom');
   const [updateGenkouryoPrice, setUpdateGenkouryoPrice] = useState('');
@@ -137,8 +145,8 @@ export const ContractManagementFeature = () => {
     return seriesList.filter((s) => {
       const matchesSearch =
         !q ||
-        s.title.toLowerCase().includes(q) ||
-        s.mangakaName.toLowerCase().includes(q);
+        s.title?.toLowerCase().includes(q) ||
+        s.mangakaName?.toLowerCase().includes(q);
       const matchesFilter =
         filterStatus === 'all' ||
         (filterStatus === 'pending' && !s.hasContract) ||
@@ -167,19 +175,19 @@ export const ContractManagementFeature = () => {
     }
   };
 
-  const handleOpenDetailModal = (series: ApprovedSeries) => {
+  const handleOpenDetailModal = (series: ApprovedSeriesContractDto) => {
     setSelectedSeries(series);
     setShowDetailModal(true);
   };
 
-  const handleOpenContractModal = (series: ApprovedSeries) => {
+  const handleOpenContractModal = (series: ApprovedSeriesContractDto) => {
     setSelectedSeries(series);
     setBaseGenkouryoPrice('');
     setCreatePricePreset('custom');
     setShowContractModal(true);
   };
 
-  const handleOpenUpdateModal = (series: ApprovedSeries) => {
+  const handleOpenUpdateModal = (series: ApprovedSeriesContractDto) => {
     setSelectedSeries(series);
     const existingPrice = series.genkouryoPrice ? String(series.genkouryoPrice) : '';
     const matchedPreset = PRESET_PRICES.find(
@@ -230,7 +238,7 @@ export const ContractManagementFeature = () => {
     if (!selectedSeries) return;
 
     createContract.mutate(
-      { seriesId: selectedSeries.id, baseGenkouryoPrice: Number(baseGenkouryoPrice) },
+      { seriesId: selectedSeries.id ?? '', baseGenkouryoPrice: Number(baseGenkouryoPrice) },
       {
         onSuccess: () => {
           toast.success(`Đã tạo hợp đồng cho "${selectedSeries.title}"!`);
@@ -386,7 +394,7 @@ export const ContractManagementFeature = () => {
         ) : (
           <div className="divide-y divide-border-custom/60">
             {filteredData.map((series) => {
-              const schedule = formatSchedule(series.publishSchedule);
+              const schedule = formatSchedule(series.publishSchedule ?? '');
               const isContracted = series.hasContract;
 
               return (
@@ -411,19 +419,19 @@ export const ContractManagementFeature = () => {
                         <p className="font-semibold text-sm text-text-primary truncate group-hover:text-brand transition-colors">
                           {series.title}
                         </p>
-                        {series.genres.length > 0 && (
+                        {(series.genres?.length ?? 0) > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {series.genres.slice(0, 3).map((g) => (
+                            {(series.genres ?? []).slice(0, 3).map((g) => (
                               <span
                                 key={g}
                                 className="px-1.5 py-0.5 rounded-md bg-bg-surface text-text-muted text-[10px] font-medium"
                               >
-                                {g}
+                                {getGenreLabel(g)}
                               </span>
                             ))}
-                            {series.genres.length > 3 && (
+                            {(series.genres?.length ?? 0) > 3 && (
                               <span className="text-[10px] text-text-muted">
-                                +{series.genres.length - 3}
+                                +{(series.genres?.length ?? 0) - 3}
                               </span>
                             )}
                           </div>
@@ -471,7 +479,7 @@ export const ContractManagementFeature = () => {
                         </span>
                       </div>
                       <span className="text-[10px] text-text-muted whitespace-nowrap">
-                        {formatApprovedDate(series.approvedAt)}
+                        {formatApprovedDate(series.approvedAt ?? '')}
                       </span>
                     </div>
 
@@ -573,7 +581,7 @@ export const ContractManagementFeature = () => {
                     Lịch xuất bản
                   </span>
                   <span className="text-sm font-medium text-text-primary text-right">
-                    {formatSchedule(selectedSeries.publishSchedule).label}
+                    {formatSchedule(selectedSeries.publishSchedule ?? '').label}
                   </span>
                 </div>
               </div>
@@ -878,7 +886,7 @@ export const ContractManagementFeature = () => {
                     Lịch xuất bản
                   </span>
                   <span className="text-sm font-medium text-text-primary">
-                    {formatSchedule(selectedSeries.publishSchedule).label}
+                    {formatSchedule(selectedSeries.publishSchedule ?? '').label}
                   </span>
                 </div>
               </div>
@@ -921,7 +929,7 @@ export const ContractManagementFeature = () => {
                     Lịch sử phụ lục ({selectedSeries.addendums.length})
                   </p>
                   <div className="space-y-2">
-                    {selectedSeries.addendums.map((addendum: ContractAddendumView, idx: number) => (
+                    {selectedSeries.addendums.map((addendum: ContractAddendumDto, idx: number) => (
                       <div
                         key={addendum.id}
                         className="bg-bg-surface border border-border-custom rounded-xl px-4 py-3 flex items-center justify-between"
@@ -935,7 +943,7 @@ export const ContractManagementFeature = () => {
                               {formatVND(addendum.newGenkouryoPrice)} / trang
                             </p>
                             <p className="text-[10px] text-text-muted mt-0.5">
-                              Hiệu lực: {formatApprovedDate(addendum.effectiveDate)}
+                              Hiệu lực: {formatApprovedDate(addendum.effectiveDate ?? '')}
                               {addendum.signedDate && ` · Ký: ${formatApprovedDate(addendum.signedDate)}`}
                             </p>
                           </div>

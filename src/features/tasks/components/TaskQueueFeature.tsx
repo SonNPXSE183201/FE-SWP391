@@ -28,7 +28,7 @@ import { Pagination } from '../../../components/common/Pagination';
 import { CustomSelect } from '../../../components/common/CustomSelect';
 import { HelpTip } from '../../../components/common/HelpTip';
 import type { AvailableTaskDto } from '../hooks/useTasks';
-import type { TaskStatus } from '../../../types/entities';
+import type { TaskStatus } from '../../../types/status.types';
 import { normalizeTaskStatus, taskStatusMatchesFilter } from '../../../utils/status';
 
 // ─── Types & constants ───────────────────────────────────────

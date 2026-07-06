@@ -44,15 +44,18 @@ export const ReconciliationDetailModal = ({
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-md shadow-xl animate-fade-in overflow-hidden">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      <div className="relative bg-bg-secondary border border-border-custom/60 rounded-3xl w-full max-w-md shadow-2xl animate-modal-enter overflow-hidden flex flex-col max-h-[90vh]">
+        {/* Decorative top gradient */}
+        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-brand/40 via-brand to-brand/40" />
+
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 p-4 border-b border-border-custom">
+        <div className="flex items-start justify-between gap-4 p-6 border-b border-border-custom/50 bg-bg-secondary/95 backdrop-blur-xl z-10 shrink-0">
           <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2.5 flex-wrap">
               {typeBadge}
-              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${statusCfg.bg} ${statusCfg.color}`}>
-                <statusCfg.icon size={11} />
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide shadow-sm ${statusCfg.bg} ${statusCfg.color}`}>
+                <statusCfg.icon size={12} strokeWidth={2.5} />
                 {statusCfg.label}
               </span>
               <HelpTip
@@ -65,94 +68,129 @@ export const ReconciliationDetailModal = ({
                 content={getReconciliationStatusHelp(status)}
               />
             </div>
-            <p className="text-sm font-semibold text-text-primary mt-2 truncate">{record.userName}</p>
-            <p className="text-[11px] text-text-muted mt-0.5">
-              {getRoleLabel(record.userRole)} · {formatReconciliationDate(record.internalDate || record.vnpayDate)}
+            <h2 className="text-lg font-bold text-text-primary mt-3 truncate tracking-tight">{record.userName}</h2>
+            <p className="text-xs text-text-muted mt-1 font-medium flex items-center gap-1.5">
+              {getRoleLabel(record.userRole)}
+              <span className="w-1 h-1 rounded-full bg-border-custom"></span>
+              {formatReconciliationDate(record.internalDate || record.vnpayDate)}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-surface transition-colors bg-transparent border-none cursor-pointer shrink-0"
+            className="p-2 rounded-full text-text-muted hover:text-text-primary hover:bg-bg-primary hover:scale-105 active:scale-95 transition-all bg-transparent border-none cursor-pointer shrink-0"
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 
-        <div className="p-4 space-y-4">
-          {/* Số tiền chính */}
-          <div className="rounded-xl bg-bg-primary border border-border-custom px-4 py-3 text-center">
-            <p className="text-[10px] uppercase tracking-wider text-text-muted">{getTransactionTypeLabel(record)}</p>
-            <p className={`text-2xl font-bold tabular-nums mt-1 ${getAmountToneClass(primaryAmount)}`}>
+        <div className="p-6 space-y-6 overflow-y-auto overflow-x-hidden custom-scrollbar">
+          {/* Main Amount Card */}
+          <div className={`relative overflow-hidden rounded-2xl p-6 text-center shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] transition-all hover:shadow-lg ${primaryAmount < 0 ? 'bg-gradient-to-br from-danger/10 via-danger/5 to-transparent border border-danger/20 hover:border-danger/40' : 'bg-gradient-to-br from-success/10 via-success/5 to-transparent border border-success/20 hover:border-success/40'}`}>
+            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-text-secondary">{getTransactionTypeLabel(record)}</p>
+            <p className={`text-3xl sm:text-4xl font-extrabold tabular-nums mt-3 tracking-tight drop-shadow-sm ${getAmountToneClass(primaryAmount)}`}>
               {formatSignedReconciliationAmount(primaryAmount)}
             </p>
-            <p className="text-[11px] text-text-muted mt-1">{formatPaymentStatus(record.internalStatus || record.vnpayStatus)}</p>
+            <div className="inline-flex items-center gap-2 mt-4 px-3.5 py-1.5 rounded-full bg-bg-surface/80 border border-border-custom/50 shadow-sm backdrop-blur-md">
+              <span className={`w-1.5 h-1.5 rounded-full ${record.internalStatus === 'Success' || record.internalStatus === 'Completed' || record.vnpayStatus === 'Success' ? 'bg-success animate-pulse' : 'bg-warning'}`}></span>
+              <p className="text-[11px] font-semibold text-text-primary tracking-wide">{formatPaymentStatus(record.internalStatus || record.vnpayStatus)}</p>
+            </div>
           </div>
 
-          {/* Mô tả */}
+          {/* Description */}
           {record.description && (
-            <p className="text-xs text-text-secondary leading-relaxed">{record.description}</p>
+            <div className="relative p-4 pl-5 rounded-xl bg-bg-primary/40 border border-border-custom/60 hover:border-brand/40 transition-all hover:shadow-sm overflow-hidden">
+              <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-brand/70"></div>
+              <p className="text-[13px] text-text-primary leading-relaxed font-medium">{record.description.replace(/Mangaka/g, 'Tác giả')}</p>
+            </div>
           )}
 
-          {/* So sánh VNPay — chỉ giao dịch cổng thanh toán */}
+          {/* VNPay Comparison */}
           {isVnpay && (
-            <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-lg border border-border-custom bg-bg-primary/60 p-3">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <CreditCard size={12} className="text-info" />
-                  <span className="text-[10px] font-bold text-info uppercase">VNPay</span>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="relative overflow-hidden rounded-xl border border-border-custom bg-bg-primary/30 p-4 transition-colors hover:border-info/30 group">
+                <div className="absolute inset-0 bg-gradient-to-br from-info/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center gap-1.5 mb-3">
+                    <div className="w-5 h-5 rounded-md bg-info/10 flex items-center justify-center">
+                      <CreditCard size={12} className="text-info" />
+                    </div>
+                    <span className="text-[10px] font-bold text-info uppercase tracking-wider">VNPay</span>
+                  </div>
+                  <p className={`text-[15px] font-bold tabular-nums tracking-tight ${amountMismatch ? 'text-warning' : 'text-text-primary'}`}>
+                    {formatReconciliationCurrency(record.vnpayAmount ?? 0)}
+                  </p>
+                  <p className="text-[11px] text-text-muted mt-1 font-medium">{formatPaymentStatus(record.vnpayStatus)}</p>
                 </div>
-                <p className={`text-sm font-bold tabular-nums ${amountMismatch ? 'text-warning' : 'text-text-primary'}`}>
-                  {formatReconciliationCurrency(record.vnpayAmount ?? 0)}
-                </p>
-                <p className="text-[10px] text-text-muted mt-1">{formatPaymentStatus(record.vnpayStatus)}</p>
               </div>
-              <div className="rounded-lg border border-border-custom bg-bg-primary/60 p-3">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Scale size={12} className="text-success" />
-                  <span className="text-[10px] font-bold text-success uppercase">Hệ thống</span>
+              <div className="relative overflow-hidden rounded-xl border border-border-custom bg-bg-primary/30 p-4 transition-colors hover:border-success/30 group">
+                <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center gap-1.5 mb-3">
+                    <div className="w-5 h-5 rounded-md bg-success/10 flex items-center justify-center">
+                      <Scale size={12} className="text-success" />
+                    </div>
+                    <span className="text-[10px] font-bold text-success uppercase tracking-wider">Hệ thống</span>
+                  </div>
+                  <p className={`text-[15px] font-bold tabular-nums tracking-tight ${amountMismatch ? 'text-warning' : 'text-text-primary'}`}>
+                    {formatSignedReconciliationAmount(record.internalAmount ?? 0)}
+                  </p>
+                  <p className="text-[11px] text-text-muted mt-1 font-medium">{formatPaymentStatus(record.internalStatus)}</p>
                 </div>
-                <p className={`text-sm font-bold tabular-nums ${amountMismatch ? 'text-warning' : 'text-text-primary'}`}>
-                  {formatSignedReconciliationAmount(record.internalAmount ?? 0)}
-                </p>
-                <p className="text-[10px] text-text-muted mt-1">{formatPaymentStatus(record.internalStatus)}</p>
               </div>
             </div>
           )}
 
-          {/* Chênh lệch */}
+          {/* Discrepancy Warning */}
           {isVnpay && amountMismatch && (
-            <div className="flex items-start gap-2 rounded-lg bg-warning/5 border border-warning/20 px-3 py-2.5">
-              <AlertTriangle size={14} className="text-warning shrink-0 mt-0.5" />
-              <div className="text-xs text-text-secondary">
-                <span className="font-semibold text-warning">Chênh lệch số tiền — </span>
-                VNPay {formatReconciliationCurrency(record.vnpayAmount ?? 0)} vs Hệ thống{' '}
-                {formatSignedReconciliationAmount(record.internalAmount ?? 0)}
+            <div className="flex items-start gap-3 rounded-xl bg-warning/10 border border-warning/30 p-4 shadow-sm animate-fade-in">
+              <div className="w-8 h-8 rounded-full bg-warning/20 flex items-center justify-center shrink-0">
+                <AlertTriangle size={16} className="text-warning" />
+              </div>
+              <div className="text-xs text-text-primary pt-0.5 leading-relaxed">
+                <span className="font-bold text-warning block mb-1">Chênh lệch số tiền phát hiện</span>
+                VNPay ghi nhận <span className="font-semibold">{formatReconciliationCurrency(record.vnpayAmount ?? 0)}</span> nhưng hệ thống ghi nhận <span className="font-semibold">{formatSignedReconciliationAmount(record.internalAmount ?? 0)}</span>. Cần kiểm tra lại.
               </div>
             </div>
           )}
 
-          {/* Ghi chú */}
+          {/* Notes */}
           {record.discrepancyNote && status !== 'Matched' && (
-            <div className="rounded-lg bg-bg-primary border border-border-custom px-3 py-2.5">
-              <p className="text-[10px] uppercase tracking-wider text-text-muted mb-1">Ghi chú</p>
-              <p className="text-xs text-text-secondary leading-relaxed">{record.discrepancyNote}</p>
+            <div className="rounded-xl bg-bg-surface/50 border border-border-custom p-4">
+              <p className="text-[10px] uppercase tracking-wider font-bold text-text-muted mb-2 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-text-muted"></span>
+                Ghi chú
+              </p>
+              <p className="text-[13px] text-text-secondary leading-relaxed">{record.discrepancyNote}</p>
             </div>
           )}
 
-          {/* Meta footer */}
-          <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border-custom/60">
-            <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold border ${getRoleBadgeStyle(record.userRole)}`}>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 bg-bg-surface/50 border-t border-border-custom/50 flex flex-wrap items-center justify-between gap-3 shrink-0 backdrop-blur-md">
+          <div className="flex items-center gap-2">
+            <span className={`inline-flex px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border shadow-sm ${getRoleBadgeStyle(record.userRole)}`}>
               {getRoleLabel(record.userRole)}
             </span>
             {!isVnpay && inferTransactionType(record) === 'funding' && (
-              <span className="text-[10px] text-text-muted">Giao dịch nội bộ · không qua VNPay</span>
+              <span className="text-[10px] font-medium text-text-muted bg-bg-primary px-2 py-1 rounded-md border border-border-custom/50">Giao dịch nội bộ</span>
             )}
             {!isVnpay && inferTransactionType(record) === 'platform_topup' && (
-              <span className="text-[10px] text-text-muted">Nạp quỹ Admin · nội bộ</span>
+              <span className="text-[10px] font-medium text-text-muted bg-bg-primary px-2 py-1 rounded-md border border-border-custom/50">Nạp quỹ Admin</span>
             )}
           </div>
+          
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-5 py-2 bg-bg-primary hover:bg-bg-surface border border-border-custom rounded-xl text-xs font-bold text-text-primary transition-all cursor-pointer shadow-sm hover:shadow active:scale-95"
+          >
+            Đóng
+          </button>
         </div>
+
       </div>
     </div>,
     document.body,

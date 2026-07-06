@@ -27,7 +27,7 @@ import {
 import { usePagination } from '../../../hooks/usePagination';
 import { Pagination } from '../../../components/common/Pagination';
 import { CustomSelect } from '../../../components/common/CustomSelect';
-import type { Page } from '../../../types/entities';
+import type { PageDto } from '../../../api/generated/types';
 import { reviewApi } from '../../review/api/review.api';
 import { countPagesByStatus, normalizeChapterStatus, pageStatusMatchesFilter, toSelectFilterOptions } from '../../../utils/status';
 
@@ -37,21 +37,22 @@ export const ChapterDetailFeature = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [showAddPages, setShowAddPages] = useState(false);
-  const [replacePage, setReplacePage] = useState<Page | null>(null);
+  const [replacePage, setReplacePage] = useState<PageDto | null>(null);
 
   const { data: chapter, isLoading: chapterLoading, error: chapterError } = useChapterDetail(chapterId);
   const { data: allPages = [], isLoading: pagesLoading, error: pagesError } = useChapterPages(chapterId);
   const { data: revisionAnnotations = [] } = useQuery({
-    queryKey: ['chapter-revision-annotations', chapterId, allPages.map((p) => p.id).join(',')],
+    queryKey: ['chapter-revision-annotations', chapterId, allPages.map((p) => String(p.id)).join(',')],
     queryFn: async () => {
       if (!allPages.length) return [] as Array<{ id: string; pageId: string; pageNumber: number; comment: string; type: string }>;
       const byPage = await Promise.all(allPages.map(async (page) => {
-        const res = await reviewApi.listAnnotations({ pageId: page.id });
+        const pageId = String(page.id);
+        const res = await reviewApi.listAnnotations({ pageId });
         const rows = res.data?.data ?? [];
         return rows.map((row) => ({
           id: String(row.id ?? ''),
-          pageId: String(row.pageId ?? page.id),
-          pageNumber: page.pageNumber,
+          pageId: String(row.pageId ?? pageId),
+          pageNumber: page.pageNumber ?? 0,
           comment: row.comment ?? '',
           type: row.type ?? 'Technical',
         }));
@@ -78,7 +79,7 @@ export const ChapterDetailFeature = () => {
 
   // Filter
   const filteredPages = useMemo(
-    () => allPages.filter((p: Page) => pageStatusMatchesFilter(p.status, statusFilter)),
+    () => allPages.filter((p) => pageStatusMatchesFilter(p.status, statusFilter)),
     [allPages, statusFilter],
   );
 
@@ -321,13 +322,14 @@ export const ChapterDetailFeature = () => {
       {/* Page Grid (Feature Components) */}
       {filteredPages.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3.5 mt-4">
-          {pagination.paginatedData.map((page: Page) => {
-            const globalIdx = filteredPages.findIndex((p: Page) => p.id === page.id);
+          {pagination.paginatedData.map((page) => {
+            const globalIdx = filteredPages.findIndex((p) => p.id === page.id);
+            const pageId = String(page.id);
             return (
               <PageCard
-                key={page.id}
+                key={pageId}
                 page={page}
-                editorAnnotationCount={annotationCountByPageId.get(page.id) ?? 0}
+                editorAnnotationCount={annotationCountByPageId.get(pageId) ?? 0}
                 canReplaceImage={canReplacePageImage}
                 onReplaceImage={() => setReplacePage(page)}
                 onClick={() => setLightboxIndex(globalIdx)}
@@ -380,7 +382,7 @@ export const ChapterDetailFeature = () => {
           onClose={() => setReplacePage(null)}
           onSubmit={(file) => {
             replacePageImage.mutate(
-              { pageId: replacePage.id, file },
+              { pageId: String(replacePage.id), file },
               { onSuccess: () => setReplacePage(null) },
             );
           }}

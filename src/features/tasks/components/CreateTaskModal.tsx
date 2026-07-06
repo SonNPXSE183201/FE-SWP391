@@ -8,6 +8,7 @@ import {
   CheckCircle2, Type, Image, Wallet, UserCheck, Briefcase,
 } from 'lucide-react';
 import { useWallet, formatVND, formatVNDInput, parseVND } from '../../wallet';
+import { getWalletLockedAmount } from '../../wallet/utils';
 import { useMySeries, useChapters, useChapterPages } from '../../series';
 import { useSeriesActiveTeam } from '../../series/hooks/useSeriesTeam';
 import { taskApi } from '../api/task.api';
@@ -105,10 +106,10 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
   const lockBreakdown = useMemo(() => {
     if (amountNum <= 0 || !wallet) return { sf: 0, wb: 0, insufficient: false };
 
-    const availableSF = wallet.setupFundBalance - wallet.lockedAmount; // Rough estimation, accurate one needs locked sf/wb breakdown
+    const availableSF = (wallet.setupFundBalance ?? 0) - getWalletLockedAmount(wallet);
     const sfPortion = Math.min(amountNum, Math.max(0, availableSF));
     const wbPortion = amountNum - sfPortion;
-    const insufficient = wbPortion > wallet.withdrawableBalance;
+    const insufficient = wbPortion > (wallet.withdrawableBalance ?? 0);
 
     return { sf: sfPortion, wb: wbPortion, insufficient };
   }, [amountNum, wallet]);
@@ -159,9 +160,8 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
       let finalRegionId: number;
 
       if (formData.regionId != null && formData.regionId !== '') {
-        // Handle mock string ID vs real numeric ID
         const parsed = Number(formData.regionId);
-        finalRegionId = isNaN(parsed) ? 1 : parsed;
+        finalRegionId = Number.isNaN(parsed) ? 1 : parsed;
       } else {
         throw new Error('Không tìm thấy vùng hợp lệ. Bạn phải khoanh vùng trên khung vẽ trước khi tạo công việc.');
       }
@@ -264,16 +264,16 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
                 <div className="flex items-center gap-2 pl-1">
                   <BookOpen size={15} className="text-brand" />
                   <span className="text-sm font-semibold text-text-primary truncate">
-                    {seriesList.find((s) => s.id === formData.seriesId)?.title || 'Đang tải...'}
+                    {seriesList.find((s) => String(s.id) === formData.seriesId)?.title || 'Đang tải...'}
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-2 pl-1 text-xs text-text-secondary">
                   <span className="inline-flex items-center gap-1">
-                    <FileText size={13} /> {chaptersList.find((c) => c.id === formData.chapterId)?.title || 'Đang tải...'}
+                    <FileText size={13} /> {chaptersList.find((c) => String(c.id) === formData.chapterId)?.title || 'Đang tải...'}
                   </span>
                   <span className="text-text-muted">•</span>
                   <span className="inline-flex items-center gap-1">
-                    <Image size={13} /> Trang {availablePages.find((p) => p.id === formData.pageId)?.pageNumber || '...'}
+                    <Image size={13} /> Trang {availablePages.find((p) => String(p.id) === formData.pageId)?.pageNumber || '...'}
                   </span>
                 </div>
                 {initialContext.taskName && (
@@ -410,9 +410,9 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
                       updateField('amount', digits ? String(digits) : '');
                     }}
                     placeholder="350.000"
-                    className={`${inputBase} pr-9 text-base font-semibold ${errors.amount ? 'border-danger/50' : 'border-border-custom'}`}
+                    className={`${inputBase} pr-12 text-base font-semibold ${errors.amount ? 'border-danger/50' : 'border-border-custom'}`}
                   />
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm text-text-muted pointer-events-none">₫</span>
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm text-text-muted font-medium pointer-events-none">VND</span>
                 </div>
                 {errors.amount && <p className="text-[11px] text-danger mt-1">{errors.amount}</p>}
                 {/* Quick presets */}
@@ -496,7 +496,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
                   {lockBreakdown.insufficient && (
                     <div className="bg-danger/5 border border-danger/20 rounded-lg p-2.5">
                       <p className="text-[11px] text-danger font-medium leading-relaxed">
-                        ⚠ Số dư không đủ. Quỹ sản xuất còn: {formatVND(Math.max(0, (wallet?.setupFundBalance || 0) - (wallet?.lockedAmount || 0)))}, Quỹ khả dụng còn: {formatVND((wallet?.withdrawableBalance || 0))}
+                        ⚠ Số dư không đủ. Quỹ sản xuất còn: {formatVND(Math.max(0, (wallet?.setupFundBalance ?? 0) - (wallet ? getWalletLockedAmount(wallet) : 0)))}, Quỹ khả dụng còn: {formatVND((wallet?.withdrawableBalance ?? 0))}
                       </p>
                     </div>
                   )}
@@ -550,7 +550,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
               ) : (
                 <>
                   <Send size={15} />
-                  Đăng lên Bảng việc làm
+                  Xác nhận giao việc
                 </>
               )}
             </button>

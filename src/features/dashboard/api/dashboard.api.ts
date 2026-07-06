@@ -13,8 +13,8 @@ import {
 type DashboardStatsDto = components['schemas']['DashboardStatsResponseDto'];
 type AdminDashboardDto = components['schemas']['AdminDashboardResponseDto'];
 
-// SeriesStatus from entities.ts — kept as string literal since dashboard uses it for UI display
-type SeriesStatus = 'Draft' | 'PendingApproval' | 'PendingBoardVote' | 'Approved' | 'Published' | 'OnHold' | 'Cancelled';
+import { normalizeSeriesStatus } from '../../../utils/status';
+import type { SeriesStatus } from '../../../types/status.types';
 
 // Donut slice colors (hex mirrors the theme palette in charts/chartTheme.ts).
 const C = {
@@ -190,8 +190,6 @@ const statNum = (dto: DashboardStatsDto, key: keyof DashboardStatsDto): number =
   return val == null ? 0 : Number(val);
 };
 
-import { normalizeSeriesStatus } from '../../../utils/status';
-
 // Map SeriesStatus → human label + slice color for status donuts.
 const SERIES_STATUS_SLICE: Record<SeriesStatus, { label: string; color: string }> = {
   Draft: { label: 'Bản nháp', color: C.secondary },
@@ -241,7 +239,7 @@ const buildAdminCharts = (s: AdminDashboardStatsDto): AdminDashboardCharts => ({
   userGrowth: buildTrend(s.users, lastMonthLabels(6), { seed: 31, startRatio: 0.6, volatility: 0.08 }),
   transactionTrend: buildTrend(s.transactions, lastMonthLabels(6), { seed: 37 }),
   contentBreakdown: nonEmptySlices([
-    { label: 'Series đã duyệt', value: s.series, color: C.info },
+    { label: 'Truyện đã duyệt', value: s.series, color: C.info },
     { label: 'Hồ sơ chờ duyệt', value: s.approvals, color: C.warning },
   ]),
 });

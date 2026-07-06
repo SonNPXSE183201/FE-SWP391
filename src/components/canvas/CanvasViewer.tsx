@@ -18,8 +18,9 @@ import {
   type TPointerEventInfo,
 } from 'fabric';
 import { Loader2 } from 'lucide-react';
-import type { Region, Annotation, AnnotationType } from '../../types/entities';
-import { sceneRectToImagePixels } from '../../features/canvas/utils/canvas.utils';
+import type { CanvasRegion, CanvasAnnotation } from '../../features/canvas/types/canvas.types';
+import type { AnnotationType } from '../../types/status.types';
+import { sceneRectToImagePixels } from '../../features/canvas';
 
 // ─── Constants ───────────────────────────────────────────────
 
@@ -59,11 +60,11 @@ type CanvasMode = 'view' | 'region' | 'annotate' | 'freeform' | 'pan';
 
 export interface CanvasViewerProps {
   imageUrl: string;
-  regions?: Region[];
-  annotations?: Annotation[];
+  regions?: CanvasRegion[];
+  annotations?: CanvasAnnotation[];
   mode?: CanvasMode;
-  onRegionCreated?: (region: Omit<Region, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  onRegionUpdated?: (region: Region) => void;
+  onRegionCreated?: (region: Omit<CanvasRegion, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onRegionUpdated?: (region: CanvasRegion) => void;
   onRegionSelect?: (regionId: string) => void;
   onRegionDeleted?: (regionId: string) => void;
   onAnnotationCreated?: (annotation: { x: number; y: number; type: AnnotationType; comment: string }) => void;

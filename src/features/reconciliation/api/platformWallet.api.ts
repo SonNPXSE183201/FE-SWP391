@@ -1,17 +1,11 @@
 import { axiosInstance } from '../../../api/axios';
-import type { ApiResponse } from '../../../api/generated/types';
+import type {
+  ApiResponse,
+  PlatformWalletDto,
+  TopUpPlatformWalletDto,
+} from '../../../api/generated/types';
 
-export interface PlatformWalletDto {
-  balance: number;
-  treasuryWalletId: number;
-  label: string;
-  description: string;
-}
-
-export interface TopUpPlatformWalletDto {
-  amount: number;
-  note?: string;
-}
+export type { PlatformWalletDto, TopUpPlatformWalletDto };
 
 export const platformWalletApi = {
   getTreasury: async (): Promise<PlatformWalletDto> => {

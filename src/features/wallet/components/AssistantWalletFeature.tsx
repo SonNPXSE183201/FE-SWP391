@@ -10,17 +10,18 @@ import { WalletActionModal } from './WalletActionModal';
 import { TransactionDetailModal } from './TransactionDetailModal';
 import { useWallet } from '../hooks/useWallet';
 
-import { calculateMonthlyStats, getTransactionAmountDisplay, formatTransactionDateTime, normalizeTransactionType } from '../utils';
+import { calculateMonthlyStats, getTransactionAmountDisplay, formatTransactionDateTime, normalizeTransactionType, getTransactionDescription } from '../utils';
 import { usePagination } from '../../../hooks/usePagination';
 import { Pagination } from '../../../components/common/Pagination';
 import { CustomSelect } from '../../../components/common/CustomSelect';
-import type { Transaction, TransactionType } from '../../../types/entities';
+import type { TransactionDto } from '../../../api/generated/types';
+import type { TransactionType } from '../../../types/status.types';
 
 export const AssistantWalletFeature = () => {
   const [txTypeFilter, setTxTypeFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [walletAction, setWalletAction] = useState<'withdraw' | null>(null);
-  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+  const [selectedTx, setSelectedTx] = useState<TransactionDto | null>(null);
 
   // Real-time wallet updates via SignalR
 
@@ -32,10 +33,12 @@ export const AssistantWalletFeature = () => {
 
   const filteredTx = useMemo(() => {
     return transactions.filter((tx) => {
-      const matchesType = !txTypeFilter || tx.type === txTypeFilter;
+      const txType = normalizeTransactionType(tx.type ?? '');
+      const description = getTransactionDescription(tx);
+      const matchesType = !txTypeFilter || txType === txTypeFilter;
       const matchesSearch = !searchQuery ||
-        tx.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tx.referenceCode.toLowerCase().includes(searchQuery.toLowerCase());
+        description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (tx.referenceCode ?? '').toLowerCase().includes(searchQuery.toLowerCase());
       return matchesType && matchesSearch;
     });
   }, [transactions, txTypeFilter, searchQuery]);
@@ -100,7 +103,7 @@ export const AssistantWalletFeature = () => {
               <span className="text-xs font-medium text-success uppercase tracking-wider">Số dư khả dụng</span>
             </div>
             <div className="text-3xl font-bold text-text-primary mt-2">
-              {formatVND(wallet.withdrawableBalance)}
+              {formatVND(wallet.withdrawableBalance ?? 0)}
             </div>
             <p className="text-[11px] text-text-muted mt-2">
               WithdrawableBalance — Nhuận bút hoàn thành Task. Có thể rút ra.
@@ -152,10 +155,11 @@ export const AssistantWalletFeature = () => {
             const cfg = TX_TYPE_CONFIG[txType] || TX_TYPE_CONFIG[tx.type as TransactionType] || { icon: Wallet, bg: 'bg-bg-surface', color: 'text-text-muted', label: tx.type, sign: '' as const };
             const TxIcon = cfg.icon;
             const amountDisplay = getTransactionAmountDisplay(tx);
-            const date = formatTransactionDateTime(tx.createdAt);
+            const date = formatTransactionDateTime(tx.createAt);
+            const description = getTransactionDescription(tx);
 
             return (
-              <div key={tx.id} onClick={() => setSelectedTx(tx)} className="group bg-bg-secondary border border-border-custom rounded-xl p-4 hover:border-brand/15 transition-all cursor-pointer">
+              <div key={String(tx.id)} onClick={() => setSelectedTx(tx)} className="group bg-bg-secondary border border-border-custom rounded-xl p-4 hover:border-brand/15 transition-all cursor-pointer">
                 <div className="flex items-center gap-3">
                   <div className={`w-9 h-9 rounded-lg ${cfg.bg} flex items-center justify-center flex-shrink-0`}>
                     <TxIcon size={16} className={cfg.color} />
@@ -166,9 +170,9 @@ export const AssistantWalletFeature = () => {
                       <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${cfg.bg} ${cfg.color}`}>
                         {cfg.label}
                       </span>
-                      <span className="text-[10px] text-text-muted font-mono">{tx.referenceCode}</span>
+                      <span className="text-[10px] text-text-muted font-mono">{tx.referenceCode ?? '—'}</span>
                     </div>
-                    <p className="text-sm text-text-primary mt-0.5 truncate">{tx.description}</p>
+                    <p className="text-sm text-text-primary mt-0.5 truncate">{description}</p>
                   </div>
 
                   <div className="text-right flex-shrink-0">
@@ -211,7 +215,7 @@ export const AssistantWalletFeature = () => {
       {walletAction && (
         <WalletActionModal
           mode={walletAction}
-          maxWithdrawAmount={wallet.withdrawableBalance}
+          maxWithdrawAmount={wallet.withdrawableBalance ?? 0}
           onClose={() => setWalletAction(null)}
         />
       )}

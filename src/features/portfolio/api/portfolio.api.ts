@@ -1,12 +1,10 @@
 import { axiosInstance } from '../../../api/axios';
+import type {
+  CreatePortfolioSampleDto,
+  PortfolioSampleDto,
+} from '../../../api/generated/types';
 
-export interface PortfolioSample {
-  id: string;
-  title: string;
-  imageUrl: string;
-  category: string;
-  createdAt: string;
-}
+export type { PortfolioSampleDto, CreatePortfolioSampleDto };
 
 export const portfolioApi = {
   getPortfolioStats: async () => {
@@ -17,7 +15,7 @@ export const portfolioApi = {
     return axiosInstance.get('/api/assistant/portfolio/samples');
   },
 
-  uploadSample: async (payload: { title: string; category: string; imageUrl: string }) => {
+  uploadSample: async (payload: CreatePortfolioSampleDto) => {
     return axiosInstance.post('/api/assistant/portfolio/samples', payload);
-  }
+  },
 };

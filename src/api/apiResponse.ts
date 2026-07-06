@@ -77,14 +77,3 @@ export function getAxiosErrorMessage(error: unknown, fallback: string): string {
 
   return err.response?.data?.message || fallback;
 }
-
-export function createMockApiResponse<T>(data: T, message = 'Success') {
-  return {
-    data: {
-      success: true,
-      statusCode: 200,
-      message,
-      data,
-    } satisfies ApiResponse<T>,
-  };
-}

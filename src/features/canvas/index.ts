@@ -7,7 +7,6 @@ export { AnnotationReviewFeature } from './components/AnnotationReviewFeature';
 // Hooks
 export {
   useCanvasPages,
-  useCanvasPage,
   useRegions,
   useCreateRegion,
   useUpdateRegion,
@@ -21,11 +20,5 @@ export {
 // API
 export { canvasApi } from './api/canvas.api';
 
-// Mock Data
-export {
-  MOCK_CANVAS_PAGES,
-  MOCK_REGIONS,
-  MOCK_ANNOTATIONS,
-  getRegionsByPageId,
-  getAnnotationsByPageId,
-} from './data/mockData';
+// Utils
+export { sceneRectToImagePixels } from './utils/canvas.utils';

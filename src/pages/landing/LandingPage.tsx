@@ -9,8 +9,8 @@ import {
   CTASection,
   Footer,
   BackToTop,
+  SectionDivider,
 } from '@/features/landing';
-import { SectionDivider } from '@/features/landing/components/SectionDivider';
 
 export const LandingPage = () => {
   const navigate = useNavigate();

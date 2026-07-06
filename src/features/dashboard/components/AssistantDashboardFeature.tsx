@@ -48,8 +48,8 @@ export const AssistantDashboardFeature = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Task đang làm" value={stats.inProgress} icon={Clock} color="text-info" navigateTo="/assistant/tasks" />
-        <StatCard label="Task hoàn thành" value={stats.completed} icon={CheckCircle} color="text-success" navigateTo="/assistant/tasks" />
+        <StatCard label="Công việc đang làm" value={stats.inProgress} icon={Clock} color="text-info" navigateTo="/assistant/tasks" />
+        <StatCard label="Công việc hoàn thành" value={stats.completed} icon={CheckCircle} color="text-success" navigateTo="/assistant/tasks" />
         <StatCard label="Đánh giá trung bình" value={stats.averageRating} suffix="/ 5.0" icon={Star} color="text-warning" />
         <StatCard
           label="Thu nhập tháng"
@@ -78,12 +78,12 @@ export const AssistantDashboardFeature = () => {
             />
           </ChartCard>
 
-          <ChartCard title="Phân bổ công việc" subtitle="Theo trạng thái task" icon={PieChart}>
+          <ChartCard title="Phân bổ công việc" subtitle="Theo trạng thái công việc" icon={PieChart}>
             {charts.taskStatus.length > 0 ? (
               <DonutChart
                 data={charts.taskStatus}
                 centerValue={stats.inProgress + stats.completed}
-                centerLabel="Tổng task"
+                centerLabel="Tổng công việc"
               />
             ) : (
               <div className="flex items-center justify-center h-[200px] text-xs text-text-muted">

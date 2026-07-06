@@ -24,6 +24,8 @@ const pathLabels: Record<string, string> = {
   portfolio: 'Hồ sơ tác phẩm',
   profile: 'Hồ sơ',
   review: 'Duyệt bài',
+  'series-review': 'Thẩm định dự án',
+  'chapter-review': 'Biên tập chương',
   annotations: 'Ghim lỗi',
   disputes: 'Tranh chấp',
   voting: 'Bỏ phiếu',

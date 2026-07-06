@@ -9,7 +9,6 @@ import { LoginPage } from './pages/auth/LoginPage';
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 import { DepositCallbackPage } from './pages/wallet/DepositCallbackPage';
-//import { UserManagementTable } from './features/user-management/UserManagementTable';
 
 // ─── Mangaka Pages ───
 import {
@@ -41,7 +40,8 @@ import {
 // ─── Editor Pages ───
 import {
   EditorDashboardPage,
-  ReviewPage,
+  ChapterReviewPage,
+  SeriesReviewQueuePage,
   AnnotationsPage,
   DisputesPage,
   EditorSettingsPage,
@@ -100,10 +100,7 @@ function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
-        <Route path="/unauthorized" element={<UnauthorizedPage />}
-        />
-        {/* BẠN CHÈN TẠM DÒNG NÀY VÀO ĐÂY */}
-        {/* <Route path="/admin/users" element={<UserManagementTable />} /> */}
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
         {/* Auth routes — wrapped in AuthLayout */}
         <Route element={<AuthLayout />}>
@@ -152,7 +149,8 @@ function App() {
         <Route element={<RoleGuard allowedRoles={['Editor']} />}>
           <Route element={<MainLayout />}>
             <Route path="/editor" element={<EditorDashboardPage />} />
-            <Route path="/editor/review" element={<ReviewPage />} />
+            <Route path="/editor/series-review" element={<SeriesReviewQueuePage />} />
+            <Route path="/editor/chapter-review" element={<ChapterReviewPage />} />
             <Route path="/editor/review/:seriesId" element={<ReviewSeriesPage />} />
             <Route path="/editor/annotations" element={<AnnotationsPage />} />
             <Route path="/editor/disputes" element={<DisputesPage />} />
@@ -171,7 +169,6 @@ function App() {
           </Route>
         </Route>
 
-        {/* ─── Admin Routes ─── */}
         {/* ─── Admin Routes ─── */}
         <Route element={<RoleGuard allowedRoles={['Admin']} />}>
           <Route element={<MainLayout />}>
