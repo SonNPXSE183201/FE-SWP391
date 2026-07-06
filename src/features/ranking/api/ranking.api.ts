@@ -25,11 +25,19 @@ export type { RankingRecord, VoteRankingRequestDto };
 
 export const rankingApi = {
   fetchRanking: async (params?: { period?: string; genre?: string }): Promise<RankingRecord[]> => {
-    const period = params?.period ?? 'month';
-    const res = await axiosInstance.get<ApiResponse<RankingRecord[]>>('/api/rankings', {
-      params: { period },
-    });
-    let items = sortRankingByPosition(res.data?.data ?? []);
+    // BE expects period as YYYY-MM-DD, while UI passes 'month', 'week' etc.
+    const todayStr = new Date().toISOString().split('T')[0];
+    let items: RankingRecord[];
+
+    try {
+      const res = await axiosInstance.get<ApiResponse<RankingRecord[]>>('/api/rankings', {
+        params: { period: todayStr },
+      });
+      items = sortRankingByPosition(res.data?.data ?? []);
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, 'Không tải được bảng xếp hạng'), { cause: error });
+    }
+
     if (params?.genre) {
       items = filterRankingByGenre(items, params.genre);
     }
