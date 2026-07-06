@@ -43,10 +43,12 @@ export type TransactionType =
   | 'Unlock'
   | 'Escrow_Lock'
   | 'Escrow_Unlock'
+  | 'Escrow_Release'
   | 'Transfer'
   | 'Deposit'
   | 'Withdraw'
   | 'Withdrawal'
+  | 'Withdrawal_Refund'
   | 'Genkouryo';
 
 export type AnnotationType =

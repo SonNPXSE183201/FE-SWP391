@@ -238,10 +238,10 @@ export const SeriesDetailFeature = () => {
                 items={checklistItems}
                 isSubmitting={seriesSubmit.isSubmitting}
                 canSubmit={nameUpload.hasNameManuscript && !nameUpload.isUploading && !nameUpload.isRemoving}
-                onSubmit={() => seriesSubmit.submitForApproval(hasRevisionRequest ? resubmitNote : undefined)}
+                onSubmit={() => seriesSubmit.submitForApproval(resubmitNote)}
                 isRevisionResubmit={hasRevisionRequest}
                 resubmitNote={resubmitNote}
-                onResubmitNoteChange={hasRevisionRequest ? setResubmitNote : undefined}
+                onResubmitNoteChange={setResubmitNote}
             />
           )}
 

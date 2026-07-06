@@ -7,7 +7,7 @@ import { normalizeChapterStatus, normalizePageStatus, normalizeSeriesStatus } fr
 // ─── Series Status Config ────────────────────────────────────
 export const SERIES_STATUS_CONFIG: Record<SeriesStatus, { label: string; color: string; bg: string }> = {
   Draft: { label: 'Bản nháp', color: 'text-text-secondary', bg: 'bg-bg-surface' },
-  PendingApproval: { label: 'Chờ Editor duyệt', color: 'text-warning', bg: 'bg-warning/10' },
+  PendingApproval: { label: 'Chờ BTV duyệt', color: 'text-warning', bg: 'bg-warning/10' },
   PendingBoardVote: { label: 'Chờ Hội đồng', color: 'text-brand', bg: 'bg-brand/10' },
   Approved: { label: 'Đã duyệt', color: 'text-info', bg: 'bg-info/10' },
   Published: { label: 'Đang xuất bản', color: 'text-success', bg: 'bg-success/10' },

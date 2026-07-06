@@ -29,6 +29,7 @@ import { CustomDatePicker } from '../../../components/common/CustomDatePicker';
 import { useApprovedSeries, useCreateContract, useUpdateContract } from '../hooks/useContract';
 import type { ApprovedSeriesContractDto, ContractAddendumDto } from '../api/contract.api';
 import { formatVND, formatVNDInput } from '../../../utils/currency';
+import { getGenreLabel } from '../../series/constants/genres';
 
 type FilterStatus = 'all' | 'pending' | 'contracted';
 type EffectiveDateMode = 'immediate' | 'scheduled';
@@ -66,11 +67,18 @@ const formatApprovedDate = (iso: string): string => {
   }
 };
 
+const SCHEDULE_LABELS: Record<string, string> = {
+  Weekly: 'Hàng tuần',
+  'Bi-weekly': '2 tuần 1 lần',
+  Monthly: 'Hàng tháng',
+};
+
 const formatSchedule = (schedule: string) => {
   if (!schedule || schedule === 'Chưa thiết lập') {
     return { label: 'Chưa thiết lập', muted: true };
   }
-  return { label: schedule.split(' (')[0], muted: false };
+  const cleanSchedule = schedule.split(' (')[0];
+  return { label: SCHEDULE_LABELS[cleanSchedule] || cleanSchedule, muted: false };
 };
 
 const getEmptyMessage = (filter: FilterStatus, search: string): { title: string; hint: string } => {
@@ -418,7 +426,7 @@ export const ContractManagementFeature = () => {
                                 key={g}
                                 className="px-1.5 py-0.5 rounded-md bg-bg-surface text-text-muted text-[10px] font-medium"
                               >
-                                {g}
+                                {getGenreLabel(g)}
                               </span>
                             ))}
                             {(series.genres?.length ?? 0) > 3 && (

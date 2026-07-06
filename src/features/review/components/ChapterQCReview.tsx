@@ -291,7 +291,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
       { chapterId, reason: finalReason },
       {
         onSuccess: () => {
-          toast.success('Đã trả chương về cho Mangaka chỉnh sửa');
+          toast.success('Đã trả chương về cho Tác giả chỉnh sửa');
           setShowRevision(false);
           onBack();
         },
@@ -790,7 +790,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-bg-surface border border-border-custom rounded-xl px-4 py-3">
                       <p className="text-[10px] uppercase tracking-wider text-text-muted font-semibold flex items-center gap-1.5">
-                        <User size={12} /> Mangaka
+                        <User size={12} /> Tác giả
                       </p>
                       <p className="text-sm font-semibold text-text-primary mt-1.5 truncate">
                         {chapter.series?.mangaka?.fullName || 'Chưa xác định'}
@@ -1003,7 +1003,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                   onChange={(e) => setRevisionReason(e.target.value)}
                   placeholder={unresolvedAnnotations.length > 0
                     ? 'Có thể chỉnh lại tóm tắt tự động trước khi gửi...'
-                    : 'Tóm tắt các điểm cần Mangaka xử lý...'}
+                    : 'Tóm tắt các điểm cần Tác giả xử lý...'}
                   rows={4}
                   className="w-full px-4 py-3 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 resize-none"
                   maxLength={500}

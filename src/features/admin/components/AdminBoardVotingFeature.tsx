@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import {
   Loader2,
@@ -7,16 +6,13 @@ import {
   Vote,
   AlertTriangle,
   CheckCircle,
-  XCircle,
-  X,
+  Check,
   Clock,
   Percent,
   Users,
   Settings2,
-  Inbox,
   Crown,
   RefreshCw,
-  Sparkles,
   Radio,
   UserX,
   Scale,
@@ -24,23 +20,22 @@ import {
   CircleDot,
 } from 'lucide-react';
 import { HelpTip } from '../../../components/common/HelpTip';
+import { CustomSelect } from '../../../components/common/CustomSelect';
 import { showAppError, showAppSuccess } from '../../../utils/appToast';
 import {
   useBoardMembers,
   useBoardVotingConfig,
   useBoardVotingRules,
-  useEscalatedVotes,
-  useManualResolveVote,
   useUpdateBoardVotingConfig,
 } from '../hooks/useBoardVotingAdmin';
 import type { BoardVotingConfigDto } from '../api/boardVoting.api';
-import { formatVND } from '../../../utils/currency';
 import { calcBoardVotesRequired, calcEffectiveThresholdPercent } from '../../voting';
 
 const PRESETS = [
-  { label: 'Đa số đơn giản (51%)', approve: 51 },
-  { label: 'Siêu đa số (~66%)', approve: 66 },
-  { label: 'Khó duyệt (75%)', approve: 75 },
+  { label: '51% (Quá bán)', approve: 51 },
+  { label: '65% (An toàn)', approve: 65 },
+  { label: '75% (Khắt khe)', approve: 75 },
+  { label: '100% (Tuyệt đối)', approve: 100 },
 ] as const;
 
 const MIN_BOARD_MEMBERS = 3;
@@ -48,9 +43,6 @@ const MIN_BOARD_MEMBERS = 3;
 
 
 const calcRequired = calcBoardVotesRequired;
-
-const inputClass =
-  'w-full px-3 py-2.5 rounded-lg bg-bg-primary border border-border-custom text-sm text-text-primary focus:outline-none focus:border-brand/50 transition-colors';
 
 export const AdminBoardVotingFeature = () => {
   const { data: config, isLoading, isFetching: configFetching } = useBoardVotingConfig();
@@ -60,16 +52,10 @@ export const AdminBoardVotingFeature = () => {
     isLoading: boardMembersLoading,
     isFetching: membersFetching,
   } = useBoardMembers();
-  const { data: escalated = [], isLoading: escalatedLoading } = useEscalatedVotes();
   const updateConfig = useUpdateBoardVotingConfig();
-  const resolveVote = useManualResolveVote();
 
   const [form, setForm] = useState<BoardVotingConfigDto | null>(null);
   const [configSnapshot, setConfigSnapshot] = useState<BoardVotingConfigDto | null | undefined>(undefined);
-  const [resolveTarget, setResolveTarget] = useState<{ id: number; title: string } | null>(null);
-  const [resolveApproved, setResolveApproved] = useState(true);
-  const [resolveReason, setResolveReason] = useState('');
-  const [resolveBudget, setResolveBudget] = useState(0);
 
   if (config !== configSnapshot) {
     setConfigSnapshot(config ?? null);
@@ -182,26 +168,6 @@ export const AdminBoardVotingFeature = () => {
     }
   };
 
-  const handleManualResolve = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!resolveTarget || !resolveReason.trim()) return;
-    try {
-      await resolveVote.mutateAsync({
-        seriesId: String(resolveTarget.id),
-        dto: {
-          approved: resolveApproved,
-          reason: resolveReason.trim(),
-          approvedBudget: resolveApproved ? resolveBudget : undefined,
-        },
-      });
-      showAppSuccess('Đã ghi nhận quyết định thủ công.');
-      setResolveTarget(null);
-      setResolveReason('');
-    } catch {
-      showAppError('Quyết định thủ công thất bại.');
-    }
-  };
-
   if (isLoading || !form || !preview) {
     return (
       <div className="flex justify-center py-20">
@@ -269,7 +235,7 @@ export const AdminBoardVotingFeature = () => {
           <div>
             <p className="font-medium text-danger">Hội đồng chưa đủ thành viên</p>
             <p className="text-xs text-danger/90 mt-1 leading-relaxed">
-              Cần ít nhất {MIN_BOARD_MEMBERS} TV HĐ Active để biểu quyết. Hiện có {boardCount} — mở khóa hoặc thêm tài khoản Board tại{' '}
+              Cần ít nhất {MIN_BOARD_MEMBERS} thành viên Hội đồng đang hoạt động để biểu quyết. Hiện có {boardCount} — mở khóa hoặc thêm tài khoản Board tại{' '}
               <Link to="/admin/users" className="underline font-medium hover:text-danger">
                 Quản lý người dùng
               </Link>
@@ -309,7 +275,7 @@ export const AdminBoardVotingFeature = () => {
               Chủ tịch: <span className="text-amber-300">{selectedChair.fullName}</span>
             </p>
             <p className="text-xs text-text-muted mt-1">
-              Trọng số {preview.chairWeight} phiếu · TV thường 1 phiếu · Tổng {preview.totalWeight} trọng số
+              Trọng số {preview.chairWeight} phiếu · Thành viên thường 1 phiếu · Tổng {preview.totalWeight} trọng số
             </p>
           </div>
         </div>
@@ -322,7 +288,7 @@ export const AdminBoardVotingFeature = () => {
           </div>
           <div className="min-w-0">
             <p className="text-lg font-bold text-text-primary leading-none">{boardCount}</p>
-            <p className="text-[11px] text-text-muted mt-1">TV HĐ Active</p>
+            <p className="text-[11px] text-text-muted mt-1">Thành viên Hội đồng đang hoạt động</p>
             <p className="text-[10px] text-text-muted/80 mt-0.5 truncate">Không tính tài khoản khóa</p>
           </div>
         </div>
@@ -375,7 +341,7 @@ export const AdminBoardVotingFeature = () => {
                 <Settings2 size={16} className="text-brand" />
                 <h2 className="text-sm font-semibold text-text-primary">Quy tắc tự động</h2>
               </div>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 {PRESETS.map((preset) => (
                   <button
                     key={preset.label}
@@ -386,50 +352,59 @@ export const AdminBoardVotingFeature = () => {
                         approvalThresholdPercent: preset.approve,
                       })
                     }
-                    className="px-2.5 py-1 rounded-lg text-[11px] font-medium border border-border-custom bg-bg-primary text-text-muted hover:text-brand hover:border-brand/30 cursor-pointer transition-colors"
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium border border-border-custom bg-bg-surface text-text-secondary hover:text-brand hover:border-brand/40 hover:bg-brand/5 cursor-pointer transition-all active:scale-95 shadow-sm hover:shadow"
                   >
-                    <Sparkles size={10} className="inline mr-1 -mt-px" />
                     {preset.label}
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <label className="block space-y-1.5">
-                <span className="flex items-center gap-1.5 text-xs font-medium text-text-secondary">
-                  <Percent size={12} className="text-success" />
-                  % phiếu Đồng ý để duyệt
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <label className="block space-y-2">
+                <span className="flex items-center gap-1.5 text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                  <Percent size={13} className="text-success" />
+                  Tỷ lệ Đồng ý tối thiểu
                 </span>
-                <input
-                  type="number"
-                  min={1}
-                  max={100}
-                  value={form.approvalThresholdPercent}
-                  onChange={(e) =>
-                    setForm({ ...form, approvalThresholdPercent: Number(e.target.value) })
-                  }
-                  className={inputClass}
-                />
-                <span className="text-[11px] text-text-muted">
-                  Hiện tại: cần <strong className="text-success">{preview.approveReq}</strong> trọng số / {preview.totalWeight}
+                <div className="flex bg-bg-primary border border-border-custom rounded-lg overflow-hidden focus-within:border-brand focus-within:ring-1 focus-within:ring-brand transition-all shadow-sm">
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={form.approvalThresholdPercent}
+                    onChange={(e) =>
+                      setForm({ ...form, approvalThresholdPercent: Number(e.target.value) })
+                    }
+                    className="flex-1 bg-transparent border-none outline-none px-4 py-2.5 text-sm font-medium text-text-primary"
+                  />
+                  <span className="flex items-center px-4 bg-bg-surface text-text-muted text-sm border-l border-border-custom font-semibold">
+                    %
+                  </span>
+                </div>
+                <span className="block text-[11px] text-text-muted">
+                  Vượt ngưỡng này → hệ thống sẽ duyệt. (Hiện tại: cần <strong className="text-success">{preview.approveReq}</strong> / {preview.totalWeight} trọng số)
                 </span>
               </label>
 
-              <label className="block space-y-1.5 sm:col-span-2">
-                <span className="flex items-center gap-1.5 text-xs font-medium text-text-secondary">
-                  <Clock size={12} className="text-brand" />
-                  Tự chốt sau (giờ)
+              <label className="block space-y-2">
+                <span className="flex items-center gap-1.5 text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                  <Clock size={13} className="text-brand" />
+                  Thời gian tự động chốt
                 </span>
-                <input
-                  type="number"
-                  min={1}
-                  value={form.autoResolveHours}
-                  onChange={(e) => setForm({ ...form, autoResolveHours: Number(e.target.value) })}
-                  className={inputClass}
-                />
-                <span className="text-[11px] text-text-muted">
-                  Quá hạn mà chưa đủ ngưỡng → hệ thống tự kết thúc
+                <div className="flex bg-bg-primary border border-border-custom rounded-lg overflow-hidden focus-within:border-brand focus-within:ring-1 focus-within:ring-brand transition-all shadow-sm">
+                  <input
+                    type="number"
+                    min={1}
+                    value={form.autoResolveHours}
+                    onChange={(e) => setForm({ ...form, autoResolveHours: Number(e.target.value) })}
+                    className="flex-1 bg-transparent border-none outline-none px-4 py-2.5 text-sm font-medium text-text-primary"
+                  />
+                  <span className="flex items-center px-4 bg-bg-surface text-text-muted text-xs border-l border-border-custom font-semibold uppercase tracking-wide">
+                    Giờ
+                  </span>
+                </div>
+                <span className="block text-[11px] text-text-muted">
+                  Quá thời gian → tính theo phe đa số
                 </span>
               </label>
             </div>
@@ -442,7 +417,7 @@ export const AdminBoardVotingFeature = () => {
                   <HelpTip
                     content={
                       <>
-                        <p className="mb-2">Chỉ hiển thị TV HĐ đang <strong>Active</strong>.</p>
+                        <p className="mb-2">Chỉ hiển thị thành viên Hội đồng đang <strong>hoạt động</strong>.</p>
                         <ul className="list-disc pl-4 space-y-1 text-text-muted">
                           <li>Khóa tài khoản → tự biến mất khỏi danh sách</li>
                           <li>Khóa Chủ tịch → hệ thống tự gỡ vai trò</li>
@@ -460,17 +435,17 @@ export const AdminBoardVotingFeature = () => {
                   className="inline-flex items-center gap-1 text-[11px] text-brand hover:underline"
                 >
                   <UserX size={11} />
-                  Quản lý / khóa TV
+                  Quản lý / khóa thành viên
                   <ArrowRight size={11} />
                 </Link>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-[11px] px-2 py-0.5 rounded-full bg-bg-secondary border border-border-custom text-text-muted">
-                  {boardMembers.length} TV có thể chọn
+                  {boardMembers.length} thành viên có thể chọn
                 </span>
                 <span className="text-[11px] text-text-muted">
-                  CT = {preview.chairWeight} phiếu · TV thường = 1 · Tổng {preview.totalWeight}
+                  Chủ tịch = {preview.chairWeight} phiếu · Thành viên thường = 1 · Tổng {preview.totalWeight}
                 </span>
               </div>
 
@@ -481,7 +456,7 @@ export const AdminBoardVotingFeature = () => {
                 ) : boardMembers.length === 0 ? (
                   <div className="text-center py-6 px-3 rounded-lg border border-dashed border-amber-500/30 bg-amber-500/5">
                     <UserX size={22} className="mx-auto text-amber-400 mb-2" />
-                    <p className="text-xs font-medium text-amber-200">Không có TV HĐ Active</p>
+                    <p className="text-xs font-medium text-amber-200">Không có thành viên Hội đồng đang hoạt động</p>
                     <p className="text-[11px] text-text-muted mt-1">
                       Mở khóa tài khoản Board tại{' '}
                       <Link to="/admin/users" className="text-brand underline">
@@ -490,73 +465,29 @@ export const AdminBoardVotingFeature = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleChairSelect(null)}
-                      className={`flex items-start gap-2.5 p-3 rounded-lg border text-left transition-all ${
-                        !form.chairUserId
-                          ? 'border-brand/50 bg-brand/10 ring-1 ring-brand/25'
-                          : 'border-border-custom bg-bg-secondary hover:border-brand/25'
-                      }`}
-                    >
-                      <div className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-bg-surface">
-                        <Users size={14} className="text-text-muted" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-text-primary">Không chỉ định</p>
-                        <p className="text-[11px] text-text-muted">Mọi TV = 1 phiếu khi vote</p>
-                      </div>
-                    </button>
-
-                    {boardMembers.map((member) => {
-                      const memberId = Number(member.id);
-                      const selected = form.chairUserId === memberId;
-                      const voteWeight = selected && chairMode !== 'invalid' ? preview.chairWeight : 1;
-                      return (
-                        <button
-                          key={member.id}
-                          type="button"
-                          onClick={() => handleChairSelect(memberId, member.fullName ?? undefined)}
-                          className={`flex items-start gap-2.5 p-3 rounded-lg border text-left transition-all ${
-                            selected
-                              ? 'border-amber-400/60 bg-amber-500/10 ring-1 ring-amber-400/30'
-                              : 'border-border-custom bg-bg-secondary hover:border-amber-400/25'
-                          }`}
-                        >
-                          <div
-                            className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
-                              selected ? 'bg-amber-500/20' : 'bg-bg-surface'
-                            }`}
-                          >
-                            <Crown
-                              size={14}
-                              className={selected ? 'text-amber-400' : 'text-text-muted'}
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between gap-1">
-                              <p className="text-sm font-medium text-text-primary truncate">
-                                {member.fullName ?? `User #${member.id}`}
-                              </p>
-                              <span
-                                className={`shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded ${
-                                  selected
-                                    ? 'bg-amber-500/20 text-amber-300'
-                                    : 'bg-bg-surface text-text-muted'
-                                }`}
-                              >
-                                {voteWeight}×
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-text-muted truncate">{member.email}</p>
-                            {selected && (
-                              <p className="text-[10px] text-amber-400/90 mt-0.5">Click lại để bỏ chọn</p>
-                            )}
-                          </div>
-                        </button>
-                      );
-                    })}
+                  <div className="max-w-md">
+                    <CustomSelect
+                      value={form.chairUserId ? String(form.chairUserId) : ''}
+                      onChange={(val) => {
+                        if (!val) {
+                          handleChairSelect(null);
+                        } else {
+                          const id = Number(val);
+                          const member = boardMembers.find((m) => Number(m.id) === id);
+                          handleChairSelect(id, member?.fullName ?? undefined);
+                        }
+                      }}
+                      options={[
+                        { value: '', label: 'Không chỉ định (Mọi thành viên = 1 phiếu)' },
+                        ...boardMembers.map((member) => ({
+                          value: String(member.id),
+                          label: `${member.fullName ?? `User #${member.id}`} — ${member.email}`
+                        }))
+                      ]}
+                      searchable={true}
+                      placeholder="Chọn Chủ tịch..."
+                      searchPlaceholder="Tìm tên hoặc email..."
+                    />
                   </div>
                 )}
                 {selectedChair && !chairSelectionInvalid && (
@@ -567,44 +498,57 @@ export const AdminBoardVotingFeature = () => {
                 )}
               </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="pt-2 border-t border-border-custom">
               <label
-                className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                className={`group flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all hover:shadow-sm ${
                   form.clearVotesOnResubmit
-                    ? 'bg-brand/5 border-brand/25'
-                    : 'bg-bg-primary border-border-custom'
+                    ? 'bg-brand/5 border-brand/40 shadow-[inset_0_0_0_1px_rgba(var(--brand),0.2)]'
+                    : 'bg-bg-primary border-border-custom hover:border-text-muted/30'
                 }`}
               >
-                <input
-                  type="checkbox"
-                  checked={form.clearVotesOnResubmit}
-                  onChange={(e) => setForm({ ...form, clearVotesOnResubmit: e.target.checked })}
-                  className="mt-0.5"
-                />
+                <div className="flex items-center h-5 relative">
+                  <div
+                    className={`w-4 h-4 rounded flex items-center justify-center transition-all border ${
+                      form.clearVotesOnResubmit
+                        ? 'bg-brand border-brand text-white'
+                        : 'bg-bg-primary border-border-custom text-transparent group-hover:border-text-muted/50'
+                    }`}
+                  >
+                    <Check size={12} strokeWidth={3} />
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={form.clearVotesOnResubmit}
+                    onChange={(e) => setForm({ ...form, clearVotesOnResubmit: e.target.checked })}
+                    className="absolute opacity-0 w-full h-full cursor-pointer m-0"
+                  />
+                </div>
                 <div>
-                  <p className="text-sm font-medium text-text-primary flex items-center gap-1.5">
-                    <RefreshCw size={13} className="text-brand" />
+                  <p className="text-sm font-bold text-text-primary flex items-center gap-1.5">
+                    <RefreshCw size={14} className={form.clearVotesOnResubmit ? 'text-brand' : 'text-text-muted'} />
                     Xóa phiếu khi trình lại
                   </p>
-                  <p className="text-[11px] text-text-muted mt-0.5">
-                    Editor trình lại Hội đồng → vote từ đầu
+                  <p className="text-[11px] text-text-muted mt-1 font-medium">
+                    Biên tập viên trình lại Hội đồng → biểu quyết từ đầu
                   </p>
                 </div>
               </label>
             </div>
 
-            <button
-              type="submit"
-              disabled={updateConfig.isPending || !hasUnsavedChanges}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand text-white text-sm font-medium cursor-pointer border-none hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {updateConfig.isPending ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <Save size={16} />
-              )}
-              {hasUnsavedChanges ? 'Lưu cấu hình' : 'Đã lưu'}
-            </button>
+            <div className="flex justify-end pt-2">
+              <button
+                type="submit"
+                disabled={updateConfig.isPending || !hasUnsavedChanges}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand text-white text-sm font-medium cursor-pointer border-none hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {updateConfig.isPending ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Save size={16} />
+                )}
+                {hasUnsavedChanges ? 'Lưu cấu hình' : 'Đã lưu'}
+              </button>
+            </div>
           </div>
         </form>
 
@@ -616,10 +560,10 @@ export const AdminBoardVotingFeature = () => {
                 <Vote size={16} className="text-brand" />
                 <h2 className="text-sm font-semibold text-text-primary">Xem trước quy tắc</h2>
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand/15 text-brand font-medium uppercase tracking-wide">
-                  Live
+                  Trực tiếp
                 </span>
                 <HelpTip
-                  content="Cập nhật theo số TV Active và Chủ tịch hiện tại — HĐ thấy tương tự trên /board/voting sau khi bạn lưu."
+                  content="Cập nhật theo số thành viên đang hoạt động và Chủ tịch hiện tại — HĐ thấy tương tự trên /board/voting sau khi bạn lưu."
                   title="Preview"
                   size="sm"
                   ariaLabel="Giải thích preview"
@@ -643,7 +587,7 @@ export const AdminBoardVotingFeature = () => {
               </span>
               <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full bg-bg-primary text-text-muted border border-border-custom">
                 <Users size={10} />
-                {boardCount} TV Active
+                {boardCount} thành viên đang hoạt động
               </span>
               <span
                 className={`inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full border font-medium ${
@@ -661,7 +605,7 @@ export const AdminBoardVotingFeature = () => {
 
             <div className="p-4 rounded-lg bg-bg-primary border border-border-custom space-y-3 text-sm leading-relaxed text-text-secondary">
               <p>
-                Với <strong className="text-text-primary">{boardCount} thành viên</strong> Hội đồng đang Active:
+                Với <strong className="text-text-primary">{boardCount} thành viên</strong> Hội đồng đang hoạt động:
               </p>
               <ul className="space-y-2 text-xs">
                 <li className="flex items-start gap-2">
@@ -677,11 +621,11 @@ export const AdminBoardVotingFeature = () => {
                     {chairMode === 'assigned' ? (
                       <>
                         Chủ tịch <strong className="text-amber-300">{preview.chairLabel}</strong> ={' '}
-                        {preview.chairWeight} phiếu, TV thường = 1
+                        {preview.chairWeight} phiếu, thành viên thường = 1
                       </>
                     ) : (
                       <>
-                        Chưa chỉ định Chủ tịch — <strong>mọi TV = 1 phiếu</strong> khi vote
+                        Chưa chỉ định Chủ tịch — <strong>mọi thành viên = 1 phiếu</strong> khi vote
                         {chairMode === 'invalid' && ' (cần chọn Chủ tịch mới)'}
                       </>
                     )}
@@ -696,33 +640,44 @@ export const AdminBoardVotingFeature = () => {
                 <li className="flex items-start gap-2">
                   <UserX size={14} className="text-text-muted shrink-0 mt-0.5" />
                   <span className="text-text-muted">
-                    Khóa TV HĐ → tự loại khỏi biểu quyết; trọng số và ngưỡng duyệt tính lại ngay
+                    Khóa thành viên Hội đồng → tự loại khỏi biểu quyết; trọng số và ngưỡng duyệt tính lại ngay
                   </span>
                 </li>
               </ul>
             </div>
 
             {boardMembers.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-[11px] font-medium text-text-secondary">Phân bổ trọng số hiện tại</p>
-                <div className="flex flex-wrap gap-1.5">
+              <div className="space-y-3">
+                <p className="text-[12px] font-medium text-text-primary">Phân bổ trọng số hiện tại</p>
+                <div className="flex flex-wrap gap-2">
                   {boardMembers.map((m) => {
                     const id = Number(m.id);
                     const isChair = form.chairUserId === id && chairMode === 'assigned';
                     const w = isChair ? preview.chairWeight : 1;
                     return (
-                      <span
+                      <div
                         key={m.id}
-                        className={`inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg border ${
+                        title={m.fullName ?? `User #${m.id}`}
+                        className={`inline-flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg border ${
                           isChair
                             ? 'border-amber-400/40 bg-amber-500/10 text-amber-200'
-                            : 'border-border-custom bg-bg-primary text-text-muted'
+                            : 'border-border-custom bg-bg-primary text-text-secondary'
                         }`}
                       >
-                        {isChair && <Crown size={9} />}
-                        <span className="truncate max-w-[8rem]">{m.fullName?.split(' ').pop()}</span>
-                        <strong>{w}</strong>
-                      </span>
+                        {isChair && <Crown size={12} className="text-amber-400 shrink-0" />}
+                        <span className="truncate max-w-[160px] font-medium">
+                          {m.fullName ?? `User #${m.id}`}
+                        </span>
+                        <span
+                          className={`shrink-0 px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                            isChair
+                              ? 'bg-amber-500/20 text-amber-300'
+                              : 'bg-bg-surface text-text-primary border border-border-custom'
+                          }`}
+                        >
+                          {w} phiếu
+                        </span>
+                      </div>
                     );
                   })}
                 </div>
@@ -735,170 +690,6 @@ export const AdminBoardVotingFeature = () => {
           </div>
         </div>
       </div>
-
-      {/* Escalated queue */}
-      <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <AlertTriangle size={16} className="text-amber-400" />
-            <h2 className="text-sm font-semibold text-text-primary">Chờ quyết định thủ công</h2>
-            <HelpTip
-              content="Series hòa phiếu hoặc không đủ ngưỡng sau khi tất cả HĐ đã vote. Bạn chọn Duyệt/Từ chối và ghi lý do."
-              title="Leo thang là gì?"
-              size="sm"
-              ariaLabel="Giải thích leo thang"
-            />
-          </div>
-          {escalated.length > 0 && (
-            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400">
-              {escalated.length} series
-            </span>
-          )}
-        </div>
-
-        {escalatedLoading ? (
-          <div className="flex justify-center py-10">
-            <Loader2 className="animate-spin text-brand" size={24} />
-          </div>
-        ) : escalated.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center rounded-xl border border-dashed border-border-custom bg-bg-primary/40">
-            <div className="w-12 h-12 rounded-xl bg-bg-surface flex items-center justify-center mb-3">
-              <Inbox size={22} className="text-text-muted" />
-            </div>
-            <p className="text-sm font-medium text-text-primary">Không có series chờ xử lý</p>
-            <p className="text-xs text-text-muted mt-1 max-w-sm">
-              Khi Hội đồng hòa phiếu (vd. 3–3), series sẽ xuất hiện ở đây để bạn quyết định.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {escalated.map((s) => (
-              <div
-                key={s.id}
-                className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-bg-primary border border-border-custom hover:border-amber-500/20 transition-colors"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-text-primary truncate">{s.title}</p>
-                  <p className="text-xs text-text-muted mt-0.5">
-                    #{s.id} · {s.mangakaName ?? 'Mangaka'} · Hòa / chưa đủ ngưỡng
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setResolveTarget({ id: s.id!, title: s.title ?? '' });
-                    setResolveBudget(s.estimatedProductionBudget ?? 0);
-                    setResolveApproved(true);
-                    setResolveReason('');
-                  }}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold bg-brand text-white border-none cursor-pointer hover:opacity-90 shrink-0"
-                >
-                  Quyết định
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Modal */}
-      {resolveTarget &&
-        createPortal(
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <form
-              onSubmit={handleManualResolve}
-              className="w-full max-w-md bg-bg-secondary border border-border-custom rounded-xl shadow-2xl animate-fade-in"
-            >
-              <div className="flex items-start justify-between gap-3 p-5 border-b border-border-custom">
-                <div>
-                  <p className="text-xs text-text-muted uppercase tracking-wide">Quyết định thủ công</p>
-                  <h3 className="text-base font-semibold text-text-primary mt-1">{resolveTarget.title}</h3>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setResolveTarget(null)}
-                  className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-surface cursor-pointer border-none bg-transparent"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              <div className="p-5 space-y-4">
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setResolveApproved(true)}
-                    className={`flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-medium border cursor-pointer transition-colors ${
-                      resolveApproved
-                        ? 'bg-success/10 text-success border-success/30'
-                        : 'bg-bg-primary text-text-muted border-border-custom'
-                    }`}
-                  >
-                    <CheckCircle size={15} />
-                    Phê duyệt
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setResolveApproved(false)}
-                    className={`flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-medium border cursor-pointer transition-colors ${
-                      !resolveApproved
-                        ? 'bg-danger/10 text-danger border-danger/30'
-                        : 'bg-bg-primary text-text-muted border-border-custom'
-                    }`}
-                  >
-                    <XCircle size={15} />
-                    Từ chối
-                  </button>
-                </div>
-
-                {resolveApproved && (
-                  <label className="block space-y-1.5">
-                    <span className="text-xs font-medium text-text-secondary">Ngân sách cấp phát</span>
-                    <input
-                      type="number"
-                      value={resolveBudget}
-                      onChange={(e) => setResolveBudget(Number(e.target.value))}
-                      className={inputClass}
-                    />
-                    <span className="text-[11px] text-text-muted">{formatVND(resolveBudget)}</span>
-                  </label>
-                )}
-
-                <label className="block space-y-1.5">
-                  <span className="text-xs font-medium text-text-secondary">
-                    Lý do <span className="text-danger">*</span>
-                  </span>
-                  <textarea
-                    value={resolveReason}
-                    onChange={(e) => setResolveReason(e.target.value)}
-                    rows={3}
-                    required
-                    className={`${inputClass} resize-none`}
-                    placeholder="VD: Hòa 3–3, căn cứ tiềm năng thương mại quyết định duyệt thử 1 mùa..."
-                  />
-                </label>
-              </div>
-
-              <div className="flex gap-2 justify-end p-5 pt-0">
-                <button
-                  type="button"
-                  onClick={() => setResolveTarget(null)}
-                  className="px-4 py-2 rounded-lg text-sm text-text-muted bg-bg-primary border border-border-custom cursor-pointer"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={resolveVote.isPending || !resolveReason.trim()}
-                  className="px-4 py-2 rounded-lg text-sm font-medium bg-brand text-white border-none cursor-pointer disabled:opacity-50"
-                >
-                  {resolveVote.isPending ? 'Đang lưu...' : 'Xác nhận quyết định'}
-                </button>
-              </div>
-            </form>
-          </div>,
-          document.body,
-        )}
     </div>
   );
 };

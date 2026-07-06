@@ -168,7 +168,7 @@ export const SeriesInfoCard = ({ series, chapterCount }: SeriesInfoCardProps) =>
 
             <div>
 
-              <p className="text-[10px] text-text-muted">Số Chapter</p>
+              <p className="text-[10px] text-text-muted">Số chương</p>
 
               <p className="text-sm font-semibold text-text-primary">{chapterCount ?? 0}</p>
 
