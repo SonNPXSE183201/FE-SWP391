@@ -9,6 +9,11 @@ export interface User {
   email: string;
   fullName: string;
   role: UserRole;
+  avatarUrl?: string;
+  penName?: string;
+  portfolioUrl?: string;
+  skills?: string;
+  phoneNumber?: string;
 }
 
 interface AuthState {
@@ -24,6 +29,7 @@ interface AuthActions {
   logout: () => void;
   isAuthenticated: () => boolean;
   getRoleRedirectPath: () => string;
+  updateUser: (data: Partial<User>) => void;
 }
 
 type AuthStore = AuthState & AuthActions;
@@ -38,6 +44,9 @@ export const useAuthStore = create<AuthStore>()(
       setAuth: (user, token, refreshToken) => set({ user, token, refreshToken }),
       setLoading: (isLoading) => set({ isLoading }),
       logout: () => set({ user: null, token: null, refreshToken: null }),
+      updateUser: (data) => set((state) => ({ 
+        user: state.user ? { ...state.user, ...data } : null 
+      })),
       isAuthenticated: () => !!get().token,
       getRoleRedirectPath: () => {
         const role = get().user?.role;

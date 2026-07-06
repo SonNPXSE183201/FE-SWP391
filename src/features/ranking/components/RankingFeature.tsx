@@ -35,6 +35,14 @@ export const RankingFeature = () => {
   const [selectedRecord, setSelectedRecord] = useState<RankingRecord | null>(null);
   const [voteAction, setVoteAction] = useState<'maintain' | 'cancel'>('maintain');
   const [comment, setComment] = useState('');
+  const [votedSeriesIds, setVotedSeriesIds] = useState<Record<string, 'maintain' | 'cancel'>>(() => {
+    try {
+      const stored = localStorage.getItem('votedSeriesIds');
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
 
   const { data: rankingList = [], isLoading } = useRankingList({ period, genre });
   const submitVoteMutation = useSubmitRankingVote();
@@ -57,6 +65,14 @@ export const RankingFeature = () => {
         comment,
       });
       toast.success(`Bỏ phiếu thành công cho "${getRankingRecordTitle(selectedRecord)}"!`);
+      setVotedSeriesIds(prev => {
+        const next = {
+          ...prev,
+          [getRankingRecordId(selectedRecord)]: voteAction
+        };
+        localStorage.setItem('votedSeriesIds', JSON.stringify(next));
+        return next;
+      });
       setShowVoteModal(false);
     } catch {
       toast.error('Gửi phiếu thất bại. Vui lòng thử lại.');
@@ -198,22 +214,28 @@ export const RankingFeature = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleOpenVote(record, 'maintain')}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-success/10 hover:bg-success/15 text-success rounded-lg text-xs font-semibold cursor-pointer border-none transition-all"
-                          >
-                            <ThumbsUp size={12} />
-                            Duy trì
-                          </button>
-                          <button
-                            onClick={() => handleOpenVote(record, 'cancel')}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-danger/10 hover:bg-danger/15 text-danger rounded-lg text-xs font-semibold cursor-pointer border-none transition-all"
-                          >
-                            <ThumbsDown size={12} />
-                            Đề xuất hủy
-                          </button>
-                        </div>
+                        {votedSeriesIds[getRankingRecordId(record)] ? (
+                          <span className="text-xs font-semibold text-text-muted italic bg-bg-surface px-3 py-1.5 rounded-lg border border-border-custom inline-block">
+                            Đã bỏ phiếu
+                          </span>
+                        ) : (
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleOpenVote(record, 'maintain')}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-success/10 hover:bg-success/15 text-success rounded-lg text-xs font-semibold cursor-pointer border-none transition-all"
+                            >
+                              <ThumbsUp size={12} />
+                              Duy trì
+                            </button>
+                            <button
+                              onClick={() => handleOpenVote(record, 'cancel')}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-danger/10 hover:bg-danger/15 text-danger rounded-lg text-xs font-semibold cursor-pointer border-none transition-all"
+                            >
+                              <ThumbsDown size={12} />
+                              Đề xuất hủy
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );
