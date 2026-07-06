@@ -30,6 +30,8 @@ import type { SeriesNameUpdateSnapshot } from '../api/series.api';
 import { NEMU_BUDGET_LABEL_SHORT, NEMU_MANUSCRIPT_LABEL } from '../constants/seriesCopy';
 import { parseEditorRevisionNote } from '../utils/editorRevision.utils';
 import { parseGenreList, resolveSeriesCover } from '../utils/series.utils';
+import { MotionStagger, MotionItem } from '../../../components/common/animation';
+import { motion } from 'framer-motion';
 
 export const SeriesDetailFeature = () => {
   const { seriesId } = useParams<{ seriesId: string }>();
@@ -89,7 +91,12 @@ export const SeriesDetailFeature = () => {
   // ─── Not Found ───
   if (!series) {
     return (
-      <div className="animate-fade-in flex flex-col items-center justify-center gap-4 py-20">
+      <motion.div
+        className="flex flex-col items-center justify-center gap-4 py-20"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+      >
         <div className="w-16 h-16 rounded-2xl bg-bg-surface flex items-center justify-center">
           <BookOpen size={28} className="text-text-muted" />
         </div>
@@ -103,7 +110,7 @@ export const SeriesDetailFeature = () => {
         >
           Quay lại danh sách
         </button>
-      </div>
+      </motion.div>
     );
   }
 
@@ -154,7 +161,7 @@ export const SeriesDetailFeature = () => {
   ];
 
   return (
-    <div className="animate-fade-in">
+    <div>
       {/* ─── Header ─── */}
       <div className="flex items-center gap-3 mb-6">
         <button
@@ -179,9 +186,9 @@ export const SeriesDetailFeature = () => {
       {/* ─── Status Timeline ─── */}
       {!hasRevisionRequest && <StatusTimeline currentStatus={currentStatus} />}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <MotionStagger className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* ─── Left: Cover Image ─── */}
-        <div className="lg:col-span-1">
+        <MotionItem className="lg:col-span-1">
           <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 sticky top-6">
             <div className="flex items-center gap-2 mb-4">
               <ImagePlus size={16} className="text-brand" />
@@ -198,10 +205,10 @@ export const SeriesDetailFeature = () => {
               )}
             </div>
           </div>
-        </div>
+        </MotionItem>
 
         {/* ─── Right: Info & Actions ─── */}
-        <div className="lg:col-span-2 space-y-5">
+        <MotionItem className="lg:col-span-2 space-y-5">
           {hasRevisionRequest && (
             <EditorRevisionPanel
               editorNote={series.editorNote!}
@@ -267,7 +274,12 @@ export const SeriesDetailFeature = () => {
                   </a>
                 </div>
               )}
-              <div className="bg-warning/5 border border-warning/20 rounded-xl p-5 animate-fade-in">
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="bg-warning/5 border border-warning/20 rounded-xl p-5"
+              >
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center flex-shrink-0">
                     <Clock size={20} className="text-warning" />
@@ -280,13 +292,18 @@ export const SeriesDetailFeature = () => {
                     </p>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
           )}
 
           {/* Editor đã trình Hội đồng */}
           {isPendingBoardVote && (
-            <div className="bg-brand/5 border border-brand/20 rounded-xl p-5 animate-fade-in">
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="bg-brand/5 border border-brand/20 rounded-xl p-5"
+            >
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center flex-shrink-0">
                   <Clock size={20} className="text-brand" />
@@ -304,7 +321,7 @@ export const SeriesDetailFeature = () => {
                   )}
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* F02 — Chấp nhận vốn sau Board duyệt (Fund_Pending) */}
@@ -321,8 +338,8 @@ export const SeriesDetailFeature = () => {
               />
             </div>
           )}
-        </div>
-      </div>
+        </MotionItem>
+      </MotionStagger>
     </div>
   );
 };

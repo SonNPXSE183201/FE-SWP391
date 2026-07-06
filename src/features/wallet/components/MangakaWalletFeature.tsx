@@ -18,6 +18,8 @@ import { Pagination } from '../../../components/common/Pagination';
 import { CustomSelect } from '../../../components/common/CustomSelect';
 import type { TransactionDto } from '../../../api/generated/types';
 import type { TransactionType } from '../../../types/status.types';
+import { MotionStagger, MotionItem, MotionListItem, containerVariants } from '../../../components/common/animation';
+import { motion } from 'framer-motion';
 
 export const MangakaWalletFeature = () => {
   const [txTypeFilter, setTxTypeFilter] = useState('');
@@ -71,7 +73,7 @@ export const MangakaWalletFeature = () => {
   }
 
   return (
-    <div className="animate-fade-in">
+    <div>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -102,9 +104,10 @@ export const MangakaWalletFeature = () => {
       </div>
 
       {/* ─── Wallet Balances — 2 ngăn ─── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+      <MotionStagger className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+        <MotionItem>
         {/* Setup Fund Balance — Xanh dương */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-info/[0.08] to-brand/[0.05] border border-info/20 rounded-2xl p-6">
+        <div className="relative overflow-hidden bg-gradient-to-br from-info/[0.08] to-brand/[0.05] border border-info/20 rounded-2xl p-6 h-full">
           <div className="absolute top-0 right-0 w-32 h-32 bg-info/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4" />
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-1">
@@ -126,9 +129,11 @@ export const MangakaWalletFeature = () => {
             </div>
           </div>
         </div>
+        </MotionItem>
 
+        <MotionItem>
         {/* Withdrawable Balance — Xanh lá */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-success/[0.08] to-secondary/[0.05] border border-success/20 rounded-2xl p-6">
+        <div className="relative overflow-hidden bg-gradient-to-br from-success/[0.08] to-secondary/[0.05] border border-success/20 rounded-2xl p-6 h-full">
           <div className="absolute top-0 right-0 w-32 h-32 bg-success/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4" />
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-1">
@@ -147,7 +152,8 @@ export const MangakaWalletFeature = () => {
             </div>
           </div>
         </div>
-      </div>
+        </MotionItem>
+      </MotionStagger>
 
       {/* Total summary */}
       <div className="bg-bg-secondary border border-border-custom rounded-xl p-4 mt-3 flex items-center justify-between">
@@ -190,7 +196,12 @@ export const MangakaWalletFeature = () => {
         </div>
 
         {/* Transaction List */}
-        <div className="space-y-2">
+        <motion.div
+          className="space-y-2"
+          initial="hidden"
+          animate="visible"
+          variants={containerVariants}
+        >
           {pagination.paginatedData.map((tx) => {
             const txType = normalizeTransactionType(String(tx.type));
             const cfg = TX_TYPE_CONFIG[txType] || TX_TYPE_CONFIG[tx.type as TransactionType] || { icon: Wallet, bg: 'bg-bg-surface', color: 'text-text-muted', label: tx.type, sign: '' as const };
@@ -200,7 +211,8 @@ export const MangakaWalletFeature = () => {
             const description = getTransactionDescription(tx);
 
             return (
-              <div key={String(tx.id)} onClick={() => setSelectedTx(tx)} className="group bg-bg-secondary border border-border-custom rounded-xl p-4 hover:border-brand/15 transition-all cursor-pointer">
+              <MotionListItem key={String(tx.id)}>
+              <div onClick={() => setSelectedTx(tx)} className="group ui-card-interactive bg-bg-secondary border border-border-custom rounded-xl p-4 hover:border-brand/15 cursor-pointer">
                 <div className="flex items-center gap-3">
                   <div className={`w-9 h-9 rounded-lg ${cfg.bg} flex items-center justify-center flex-shrink-0`}>
                     <TxIcon size={16} className={cfg.color} />
@@ -240,9 +252,10 @@ export const MangakaWalletFeature = () => {
                   </div>
                 )}
               </div>
+              </MotionListItem>
             );
           })}
-        </div>
+        </motion.div>
 
         {filteredTx.length === 0 && (
           <div className="bg-bg-secondary border border-border-custom rounded-xl p-12 flex flex-col items-center gap-4">

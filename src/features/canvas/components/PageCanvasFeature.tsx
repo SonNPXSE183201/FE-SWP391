@@ -58,6 +58,8 @@ import type { CanvasAnnotation, CanvasRegion } from "../types/canvas.types";
 import { ANNOTATION_TYPE_CONFIG } from "../../review/constants";
 import type { TasksDto } from "../../../api/generated/types";
 import type { CanvasViewerHandle } from "../../../components/canvas/CanvasViewer";
+import { AnimatePresence, motion } from "framer-motion";
+import { canvasPageVariants, canvasShellTransition } from "../../../components/common/animation";
 
 interface PageCanvasFeatureProps {
   chapterId?: string;
@@ -364,7 +366,12 @@ export const PageCanvasFeature = ({
   // ─── Empty state ───
   if (!currentPage) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4 animate-fade-in">
+      <motion.div
+        className="flex flex-col items-center justify-center py-20 gap-4"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={canvasShellTransition}
+      >
         <ImageOff size={48} className="text-text-muted" />
         <p className="text-text-secondary">
           Chapter này chưa có trang nào để chỉnh sửa.
@@ -375,7 +382,7 @@ export const PageCanvasFeature = ({
         >
           <ArrowLeft size={14} /> Quay lại & tải ảnh trang lên
         </button>
-      </div>
+      </motion.div>
     );
   }
 
@@ -386,7 +393,12 @@ export const PageCanvasFeature = ({
   return (
     <>
       <MobileCanvasWarning />
-      <div className="hidden md:flex flex-col gap-3 animate-fade-in h-[calc(100vh-100px)]">
+      <motion.div
+        className="hidden md:flex flex-col gap-3 h-[calc(100vh-100px)]"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={canvasShellTransition}
+      >
         {/* ═══ Top bar ═══ */}
         <div className="flex items-center justify-between flex-shrink-0 bg-bg-secondary border border-border-custom rounded-xl px-4 py-2.5">
           {/* Left: back + page info */}
@@ -615,9 +627,17 @@ export const PageCanvasFeature = ({
                 <span className="text-sm text-text-muted">Đang tải ảnh trang...</span>
               </div>
             ) : (
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={pageId}
+                  className="w-full h-full"
+                  variants={canvasPageVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
               <CanvasViewer
                 ref={canvasRef}
-              key={pageId}
               imageUrl={canvasImageUrl}
               regions={showRegions ? regions : []}
               annotations={editorAnnotations}
@@ -632,6 +652,8 @@ export const PageCanvasFeature = ({
               showRegionCoords
               className="w-full h-full"
             />
+                </motion.div>
+              </AnimatePresence>
             )}
 
             {/* Region-name prompt overlay while drawing */}
@@ -718,7 +740,12 @@ export const PageCanvasFeature = ({
                         </div>
 
                         {isSelected && (
-                          <div className="mt-2 pt-2 border-t border-amber-500/20 flex gap-1.5 animate-fade-in">
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                            className="mt-2 pt-2 border-t border-amber-500/20 flex gap-1.5 overflow-hidden"
+                          >
                             <button
                               type="button"
                               onClick={() => setShowReplaceImage(true)}
@@ -737,7 +764,7 @@ export const PageCanvasFeature = ({
                               <SquareDashedBottom size={12} />
                               Khoanh vùng
                             </button>
-                          </div>
+                          </motion.div>
                         )}
                       </div>
                     );
@@ -961,7 +988,7 @@ export const PageCanvasFeature = ({
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Create Task modal */}
       {showCreateTask && (

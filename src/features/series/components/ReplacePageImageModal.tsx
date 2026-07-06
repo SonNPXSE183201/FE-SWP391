@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { createPortal } from 'react-dom';
+import { AnimatedModal } from '../../../components/common/animation';
 import { Upload, X, ImagePlus } from 'lucide-react';
 import type { PageDto } from '../../../api/generated/types';
 
@@ -35,10 +35,12 @@ export const ReplacePageImageModal = ({
     onSubmit(file);
   }, [file, onSubmit]);
 
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-lg shadow-lg-custom animate-modal-enter">
+  return (
+    <AnimatedModal
+      open
+      onClose={onClose}
+      panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-lg shadow-lg-custom"
+    >
         <div className="px-6 py-4 border-b border-border-custom flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-brand/10 flex items-center justify-center">
@@ -123,8 +125,6 @@ export const ReplacePageImageModal = ({
             )}
           </button>
         </div>
-      </div>
-    </div>,
-    document.body,
+    </AnimatedModal>
   );
 };

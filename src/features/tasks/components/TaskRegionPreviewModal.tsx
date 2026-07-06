@@ -1,4 +1,4 @@
-import { createPortal } from 'react-dom';
+import { AnimatedModal } from '../../../components/common/animation';
 import { X, Download } from 'lucide-react';
 
 import type { TasksDto } from '../../../api/generated/types';
@@ -20,10 +20,13 @@ export const TaskRegionPreviewModal = ({
 }: TaskRegionPreviewModalProps) => {
   const canAccept = task.status === 'Pending' && !!onAccept;
 
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-border-custom bg-bg-secondary shadow-lg-custom animate-scale-in">
+  return (
+    <AnimatedModal
+      open
+      onClose={onClose}
+      backdropClassName="absolute inset-0 bg-black/70 backdrop-blur-sm"
+      panelClassName="relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-border-custom bg-bg-secondary shadow-lg-custom"
+    >
         <div className="flex items-center justify-between gap-3 border-b border-border-custom px-5 py-4">
           <div className="min-w-0">
             <h2 className="truncate text-base font-semibold text-text-primary">
@@ -83,8 +86,6 @@ export const TaskRegionPreviewModal = ({
             )}
           </div>
         </div>
-      </div>
-    </div>,
-    document.body,
+    </AnimatedModal>
   );
 };

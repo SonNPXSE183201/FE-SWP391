@@ -3,6 +3,7 @@ import { BriefcaseBusiness, Save, ExternalLink, Star, Award, TrendingUp, CheckCi
 import { toast } from 'react-hot-toast';
 import { useAssistantProfile, useUpdateAssistantProfile } from '../hooks/useProfile';
 import { usePortfolioStats } from '../../portfolio/hooks/usePortfolio';
+import { MotionStagger, MotionItem } from '../../../components/common/animation';
 
 export const AssistantProfileFeature = () => {
   const [portfolioUrl, setPortfolioUrl] = useState('');
@@ -76,42 +77,48 @@ export const AssistantProfileFeature = () => {
         </div>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <MotionStagger className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Left Col - Stats */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-bg-secondary border border-border-custom rounded-xl p-6">
+        <MotionItem className="lg:col-span-1 space-y-6">
+          <div className="bg-bg-secondary border border-border-custom rounded-xl p-6 h-full">
             <h2 className="text-lg font-bold text-text-primary mb-4 flex items-center gap-2">
               <Award size={20} className="text-brand" /> Thành tích
             </h2>
             
-            <div className="space-y-4">
+            <MotionStagger className="space-y-4">
+              <MotionItem>
               <div className="flex justify-between items-center p-3 bg-bg-surface rounded-lg">
                 <span className="text-text-secondary flex items-center gap-2">
                   <Star size={16} className="text-yellow-400" /> Đánh giá TB
                 </span>
                 <span className="font-bold text-text-primary">{stats.rating}/5.0</span>
               </div>
+              </MotionItem>
               
+              <MotionItem>
               <div className="flex justify-between items-center p-3 bg-bg-surface rounded-lg">
                 <span className="text-text-secondary flex items-center gap-2">
                   <CheckCircle size={16} className="text-green-400" /> Task hoàn thành
                 </span>
                 <span className="font-bold text-text-primary">{stats.tasksCompleted}</span>
               </div>
+              </MotionItem>
 
+              <MotionItem>
               <div className="flex justify-between items-center p-3 bg-bg-surface rounded-lg">
                 <span className="text-text-secondary flex items-center gap-2">
                   <TrendingUp size={16} className="text-blue-400" /> Tỷ lệ hoàn thành
                 </span>
                 <span className="font-bold text-text-primary">{stats.completionRate}%</span>
               </div>
-            </div>
+              </MotionItem>
+            </MotionStagger>
           </div>
-        </div>
+        </MotionItem>
 
         {/* Right Col - Edit Profile */}
-        <div className="lg:col-span-2 space-y-6">
+        <MotionItem className="lg:col-span-2 space-y-6">
           <div className="bg-bg-secondary border border-border-custom rounded-xl p-6">
             <h2 className="text-lg font-bold text-text-primary mb-6">Thông tin nghề nghiệp</h2>
             
@@ -188,9 +195,9 @@ export const AssistantProfileFeature = () => {
               </div>
             </div>
           </div>
-        </div>
+        </MotionItem>
 
-      </div>
+      </MotionStagger>
     </div>
   );
 };

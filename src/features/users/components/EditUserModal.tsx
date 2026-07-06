@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, Pencil, Loader2 } from 'lucide-react';
+import { AnimatedModal } from '../../../components/common/animation';
 import type { components } from '../../../api/generated/schema';
 import type { UpdateUserByAdminDto } from '../../../api/generated/types';
 import { AssignedEditorField } from './AssignedEditorField';
@@ -48,8 +49,11 @@ export const EditUserModal = ({ user, onClose }: EditUserModalProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-bg-primary w-full max-w-md rounded-2xl border border-border-custom shadow-2xl overflow-hidden animate-slide-up">
+    <AnimatedModal
+      open
+      onClose={onClose}
+      panelClassName="bg-bg-primary w-full max-w-md rounded-2xl border border-border-custom shadow-2xl overflow-hidden"
+    >
         <div className="flex items-center justify-between p-4 border-b border-border-custom bg-bg-secondary/50">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center text-brand">
@@ -129,7 +133,6 @@ export const EditUserModal = ({ user, onClose }: EditUserModalProps) => {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </AnimatedModal>
   );
 };

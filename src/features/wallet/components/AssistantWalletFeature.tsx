@@ -16,6 +16,8 @@ import { Pagination } from '../../../components/common/Pagination';
 import { CustomSelect } from '../../../components/common/CustomSelect';
 import type { TransactionDto } from '../../../api/generated/types';
 import type { TransactionType } from '../../../types/status.types';
+import { MotionItem, MotionListItem, containerVariants } from '../../../components/common/animation';
+import { motion } from 'framer-motion';
 
 export const AssistantWalletFeature = () => {
   const [txTypeFilter, setTxTypeFilter] = useState('');
@@ -69,7 +71,7 @@ export const AssistantWalletFeature = () => {
   }
 
   return (
-    <div className="animate-fade-in">
+    <div>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -93,7 +95,7 @@ export const AssistantWalletFeature = () => {
       </div>
 
       {/* ─── Wallet Balances — 1 ngăn ─── */}
-      <div className="mt-6">
+      <MotionItem className="mt-6">
         {/* Withdrawable Balance — Xanh lá */}
         <div className="relative overflow-hidden bg-gradient-to-br from-success/[0.08] to-secondary/[0.05] border border-success/20 rounded-2xl p-6 md:w-1/2">
           <div className="absolute top-0 right-0 w-32 h-32 bg-success/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4" />
@@ -116,7 +118,7 @@ export const AssistantWalletFeature = () => {
             </div>
           </div>
         </div>
-      </div>
+      </MotionItem>
 
       {/* ─── Transaction History ─── */}
       <div className="mt-8">
@@ -149,7 +151,12 @@ export const AssistantWalletFeature = () => {
         </div>
 
         {/* Transaction List */}
-        <div className="space-y-2">
+        <motion.div
+          className="space-y-2"
+          initial="hidden"
+          animate="visible"
+          variants={containerVariants}
+        >
           {pagination.paginatedData.map((tx) => {
             const txType = normalizeTransactionType(String(tx.type));
             const cfg = TX_TYPE_CONFIG[txType] || TX_TYPE_CONFIG[tx.type as TransactionType] || { icon: Wallet, bg: 'bg-bg-surface', color: 'text-text-muted', label: tx.type, sign: '' as const };
@@ -159,7 +166,8 @@ export const AssistantWalletFeature = () => {
             const description = getTransactionDescription(tx);
 
             return (
-              <div key={String(tx.id)} onClick={() => setSelectedTx(tx)} className="group bg-bg-secondary border border-border-custom rounded-xl p-4 hover:border-brand/15 transition-all cursor-pointer">
+              <MotionListItem key={String(tx.id)}>
+              <div onClick={() => setSelectedTx(tx)} className="group ui-card-interactive bg-bg-secondary border border-border-custom rounded-xl p-4 hover:border-brand/15 cursor-pointer">
                 <div className="flex items-center gap-3">
                   <div className={`w-9 h-9 rounded-lg ${cfg.bg} flex items-center justify-center flex-shrink-0`}>
                     <TxIcon size={16} className={cfg.color} />
@@ -183,9 +191,10 @@ export const AssistantWalletFeature = () => {
                   </div>
                 </div>
               </div>
+              </MotionListItem>
             );
           })}
-        </div>
+        </motion.div>
 
         {filteredTx.length === 0 && (
           <div className="bg-bg-secondary border border-border-custom rounded-xl p-12 flex flex-col items-center gap-4">

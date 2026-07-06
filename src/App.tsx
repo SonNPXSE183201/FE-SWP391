@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './components/common/ToastProvider';
+import { AnimationProvider } from './components/common/animation';
 import { RoleGuard } from './routes/RoleGuard';
 import { MainLayout } from './layouts/MainLayout';
 import { AuthLayout } from './layouts/AuthLayout';
@@ -53,6 +54,7 @@ import {
   BoardDashboardPage,
   VotingPage,
   RankingPage,
+  RankingDataEntryPage,
   PublishSchedulePage,
   BoardSettingsPage,
 } from './pages/board';
@@ -96,8 +98,9 @@ const UnauthorizedPage = () => (
 function App() {
   return (
     <BrowserRouter>
-      <ToastProvider />
-      <Routes>
+      <AnimationProvider>
+        <ToastProvider />
+        <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
@@ -164,6 +167,7 @@ function App() {
             <Route path="/board" element={<BoardDashboardPage />} />
             <Route path="/board/voting" element={<VotingPage />} />
             <Route path="/board/ranking" element={<RankingPage />} />
+            <Route path="/board/ranking-data" element={<RankingDataEntryPage />} />
             <Route path="/board/schedule" element={<PublishSchedulePage />} />
             <Route path="/board/settings" element={<BoardSettingsPage />} />
           </Route>
@@ -187,7 +191,8 @@ function App() {
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+        </Routes>
+      </AnimationProvider>
     </BrowserRouter>
   );
 }

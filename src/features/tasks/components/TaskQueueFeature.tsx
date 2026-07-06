@@ -27,6 +27,14 @@ import { useDebounce } from '../../../hooks/useDebounce';
 import { Pagination } from '../../../components/common/Pagination';
 import { CustomSelect } from '../../../components/common/CustomSelect';
 import { HelpTip } from '../../../components/common/HelpTip';
+import {
+  MotionStagger,
+  MotionItem,
+  MotionTabPanel,
+  MotionListItem,
+  containerVariants,
+} from '../../../components/common/animation';
+import { motion } from 'framer-motion';
 import type { AvailableTaskDto } from '../hooks/useTasks';
 import type { TaskStatus } from '../../../types/status.types';
 import { normalizeTaskStatus, taskStatusMatchesFilter } from '../../../utils/status';
@@ -172,7 +180,7 @@ export const TaskQueueFeature = () => {
 
   // ─── Render ────────────────────────────────────────────────
   return (
-    <div className="animate-fade-in">
+    <div>
       {/* Header */}
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -228,7 +236,7 @@ export const TaskQueueFeature = () => {
         </div>
 
         {/* Quick stats */}
-        <div className="flex flex-wrap gap-2">
+        <MotionStagger className="flex flex-wrap gap-2">
           {(isMyTasksTab
             ? [
                 { label: 'Việc cần xử lý', value: myStats.active, icon: ListChecks, color: 'text-info', bg: 'bg-info/10' },
@@ -239,8 +247,8 @@ export const TaskQueueFeature = () => {
                 { label: 'Đang chờ nhận', value: totalItems, icon: Unlock, color: 'text-brand', bg: 'bg-brand/10' },
               ]
           ).map((s) => (
+            <MotionItem key={s.label}>
             <div
-              key={s.label}
               className="flex items-center gap-2.5 rounded-xl border border-border-custom bg-bg-secondary px-3 py-2"
             >
               <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${s.bg}`}>
@@ -251,8 +259,9 @@ export const TaskQueueFeature = () => {
                 <p className="mt-1 text-[10px] text-text-muted">{s.label}</p>
               </div>
             </div>
+            </MotionItem>
           ))}
-        </div>
+        </MotionStagger>
       </header>
 
       {/* Toolbar: tabs + search + filter */}
@@ -387,10 +396,16 @@ export const TaskQueueFeature = () => {
           )}
         </div>
       ) : (
-        <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-3">
+        <MotionTabPanel tabKey={activeTab} className="mt-4">
+          <motion.div
+            className="grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-3"
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
+          >
           {tasks.map((task: AvailableTaskDto) => (
+            <MotionListItem key={task.id}>
             <AssistantTaskCard
-              key={task.id}
               task={task}
               variant={isMyTasksTab ? 'my' : 'available'}
               acceptPending={acceptMutation.isPending}
@@ -398,8 +413,10 @@ export const TaskQueueFeature = () => {
               onOpenDetail={isMyTasksTab ? () => setDetailTask(task) : undefined}
               onOpenRegionPreview={!isMyTasksTab ? () => setPreviewTask(task) : undefined}
             />
+            </MotionListItem>
           ))}
-        </div>
+          </motion.div>
+        </MotionTabPanel>
       )}
 
       {showPagination && (

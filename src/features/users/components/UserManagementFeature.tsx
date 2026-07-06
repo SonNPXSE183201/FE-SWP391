@@ -23,6 +23,12 @@ import {
   useLockUser,
   useUnlockUser,
 } from "../hooks/useAdminUsers";
+import {
+  MotionTableRow,
+  containerVariants,
+  listItemVariants,
+} from "../../../components/common/animation";
+import { motion } from "framer-motion";
 
 const ROLE_LABELS: Record<string, string> = {
   'System Admin': 'Quản trị hệ thống',
@@ -178,7 +184,12 @@ export const UserManagementFeature = () => {
                       <th className="p-4 font-medium text-right rounded-tr-lg">Thao tác</th>
                     </tr>
                   </thead>
-                  <tbody className="text-sm">
+                  <motion.tbody
+                    className="text-sm"
+                    initial="hidden"
+                    animate="visible"
+                    variants={containerVariants}
+                  >
                     {users.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="p-8 text-center text-text-muted">
@@ -187,8 +198,9 @@ export const UserManagementFeature = () => {
                       </tr>
                     ) : (
                       users.map((user) => (
-                        <tr
+                        <MotionTableRow
                           key={user.id}
+                          variants={listItemVariants}
                           className="border-b border-border-custom/50 hover:bg-bg-primary/30 transition-colors"
                         >
                           <td className="p-4 font-medium text-text-primary">
@@ -326,10 +338,10 @@ export const UserManagementFeature = () => {
                               )}
                             </div>
                           </td>
-                        </tr>
+                        </MotionTableRow>
                       ))
                     )}
-                  </tbody>
+                  </motion.tbody>
                 </table>
               </div>
 

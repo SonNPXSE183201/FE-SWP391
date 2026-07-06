@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { AnimatedModal } from '../../../components/common/animation';
 import toast from 'react-hot-toast';
 import {
   FileSignature,
@@ -30,6 +30,8 @@ import { useApprovedSeries, useCreateContract, useUpdateContract } from '../hook
 import type { ApprovedSeriesContractDto, ContractAddendumDto } from '../api/contract.api';
 import { formatVND, formatVNDInput } from '../../../utils/currency';
 import { getGenreLabel } from '../../series/constants/genres';
+import { MotionStagger, MotionItem, MotionListItem, containerVariants } from '../../../components/common/animation';
+import { motion } from 'framer-motion';
 
 type FilterStatus = 'all' | 'pending' | 'contracted';
 type EffectiveDateMode = 'immediate' | 'scheduled';
@@ -68,9 +70,9 @@ const formatApprovedDate = (iso: string): string => {
 };
 
 const SCHEDULE_LABELS: Record<string, string> = {
-  Weekly: 'Hàng tuần',
+  Weekly: '1 tuần 1 lần',
   'Bi-weekly': '2 tuần 1 lần',
-  Monthly: 'Hàng tháng',
+  Monthly: '1 tháng 1 lần',
 };
 
 const formatSchedule = (schedule: string) => {
@@ -257,7 +259,7 @@ export const ContractManagementFeature = () => {
   ];
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="page-header">
         <div className="flex items-center gap-3">
@@ -274,8 +276,9 @@ export const ContractManagementFeature = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-bg-secondary border border-border-custom rounded-xl p-4">
+      <MotionStagger className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <MotionItem>
+        <div className="ui-card bg-bg-secondary border border-border-custom rounded-xl p-4 h-full">
           <div className="flex items-center gap-2 text-text-muted">
             <Clock size={14} />
             <span className="text-[10px] uppercase tracking-wider font-medium">Chờ lập HĐ</span>
@@ -283,7 +286,9 @@ export const ContractManagementFeature = () => {
           <p className="text-2xl font-bold text-warning mt-2">{pendingCount}</p>
           <p className="text-[11px] text-text-muted mt-1">Bộ truyện đã duyệt, chưa có hợp đồng</p>
         </div>
-        <div className="bg-bg-secondary border border-border-custom rounded-xl p-4">
+        </MotionItem>
+        <MotionItem>
+        <div className="ui-card bg-bg-secondary border border-border-custom rounded-xl p-4 h-full">
           <div className="flex items-center gap-2 text-text-muted">
             <FileCheck size={14} />
             <span className="text-[10px] uppercase tracking-wider font-medium">Đã có HĐ</span>
@@ -291,7 +296,9 @@ export const ContractManagementFeature = () => {
           <p className="text-2xl font-bold text-emerald-400 mt-2">{contractedCount}</p>
           <p className="text-[11px] text-text-muted mt-1">Đã thiết lập nhuận bút cơ bản</p>
         </div>
-        <div className="bg-bg-secondary border border-border-custom rounded-xl p-4">
+        </MotionItem>
+        <MotionItem>
+        <div className="ui-card bg-bg-secondary border border-border-custom rounded-xl p-4 h-full">
           <div className="flex items-center gap-2 text-text-muted">
             <Banknote size={14} />
             <span className="text-[10px] uppercase tracking-wider font-medium">Tổng ngân sách duyệt</span>
@@ -299,7 +306,8 @@ export const ContractManagementFeature = () => {
           <p className="text-lg font-bold text-text-primary mt-2">{formatVND(totalBudget)}</p>
           <p className="text-[11px] text-text-muted mt-1">Tổng ngân sách Hội đồng đã phê duyệt</p>
         </div>
-      </div>
+        </MotionItem>
+      </MotionStagger>
 
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -392,14 +400,19 @@ export const ContractManagementFeature = () => {
             )}
           </div>
         ) : (
-          <div className="divide-y divide-border-custom/60">
+          <motion.div
+            className="divide-y divide-border-custom/60"
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
+          >
             {filteredData.map((series) => {
               const schedule = formatSchedule(series.publishSchedule ?? '');
               const isContracted = series.hasContract;
 
               return (
+                <MotionListItem key={series.id}>
                 <div
-                  key={series.id}
                   onClick={() => isContracted && handleOpenDetailModal(series)}
                   className={`
                     group relative px-5 py-4 transition-all
@@ -520,9 +533,10 @@ export const ContractManagementFeature = () => {
                   </div>
 
                 </div>
+                </MotionListItem>
               );
             })}
-          </div>
+          </motion.div>
         )}
 
         {!isLoading && !isError && filteredData.length > 0 && (
@@ -539,13 +553,8 @@ export const ContractManagementFeature = () => {
       </div>
 
       {/* Create Contract Modal */}
-      {showContractModal && selectedSeries && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setShowContractModal(false)}
-          />
-          <div className="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-lg-custom w-full max-w-lg animate-modal-enter">
+      {showContractModal && selectedSeries && (
+        <AnimatedModal open onClose={() => setShowContractModal(false)} panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-lg-custom w-full max-w-lg">
             <div className="flex items-center justify-between p-5 border-b border-border-custom">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-brand/10 flex items-center justify-center">
@@ -667,19 +676,12 @@ export const ContractManagementFeature = () => {
                 Tạo hợp đồng
               </button>
             </div>
-          </div>
-        </div>,
-        document.body,
+        </AnimatedModal>
       )}
 
       {/* Update Contract Modal */}
-      {showUpdateModal && selectedSeries && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setShowUpdateModal(false)}
-          />
-          <div className="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-lg-custom w-full max-w-lg animate-modal-enter">
+      {showUpdateModal && selectedSeries && (
+        <AnimatedModal open onClose={() => setShowUpdateModal(false)} panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-lg-custom w-full max-w-lg">
             <div className="flex items-center justify-between px-6 py-4 border-b border-border-custom">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center">
@@ -804,19 +806,12 @@ export const ContractManagementFeature = () => {
                 {updateContract.isPending ? 'Đang lưu...' : 'Lưu phụ lục'}
               </button>
             </div>
-          </div>
-        </div>,
-        document.body,
+        </AnimatedModal>
       )}
 
       {/* Contract Detail Modal */}
-      {showDetailModal && selectedSeries && selectedSeries.hasContract && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setShowDetailModal(false)}
-          />
-          <div className="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-lg-custom w-full max-w-lg animate-modal-enter max-h-[90vh] flex flex-col">
+      {showDetailModal && selectedSeries && selectedSeries.hasContract && (
+        <AnimatedModal open onClose={() => setShowDetailModal(false)} panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-lg-custom w-full max-w-lg max-h-[90vh] flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-border-custom shrink-0">
               <div className="flex items-center gap-3">
@@ -982,9 +977,7 @@ export const ContractManagementFeature = () => {
                 Đóng
               </button>
             </div>
-          </div>
-        </div>,
-        document.body,
+        </AnimatedModal>
       )}
     </div>
   );

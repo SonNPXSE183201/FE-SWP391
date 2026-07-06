@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useRespondSeriesInvite } from '../hooks/useSeriesTeam';
+import { motion } from 'framer-motion';
 
 export const SeriesInviteRespondFeature = () => {
   const { seriesId } = useParams<{ seriesId: string }>();
@@ -19,7 +20,12 @@ export const SeriesInviteRespondFeature = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto animate-fade-in">
+    <motion.div
+      className="max-w-md mx-auto"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+    >
       <button
         type="button"
         onClick={() => navigate(-1)}
@@ -53,6 +59,6 @@ export const SeriesInviteRespondFeature = () => {
           </button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };

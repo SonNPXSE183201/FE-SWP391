@@ -23,6 +23,8 @@ import type { SeriesReviewDto } from '../api/review.api';
 import { getGenreLabel } from '../../series';
 import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
 import { formatVND, formatVNDInput } from '../../../utils/currency';
+import { MotionStagger, MotionItem } from '../../../components/common/animation';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const CHECKLIST_ITEMS = [
   { id: 'synopsis', label: 'Nội dung tóm tắt rõ ràng, hấp dẫn' },
@@ -92,7 +94,7 @@ export const ReviewSeriesFeature = () => {
         {
           onSuccess: () => {
             toast.success('Đã trình hồ sơ lên Hội đồng!');
-            navigate('/editor/review');
+            navigate('/editor/series-review');
           },
           onError: () => toast.error('Có lỗi xảy ra. Vui lòng thử lại.'),
         },
@@ -114,7 +116,7 @@ export const ReviewSeriesFeature = () => {
         {
           onSuccess: () => {
             toast.success('Đã trình hồ sơ lên Hội đồng kèm đề xuất ngân sách!');
-            navigate('/editor/review');
+            navigate('/editor/series-review');
           },
           onError: (err: unknown) => {
             const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -135,7 +137,7 @@ export const ReviewSeriesFeature = () => {
       {
         onSuccess: () => {
           toast.success('Đã gửi phản hồi cho Tác giả.');
-          navigate('/editor/review');
+          navigate('/editor/series-review');
         },
         onError: (err: unknown) => {
           const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -162,12 +164,12 @@ export const ReviewSeriesFeature = () => {
   const statusLabel = STATUS_LABELS[typedSeries.status ?? ''] ?? typedSeries.status;
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
-          onClick={() => navigate('/editor/review')}
+          onClick={() => navigate('/editor/series-review')}
           className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-surface transition-colors bg-transparent border-none cursor-pointer"
         >
           <ArrowLeft size={20} />
@@ -195,9 +197,9 @@ export const ReviewSeriesFeature = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+      <MotionStagger className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
         {/* Left — Series detail */}
-        <div className="flex flex-col gap-5 h-full min-h-0">
+        <MotionItem className="flex flex-col gap-5 h-full min-h-0">
           <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 shrink-0">
             <div className="flex items-center gap-2 mb-4">
               <BookOpen size={16} className="text-brand" />
@@ -303,10 +305,10 @@ export const ReviewSeriesFeature = () => {
               </div>
             </div>
           </div>
-        </div>
+        </MotionItem>
 
         {/* Right — Editor panel */}
-        <div className="flex flex-col h-full min-h-0">
+        <MotionItem className="flex flex-col h-full min-h-0">
           <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 flex-1 flex flex-col h-full min-h-0">
             <div className="flex items-center justify-between gap-2 shrink-0">
               <div className="flex items-center gap-2">
@@ -339,15 +341,15 @@ export const ReviewSeriesFeature = () => {
               />
             </div>
 
-            <div className="space-y-1 shrink-0 mt-4">
+            <MotionStagger className="space-y-1 shrink-0 mt-4">
               <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-2">
                 Danh mục kiểm tra
               </p>
               {CHECKLIST_ITEMS.map((item) => {
                 const checked = checklist[item.id];
                 return (
+                  <MotionItem key={item.id}>
                   <button
-                    key={item.id}
                     type="button"
                     onClick={() => toggleChecklist(item.id)}
                     className={`w-full flex items-start gap-2.5 p-2.5 rounded-lg text-left border transition-colors cursor-pointer ${
@@ -367,12 +369,21 @@ export const ReviewSeriesFeature = () => {
                       {item.label}
                     </span>
                   </button>
+                  </MotionItem>
                 );
               })}
-            </div>
+            </MotionStagger>
 
+            <AnimatePresence>
             {budgetFailed && (
-              <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 space-y-3 animate-fade-in shrink-0 mt-4">
+              <motion.div
+                key="budget-panel"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25 }}
+                className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 space-y-3 shrink-0 mt-4 overflow-hidden"
+              >
                 <div className="flex items-center gap-2">
                   <Banknote size={14} className="text-amber-400" />
                   <p className="text-xs font-semibold text-text-primary">Ngân sách biên tập viên đề xuất</p>
@@ -401,8 +412,9 @@ export const ReviewSeriesFeature = () => {
                     Hội đồng sẽ thấy: {formatVND(suggestedBudgetNum)}
                   </p>
                 )}
-              </div>
+              </motion.div>
             )}
+            </AnimatePresence>
 
             <div className="flex-1 flex flex-col min-h-0 mt-4">
               <label className="block text-xs font-medium text-text-secondary mb-1.5 shrink-0">
@@ -450,8 +462,8 @@ export const ReviewSeriesFeature = () => {
               </p>
             </div>
           </div>
-        </div>
-      </div>
+        </MotionItem>
+      </MotionStagger>
     </div>
   );
 };

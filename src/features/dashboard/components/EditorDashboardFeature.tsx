@@ -33,7 +33,7 @@ export const EditorDashboardFeature = () => {
   }
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="space-y-6">
       {/* Page Header */}
       <div className="page-header">
         <div className="flex items-center gap-3">
@@ -48,20 +48,20 @@ export const EditorDashboardFeature = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" data-stagger>
         <StatCard
           label="Đang đánh giá"
           value={stats.reviewing}
           icon={Clock}
           color="text-info"
-          navigateTo="/editor/review"
+          navigateTo="/editor/series-review"
         />
         <StatCard
           label="Yêu cầu chờ duyệt"
           value={stats.pending}
           icon={FileText}
           color="text-warning"
-          navigateTo="/editor/review"
+          navigateTo="/editor/series-review"
         />
         <StatCard
           label="Tranh chấp phát sinh"
@@ -75,13 +75,13 @@ export const EditorDashboardFeature = () => {
           value={stats.completed}
           icon={CheckCircle}
           color="text-success"
-          navigateTo="/editor/review"
+          navigateTo="/editor/series-review"
         />
       </div>
 
       {/* Charts */}
       {charts && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" data-stagger>
           <ChartCard
             title="Số series đã đánh giá"
             subtitle="6 tháng gần đây"

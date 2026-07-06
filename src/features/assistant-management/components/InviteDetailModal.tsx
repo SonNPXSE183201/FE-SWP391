@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { AnimatedModal } from '../../../components/common/animation';
 import {
   X,
   BookOpen,
@@ -36,19 +35,6 @@ export const InviteDetailModal = ({
   onRespond,
   isPending,
 }: InviteDetailModalProps) => {
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKeyDown);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [onClose]);
-
   const status = STATUS_STYLES[invite.seriesStatus ?? ''] ?? {
     label: invite.seriesStatus ?? 'Không rõ',
     dot: 'bg-text-muted',
@@ -71,22 +57,14 @@ export const InviteDetailModal = ({
     year: 'numeric',
   });
 
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-md"
-        onClick={onClose}
-        aria-hidden
-      />
-
-      {/* Modal */}
-      <div
-        className="relative w-full max-w-[40rem] bg-bg-secondary rounded-[20px] shadow-[0_32px_80px_rgba(0,0,0,0.55)] animate-scale-in overflow-hidden max-h-[min(90vh,48rem)] flex flex-col border border-white/[0.06]"
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Chi tiết lời mời — ${invite.seriesTitle}`}
-      >
+  return (
+    <AnimatedModal
+      open
+      onClose={onClose}
+      containerClassName="flex items-center justify-center p-4 sm:p-6"
+      backdropClassName="absolute inset-0 bg-black/70 backdrop-blur-md"
+      panelClassName="relative w-full max-w-[40rem] bg-bg-secondary rounded-[20px] shadow-[0_32px_80px_rgba(0,0,0,0.55)] overflow-hidden max-h-[min(90vh,48rem)] flex flex-col border border-white/[0.06]"
+    >
         {/* ─── HEADER ─── */}
         <div className="relative shrink-0 px-6 pt-6 pb-5">
           {/* Decorative gradient */}
@@ -258,8 +236,6 @@ export const InviteDetailModal = ({
             </button>
           </div>
         </div>
-      </div>
-    </div>,
-    document.body,
+    </AnimatedModal>
   );
 };

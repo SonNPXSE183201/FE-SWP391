@@ -15,16 +15,17 @@ import {
   Pencil,
   Copy,
   Check,
-  AlertCircle,
   Camera,
-  Save,
-  X,
-  Loader2,
 } from 'lucide-react';
 import { useAuthStore, type UserRole } from '../../../stores/authStore';
 import { ChangePasswordModal } from '../../auth';
 import { useMangakaOnLeave } from '../hooks/useMangakaOnLeave';
-import { axiosInstance } from '../../../api/axios';
+import { useUpdateProfile } from '../hooks/useUpdateProfile';
+import { useUploadAvatar } from '../hooks/useUploadAvatar';
+import { EditProfileModal } from './EditProfileModal';
+import { HelpTip } from '../../../components/common/HelpTip';
+import { MotionTabPanel, MotionStagger, MotionItem } from '../../../components/common/animation';
+import { motion } from 'framer-motion';
 
 // ─── Types ───────────────────────────────────────────────────
 type TabId = 'profile' | 'password' | 'notifications';
@@ -53,7 +54,7 @@ const TABS: TabItem[] = [
 const ROLE_BADGE_STYLES: Record<UserRole, { bg: string; text: string; label: string }> = {
   Admin: { bg: 'bg-rose-500/10', text: 'text-rose-400', label: 'Quản trị viên' },
   Editor: { bg: 'bg-blue-500/10', text: 'text-blue-400', label: 'Biên tập viên' },
-  Mangaka: { bg: 'bg-brand/10', text: 'text-brand', label: 'Mangaka' },
+  Mangaka: { bg: 'bg-brand/10', text: 'text-brand', label: 'Tác giả' },
   Assistant: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', label: 'Trợ lý' },
   Board: { bg: 'bg-amber-500/10', text: 'text-amber-400', label: 'Ban quản lý' },
 };
@@ -129,12 +130,6 @@ interface ToggleSwitchProps {
 }
 
 
-const getProfileCompletion = (user: { fullName?: string; email?: string; penName?: string; avatarUrl?: string; phoneNumber?: string } | null) => {
-  const fields = [user?.fullName, user?.email, user?.penName, user?.avatarUrl, user?.phoneNumber];
-  const filled = fields.filter(Boolean).length;
-  return { filled, total: fields.length, percent: Math.round((filled / fields.length) * 100) };
-};
-
 const ToggleSwitch = ({ enabled, onChange }: ToggleSwitchProps) => (
   <button
     type="button"
@@ -162,32 +157,27 @@ const ToggleSwitch = ({ enabled, onChange }: ToggleSwitchProps) => (
 
 // ─── Main Component ──────────────────────────────────────────
 export const SettingsFeature = () => {
-  const { user, updateUser } = useAuthStore();
+  const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<TabId>('profile');
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [editForm, setEditForm] = useState({
-    fullName: user?.fullName || '',
-    penName: user?.penName || '',
-    skills: user?.skills || '',
-    portfolioUrl: user?.portfolioUrl || '',
-    phoneNumber: user?.phoneNumber || '',
-  });
   const { isOnLeave, toggleOnLeave, isPending: isOnLeavePending } = useMangakaOnLeave();
   const [notificationPrefs, setNotificationPrefs] = useState<NotificationPref[]>(() =>
     loadNotificationPrefs(user?.id)
   );
 
   const role = user?.role ?? 'Mangaka';
+  const showPenName = ['Mangaka'].includes(role);
   const roleBadge = ROLE_BADGE_STYLES[role];
-  const avatarGradient = AVATAR_GRADIENTS[role];
-  const initial = user?.fullName?.charAt(0)?.toUpperCase() || 'U';
-  const profileCompletion = getProfileCompletion(user);
-  const displayUserName = user?.userName || user?.email?.split('@')[0];
+  const avatarGradient = AVATAR_GRADIENTS[role];  const uploadAvatarMutation = useUploadAvatar();
+  const updateProfileMutation = useUpdateProfile();
+  
+  const initial = user?.fullName
+    ? user.fullName.charAt(0).toUpperCase()
+    : user?.userName?.charAt(0).toUpperCase() || '?';
 
   const handleCopy = async (value: string, field: string) => {
     try {
@@ -219,15 +209,13 @@ export const SettingsFeature = () => {
       const formData = new FormData();
       formData.append('file', file);
       
-      const res = await axiosInstance.post<{ success: boolean; data: string; message: string }>('/api/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const res = await uploadAvatarMutation.mutateAsync(formData);
       
       if (res.data.success) {
         const newAvatarUrl = res.data.data;
         
         // Gọi API cập nhật ngay lập tức cho ảnh đại diện
-        await axiosInstance.put('/api/profile', {
+        await updateProfileMutation.mutateAsync({
           fullName: user?.fullName,
           penName: user?.penName,
           portfolioUrl: user?.portfolioUrl,
@@ -236,7 +224,6 @@ export const SettingsFeature = () => {
           avatarUrl: newAvatarUrl
         });
 
-        updateUser({ avatarUrl: newAvatarUrl });
         toast.success('Cập nhật ảnh đại diện thành công!');
       }
     } catch (error) {
@@ -247,51 +234,24 @@ export const SettingsFeature = () => {
     }
   };
 
-  const handleSaveProfile = async () => {
-    try {
-      setIsSavingProfile(true);
-      // Gọi API thật để lưu thông tin xuống Database
-      await axiosInstance.put('/api/profile', {
-        fullName: editForm.fullName,
-        penName: editForm.penName,
-        portfolioUrl: editForm.portfolioUrl,
-        skills: editForm.skills,
-        phoneNumber: editForm.phoneNumber,
-        avatarUrl: user?.avatarUrl
-      });
-
-      // Update local state in Zustand
-      updateUser(editForm);
-      toast.success('Đã cập nhật thông tin hồ sơ thành công!');
-      setIsEditingProfile(false);
-    } catch (error) {
-      toast.error('Lỗi khi lưu thông tin. Vui lòng thử lại!');
-      console.error(error);
-    } finally {
-      setIsSavingProfile(false);
-    }
-  };
 
   // ─── Profile Hero ──────────────────────────────────────────
   const renderProfileHero = () => (
-    <div className="bg-bg-secondary border border-border-custom rounded-2xl overflow-hidden mb-6 w-full max-w-7xl">
-      <div className="h-20 sm:h-24 bg-gradient-to-r from-brand/25 via-bg-secondary to-secondary/15 relative">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_40%,rgba(108,92,231,0.2),transparent_55%)]" />
-      </div>
-
-      <div className="px-5 sm:px-6 pb-5 sm:pb-6 -mt-10 sm:-mt-11 relative z-10">
-        <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-5">
-          <div className="relative group">
+    <div className="bg-gradient-to-br from-bg-secondary to-bg-surface border border-border-custom rounded-2xl mb-6 w-full max-w-7xl relative shadow-sm overflow-hidden">
+      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03] pointer-events-none" />
+      
+      <div className="p-6 relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div className="flex items-center gap-5">
+          <div className="relative group flex-shrink-0">
             {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt="Avatar" className="w-20 h-20 sm:w-[5.5rem] sm:h-[5.5rem] rounded-2xl object-cover shadow-lg border-4 border-bg-secondary ring-1 ring-white/10 flex-shrink-0" />
+              <img src={user.avatarUrl} alt="Avatar" className="w-[5.5rem] h-[5.5rem] rounded-full object-cover shadow-md border border-border-custom" />
             ) : (
-              <div className={`w-20 h-20 sm:w-[5.5rem] sm:h-[5.5rem] rounded-2xl bg-gradient-to-br ${avatarGradient} flex items-center justify-center text-white text-2xl sm:text-3xl font-bold shadow-lg border-4 border-bg-secondary ring-1 ring-white/10 flex-shrink-0`}>
+              <div className={`w-[5.5rem] h-[5.5rem] rounded-full bg-gradient-to-br ${avatarGradient} flex items-center justify-center text-white text-3xl font-bold shadow-md border border-border-custom`}>
                 {initial}
               </div>
             )}
             
-            {/* Avatar upload overlay */}
-            <label className="absolute inset-0 bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer flex flex-col items-center justify-center text-white border-4 border-transparent">
+            <label className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer flex flex-col items-center justify-center text-white backdrop-blur-[2px]">
               {isUploading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
@@ -304,156 +264,84 @@ export const SettingsFeature = () => {
             </label>
           </div>
 
-          <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h2 className="text-xl sm:text-2xl font-bold text-text-primary tracking-tight truncate">
-                  {user?.fullName || 'Chưa cập nhật'}
-                </h2>
-                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold ${roleBadge.bg} ${roleBadge.text}`}>
-                  <Shield size={12} />
-                  {roleBadge.label}
-                </span>
-              </div>
-              <p className="text-sm text-text-secondary mt-1 truncate">
-                {displayUserName ? `@${displayUserName}` : 'Chưa có tên đăng nhập'}
-              </p>
-            </div>
-
-              {!isEditingProfile && (
-                <button
-                  type="button"
-                  onClick={() => setIsEditingProfile(true)}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-brand/10 hover:bg-brand/20 border border-brand/25 rounded-xl text-sm font-medium text-brand transition-colors flex-shrink-0 cursor-pointer"
-                >
-                  <Pencil size={14} />
-                  Chỉnh sửa hồ sơ
-                </button>
-              )}
-            </div>
-        </div>
-
-        {profileCompletion.percent < 100 && (
-          <div className="mt-5 pt-4 border-t border-border-custom/60">
-            <div className="flex items-center justify-between gap-3 mb-2">
-              <div className="flex items-center gap-2 text-xs text-text-secondary">
-                <AlertCircle size={14} className="text-warning flex-shrink-0" />
-                <span>Hoàn thiện hồ sơ ({profileCompletion.filled}/{profileCompletion.total})</span>
-              </div>
-              <span className="text-xs font-semibold text-warning">{profileCompletion.percent}%</span>
-            </div>
-            <div className="h-1.5 rounded-full bg-bg-surface overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-brand to-secondary transition-all duration-500"
-                style={{ width: `${profileCompletion.percent}%` }}
-              />
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h2 className="text-2xl font-bold text-text-primary tracking-tight truncate drop-shadow-sm">
+                {user?.fullName || 'Chưa cập nhật'}
+              </h2>
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase shadow-sm ${roleBadge.bg} ${roleBadge.text}`}>
+                <Shield size={12} />
+                {roleBadge.label}
+              </span>
             </div>
           </div>
-        )}
+        </div>
+
+        <div className="flex items-center gap-4 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-border-custom pt-4 sm:pt-0 sm:pl-6">
+          {role === 'Mangaka' && (
+            <div className="flex items-center gap-3 bg-bg-surface/60 hover:bg-bg-surface px-4 py-2.5 rounded-xl border border-border-custom transition-colors">
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-semibold text-text-primary">Tạm nghỉ</span>
+                <HelpTip content="Khi bật, hệ thống tạm dừng tính thời gian tự động duyệt đầu việc (Task). Dùng khi bạn cần nghỉ phép dài ngày." placement="bottom-end" />
+              </div>
+              <div className="w-px h-5 bg-border-custom/80" />
+              <div className="flex items-center gap-2">
+                {isOnLeavePending && <span className="text-[11px] text-text-muted font-medium">Đang xử lý...</span>}
+                <ToggleSwitch enabled={isOnLeave} onChange={toggleOnLeave} />
+              </div>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setIsProfileModalOpen(true)}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-semibold transition-all shadow-md shadow-brand/20 hover:shadow-brand/40 cursor-pointer border-none hover:-translate-y-0.5"
+          >
+            <Pencil size={15} />
+            Chỉnh sửa hồ sơ
+          </button>
+        </div>
       </div>
-    </div>
-  );
+
+        {/* Embedded Tab Navigation */}
+        <div className="px-6 border-t border-border-custom/50 bg-black/5 relative z-10 flex gap-6 overflow-x-auto hide-scrollbar">
+          {TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`
+                  relative flex items-center gap-2 py-4 text-sm font-medium whitespace-nowrap
+                  transition-all duration-200 cursor-pointer border-none bg-transparent
+                  ${isActive
+                    ? 'text-brand'
+                    : 'text-text-secondary hover:text-text-primary'
+                  }
+                `}
+              >
+                <Icon size={16} className={isActive ? 'text-brand' : ''} />
+                <span>{tab.label}</span>
+                {isActive && (
+                  <motion.div
+                    layoutId="settings-tab-indicator"
+                    className="absolute bottom-0 left-0 right-0 h-[3px] bg-brand rounded-t-full shadow-[0_-2px_8px_rgba(108,92,231,0.5)]"
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
 
   // ─── Profile Tab ─────────────────────────────────────────
   const renderProfileTab = () => {
-    if (isEditingProfile) {
-      return (
-        <div className="space-y-5 animate-fade-in">
-          <div className="bg-bg-secondary border border-border-custom rounded-2xl overflow-hidden p-5 sm:p-6 space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-text-primary">Chỉnh sửa hồ sơ</h3>
-              <button
-                onClick={() => setIsEditingProfile(false)}
-                className="p-2 text-text-muted hover:text-text-primary rounded-lg hover:bg-bg-surface transition-colors border-none cursor-pointer bg-transparent"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-text-primary">Họ và tên</label>
-                <input
-                  type="text"
-                  value={editForm.fullName}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, fullName: e.target.value }))}
-                  className="w-full px-4 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all"
-                  placeholder="Nhập họ và tên"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-text-primary">Bút danh / Tên hiển thị</label>
-                <input
-                  type="text"
-                  value={editForm.penName}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, penName: e.target.value }))}
-                  className="w-full px-4 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all"
-                  placeholder="Nhập bút danh"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-text-primary">Số điện thoại</label>
-                <input
-                  type="tel"
-                  value={editForm.phoneNumber}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
-                  className="w-full px-4 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all"
-                  placeholder="Nhập số điện thoại"
-                />
-              </div>
-
-              {role === 'Assistant' && (
-                <>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-text-primary">Kỹ năng chuyên môn</label>
-                    <input
-                      type="text"
-                      value={editForm.skills}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, skills: e.target.value }))}
-                      className="w-full px-4 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all"
-                      placeholder="VD: Lineart, Đổ bóng, Tô màu..."
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-text-primary">Link Portfolio / Mẫu vẽ</label>
-                    <input
-                      type="url"
-                      value={editForm.portfolioUrl}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, portfolioUrl: e.target.value }))}
-                      className="w-full px-4 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all"
-                      placeholder="https://..."
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="pt-4 flex justify-end gap-3 border-t border-border-custom mt-6">
-              <button
-                onClick={() => setIsEditingProfile(false)}
-                className="px-5 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-bg-surface rounded-xl transition-colors border-none cursor-pointer bg-transparent"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleSaveProfile}
-                disabled={isSavingProfile}
-                className="flex items-center gap-2 px-6 py-2.5 bg-brand hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-sm font-medium transition-colors shadow-sm shadow-brand/20 border-none cursor-pointer"
-              >
-                {isSavingProfile ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                {isSavingProfile ? 'Đang lưu...' : 'Lưu thay đổi'}
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
     return (
-      <div className="space-y-5 animate-fade-in">
+      <div className="space-y-5">
         {/* Detail info grid */}
         <div className="bg-bg-secondary border border-border-custom rounded-2xl overflow-hidden">
           <div className="px-5 sm:px-6 py-4 border-b border-border-custom">
@@ -485,18 +373,28 @@ export const SettingsFeature = () => {
               )}
             </div>
 
-            {/* PenName / Username */}
+            {/* PenName / FullName */}
             <div className="group flex items-center justify-between gap-4 px-5 sm:px-6 py-4 hover:bg-bg-surface/25 transition-colors md:border-t-0 md:border-l border-border-custom">
               <div className="flex items-center gap-3.5 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center flex-shrink-0">
                   <User size={18} className="text-brand" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-text-muted uppercase tracking-wide">Bút danh</p>
-                  {user?.penName || user?.userName ? (
-                    <p className="text-sm text-text-primary mt-0.5 truncate">{user?.penName || `@${user?.userName}`}</p>
+                  <p className="text-xs font-medium text-text-muted uppercase tracking-wide">
+                    {showPenName ? 'Bút danh' : 'Họ và tên'}
+                  </p>
+                  {showPenName ? (
+                    user?.penName || user?.userName ? (
+                      <p className="text-sm text-text-primary mt-0.5 truncate">{user?.penName || `@${user?.userName}`}</p>
+                    ) : (
+                      <p className="text-sm text-text-muted mt-0.5 italic">Chưa cập nhật</p>
+                    )
                   ) : (
-                    <p className="text-sm text-text-muted mt-0.5 italic">Chưa cập nhật</p>
+                    user?.fullName ? (
+                      <p className="text-sm text-text-primary mt-0.5 truncate">{user?.fullName}</p>
+                    ) : (
+                      <p className="text-sm text-text-muted mt-0.5 italic">Chưa cập nhật</p>
+                    )
                   )}
                 </div>
               </div>
@@ -537,36 +435,13 @@ export const SettingsFeature = () => {
             </div>
           </div>
         </div>
-
-        {/* On Leave Status (Only for Mangaka) */}
-        {role === 'Mangaka' && (
-          <div className="bg-bg-secondary border border-border-custom rounded-2xl p-5 sm:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-              <div className="flex items-start gap-4 flex-1">
-                <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${isOnLeave ? 'bg-amber-500/10' : 'bg-bg-surface'} transition-colors`}>
-                  <Monitor size={20} className={isOnLeave ? 'text-amber-500' : 'text-text-muted'} />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-text-primary">Trạng thái Tạm nghỉ (On Leave)</h3>
-                  <p className="text-xs text-text-secondary mt-1 leading-relaxed max-w-xl">
-                    Khi bật, hệ thống tạm dừng tính thời gian tự động duyệt Task. Dùng khi bạn cần nghỉ phép dài ngày.
-                  </p>
-                  {isOnLeavePending && (
-                    <p className="text-[11px] text-text-muted mt-2">Đang cập nhật...</p>
-                  )}
-                </div>
-              </div>
-              <ToggleSwitch enabled={isOnLeave} onChange={toggleOnLeave} />
-            </div>
-          </div>
-        )}
       </div>
     );
   };
 
   // ─── Password Tab ────────────────────────────────────────
   const renderPasswordTab = () => (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6">
       <div className="bg-bg-secondary border border-border-custom rounded-xl p-6">
         <div className="flex flex-col lg:flex-row lg:items-center gap-6">
           {/* Icon & Info */}
@@ -627,7 +502,7 @@ export const SettingsFeature = () => {
 
   // ─── Notifications Tab ───────────────────────────────────
   const renderNotificationsTab = () => (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6">
       <div className="bg-bg-secondary border border-border-custom rounded-xl overflow-hidden">
         <div className="px-6 py-4 border-b border-border-custom">
           <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
@@ -639,12 +514,12 @@ export const SettingsFeature = () => {
           </p>
         </div>
 
-        <div className="divide-y divide-border-custom">
+        <MotionStagger className="divide-y divide-border-custom">
           {notificationPrefs.map((pref) => {
             const Icon = pref.icon;
             return (
+              <MotionItem key={pref.id}>
               <div
-                key={pref.id}
                 className="flex items-center justify-between px-6 py-4 hover:bg-bg-surface/30 transition-colors duration-200"
               >
                 <div className="flex items-center gap-4">
@@ -665,9 +540,10 @@ export const SettingsFeature = () => {
                   onChange={() => handleToggleNotification(pref.id)}
                 />
               </div>
+              </MotionItem>
             );
           })}
-        </div>
+        </MotionStagger>
       </div>
 
       {/* Info note */}
@@ -696,57 +572,20 @@ export const SettingsFeature = () => {
   };
 
   return (
-    <div className="animate-fade-in">
-      {/* ─── Page Header ─── */}
-      <div className="page-header mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
-            <Settings size={20} className="text-brand" />
-          </div>
-          <div>
-            <h1 className="page-header__title">Cài đặt</h1>
-            <p className="page-header__subtitle">Quản lý tài khoản và tùy chỉnh</p>
-          </div>
-        </div>
-      </div>
-
+    <div>
       {renderProfileHero()}
-
-      {/* ─── Tab Navigation ─── */}
-      <div>
-        <nav
-          className="inline-flex p-1 gap-1 bg-bg-secondary border border-border-custom rounded-xl"
-          aria-label="Settings tabs"
-        >
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`
-                  relative flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-medium
-                  rounded-lg transition-all duration-200 cursor-pointer border-none
-                  ${isActive
-                    ? 'bg-brand/15 text-brand shadow-sm'
-                    : 'text-text-secondary hover:text-text-primary hover:bg-bg-surface/60'
-                  }
-                `}
-              >
-                <Icon size={16} className={isActive ? 'text-brand' : ''} />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-      </div>
 
       {/* ─── Tab Content ─── */}
       <div className="mt-6 w-full max-w-7xl">
-        {renderTabContent()}
+        <MotionTabPanel tabKey={activeTab}>
+          {renderTabContent()}
+        </MotionTabPanel>
       </div>
+
+      <EditProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
     </div>
   );
 };

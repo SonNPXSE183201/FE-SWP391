@@ -1,5 +1,5 @@
 import { ShieldCheck, Info, X, Loader2, CheckCircle2, Mail } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { AnimatedModal } from '../../../components/common/animation';
 
 interface RegisterConfirmModalProps {
   isOpen: boolean;
@@ -14,44 +14,18 @@ export const RegisterConfirmModal = ({
   onClose,
   onConfirm,
 }: RegisterConfirmModalProps) => {
-  const overlayRef = useRef<HTMLDivElement>(null);
-
-  // Close on Escape
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !isLoading) onClose();
-    };
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden';
-    }
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
-    };
-  }, [isOpen, isLoading, onClose]);
-
-  if (!isOpen) return null;
+  const handleClose = () => {
+    if (!isLoading) onClose();
+  };
 
   return (
-    <div
-      ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={(e) => {
-        if (e.target === overlayRef.current && !isLoading) onClose();
-      }}
+    <AnimatedModal
+      open={isOpen}
+      onClose={handleClose}
+      closeOnBackdrop={!isLoading}
+      backdropClassName="absolute inset-0 bg-black/70 backdrop-blur-md"
+      panelClassName="relative w-full max-w-md bg-bg-secondary border border-border-custom rounded-2xl shadow-2xl ring-1 ring-white/5"
     >
-      {/* Backdrop — fade in */}
-      <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-md"
-        style={{ animation: 'fade-in 0.2s ease-out both' }}
-      />
-
-      {/* Modal — scale + fade in */}
-      <div
-        className="relative w-full max-w-md bg-bg-secondary border border-border-custom rounded-2xl shadow-2xl ring-1 ring-white/5"
-        style={{ animation: 'modal-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) both' }}
-      >
         {/* Close button */}
         <button
           onClick={onClose}
@@ -175,7 +149,6 @@ export const RegisterConfirmModal = ({
             )}
           </button>
         </div>
-      </div>
-    </div>
+    </AnimatedModal>
   );
 };
