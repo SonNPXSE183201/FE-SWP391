@@ -15,7 +15,7 @@ import { Pagination } from '../../../components/common/Pagination';
 import { CustomSelect } from '../../../components/common/CustomSelect';
 import { useMySeries, useAllChapters } from '../hooks/useSeries';
 import { seriesStatusMatchesFilter, toSelectFilterOptions } from '../../../utils/status';
-import { parseGenreList } from '../utils/series.utils';
+import { parseGenreList, removeVietnameseAccents } from '../utils/series.utils';
 
 export const SeriesListFeature = () => {
   const navigate = useNavigate();
@@ -36,11 +36,12 @@ export const SeriesListFeature = () => {
   const filteredSeries = useMemo(() => {
     return series.filter((s) => {
       const genres = parseGenreList(s.genre);
+      const searchNormalized = removeVietnameseAccents(searchQuery).toLowerCase();
       const matchesSearch =
         !searchQuery ||
-        (s.title ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (s.synopsis ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        genres.some((g) => g.toLowerCase().includes(searchQuery.toLowerCase()));
+        removeVietnameseAccents(s.title ?? '').toLowerCase().includes(searchNormalized) ||
+        removeVietnameseAccents(s.synopsis ?? '').toLowerCase().includes(searchNormalized) ||
+        genres.some((g) => removeVietnameseAccents(g).toLowerCase().includes(searchNormalized));
       const matchesStatus = seriesStatusMatchesFilter(s.status, statusFilter);
       return matchesSearch && matchesStatus;
     });

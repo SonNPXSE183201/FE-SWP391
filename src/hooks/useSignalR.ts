@@ -252,6 +252,8 @@ export const useSignalR = () => {
     connection.on('WalletUpdated', (payload: SignalRWalletUpdatedPayload) => {
       logSignalR('WalletUpdated received:', payload);
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      queryClient.invalidateQueries({ queryKey: ['reconciliation'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'withdraw-pending'] });
     });
 
     // UnreadCountUpdated: server pushes fresh unread count

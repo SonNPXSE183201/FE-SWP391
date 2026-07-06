@@ -410,9 +410,9 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
                       updateField('amount', digits ? String(digits) : '');
                     }}
                     placeholder="350.000"
-                    className={`${inputBase} pr-9 text-base font-semibold ${errors.amount ? 'border-danger/50' : 'border-border-custom'}`}
+                    className={`${inputBase} pr-12 text-base font-semibold ${errors.amount ? 'border-danger/50' : 'border-border-custom'}`}
                   />
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm text-text-muted pointer-events-none">₫</span>
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm text-text-muted font-medium pointer-events-none">VND</span>
                 </div>
                 {errors.amount && <p className="text-[11px] text-danger mt-1">{errors.amount}</p>}
                 {/* Quick presets */}
@@ -550,7 +550,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
               ) : (
                 <>
                   <Send size={15} />
-                  Đăng lên Bảng việc làm
+                  Xác nhận giao việc
                 </>
               )}
             </button>

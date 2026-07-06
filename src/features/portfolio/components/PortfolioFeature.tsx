@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { usePortfolioStats, usePortfolioSamples, useUploadPortfolioSample } from '../hooks/usePortfolio';
 import type { PortfolioSampleDto } from '../api/portfolio.api';
+import { CustomSelect } from '../../../components/common/CustomSelect';
 import { getPagedItems } from '../../../api/apiResponse';
 import { taskApi } from '../../tasks/api/task.api';
 import { formatVND } from '../../wallet';
@@ -338,16 +339,16 @@ export const PortfolioFeature = () => {
 
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">Loại (Category)</label>
-                <select
+                <CustomSelect
+                  options={[
+                    { value: 'Lineart', label: 'Lineart (Đi nét)' },
+                    { value: 'Background', label: 'Background (Bối cảnh)' },
+                    { value: 'Screentone', label: 'Screentone (Đổ bóng)' },
+                    { value: 'Coloring', label: 'Coloring (Lên màu)' },
+                  ]}
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-bg-surface border border-border-custom rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-brand"
-                >
-                  <option value="Lineart">Lineart (Đi nét)</option>
-                  <option value="Background">Background (Bối cảnh)</option>
-                  <option value="Screentone">Screentone (Đổ bóng)</option>
-                  <option value="Coloring">Coloring (Lên màu)</option>
-                </select>
+                  onChange={(val) => setCategory(val as string)}
+                />
               </div>
 
               <div>
@@ -360,6 +361,17 @@ export const PortfolioFeature = () => {
                   className="w-full bg-bg-surface border border-border-custom rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-brand"
                   required
                 />
+                {imageUrl && (
+                  <div className="mt-3 relative h-32 rounded-xl border border-border-custom overflow-hidden bg-bg-primary flex items-center justify-center">
+                    <img 
+                      src={imageUrl} 
+                      alt="Preview" 
+                      className="h-full w-auto object-contain"
+                      onError={(e) => (e.currentTarget.style.display = 'none')}
+                      onLoad={(e) => (e.currentTarget.style.display = 'block')}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="pt-4 border-t border-border-custom flex justify-end gap-2">

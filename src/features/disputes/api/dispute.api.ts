@@ -25,7 +25,7 @@ export const disputeApi = {
   ) => {
     const numId = typeof taskId === 'string' ? parseInt(taskId, 10) : taskId;
     return axiosInstance.post<ApiResponse<boolean>>(`/api/disputes/${numId}/resolve`, {
-      AssistantRate: payload.assistantPaymentPercent,
+      AssistantRate: payload.assistantPaymentPercent / 100,
     });
   },
 };

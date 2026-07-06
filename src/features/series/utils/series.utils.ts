@@ -8,3 +8,12 @@ export const parseGenreList = (genre?: string | null): string[] => {
 
 export const resolveSeriesCover = (dto: Pick<SeriesDto, 'coverArtworkUrl'>): string =>
   resolveMediaUrl(dto.coverArtworkUrl || '');
+
+export const removeVietnameseAccents = (str: string): string => {
+  if (!str) return '';
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D');
+};
