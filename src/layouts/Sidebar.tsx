@@ -20,7 +20,6 @@ import {
   PanelLeft,
   Palette,
   BriefcaseBusiness,
-  Sparkles,
   Mailbox,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -115,7 +114,7 @@ const getNavSections = (role: UserRole, invitesCount: number = 0): NavSectionCon
           ],
         },
         {
-          title: "Công việc",
+          title: "Hồ sơ & Công việc",
           items: [
             {
               label: "Lời mời dự án",
@@ -165,18 +164,19 @@ const getNavSections = (role: UserRole, invitesCount: number = 0): NavSectionCon
           ],
         },
         {
-          title: "Biên tập",
+          title: "Nghiệp vụ Biên tập",
           items: [
             {
-              label: "Duyệt bản thảo",
-              path: "/editor/review",
-              icon: <FileText size={20} />,
+              label: "Thẩm định dự án",
+              path: "/editor/series-review",
+              icon: <BookOpen size={20} />,
             },
             {
-              label: "Annotation",
-              path: "/editor/annotations",
-              icon: <Sparkles size={20} />,
+              label: "Biên tập chương",
+              path: "/editor/chapter-review",
+              icon: <FileText size={20} />,
             },
+
             {
               label: "Phân xử tranh chấp",
               path: "/editor/disputes",
@@ -199,7 +199,7 @@ const getNavSections = (role: UserRole, invitesCount: number = 0): NavSectionCon
           ],
         },
         {
-          title: "Xuất bản",
+          title: "Nghiệp vụ Hội đồng",
           items: [
             {
               label: "Bỏ phiếu",
@@ -233,7 +233,7 @@ const getNavSections = (role: UserRole, invitesCount: number = 0): NavSectionCon
           ],
         },
         {
-          title: "Quản trị",
+          title: "Vận hành & Hệ thống",
           items: [
             {
               label: "Quản lý người dùng",

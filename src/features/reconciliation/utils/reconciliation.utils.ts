@@ -55,7 +55,7 @@ export const getReconciliationStatusHelp = (status: ReconciliationStatus): strin
     case 'Mismatch':
       return 'Cần kiểm tra — trạng thái không khớp (ví dụ VNPay thành công nhưng hệ thống thất bại).';
     case 'Missing':
-      return 'Thiếu mã ReferenceCode (F04) — không thể đối soát đầy đủ với VNPay.';
+      return 'Thiếu mã ReferenceCode — không thể đối soát đầy đủ với VNPay.';
     case 'Pending':
       return 'Giao dịch đang chờ xác nhận hoặc xử lý.';
   }

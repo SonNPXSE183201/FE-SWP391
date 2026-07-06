@@ -239,7 +239,7 @@ const buildAdminCharts = (s: AdminDashboardStatsDto): AdminDashboardCharts => ({
   userGrowth: buildTrend(s.users, lastMonthLabels(6), { seed: 31, startRatio: 0.6, volatility: 0.08 }),
   transactionTrend: buildTrend(s.transactions, lastMonthLabels(6), { seed: 37 }),
   contentBreakdown: nonEmptySlices([
-    { label: 'Series đã duyệt', value: s.series, color: C.info },
+    { label: 'Truyện đã duyệt', value: s.series, color: C.info },
     { label: 'Hồ sơ chờ duyệt', value: s.approvals, color: C.warning },
   ]),
 });

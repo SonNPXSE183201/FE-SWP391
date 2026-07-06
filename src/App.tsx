@@ -40,7 +40,8 @@ import {
 // ─── Editor Pages ───
 import {
   EditorDashboardPage,
-  ReviewPage,
+  ChapterReviewPage,
+  SeriesReviewQueuePage,
   AnnotationsPage,
   DisputesPage,
   EditorSettingsPage,
@@ -148,7 +149,8 @@ function App() {
         <Route element={<RoleGuard allowedRoles={['Editor']} />}>
           <Route element={<MainLayout />}>
             <Route path="/editor" element={<EditorDashboardPage />} />
-            <Route path="/editor/review" element={<ReviewPage />} />
+            <Route path="/editor/series-review" element={<SeriesReviewQueuePage />} />
+            <Route path="/editor/chapter-review" element={<ChapterReviewPage />} />
             <Route path="/editor/review/:seriesId" element={<ReviewSeriesPage />} />
             <Route path="/editor/annotations" element={<AnnotationsPage />} />
             <Route path="/editor/disputes" element={<DisputesPage />} />

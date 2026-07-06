@@ -20,6 +20,7 @@ import {
 import { HelpTip } from '../../../components/common/HelpTip';
 import { useReviewSeriesDetail, useSubmitToBoard, useRequireRevision } from '../hooks/useReview';
 import type { SeriesReviewDto } from '../api/review.api';
+import { getGenreLabel } from '../../series';
 import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
 import { formatVND, formatVNDInput } from '../../../utils/currency';
 
@@ -133,7 +134,7 @@ export const ReviewSeriesFeature = () => {
       },
       {
         onSuccess: () => {
-          toast.success('Đã gửi phản hồi cho Mangaka.');
+          toast.success('Đã gửi phản hồi cho Tác giả.');
           navigate('/editor/review');
         },
         onError: (err: unknown) => {
@@ -232,7 +233,7 @@ export const ReviewSeriesFeature = () => {
                 <div className="flex flex-wrap gap-1.5">
                   {genreList.map((g) => (
                     <span key={g} className="px-2 py-0.5 rounded-md bg-brand/10 text-brand text-[10px] font-medium">
-                      {g}
+                      {getGenreLabel(g)}
                     </span>
                   ))}
                 </div>
@@ -258,7 +259,7 @@ export const ReviewSeriesFeature = () => {
               <div className="bg-bg-surface border border-border-custom rounded-xl p-4 h-full">
                 <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Vốn yêu cầu</p>
                 <p className="text-xl font-bold text-text-primary mt-1">{formatVND(originalBudget)}</p>
-                <p className="text-[11px] text-text-muted mt-1">Mangaka đề xuất</p>
+                <p className="text-[11px] text-text-muted mt-1">Tác giả đề xuất</p>
               </div>
               <div className="bg-bg-surface border border-border-custom rounded-xl p-4 h-full">
                 <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Số chương</p>
@@ -281,7 +282,7 @@ export const ReviewSeriesFeature = () => {
                     <p className="text-xs font-semibold text-text-primary">Bản phác thảo</p>
                     <p className="text-[11px] text-text-muted mt-0.5">
                       {typedSeries.resourceFolderUrl
-                        ? 'Mangaka đã nộp tệp phác thảo chương mẫu.'
+                        ? 'Tác giả đã nộp tệp phác thảo chương mẫu.'
                         : 'Chưa có bản phác thảo được nộp kèm hồ sơ.'}
                     </p>
                   </div>
@@ -316,7 +317,7 @@ export const ReviewSeriesFeature = () => {
                     <>
                       Tick các mục đạt yêu cầu. Nếu <strong className="text-text-primary">đủ 4/4</strong>, hồ sơ
                       trình thẳng lên Hội đồng. Nếu chỉ mục ngân sách chưa đạt, nhập mức biên tập viên đề xuất — hồ sơ vẫn
-                      được trình Hội đồng mà không bắt Mangaka nộp lại. Các mục khác chưa đạt sẽ gửi về Mangaka chỉnh sửa.
+                      được trình Hội đồng mà không bắt Tác giả nộp lại. Các mục khác chưa đạt sẽ gửi về Tác giả chỉnh sửa.
                     </>
                   }
                   ariaLabel="Hướng dẫn đánh giá"
@@ -383,7 +384,7 @@ export const ReviewSeriesFeature = () => {
                 </p>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="px-3 py-2 rounded-lg bg-bg-surface border border-border-custom">
-                    <p className="text-[10px] text-text-muted">Mangaka đề xuất</p>
+                    <p className="text-[10px] text-text-muted">Tác giả đề xuất</p>
                     <p className="text-sm font-semibold text-text-primary whitespace-nowrap">{formatVND(originalBudget)}</p>
                   </div>
                   <input
@@ -416,7 +417,7 @@ export const ReviewSeriesFeature = () => {
                     ? 'Nhận xét tổng quan trước khi trình Hội đồng...'
                     : onlyBudgetFailed
                       ? 'Lý do điều chỉnh ngân sách (vd. cắt giảm chi phí thuê trợ lý)...'
-                      : 'Mô tả chi tiết phần Mangaka cần chỉnh sửa...'
+                      : 'Mô tả chi tiết phần Tác giả cần chỉnh sửa...'
                 }
                 maxLength={1000}
                 className="flex-1 min-h-[7rem] w-full px-4 py-3 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 resize-none"
@@ -445,7 +446,7 @@ export const ReviewSeriesFeature = () => {
               <p className="text-[10px] text-center text-text-muted">
                 {allChecked
                   ? 'Hồ sơ đạt yêu cầu — sẽ trình lên Hội đồng'
-                  : `${uncheckedItems.length} mục chưa đạt — phản hồi gửi về Mangaka`}
+                  : `${uncheckedItems.length} mục chưa đạt — phản hồi gửi về Tác giả`}
               </p>
             </div>
           </div>

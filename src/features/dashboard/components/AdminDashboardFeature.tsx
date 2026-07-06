@@ -57,7 +57,7 @@ export const AdminDashboardFeature = () => {
           navigateTo="/admin/users"
         />
         <StatCard
-          label="Số series đã duyệt"
+          label="Số truyện đã duyệt"
           value={stats.series}
           icon={BookOpen}
           color="text-info"
@@ -93,9 +93,9 @@ export const AdminDashboardFeature = () => {
               <TrendAreaChart data={charts.userGrowth} color={CHART_COLORS.brand} name="Người dùng" />
             </ChartCard>
 
-            <ChartCard title="Phân bổ nội dung" subtitle="Series & hồ sơ" icon={PieChart}>
+            <ChartCard title="Phân bổ nội dung" subtitle="Truyện & hồ sơ" icon={PieChart}>
               {charts.contentBreakdown.length > 0 ? (
-                <DonutChart data={charts.contentBreakdown} centerValue={stats.series} centerLabel="Series" />
+                <DonutChart data={charts.contentBreakdown} centerValue={stats.series} centerLabel="Truyện" />
               ) : (
                 <div className="flex items-center justify-center h-[200px] text-xs text-text-muted">
                   Chưa có dữ liệu

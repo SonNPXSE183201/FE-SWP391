@@ -90,41 +90,46 @@ const getRowHighlight = (status: ReconciliationStatus): string => {
   }
 };
 
-const TransactionTypeBadge = ({ record }: { record: ReconciliationRecord }) => {
+const TransactionTypeBadge = ({ record, size = 'sm' }: { record: ReconciliationRecord; size?: 'sm' | 'md' }) => {
   const type = inferTransactionType(record);
+  const px = size === 'md' ? 'px-2.5 py-1' : 'px-2 py-0.5';
+  const text = size === 'md' ? 'text-[11px] font-bold tracking-wide' : 'text-[10px] font-semibold';
+  const iconSize = size === 'md' ? 12 : 10;
+  const stroke = size === 'md' ? 2.5 : 2;
+
   if (type === 'deposit') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-success/10 text-success">
-        <ArrowDownToLine size={10} />
+      <span className={`inline-flex items-center gap-1.5 rounded-full shadow-sm ${px} ${text} bg-success/10 text-success`}>
+        <ArrowDownToLine size={iconSize} strokeWidth={stroke} />
         Nạp tiền
       </span>
     );
   }
   if (type === 'withdraw') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-danger/10 text-danger">
-        <ArrowUpFromLine size={10} />
+      <span className={`inline-flex items-center gap-1.5 rounded-full shadow-sm ${px} ${text} bg-danger/10 text-danger`}>
+        <ArrowUpFromLine size={iconSize} strokeWidth={stroke} />
         Rút tiền
       </span>
     );
   }
   if (type === 'funding') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-brand/10 text-brand">
-        <ArrowLeftRight size={10} />
+      <span className={`inline-flex items-center gap-1.5 rounded-full shadow-sm ${px} ${text} bg-brand/10 text-brand`}>
+        <ArrowLeftRight size={iconSize} strokeWidth={stroke} />
         Cấp vốn SX
       </span>
     );
   }
   if (type === 'platform_topup') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-info/10 text-info">
-        <ArrowDownToLine size={10} />
+      <span className={`inline-flex items-center gap-1.5 rounded-full shadow-sm ${px} ${text} bg-info/10 text-info`}>
+        <ArrowDownToLine size={iconSize} strokeWidth={stroke} />
         Nạp quỹ NXB
       </span>
     );
   }
-  return <span className="text-[10px] text-text-muted">{getTransactionTypeLabel(record)}</span>;
+  return <span className={`${text} text-text-muted`}>{getTransactionTypeLabel(record)}</span>;
 };
 
 const RECONCILIATION_HELP = (
@@ -137,11 +142,11 @@ const RECONCILIATION_HELP = (
       <strong className="text-brand">Quỹ NXB:</strong> Admin nạp quỹ vào ví hệ thống trước khi cấp vốn series.
     </li>
     <li>
-      <strong className="text-success">Cấp vốn SX (F02/F5.4):</strong> Mangaka xác nhận nhận vốn → 2 giao dịch liên kết, mã{' '}
+      <strong className="text-success">Cấp vốn SX:</strong> Tác giả xác nhận nhận vốn → 2 giao dịch liên kết, mã{' '}
       <span className="font-mono">FUND-S{'{seriesId}'}-...</span>
     </li>
     <li>
-      <strong className="text-text-secondary">Trạng thái:</strong> Khớp · Lệch · Thiếu mã (F04) · Đang chờ.
+      <strong className="text-text-secondary">Trạng thái:</strong> Khớp · Lệch · Thiếu mã · Đang chờ.
     </li>
   </ul>
 );
@@ -259,7 +264,7 @@ export const ReconciliationFeature = () => {
                   </span>
                   <span className="inline-flex items-center gap-1">
                     <ArrowLeftRight size={11} className="text-success" />
-                    Cấp vốn Mangaka
+                    Cấp vốn Tác giả
                   </span>
                 </p>
               </div>
@@ -440,7 +445,7 @@ export const ReconciliationFeature = () => {
             <p className="text-sm text-text-muted max-w-md mx-auto mb-4">
               {hasActiveFilters
                 ? 'Thử xóa bộ lọc hoặc mở rộng khoảng thời gian.'
-                : 'Giao dịch VNPay, nạp quỹ NXB và cấp vốn Mangaka sẽ hiển thị tại đây.'}
+                : 'Giao dịch VNPay, nạp quỹ NXB và cấp vốn Tác giả sẽ hiển thị tại đây.'}
             </p>
             {hasActiveFilters ? (
               <button type="button" onClick={clearFilters} className="text-sm text-brand font-semibold hover:underline cursor-pointer bg-transparent border-none">
@@ -543,7 +548,7 @@ export const ReconciliationFeature = () => {
           record={selectedRecord}
           statusCfg={getStatusConfig(toReconciliationStatus(selectedRecord.status))}
           onClose={() => setSelectedRecord(null)}
-          typeBadge={<TransactionTypeBadge record={selectedRecord} />}
+          typeBadge={<TransactionTypeBadge record={selectedRecord} size="md" />}
         />
       )}
 
