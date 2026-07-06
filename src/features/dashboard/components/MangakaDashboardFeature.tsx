@@ -42,7 +42,7 @@ export const MangakaDashboardFeature = () => {
   }
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="space-y-6">
       {/* ─── Welcome Banner ─── */}
       <div className="relative overflow-hidden bg-gradient-to-r from-brand/[0.08] via-bg-secondary to-secondary/[0.06] border border-brand/10 rounded-2xl p-6 lg:p-8">
         {/* Decorative */}
@@ -82,7 +82,7 @@ export const MangakaDashboardFeature = () => {
       </div>
 
       {/* ─── Stat Cards ─── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-stagger>
         <StatCard
           label="Bộ truyện đang hoạt động"
           value={stats.activeSeries}
@@ -116,7 +116,7 @@ export const MangakaDashboardFeature = () => {
 
       {/* ─── Charts ─── */}
       {charts && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" data-stagger>
           <ChartCard
             title="Nhuận bút 6 tháng gần đây"
             subtitle="Tổng nhuận bút nhận theo tháng"

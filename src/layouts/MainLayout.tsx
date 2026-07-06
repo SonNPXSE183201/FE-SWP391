@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { useSignalR } from '../hooks/useSignalR';
+import { AnimatedPage } from '../components/common/animation';
 
 export const MainLayout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -45,7 +46,9 @@ export const MainLayout = () => {
 
         {/* Page content */}
         <main className="flex-1 p-6 max-w-[1440px] w-full">
-          <Outlet />
+          <AnimatedPage>
+            <Outlet />
+          </AnimatedPage>
         </main>
       </div>
     </div>

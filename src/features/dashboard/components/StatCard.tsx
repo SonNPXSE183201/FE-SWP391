@@ -31,7 +31,9 @@ export const StatCard = ({
   return (
     <div
       onClick={handleClick}
-      className={`bg-bg-secondary border border-border-custom rounded-xl p-5 transition-all duration-300 hover:border-brand/20 hover:shadow-md-custom ${handleClick ? 'cursor-pointer hover:-translate-y-0.5' : ''} group`}
+      className={`ui-card-interactive bg-bg-secondary border border-border-custom rounded-xl p-5 hover:border-brand/20 group ${
+        handleClick ? '' : 'cursor-default hover:translate-y-0 hover:shadow-none active:scale-100'
+      }`}
     >
       <div className="flex items-start justify-between">
         <div className={`w-10 h-10 rounded-xl ${color.replace('text-', 'bg-')}/10 flex items-center justify-center`}>

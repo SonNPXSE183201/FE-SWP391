@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { createPortal } from 'react-dom';
+import { AnimatedModal } from '../../../components/common/animation';
 import toast from 'react-hot-toast';
 import {
   X, RotateCcw, User, Calendar, FileText,
@@ -346,10 +346,13 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
     </div>
   );
 
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-5xl max-h-full overflow-hidden shadow-lg-custom animate-scale-in flex flex-col">
+  return (
+    <>
+    <AnimatedModal
+      open
+      onClose={onClose}
+      panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-5xl max-h-full overflow-hidden shadow-lg-custom flex flex-col"
+    >
         {/* Header */}
         <div className="shrink-0 bg-bg-secondary border-b border-border-custom px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
@@ -609,10 +612,14 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
             </button>
           )}
         </div>
-      </div>
-      {showDisputeModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-bg-primary w-full max-w-md rounded-2xl shadow-2xl border border-border-custom p-6">
+    </AnimatedModal>
+    {showDisputeModal && (
+      <AnimatedModal
+        open
+        onClose={() => setShowDisputeModal(false)}
+        zIndex={100}
+        panelClassName="bg-bg-primary w-full max-w-md rounded-2xl shadow-2xl border border-border-custom p-6"
+      >
             <h3 className="text-lg font-bold text-text-primary mb-2 flex items-center gap-2">
               <AlertCircle className="text-warning" size={20} />
               Báo cáo sự cố / Tranh chấp
@@ -658,11 +665,9 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
                 Xác nhận báo cáo
               </button>
             </div>
-          </div>
-        </div>
-      )}
-    </div>,
-    document.body,
+      </AnimatedModal>
+    )}
+    </>
   );
 };
 

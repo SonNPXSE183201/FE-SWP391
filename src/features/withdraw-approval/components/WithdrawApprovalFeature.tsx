@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { AnimatedModal } from '../../../components/common/animation';
 import {
   ArrowUpFromLine,
   Loader2,
@@ -19,6 +19,14 @@ import type { PendingWithdrawal } from '../types/withdrawApproval.types';
 import { formatVND } from '../../wallet/constants';
 import { formatTransactionDateTime } from '../../wallet/utils';
 import { getRequesterRoleLabel, getRequesterRoleStyle } from '../utils/withdrawApproval.utils';
+import {
+  MotionStagger,
+  MotionItem,
+  MotionTableRow,
+  containerVariants,
+  listItemVariants,
+} from '../../../components/common/animation';
+import { motion } from 'framer-motion';
 
 const displayUser = (tx: PendingWithdrawal) =>
   tx.toUserFullName || tx.fromUserFullName || tx.toUserName || tx.fromUserName || `User #${tx.toUserId ?? tx.fromUserId ?? '—'}`;
@@ -69,7 +77,7 @@ export const WithdrawApprovalFeature = () => {
   };
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="space-y-6">
       <div className="page-header">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-danger/10 flex items-center justify-center">
@@ -77,28 +85,34 @@ export const WithdrawApprovalFeature = () => {
           </div>
           <div>
             <h1 className="page-header__title">Duyệt rút tiền</h1>
-            <p className="page-header__subtitle">Phê duyệt hoặc từ chối yêu cầu rút tiền từ Mangaka / Assistant</p>
+            <p className="page-header__subtitle">Phê duyệt hoặc từ chối yêu cầu rút tiền từ Tác giả / Trợ lý</p>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-bg-secondary border border-border-custom rounded-xl p-4">
+      <MotionStagger className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <MotionItem>
+        <div className="ui-card bg-bg-secondary border border-border-custom rounded-xl p-4 h-full">
           <span className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Chờ duyệt</span>
           <p className="text-2xl font-bold text-text-primary mt-1">{filtered.length}</p>
         </div>
-        <div className="bg-bg-secondary border border-border-custom rounded-xl p-4">
+        </MotionItem>
+        <MotionItem>
+        <div className="ui-card bg-bg-secondary border border-border-custom rounded-xl p-4 h-full">
           <span className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Tổng tiền chờ</span>
           <p className="text-lg font-bold text-danger mt-1">{formatVND(totalAmount)}</p>
         </div>
-        <div className="bg-bg-secondary border border-border-custom rounded-xl p-4">
+        </MotionItem>
+        <MotionItem>
+        <div className="ui-card bg-bg-secondary border border-border-custom rounded-xl p-4 h-full">
           <span className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Trạng thái</span>
           <p className="text-sm font-medium text-warning mt-2 flex items-center gap-2">
             <Clock size={14} />
-            {isFetching ? 'Đang cập nhật...' : 'Pending — chờ Admin'}
+            {isFetching ? 'Đang cập nhật...' : 'Chờ duyệt — Quản trị viên'}
           </p>
         </div>
-      </div>
+        </MotionItem>
+      </MotionStagger>
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="relative flex-1 max-w-md">
@@ -152,9 +166,17 @@ export const WithdrawApprovalFeature = () => {
                   <th className="px-5 py-4 font-medium text-right">Thao tác</th>
                 </tr>
               </thead>
-              <tbody>
+              <motion.tbody
+                initial="hidden"
+                animate="visible"
+                variants={containerVariants}
+              >
                 {filtered.map((tx) => (
-                  <tr key={tx.id} className="border-b border-border-custom/60 hover:bg-bg-surface/50 transition-colors">
+                  <MotionTableRow
+                    key={tx.id}
+                    variants={listItemVariants}
+                    className="border-b border-border-custom/60 hover:bg-bg-surface/50 transition-colors"
+                  >
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
                         <User size={14} className="text-text-muted shrink-0" />
@@ -184,18 +206,16 @@ export const WithdrawApprovalFeature = () => {
                         Xem & duyệt
                       </button>
                     </td>
-                  </tr>
+                  </MotionTableRow>
                 ))}
-              </tbody>
+              </motion.tbody>
             </table>
           </div>
         )}
       </div>
 
-      {selected && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal} />
-          <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-lg shadow-lg-custom animate-modal-enter">
+      {selected && (
+        <AnimatedModal open onClose={closeModal} panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-lg shadow-lg-custom">
             <div className="px-6 py-4 border-b border-border-custom flex items-center justify-between">
               <div>
                 <h2 className="text-base font-semibold text-text-primary">Chi tiết yêu cầu rút tiền</h2>
@@ -294,9 +314,7 @@ export const WithdrawApprovalFeature = () => {
                 Phê duyệt
               </button>
             </div>
-          </div>
-        </div>,
-        document.body,
+        </AnimatedModal>
       )}
     </div>
   );

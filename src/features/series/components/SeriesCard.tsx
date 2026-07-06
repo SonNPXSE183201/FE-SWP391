@@ -54,9 +54,7 @@ export const SeriesCard = ({ series, index }: { series: SeriesCardData; index: n
 
       onClick={() => navigate(`/mangaka/series/${series.id}`)}
 
-      className="group bg-bg-secondary border border-border-custom rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:border-brand/30 hover:shadow-md-custom hover:-translate-y-1"
-
-      style={{ animationDelay: `${index * 0.05}s` }}
+      className="group ui-card-interactive bg-bg-secondary border border-border-custom rounded-xl overflow-hidden cursor-pointer hover:border-brand/30"
 
     >
 
@@ -194,9 +192,7 @@ export const SeriesRow = ({ series, index }: { series: SeriesCardData; index: nu
 
       onClick={() => navigate(`/mangaka/series/${series.id}`)}
 
-      className="group flex items-center gap-4 bg-bg-secondary border border-border-custom rounded-xl p-4 cursor-pointer transition-all duration-200 hover:border-brand/30 hover:bg-bg-surface/50"
-
-      style={{ animationDelay: `${index * 0.03}s` }}
+      className="group ui-card-interactive flex items-center gap-4 bg-bg-secondary border border-border-custom rounded-xl p-4 cursor-pointer hover:border-brand/30 hover:bg-bg-surface/50"
 
     >
 

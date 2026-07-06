@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { createPortal } from 'react-dom';
+import { AnimatedModal } from '../../../components/common/animation';
 import toast from 'react-hot-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -199,10 +199,13 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
 
   // ─── Success Overlay ───────────────────────────────────────
   if (success) {
-    return createPortal(
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-        <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-lg shadow-lg-custom animate-scale-in p-12 flex flex-col items-center gap-4">
+    return (
+      <AnimatedModal
+        open
+        onClose={() => {}}
+        closeOnBackdrop={false}
+        panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-lg shadow-lg-custom p-12 flex flex-col items-center gap-4"
+      >
           <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center animate-bounce">
             <CheckCircle2 size={32} className="text-success" />
           </div>
@@ -210,9 +213,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
           <p className="text-sm text-text-muted text-center">
             Khoá <span className="text-text-primary font-semibold">{formatVND(amountNum)}</span> · Trợ lý sẽ nhận thông báo
           </p>
-        </div>
-      </div>,
-      document.body,
+      </AnimatedModal>
     );
   }
 
@@ -220,10 +221,13 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
   const inputBase =
     'w-full px-3.5 py-2.5 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/60 focus:ring-2 focus:ring-brand/15 transition-all';
 
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-4xl shadow-lg-custom animate-scale-in flex flex-col overflow-hidden">
+  return (
+    <AnimatedModal
+      open
+      onClose={onClose}
+      backdropClassName="absolute inset-0 bg-black/70 backdrop-blur-sm"
+      panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-4xl shadow-lg-custom flex flex-col overflow-hidden"
+    >
 
         {/* ─── Header ─── */}
         <div className="relative px-6 py-4 border-b border-border-custom flex items-center justify-between bg-gradient-to-r from-brand/10 via-brand/[0.04] to-transparent">
@@ -556,8 +560,6 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
             </button>
           </div>
         </div>
-      </div>
-    </div>,
-    document.body,
+    </AnimatedModal>
   );
 };

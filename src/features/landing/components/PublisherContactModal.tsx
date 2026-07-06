@@ -1,4 +1,5 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useCallback, useState } from 'react';
+import { AnimatedModal } from '../../../components/common/animation';
 import {
   X,
   Phone,
@@ -9,7 +10,6 @@ import {
   Copy,
   CheckCircle2,
 } from 'lucide-react';
-import { useState } from 'react';
 
 interface PublisherContactModalProps {
   isOpen: boolean;
@@ -56,23 +56,7 @@ export const PublisherContactModal = ({
   isOpen,
   onClose,
 }: PublisherContactModalProps) => {
-  const overlayRef = useRef<HTMLDivElement>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
-
-  // Close on Escape
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden';
-    }
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
-    };
-  }, [isOpen, onClose]);
 
   const handleCopy = useCallback(
     (value: string, index: number) => {
@@ -84,29 +68,13 @@ export const PublisherContactModal = ({
     []
   );
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={(e) => {
-        if (e.target === overlayRef.current) onClose();
-      }}
+    <AnimatedModal
+      open={isOpen}
+      onClose={onClose}
+      backdropClassName="absolute inset-0 bg-black/70 backdrop-blur-md"
+      panelClassName="relative w-full max-w-2xl bg-bg-secondary border border-border-custom rounded-2xl shadow-2xl ring-1 ring-white/5 overflow-hidden"
     >
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-md"
-        style={{ animation: 'fade-in 0.2s ease-out both' }}
-      />
-
-      {/* Modal */}
-      <div
-        className="relative w-full max-w-2xl bg-bg-secondary border border-border-custom rounded-2xl shadow-2xl ring-1 ring-white/5 overflow-hidden"
-        style={{
-          animation: 'modal-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) both',
-        }}
-      >
         {/* ═══ TOP GRADIENT ACCENT ═══ */}
         <div className="h-[3px] w-full bg-gradient-to-r from-brand via-secondary to-[#e84393]" />
 
@@ -295,7 +263,6 @@ export const PublisherContactModal = ({
 
         {/* ═══ BOTTOM GRADIENT ═══ */}
         <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-brand/30 to-transparent" />
-      </div>
-    </div>
+    </AnimatedModal>
   );
 };

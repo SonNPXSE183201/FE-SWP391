@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { KeyRound, Loader2, Eye, EyeOff, X, ShieldCheck } from 'lucide-react';
+import { AnimatedModal } from '../../../components/common/animation';
 import { authApi } from '../api/auth.api';
 import { useAuthStore } from '../../../stores/authStore';
 interface ChangePasswordModalProps {
@@ -97,14 +98,11 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
     };
     if (!isOpen) return null;
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Backdrop */}
-            <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
-                onClick={handleClose}
-            />
-            {/* Modal */}
-            <div className="relative w-full max-w-md mx-4 animate-scale-in">
+        <AnimatedModal
+            open={isOpen}
+            onClose={handleClose}
+            panelClassName="relative w-full max-w-md mx-4"
+        >
                 {/* Shimmer border */}
                 <div
                     className="absolute -inset-[1px] rounded-2xl opacity-60 blur-[1px] animate-shimmer-border"
@@ -254,7 +252,6 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
                         </div>
                     </form>
                 </div>
-            </div>
-        </div>
+        </AnimatedModal>
     );
 };

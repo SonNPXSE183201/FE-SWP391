@@ -12,10 +12,10 @@ interface HeaderProps {
 
 // Breadcrumb map — maps path segments to readable labels
 const pathLabels: Record<string, string> = {
-  mangaka: 'Mangaka',
+  mangaka: 'Tác giả',
   assistant: 'Trợ lý vẽ',
   editor: 'Biên tập viên',
-  board: 'Hội đồng BT',
+  board: 'Hội đồng Biên tập',
   admin: 'Quản trị viên',
   series: 'Bộ truyện',
   manuscripts: 'Bản thảo',
@@ -30,11 +30,14 @@ const pathLabels: Record<string, string> = {
   disputes: 'Tranh chấp',
   voting: 'Bỏ phiếu',
   ranking: 'Xếp hạng',
+  'ranking-data': 'Nhập liệu xếp hạng',
   schedule: 'Lịch XB',
   users: 'Người dùng',
   roles: 'Phân quyền',
   contracts: 'Hợp đồng',
   reconciliation: 'Đối soát',
+  'withdraw-approval': 'Duyệt rút tiền',
+  'board-voting': 'Biểu quyết HĐ',
   settings: 'Cài đặt',
 };
 
@@ -66,7 +69,7 @@ export const Header = ({ onMobileMenuToggle }: HeaderProps) => {
         </button>
 
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-1 text-sm" aria-label="Breadcrumb">
+        <nav key={location.pathname} className="flex items-center gap-1 text-sm animate-fade-in" aria-label="Breadcrumb">
           {breadcrumbs.map((crumb, index) => (
             <span key={crumb.path} className="flex items-center gap-1">
               {index > 0 && (

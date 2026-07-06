@@ -22,6 +22,8 @@ import { usePagination } from '../../../hooks/usePagination';
 import { Pagination } from '../../../components/common/Pagination';
 import { CustomSelect } from '../../../components/common/CustomSelect';
 import { HelpTip } from '../../../components/common/HelpTip';
+import { MotionStagger, MotionItem, MotionTableRow, listItemVariants, containerVariants } from '../../../components/common/animation';
+import { motion } from 'framer-motion';
 import { normalizeTaskStatus, taskStatusMatchesFilter, toSelectFilterOptions } from '../../../utils/status';
 
 export const MangakaTasksFeature = () => {
@@ -102,7 +104,7 @@ export const MangakaTasksFeature = () => {
   }
 
   return (
-    <div className="animate-fade-in">
+    <div>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -138,10 +140,11 @@ export const MangakaTasksFeature = () => {
       </div>
 
       {/* Stats (Dashboard cards) */}
-      <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatPill label="Tổng công việc" value={String(stats.total)} icon={ClipboardList} tone="text-brand" />
-        <StatPill label="Đang làm" value={String(stats.inProgress)} icon={Clock} tone="text-info" />
-        <StatPill label="Chờ duyệt" value={String(stats.pendingReview)} icon={Eye} tone="text-warning" />
+      <MotionStagger className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <MotionItem><StatPill label="Tổng công việc" value={String(stats.total)} icon={ClipboardList} tone="text-brand" /></MotionItem>
+        <MotionItem><StatPill label="Đang làm" value={String(stats.inProgress)} icon={Clock} tone="text-info" /></MotionItem>
+        <MotionItem><StatPill label="Chờ duyệt" value={String(stats.pendingReview)} icon={Eye} tone="text-warning" /></MotionItem>
+        <MotionItem>
         <StatPill
           label="Tiền tạm giữ"
           value={formatVND(stats.totalLocked)}
@@ -155,7 +158,8 @@ export const MangakaTasksFeature = () => {
             </div>
           )}
         />
-      </div>
+        </MotionItem>
+      </MotionStagger>
 
       {/* Filters */}
       <div className="mt-4 bg-bg-secondary border border-border-custom rounded-xl p-3">
@@ -241,15 +245,21 @@ export const MangakaTasksFeature = () => {
                 <th className="px-4 py-3 font-semibold text-right">Hành động</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border-custom">
+            <motion.tbody
+              className="divide-y divide-border-custom"
+              initial="hidden"
+              animate="visible"
+              variants={containerVariants}
+            >
               {pagination.paginatedData.map((task) => {
                 const statusCfg = getTaskStatusConfig(task.status);
                 const dl = formatDeadline(task.deadline || '');
                 const reviewable = REVIEWABLE_TASK_STATUSES.includes(normalizeTaskStatus(task.status));
 
                 const mainRow = (
-                  <tr
+                  <MotionTableRow
                     key={task.id}
+                    variants={listItemVariants}
                     onClick={() => reviewable && setReviewTask(task)}
                     className={`group hover:bg-bg-surface transition-colors ${reviewable ? 'cursor-pointer' : ''}`}
                   >
@@ -307,7 +317,7 @@ export const MangakaTasksFeature = () => {
                         </button>
                       )}
                     </td>
-                  </tr>
+                  </MotionTableRow>
                 );
 
                 const extensionRow = task.extensionStatus === 'Pending' ? (
@@ -347,7 +357,7 @@ export const MangakaTasksFeature = () => {
 
                 return [mainRow, extensionRow];
               })}
-            </tbody>
+            </motion.tbody>
           </table>
         </div>
       </div>

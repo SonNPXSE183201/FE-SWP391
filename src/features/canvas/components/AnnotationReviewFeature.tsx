@@ -15,6 +15,8 @@ import {
 } from '../hooks/useCanvasData';
 import type { AnnotationType } from '../../../types/status.types';
 import type { CanvasAnnotation } from '../types/canvas.types';
+import { AnimatePresence, motion } from 'framer-motion';
+import { canvasPageVariants, canvasShellTransition } from '../../../components/common/animation';
 
 interface AnnotationReviewFeatureProps {
   chapterId?: string;
@@ -91,17 +93,27 @@ export const AnnotationReviewFeature = ({ chapterId = 'ch-1' }: AnnotationReview
 
   if (!currentPage) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4 animate-fade-in">
+      <motion.div
+        className="flex flex-col items-center justify-center py-20 gap-4"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={canvasShellTransition}
+      >
         <ImageOff size={48} className="text-text-muted" />
         <p className="text-text-secondary">Không tìm thấy trang nào để review</p>
-      </div>
+      </motion.div>
     );
   }
 
   return (
     <>
       <MobileCanvasWarning />
-      <div className="hidden md:flex flex-col gap-4 animate-fade-in h-[calc(100vh-120px)]">
+      <motion.div
+        className="hidden md:flex flex-col gap-4 h-[calc(100vh-120px)]"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={canvasShellTransition}
+      >
         {/* Header */}
         <div className="flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
@@ -146,6 +158,15 @@ export const AnnotationReviewFeature = ({ chapterId = 'ch-1' }: AnnotationReview
         <div className="flex gap-4 flex-1 min-h-0">
           {/* Canvas */}
           <div className="flex-1 relative bg-bg-secondary border border-border-custom rounded-xl overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={pageId}
+                className="w-full h-full"
+                variants={canvasPageVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+              >
             <CanvasViewer
               imageUrl={currentPage.imageUrl}
               regions={regions}
@@ -156,6 +177,8 @@ export const AnnotationReviewFeature = ({ chapterId = 'ch-1' }: AnnotationReview
               onAnnotationSelect={setSelectedAnnotation}
               className="w-full h-full"
             />
+              </motion.div>
+            </AnimatePresence>
 
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
               <CanvasToolbar
@@ -260,7 +283,7 @@ export const AnnotationReviewFeature = ({ chapterId = 'ch-1' }: AnnotationReview
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </>
   );
 };

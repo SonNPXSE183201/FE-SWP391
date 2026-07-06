@@ -107,7 +107,7 @@ const getNavSections = (role: UserRole, invitesCount: number = 0): NavSectionCon
           title: "Tổng quan",
           items: [
             {
-              label: "Dashboard",
+              label: "Bảng tin",
               path: "/assistant",
               icon: <LayoutDashboard size={20} />,
             },
@@ -157,7 +157,7 @@ const getNavSections = (role: UserRole, invitesCount: number = 0): NavSectionCon
           title: "Tổng quan",
           items: [
             {
-              label: "Dashboard",
+              label: "Bảng tin",
               path: "/editor",
               icon: <LayoutDashboard size={20} />,
             },
@@ -192,7 +192,7 @@ const getNavSections = (role: UserRole, invitesCount: number = 0): NavSectionCon
           title: "Tổng quan",
           items: [
             {
-              label: "Dashboard",
+              label: "Bảng tin",
               path: "/board",
               icon: <LayoutDashboard size={20} />,
             },
@@ -212,6 +212,11 @@ const getNavSections = (role: UserRole, invitesCount: number = 0): NavSectionCon
               icon: <BarChart3 size={20} />,
             },
             {
+              label: "Nhập liệu xếp hạng",
+              path: "/board/ranking-data",
+              icon: <FileSignature size={20} />,
+            },
+            {
               label: "Lịch xuất bản",
               path: "/board/schedule",
               icon: <Calendar size={20} />,
@@ -226,7 +231,7 @@ const getNavSections = (role: UserRole, invitesCount: number = 0): NavSectionCon
           title: "Tổng quan",
           items: [
             {
-              label: "Dashboard",
+              label: "Bảng tin",
               path: "/admin",
               icon: <LayoutDashboard size={20} />,
             },
@@ -288,7 +293,7 @@ export const Sidebar = ({
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-[35] bg-black/50 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-[35] bg-black/50 backdrop-blur-sm lg:hidden animate-sidebar-overlay"
           onClick={onCloseMobile}
         />
       )}
@@ -329,7 +334,7 @@ export const Sidebar = ({
                 const isActive =
                   item.path === `/${user.role.toLowerCase()}`
                     ? location.pathname === item.path
-                    : location.pathname.startsWith(item.path);
+                    : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
 
                 return (
                   <NavLink
@@ -337,8 +342,8 @@ export const Sidebar = ({
                     to={item.path}
                     title={collapsed ? item.label : undefined}
                     className={`
-                      group flex items-center gap-2 my-0.5 rounded-lg-custom text-sm font-medium
-                      transition-all duration-200 no-underline border border-transparent
+                      ui-nav-item group flex items-center gap-2 my-0.5 rounded-lg-custom text-sm font-medium
+                      no-underline border border-transparent
                       ${collapsed ? "justify-center p-2.5" : "px-4 py-2.5"}
                       ${
                         isActive

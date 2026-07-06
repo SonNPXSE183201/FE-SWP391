@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { AnimatedModal } from '../../../components/common/animation';
 import {
   Calendar, ChevronLeft, ChevronRight, Loader2, BookOpen, User,
   X, CheckCircle2, CalendarClock, GripVertical,
@@ -12,6 +12,7 @@ import {
   formatMonthTitle, isSameDay, isSameMonth, toDateKey, toMonthKey,
 } from '../constants';
 import type { ScheduleItem } from '../types';
+import { MotionStagger, MotionItem } from '../../../components/common/animation';
 
 const MAX_VISIBLE_PER_DAY = 3;
 
@@ -91,7 +92,7 @@ export const PublishScheduleFeature = () => {
   };
 
   return (
-    <div className="animate-fade-in">
+    <div>
       {/* ─── Header ─── */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
@@ -159,7 +160,7 @@ export const PublishScheduleFeature = () => {
           </div>
 
           {/* Day cells */}
-          <div className="grid grid-cols-7">
+          <MotionStagger className="grid grid-cols-7">
             {grid.map((date) => {
               const key = toDateKey(date);
               const inMonth = isSameMonth(date, viewMonth);
@@ -168,8 +169,8 @@ export const PublishScheduleFeature = () => {
               const visible = dayItems.slice(0, MAX_VISIBLE_PER_DAY);
               const hidden = dayItems.length - visible.length;
               return (
+                <MotionItem key={key}>
                 <div
-                  key={key}
                   onDragOver={(e) => { e.preventDefault(); setDragOverKey(key); }}
                   onDragLeave={() => setDragOverKey((k) => (k === key ? null : k))}
                   onDrop={(e) => { e.preventDefault(); handleDrop(date); }}
@@ -219,17 +220,16 @@ export const PublishScheduleFeature = () => {
                     )}
                   </div>
                 </div>
+                </MotionItem>
               );
             })}
-          </div>
+          </MotionStagger>
         </div>
       )}
 
       {/* ─── Detail / reschedule modal ─── */}
-      {selected && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelected(null)} />
-          <div className="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-xl w-full max-w-md animate-fade-in">
+      {selected && (
+        <AnimatedModal open onClose={() => setSelected(null)} panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-xl w-full max-w-md">
             <div className="flex items-center justify-between p-5 border-b border-border-custom">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center">
@@ -301,9 +301,7 @@ export const PublishScheduleFeature = () => {
                 </button>
               )}
             </div>
-          </div>
-        </div>,
-        document.body,
+        </AnimatedModal>
       )}
     </div>
   );

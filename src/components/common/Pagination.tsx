@@ -56,6 +56,7 @@ export const Pagination = ({
     <div
       id="pagination-bar"
       className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 pt-5 border-t border-border-custom"
+      data-reveal
     >
       {/* Item counter */}
       <div className="text-xs text-text-muted order-2 sm:order-1">
@@ -128,7 +129,7 @@ export const Pagination = ({
               aria-label={`Trang ${item}`}
               aria-current={isActive ? 'page' : undefined}
               className={`
-                flex items-center justify-center w-8 h-8 rounded-lg text-sm font-medium
+                ui-btn-press flex items-center justify-center w-8 h-8 rounded-lg text-sm font-medium
                 border transition-all duration-200 cursor-pointer
                 ${isActive
                   ? 'bg-brand text-white border-brand shadow-brand'

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { createPortal } from 'react-dom';
+import { AnimatedModal } from '../../../components/common/animation';
 import toast from 'react-hot-toast';
 import {
   Shield,
@@ -26,6 +26,13 @@ import {
 import { useDisputes, useDisputeDetail, useResolveDispute } from '../hooks/useDispute';
 import type { DisputeListItemDto, DisputeEvidenceDto } from '../api/dispute.api';
 import { formatVND } from '../../../utils/currency';
+import {
+  MotionStagger,
+  MotionItem,
+  MotionListItem,
+  containerVariants,
+} from '../../../components/common/animation';
+import { motion } from 'framer-motion';
 
 // ─── Helpers ───
 
@@ -173,7 +180,7 @@ export const DisputeManagementFeature = () => {
     const assistantEvidence = evidenceList.filter(e => e.submittedBy === 'Assistant');
 
     return (
-      <div className="animate-fade-in">
+      <div>
         {/* ─── Header ─── */}
         <div className="flex items-center gap-3 mb-6">
           <button
@@ -195,9 +202,9 @@ export const DisputeManagementFeature = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <MotionStagger className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* ─── LEFT: Task Info + Evidence ─── */}
-          <div className="lg:col-span-3 space-y-5">
+          <MotionItem className="lg:col-span-3 space-y-5">
             {/* Task Info */}
             <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
               <div className="flex items-center gap-2 mb-4">
@@ -293,10 +300,10 @@ export const DisputeManagementFeature = () => {
                 </div>
               )}
             </div>
-          </div>
+          </MotionItem>
 
           {/* ─── RIGHT: Participants + Resolve Action ─── */}
-          <div className="lg:col-span-2 space-y-5">
+          <MotionItem className="lg:col-span-2 space-y-5">
             {/* Parties */}
             <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
               <div className="flex items-center gap-2 mb-4">
@@ -402,20 +409,18 @@ export const DisputeManagementFeature = () => {
                 )}
               </div>
             </div>
-          </div>
-        </div>
+          </MotionItem>
+        </MotionStagger>
 
         {/* ═══════ RESOLVE MODAL ═══════ */}
-        {showResolveModal && createPortal(
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-            {/* Backdrop */}
-            <div 
-              className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity duration-300" 
-              onClick={() => setShowResolveModal(false)} 
-            />
-
-            {/* Modal */}
-            <div className="relative bg-bg-primary border border-border-custom rounded-2xl shadow-xl w-full max-w-2xl animate-fade-in overflow-hidden">
+        {showResolveModal && (
+          <AnimatedModal
+            open
+            onClose={() => setShowResolveModal(false)}
+            zIndex={100}
+            backdropClassName="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity duration-300"
+            panelClassName="relative bg-bg-primary border border-border-custom rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden"
+          >
               {/* Header */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-border-custom bg-bg-secondary">
                 <div className="flex items-center gap-2">
@@ -533,9 +538,7 @@ export const DisputeManagementFeature = () => {
                   Xác nhận phân xử
                 </button>
               </div>
-            </div>
-          </div>,
-          document.body,
+          </AnimatedModal>
         )}
       </div>
     );
@@ -545,7 +548,7 @@ export const DisputeManagementFeature = () => {
   //  LIST VIEW
   // ═══════════════════════════════════════════
   return (
-    <div className="animate-fade-in">
+    <div>
       {/* ─── Header ─── */}
       <div className="page-header">
         <div className="flex items-center gap-3">
@@ -624,14 +627,19 @@ export const DisputeManagementFeature = () => {
       )}
 
       {/* ─── Dispute Cards ─── */}
-      <div className="space-y-3">
+      <motion.div
+        className="space-y-3"
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+      >
         {!listLoading && filteredDisputes.map((dispute: DisputeListItemDto) => {
           const sc = statusConfig[dispute.status ?? 'Open'] ?? statusConfig.Open;
           return (
+            <MotionListItem key={dispute.id}>
             <div
-              key={dispute.id}
               onClick={() => setSelectedDisputeId(dispute.id ?? 0)}
-              className="bg-bg-secondary border border-border-custom rounded-xl p-5 hover:border-brand/20 transition-all duration-200 cursor-pointer group"
+              className="ui-card-interactive bg-bg-secondary border border-border-custom rounded-xl p-5 hover:border-brand/20 cursor-pointer group"
             >
               <div className="flex items-center gap-4">
                 {/* Icon */}
@@ -676,9 +684,10 @@ export const DisputeManagementFeature = () => {
                 <ChevronRight size={16} className="text-text-muted group-hover:text-brand transition-colors flex-shrink-0" />
               </div>
             </div>
+            </MotionListItem>
           );
         })}
-      </div>
+      </motion.div>
     </div>
   );
 };

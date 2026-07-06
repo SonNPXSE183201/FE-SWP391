@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { createPortal } from 'react-dom';
+import { AnimatedModal } from '../../../components/common/animation';
 import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { Upload, X, ImagePlus, BookOpen, AlertCircle, CheckCircle2 } from 'lucide-react';
@@ -113,10 +113,12 @@ export const UploadChapterModal = ({ onClose, seriesId: preselectedSeriesId }: U
   // Compute total file size for display
   const totalSizeMB = (pages.reduce((acc, f) => acc + f.size, 0) / (1024 * 1024)).toFixed(1);
 
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-lg-custom animate-modal-enter">
+  return (
+    <AnimatedModal
+      open
+      onClose={onClose}
+      panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-lg-custom"
+    >
         {/* Header */}
         <div className="sticky top-0 z-10 bg-bg-secondary border-b border-border-custom px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
@@ -298,8 +300,6 @@ export const UploadChapterModal = ({ onClose, seriesId: preselectedSeriesId }: U
             )}
           </button>
         </div>
-      </div>
-    </div>,
-    document.body,
+    </AnimatedModal>
   );
 };

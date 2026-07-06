@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, UserPlus, Loader2 } from 'lucide-react';
+import { AnimatedModal } from '../../../components/common/animation';
 import { toast } from 'react-hot-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../../admin';
@@ -101,8 +102,11 @@ export const CreateUserModal = ({ onClose }: CreateUserModalProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-bg-primary w-full max-w-md rounded-2xl border border-border-custom shadow-2xl overflow-hidden animate-slide-up">
+    <AnimatedModal
+      open
+      onClose={onClose}
+      panelClassName="bg-bg-primary w-full max-w-md rounded-2xl border border-border-custom shadow-2xl overflow-hidden"
+    >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border-custom bg-bg-secondary/50">
           <div className="flex items-center gap-2">
@@ -262,7 +266,6 @@ export const CreateUserModal = ({ onClose }: CreateUserModalProps) => {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </AnimatedModal>
   );
 };

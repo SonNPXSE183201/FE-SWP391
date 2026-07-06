@@ -2465,6 +2465,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProfileResponseDtoApiResponse"];
+                        "application/json": components["schemas"]["ProfileResponseDtoApiResponse"];
+                        "text/json": components["schemas"]["ProfileResponseDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateProfileDto"];
+                    "text/json": components["schemas"]["UpdateProfileDto"];
+                    "application/*+json": components["schemas"]["UpdateProfileDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProfileResponseDtoApiResponse"];
+                        "application/json": components["schemas"]["ProfileResponseDtoApiResponse"];
+                        "text/json": components["schemas"]["ProfileResponseDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/publishing/schedule": {
         parameters: {
             query?: never;
@@ -5161,6 +5225,11 @@ export interface components {
             email?: string | null;
             fullName?: string | null;
             roleName?: string | null;
+            avatarUrl?: string | null;
+            penName?: string | null;
+            portfolioUrl?: string | null;
+            skills?: string | null;
+            phoneNumber?: string | null;
             token?: string | null;
             refreshToken?: string | null;
         };
@@ -5942,6 +6011,30 @@ export interface components {
                 [key: string]: string[] | null;
             } | null;
         };
+        ProfileResponseDto: {
+            /** Format: int32 */
+            id?: number;
+            userName?: string | null;
+            email?: string | null;
+            fullName?: string | null;
+            roleName?: string | null;
+            penName?: string | null;
+            portfolioUrl?: string | null;
+            skills?: string | null;
+            specialtyTags?: string | null;
+            phoneNumber?: string | null;
+            avatarUrl?: string | null;
+        };
+        ProfileResponseDtoApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            statusCode?: number;
+            message?: string | null;
+            data?: components["schemas"]["ProfileResponseDto"];
+            errors?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
         RankingInputDto: {
             /** Format: int32 */
             seriesId?: number;
@@ -6689,6 +6782,15 @@ export interface components {
             imageUrl?: string | null;
             category?: string | null;
         };
+        UpdateProfileDto: {
+            fullName?: string | null;
+            penName?: string | null;
+            portfolioUrl?: string | null;
+            skills?: string | null;
+            specialtyTags?: string | null;
+            phoneNumber?: string | null;
+            avatarUrl?: string | null;
+        };
         UpdateRegionDto: {
             coordinatesJson?: string | null;
             name?: string | null;
@@ -6701,6 +6803,8 @@ export interface components {
             skills?: string | null;
             /** Format: int32 */
             assignedEditorId?: number | null;
+            phoneNumber?: string | null;
+            avatarUrl?: string | null;
         };
         User: {
             /** Format: int32 */
@@ -6719,6 +6823,8 @@ export interface components {
             penName?: string | null;
             portfolioUrl?: string | null;
             skills?: string | null;
+            phoneNumber?: string | null;
+            avatarUrl?: string | null;
             isOnLeave?: boolean;
             /** Format: int32 */
             assignedEditorId?: number | null;
@@ -6753,6 +6859,8 @@ export interface components {
             /** Format: int32 */
             assignedEditorId?: number | null;
             assignedEditorName?: string | null;
+            phoneNumber?: string | null;
+            avatarUrl?: string | null;
         };
         UserListItemDtoPagedResult: {
             items?: components["schemas"]["UserListItemDto"][] | null;
@@ -6791,6 +6899,8 @@ export interface components {
             /** Format: int32 */
             assignedEditorId?: number | null;
             assignedEditorName?: string | null;
+            phoneNumber?: string | null;
+            avatarUrl?: string | null;
             message?: string | null;
         };
         UserResponseDtoApiResponse: {

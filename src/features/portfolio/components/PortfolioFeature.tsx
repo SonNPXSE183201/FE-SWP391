@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { createPortal } from 'react-dom';
+import { AnimatedModal } from '../../../components/common/animation';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
@@ -18,6 +18,16 @@ import { getPagedItems } from '../../../api/apiResponse';
 import { taskApi } from '../../tasks/api/task.api';
 import { formatVND } from '../../wallet';
 import type { TasksDto } from '../../../api/generated/types';
+import {
+  MotionStagger,
+  MotionItem,
+  MotionTabPanel,
+  MotionListItem,
+  MotionTableRow,
+  containerVariants,
+  listItemVariants,
+} from '../../../components/common/animation';
+import { motion } from 'framer-motion';
 
 interface PortfolioHistoryTask extends Pick<TasksDto, 'id' | 'deadline' | 'status'> {
   amount?: number;
@@ -90,7 +100,7 @@ export const PortfolioFeature = () => {
     : samples.filter((s: PortfolioSampleDto) => s.category === selectedCategory);
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="space-y-6">
       {/* Page Header */}
       <div className="page-header">
         <div className="flex items-center gap-3">
@@ -105,43 +115,49 @@ export const PortfolioFeature = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-brand/10 flex items-center justify-center text-brand">
-            <Briefcase size={22} />
+      <MotionStagger className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <MotionItem>
+          <div className="ui-card bg-bg-secondary border border-border-custom rounded-xl p-5 flex items-center gap-4 h-full">
+            <div className="w-12 h-12 rounded-xl bg-brand/10 flex items-center justify-center text-brand">
+              <Briefcase size={22} />
+            </div>
+            <div>
+              <p className="text-xs text-text-muted uppercase tracking-wider font-semibold">Task hoàn thành</p>
+              <p className="text-2xl font-bold text-text-primary mt-1">
+                {statsLoading ? '...' : stats?.tasksCompleted || 0}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-text-muted uppercase tracking-wider font-semibold">Task hoàn thành</p>
-            <p className="text-2xl font-bold text-text-primary mt-1">
-              {statsLoading ? '...' : stats?.tasksCompleted || 0}
-            </p>
-          </div>
-        </div>
+        </MotionItem>
 
-        <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center text-success">
-            <CheckCircle2 size={22} />
+        <MotionItem>
+          <div className="ui-card bg-bg-secondary border border-border-custom rounded-xl p-5 flex items-center gap-4 h-full">
+            <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center text-success">
+              <CheckCircle2 size={22} />
+            </div>
+            <div>
+              <p className="text-xs text-text-muted uppercase tracking-wider font-semibold">Tỷ lệ duyệt</p>
+              <p className="text-2xl font-bold text-text-primary mt-1">
+                {statsLoading ? '...' : `${stats?.approveRate || 100}%`}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-text-muted uppercase tracking-wider font-semibold">Tỷ lệ duyệt</p>
-            <p className="text-2xl font-bold text-text-primary mt-1">
-              {statsLoading ? '...' : `${stats?.approveRate || 100}%`}
-            </p>
-          </div>
-        </div>
+        </MotionItem>
 
-        <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-info/10 flex items-center justify-center text-info">
-            <DollarSign size={22} />
+        <MotionItem>
+          <div className="ui-card bg-bg-secondary border border-border-custom rounded-xl p-5 flex items-center gap-4 h-full">
+            <div className="w-12 h-12 rounded-xl bg-info/10 flex items-center justify-center text-info">
+              <DollarSign size={22} />
+            </div>
+            <div>
+              <p className="text-xs text-text-muted uppercase tracking-wider font-semibold">Tổng thu nhập</p>
+              <p className="text-2xl font-bold text-brand mt-1 font-mono">
+                {statsLoading ? '...' : formatVND(stats?.earnings || 0)}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-text-muted uppercase tracking-wider font-semibold">Tổng thu nhập</p>
-            <p className="text-2xl font-bold text-brand mt-1 font-mono">
-              {statsLoading ? '...' : formatVND(stats?.earnings || 0)}
-            </p>
-          </div>
-        </div>
-      </div>
+        </MotionItem>
+      </MotionStagger>
 
       {/* Tabs Menu */}
       <div className="border-b border-border-custom">
@@ -170,7 +186,7 @@ export const PortfolioFeature = () => {
       </div>
 
       {/* Tab Content */}
-      <div>
+      <MotionTabPanel tabKey={activeTab}>
         {activeTab === 'samples' ? (
           <div className="space-y-6">
             {/* Toolbar for Samples */}
@@ -212,11 +228,16 @@ export const PortfolioFeature = () => {
                 Chưa có tác phẩm nào thuộc nhóm này
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <motion.div
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                initial="hidden"
+                animate="visible"
+                variants={containerVariants}
+              >
                 {filteredSamples.map((sample: PortfolioSampleDto) => (
+                  <MotionListItem key={sample.id}>
                   <div
-                    key={sample.id}
-                    className="group relative bg-bg-secondary border border-border-custom rounded-xl overflow-hidden shadow-sm hover:border-brand/35 transition-all duration-300"
+                    className="group relative ui-card-interactive bg-bg-secondary border border-border-custom rounded-xl overflow-hidden shadow-sm hover:border-brand/35 h-full"
                   >
                     {/* Media Container */}
                     <div className="aspect-[4/3] bg-bg-surface overflow-hidden relative">
@@ -249,8 +270,9 @@ export const PortfolioFeature = () => {
                       </div>
                     </div>
                   </div>
+                  </MotionListItem>
                 ))}
-              </div>
+              </motion.div>
             )}
           </div>
         ) : (
@@ -274,9 +296,18 @@ export const PortfolioFeature = () => {
                       <th className="px-6 py-4">Trạng thái</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border-custom">
+                  <motion.tbody
+                    className="divide-y divide-border-custom"
+                    initial="hidden"
+                    animate="visible"
+                    variants={containerVariants}
+                  >
                     {tasks.map((task) => (
-                      <tr key={task.id} className="hover:bg-bg-surface/30 transition-colors">
+                      <MotionTableRow
+                        key={task.id}
+                        variants={listItemVariants}
+                        className="hover:bg-bg-surface/30 transition-colors"
+                      >
                         <td className="px-6 py-4 font-mono text-xs text-text-primary">#{task.id}</td>
                         <td className="px-6 py-4 font-medium text-text-primary">
                           {task.title ?? task.taskName ?? `${task.seriesTitle ?? 'Series'} - Task`}
@@ -297,21 +328,19 @@ export const PortfolioFeature = () => {
                             {task.status.replace('_', ' ')}
                           </span>
                         </td>
-                      </tr>
+                      </MotionTableRow>
                     ))}
-                  </tbody>
+                  </motion.tbody>
                 </table>
               </div>
             )}
           </div>
         )}
-      </div>
+      </MotionTabPanel>
 
       {/* ─── Upload Modal ─── */}
-      {showUploadModal && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowUploadModal(false)} />
-          <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-md p-6 shadow-xl animate-fade-in">
+      {showUploadModal && (
+        <AnimatedModal open onClose={() => setShowUploadModal(false)} panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-md p-6 shadow-xl">
             <div className="flex justify-between items-center border-b border-border-custom pb-4 mb-4">
               <h3 className="text-base font-bold text-text-primary flex items-center gap-2">
                 <Plus size={18} className="text-brand" /> Thêm tác phẩm mẫu
@@ -394,9 +423,7 @@ export const PortfolioFeature = () => {
                 </button>
               </div>
             </form>
-          </div>
-        </div>,
-        document.body,
+        </AnimatedModal>
       )}
     </div>
   );

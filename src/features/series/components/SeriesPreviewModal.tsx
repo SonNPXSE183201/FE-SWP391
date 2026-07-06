@@ -1,4 +1,4 @@
-import { createPortal } from 'react-dom';
+import { AnimatedModal } from '../../../components/common/animation';
 import { Eye, X, ImagePlus, Banknote } from 'lucide-react';
 import type { SeriesFormData } from '../types/series.types';
 import { getGenreLabel } from '../constants/genres';
@@ -11,20 +11,12 @@ interface SeriesPreviewModalProps {
 }
 
 export const SeriesPreviewModal = ({ formData, onClose }: SeriesPreviewModalProps) => {
-  return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+  return (
+    <AnimatedModal
+      open
+      onClose={onClose}
+      panelClassName="relative w-full max-w-2xl bg-bg-secondary border border-border-custom rounded-2xl shadow-2xl overflow-hidden"
     >
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" />
-
-      {/* Modal */}
-      <div
-        className="relative w-full max-w-2xl bg-bg-secondary border border-border-custom rounded-2xl shadow-2xl animate-fade-in overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border-custom">
           <div className="flex items-center gap-2">
@@ -125,8 +117,6 @@ export const SeriesPreviewModal = ({ formData, onClose }: SeriesPreviewModalProp
             Đóng
           </button>
         </div>
-      </div>
-    </div>,
-    document.body,
+    </AnimatedModal>
   );
 };

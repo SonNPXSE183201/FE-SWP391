@@ -4,3 +4,4 @@ export { VotingPage } from './VotingPage';
 export { RankingPage } from './RankingPage';
 export { PublishSchedulePage } from './PublishSchedulePage';
 export { BoardSettingsPage } from './BoardSettingsPage';
+export { RankingDataEntryPage } from './RankingDataEntryPage';
