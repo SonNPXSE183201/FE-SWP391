@@ -6,10 +6,10 @@ import { useClickOutside } from '../hooks/useClickOutside';
 import type { UserRole } from '../stores/authStore';
 
 const roleDisplayNames: Record<UserRole, string> = {
-  Mangaka: 'Mangaka',
+  Mangaka: 'Tác giả',
   Assistant: 'Trợ lý vẽ',
   Editor: 'Biên tập viên',
-  Board: 'Hội đồng BT',
+  Board: 'Hội đồng Biên tập',
   Admin: 'Quản trị viên',
 };
 

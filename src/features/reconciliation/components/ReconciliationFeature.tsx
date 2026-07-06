@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import { AnimatedModal } from '../../../components/common/animation';
 import {
   Receipt,
   Search,
@@ -37,6 +37,14 @@ import {
   getAmountToneClass,
 } from '../utils/reconciliation.utils';
 import { getRoleBadgeStyle, getRoleLabel } from '../../../utils/roleDisplay';
+import {
+  MotionStagger,
+  MotionItem,
+  MotionTableRow,
+  containerVariants,
+  listItemVariants,
+} from '../../../components/common/animation';
+import { motion } from 'framer-motion';
 
 const STATUS_FILTERS: { value: ReconciliationStatus | 'All'; label: string; hint: string }[] = [
   { value: 'All', label: 'Tất cả', hint: '' },
@@ -135,7 +143,7 @@ const TransactionTypeBadge = ({ record, size = 'sm' }: { record: ReconciliationR
 const RECONCILIATION_HELP = (
   <ul className="space-y-2 list-none m-0 p-0">
     <li>
-      <strong className="text-info">VNPay:</strong> Nạp/rút ví cá nhân — import CSV{' '}
+      <strong className="text-info">VNPay:</strong> Nạp/rút ví cá nhân — tải lên file CSV{' '}
       <span className="font-mono text-[10px]">TxnRef, Amount, ResponseCode, PayDate</span> để đối soát hàng loạt.
     </li>
     <li>
@@ -231,10 +239,11 @@ export const ReconciliationFeature = () => {
   const hasActiveFilters = statusFilter !== 'All' || categoryFilter !== 'all' || searchCode || dateFrom || dateTo;
 
   return (
-    <div className="animate-fade-in space-y-4">
+    <div className="space-y-4">
       {/* Hero: toolbar + ví quỹ */}
-      <div className="grid lg:grid-cols-[1fr_minmax(280px,320px)] gap-4 items-stretch">
-        <div className="rounded-xl border border-border-custom bg-bg-secondary overflow-hidden flex flex-col">
+      <MotionStagger className="grid lg:grid-cols-[1fr_minmax(280px,320px)] gap-4 items-stretch">
+        <MotionItem>
+        <div className="rounded-xl border border-border-custom bg-bg-secondary overflow-hidden flex flex-col h-full">
           <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
             <div className="flex items-start gap-3 min-w-0 flex-1">
               <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
@@ -279,7 +288,7 @@ export const ReconciliationFeature = () => {
                 className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-brand text-white hover:bg-brand/90 cursor-pointer disabled:opacity-50"
               >
                 {importMutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
-                Import CSV
+                Tải lên CSV
               </button>
               <button
                 type="button"
@@ -294,8 +303,9 @@ export const ReconciliationFeature = () => {
           </div>
 
           {summary && (
-            <div className="px-4 pb-4 pt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 border-t border-border-custom">
-              <div className="rounded-lg bg-bg-primary/50 border border-border-custom/80 px-3 py-2.5">
+            <MotionStagger className="px-4 pb-4 pt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 border-t border-border-custom">
+              <MotionItem>
+              <div className="rounded-lg bg-bg-primary/50 border border-border-custom/80 px-3 py-2.5 h-full">
                 <p className="text-[10px] uppercase tracking-wider text-text-muted">Giao dịch</p>
                 <p className="text-lg font-bold text-text-primary tabular-nums leading-tight">{summary.totalRecords ?? 0}</p>
                 <p className="text-[10px] text-success font-medium mt-0.5">
@@ -305,19 +315,25 @@ export const ReconciliationFeature = () => {
                   )}
                 </p>
               </div>
-              <div className="rounded-lg bg-bg-primary/50 border border-border-custom/80 px-3 py-2.5">
+              </MotionItem>
+              <MotionItem>
+              <div className="rounded-lg bg-bg-primary/50 border border-border-custom/80 px-3 py-2.5 h-full">
                 <p className="text-[10px] uppercase tracking-wider text-text-muted">VNPay</p>
                 <p className="text-sm font-bold text-text-primary tabular-nums leading-tight truncate">
                   {formatReconciliationCurrency(summary.totalVnpayAmount ?? 0)}
                 </p>
               </div>
-              <div className="rounded-lg bg-bg-primary/50 border border-border-custom/80 px-3 py-2.5">
+              </MotionItem>
+              <MotionItem>
+              <div className="rounded-lg bg-bg-primary/50 border border-border-custom/80 px-3 py-2.5 h-full">
                 <p className="text-[10px] uppercase tracking-wider text-text-muted">Hệ thống</p>
                 <p className="text-sm font-bold text-text-primary tabular-nums leading-tight truncate">
                   {formatReconciliationCurrency(summary.totalInternalAmount ?? 0)}
                 </p>
               </div>
-              <div className={`rounded-lg px-3 py-2.5 border ${
+              </MotionItem>
+              <MotionItem>
+              <div className={`rounded-lg px-3 py-2.5 border h-full ${
                 (summary.differenceAmount ?? 0) === 0
                   ? 'bg-success/[0.06] border-success/20'
                   : 'bg-danger/[0.06] border-danger/20'
@@ -329,12 +345,16 @@ export const ReconciliationFeature = () => {
                   {(summary.differenceAmount ?? 0) === 0 ? '0 ₫' : formatReconciliationCurrency(summary.differenceAmount ?? 0)}
                 </p>
               </div>
-            </div>
+              </MotionItem>
+            </MotionStagger>
           )}
         </div>
+        </MotionItem>
 
+        <MotionItem className="h-full">
         <PlatformWalletCard className="h-full" />
-      </div>
+        </MotionItem>
+      </MotionStagger>
 
       {/* Lọc theo loại giao dịch */}
       {summary && (
@@ -473,15 +493,21 @@ export const ReconciliationFeature = () => {
                   <th className="px-5 py-3.5 text-right" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border-custom">
+              <motion.tbody
+                className="divide-y divide-border-custom"
+                initial="hidden"
+                animate="visible"
+                variants={containerVariants}
+              >
                 {displayRecords.map((record) => {
                   const status = toReconciliationStatus(record.status);
                   const statusCfg = getStatusConfig(status);
                   const amountMismatch = (record.vnpayAmount ?? 0) !== (record.internalAmount ?? 0);
 
                   return (
-                    <tr
+                    <MotionTableRow
                       key={record.id}
+                      variants={listItemVariants}
                       className={`hover:bg-bg-surface/30 transition-colors ${getRowHighlight(status)}`}
                     >
                       <td className="px-5 py-3.5">
@@ -534,10 +560,10 @@ export const ReconciliationFeature = () => {
                           Chi tiết
                         </button>
                       </td>
-                    </tr>
+                    </MotionTableRow>
                   );
                 })}
-              </tbody>
+              </motion.tbody>
             </table>
           </div>
         )}
@@ -553,12 +579,10 @@ export const ReconciliationFeature = () => {
       )}
 
       {/* Import report modal */}
-      {importReport && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setImportReport(null)} />
-          <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-lg shadow-xl animate-fade-in max-h-[85vh] overflow-y-auto">
+      {importReport && (
+        <AnimatedModal open onClose={() => setImportReport(null)} panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-lg shadow-xl max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between p-5 border-b border-border-custom">
-              <h3 className="text-base font-semibold text-text-primary">Kết quả import CSV</h3>
+              <h3 className="text-base font-semibold text-text-primary">Kết quả tải lên CSV</h3>
               <button
                 type="button"
                 onClick={() => setImportReport(null)}
@@ -597,9 +621,7 @@ export const ReconciliationFeature = () => {
                 </div>
               )}
             </div>
-          </div>
-        </div>,
-        document.body,
+        </AnimatedModal>
       )}
     </div>
   );

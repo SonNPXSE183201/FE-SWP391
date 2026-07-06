@@ -33,7 +33,7 @@ export const AdminDashboardFeature = () => {
   }
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="space-y-6">
       {/* Page Header */}
       <div className="page-header">
         <div className="flex items-center gap-3">
@@ -48,7 +48,7 @@ export const AdminDashboardFeature = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" data-stagger>
         <StatCard
           label="Tổng người dùng"
           value={stats.users}
@@ -82,7 +82,7 @@ export const AdminDashboardFeature = () => {
       {/* Charts */}
       {charts && (
         <>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" data-stagger>
             <ChartCard
               title="Tăng trưởng người dùng"
               subtitle="Tổng người dùng 6 tháng gần đây"

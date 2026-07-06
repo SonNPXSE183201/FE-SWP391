@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { createPortal } from 'react-dom';
 import {
   Vote,
   Eye,
@@ -45,6 +44,8 @@ import {
   type VotingListFilter,
 } from '../voting.utils';
 import { formatVND } from '../../../utils/currency';
+import { MotionStagger, MotionItem, MotionListItem, containerVariants } from '../../../components/common/animation';
+import { motion } from 'framer-motion';
 
 const FILTER_TABS: { value: VotingListFilter; label: string }[] = [
   { value: 'All', label: 'Tất cả' },
@@ -184,7 +185,7 @@ export const VotingFeature = () => {
     const genres = parseSeriesGenres(selectedItem.genre);
     const uiStatus = getVotingUiStatus(selectedItem, boardMemberId);
     return (
-      <div className="animate-fade-in">
+      <div>
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <button
@@ -200,9 +201,9 @@ export const VotingFeature = () => {
           {getStatusBadge(selectedItem, boardMemberId)}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <MotionStagger className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* LEFT: Series Info */}
-          <div className="lg:col-span-3 space-y-5">
+          <MotionItem className="lg:col-span-3 space-y-5">
             {/* Cover + Basic info */}
             <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
               <div className="flex items-center gap-2 mb-4">
@@ -281,10 +282,10 @@ export const VotingFeature = () => {
               </div>
               <BoardSeriesDossier series={selectedItem} />
             </div>
-          </div>
+          </MotionItem>
 
           {/* RIGHT: Vote Results + Actions */}
-          <div className="lg:col-span-2 space-y-5">
+          <MotionItem className="lg:col-span-2 space-y-5">
             {/* Vote Distribution */}
             <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
               <div className="flex items-center gap-2 mb-5">
@@ -330,11 +331,11 @@ export const VotingFeature = () => {
                 </button>
               </div>
             )}
-          </div>
-        </div>
+          </MotionItem>
+        </MotionStagger>
         
         {/* Modal Needs to be here too for Detail View */}
-        {showVoteModal && voteTarget && createPortal(
+        {showVoteModal && voteTarget && (
           <VoteModal
             voteTarget={voteTarget}
             voteDecision={voteDecision}
@@ -349,8 +350,7 @@ export const VotingFeature = () => {
             onClose={() => setShowVoteModal(false)}
             onSubmit={handleVoteSubmit}
             submitVoteMutation={submitVoteMutation}
-          />,
-          document.body
+          />
         )}
       </div>
     );
@@ -358,7 +358,7 @@ export const VotingFeature = () => {
 
   // ── Main List View ──
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="space-y-6">
       <div className="page-header">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
@@ -379,35 +379,41 @@ export const VotingFeature = () => {
 
       {votingRules && <VotingRulesBanner rules={votingRules} />}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-bg-secondary border border-border-custom rounded-xl px-4 py-3.5 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0">
-            <Clock size={18} />
+      <MotionStagger className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <MotionItem>
+          <div className="ui-card bg-bg-secondary border border-border-custom rounded-xl px-4 py-3.5 flex items-center gap-3 h-full">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0">
+              <Clock size={18} />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-text-primary leading-none tabular-nums">{stats.pending}</p>
+              <p className="text-[11px] text-text-muted mt-1.5">Chờ bạn bỏ phiếu</p>
+            </div>
           </div>
-          <div>
-            <p className="text-2xl font-bold text-text-primary leading-none tabular-nums">{stats.pending}</p>
-            <p className="text-[11px] text-text-muted mt-1.5">Chờ bạn bỏ phiếu</p>
+        </MotionItem>
+        <MotionItem>
+          <div className="ui-card bg-bg-secondary border border-border-custom rounded-xl px-4 py-3.5 flex items-center gap-3 h-full">
+            <div className="w-10 h-10 rounded-xl bg-brand/10 text-brand flex items-center justify-center shrink-0">
+              <CheckCircle size={18} />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-text-primary leading-none tabular-nums">{stats.voted}</p>
+              <p className="text-[11px] text-text-muted mt-1.5">Bạn đã bỏ phiếu</p>
+            </div>
           </div>
-        </div>
-        <div className="bg-bg-secondary border border-border-custom rounded-xl px-4 py-3.5 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-brand/10 text-brand flex items-center justify-center shrink-0">
-            <CheckCircle size={18} />
+        </MotionItem>
+        <MotionItem>
+          <div className="ui-card bg-bg-secondary border border-border-custom rounded-xl px-4 py-3.5 flex items-center gap-3 h-full">
+            <div className="w-10 h-10 rounded-xl bg-bg-surface text-text-muted flex items-center justify-center shrink-0 border border-border-custom">
+              <Inbox size={18} />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-text-primary leading-none tabular-nums">{stats.total}</p>
+              <p className="text-[11px] text-text-muted mt-1.5">Đề xuất đang mở</p>
+            </div>
           </div>
-          <div>
-            <p className="text-2xl font-bold text-text-primary leading-none tabular-nums">{stats.voted}</p>
-            <p className="text-[11px] text-text-muted mt-1.5">Bạn đã bỏ phiếu</p>
-          </div>
-        </div>
-        <div className="bg-bg-secondary border border-border-custom rounded-xl px-4 py-3.5 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-bg-surface text-text-muted flex items-center justify-center shrink-0 border border-border-custom">
-            <Inbox size={18} />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-text-primary leading-none tabular-nums">{stats.total}</p>
-            <p className="text-[11px] text-text-muted mt-1.5">Đề xuất đang mở</p>
-          </div>
-        </div>
-      </div>
+        </MotionItem>
+      </MotionStagger>
 
       <div className="bg-bg-secondary border border-border-custom rounded-xl p-4 space-y-4">
         <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
@@ -469,7 +475,12 @@ export const VotingFeature = () => {
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <motion.div
+            className="space-y-3"
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
+          >
             {filteredList.map((item) => {
               const voteResults = getVoteResults(item);
               const genres = parseSeriesGenres(item.genre);
@@ -477,9 +488,9 @@ export const VotingFeature = () => {
               const coverUrl = item.coverArtworkUrl ? resolveMediaUrl(item.coverArtworkUrl) : '';
 
               return (
+                <MotionListItem key={item.id}>
                 <div
-                  key={item.id}
-                  className="rounded-xl border border-border-custom bg-bg-primary/50 p-4 hover:border-brand/30 hover:bg-brand/[0.02] transition-all"
+                  className="ui-card-interactive rounded-xl border border-border-custom bg-bg-primary/50 p-4 hover:border-brand/30 hover:bg-brand/[0.02]"
                 >
                   <div className="flex flex-col sm:flex-row gap-4">
                     <div className="w-[72px] h-[96px] rounded-lg overflow-hidden bg-bg-surface shrink-0 border border-border-custom mx-auto sm:mx-0">
@@ -566,14 +577,15 @@ export const VotingFeature = () => {
                     </div>
                   </div>
                 </div>
+                </MotionListItem>
               );
             })}
-          </div>
+          </motion.div>
         )}
       </div>
 
       {/* ─── Vote Modal ─── */}
-      {showVoteModal && voteTarget && createPortal(
+      {showVoteModal && voteTarget && (
         <VoteModal
           voteTarget={voteTarget}
           voteDecision={voteDecision}
@@ -588,8 +600,7 @@ export const VotingFeature = () => {
           onClose={() => setShowVoteModal(false)}
           onSubmit={handleVoteSubmit}
           submitVoteMutation={submitVoteMutation}
-        />,
-        document.body,
+        />
       )}
     </div>
   );

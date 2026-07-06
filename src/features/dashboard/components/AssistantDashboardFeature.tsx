@@ -32,7 +32,7 @@ export const AssistantDashboardFeature = () => {
   }
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="space-y-6">
       {/* Page Header */}
       <div className="page-header">
         <div className="flex items-center gap-3">
@@ -47,7 +47,7 @@ export const AssistantDashboardFeature = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" data-stagger>
         <StatCard label="Công việc đang làm" value={stats.inProgress} icon={Clock} color="text-info" navigateTo="/assistant/tasks" />
         <StatCard label="Công việc hoàn thành" value={stats.completed} icon={CheckCircle} color="text-success" navigateTo="/assistant/tasks" />
         <StatCard label="Đánh giá trung bình" value={stats.averageRating} suffix="/ 5.0" icon={Star} color="text-warning" />
@@ -62,7 +62,7 @@ export const AssistantDashboardFeature = () => {
 
       {/* Charts */}
       {charts && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" data-stagger>
           <ChartCard
             title="Thu nhập 6 tháng gần đây"
             subtitle="Tiền công nhận theo tháng"

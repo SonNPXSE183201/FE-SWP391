@@ -1,6 +1,5 @@
-import { createPortal } from 'react-dom';
 import { X, Receipt, Clock, ArrowRightLeft, Shield, Banknote, Hash } from 'lucide-react';
-import { TX_TYPE_CONFIG, formatVND } from '../constants';
+import { AnimatedModal } from '../../../components/common/animation';import { TX_TYPE_CONFIG, formatVND } from '../constants';
 import type { TransactionDto } from '../../../api/generated/types';
 import { getTransactionAmountDisplay, formatTransactionDateTime, getTransactionDescription, normalizeTransactionType } from '../utils';
 
@@ -21,11 +20,12 @@ export const TransactionDetailModal = ({ transaction, onClose }: TransactionDeta
   const setupFundAmount = Number(transaction.setupFundAmount ?? 0);
   const withdrawableAmount = Number(transaction.withdrawableAmount ?? 0);
 
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-lg shadow-lg-custom animate-modal-enter">
-        {/* Header */}
+  return (
+    <AnimatedModal
+      open
+      onClose={onClose}
+      panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-lg shadow-lg-custom"
+    >        {/* Header */}
         <div className="px-6 py-4 border-b border-border-custom flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`w-9 h-9 rounded-lg ${cfg.bg} flex items-center justify-center`}>
@@ -117,8 +117,6 @@ export const TransactionDetailModal = ({ transaction, onClose }: TransactionDeta
             Đóng
           </button>
         </div>
-      </div>
-    </div>,
-    document.body,
+    </AnimatedModal>
   );
 };

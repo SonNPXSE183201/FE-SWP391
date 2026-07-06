@@ -15,6 +15,8 @@ import { formatVND } from '../constants';
 import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
 import { getSeriesStatusConfig, getGenreLabel } from '../../series';
 import type { SeriesReviewDto } from '../api/review.api';
+import { MotionStagger, MotionItem, MotionListItem, containerVariants } from '../../../components/common/animation';
+import { motion } from 'framer-motion';
 
 const formatDate = (value?: string | null) => {
   if (!value) return '—';
@@ -76,7 +78,7 @@ const SeriesReviewCard = ({ series }: { series: SeriesReviewDto }) => {
   return (
     <Link
       to={`/editor/review/${series.id}`}
-      className="group flex gap-4 p-4 rounded-xl border border-border-custom bg-bg-primary/50 hover:border-brand/35 hover:bg-brand/[0.02] transition-all no-underline text-inherit"
+      className="group ui-card-interactive flex gap-4 p-4 rounded-xl border border-border-custom bg-bg-primary/50 hover:border-brand/35 hover:bg-brand/[0.02] no-underline text-inherit"
     >
       <div className="w-[72px] h-[96px] rounded-lg overflow-hidden bg-bg-surface shrink-0 border border-border-custom">
         {coverUrl ? (
@@ -151,7 +153,7 @@ export const SeriesReviewQueueFeature = () => {
   const allClear = pendingSeries.length === 0;
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="space-y-6">
       <div className="page-header">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
@@ -170,14 +172,16 @@ export const SeriesReviewQueueFeature = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <MotionStagger className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <MotionItem>
         <SummaryStat
           label="Dự án chờ duyệt"
           value={pendingSeries.length}
           icon={BookOpen}
           tone="bg-amber-500/10 text-amber-400"
         />
-      </div>
+        </MotionItem>
+      </MotionStagger>
 
       {allClear ? (
         <EmptyBlock
@@ -187,11 +191,18 @@ export const SeriesReviewQueueFeature = () => {
         />
       ) : (
         <section className="bg-bg-secondary border border-border-custom rounded-xl p-5">
-          <div className="space-y-3">
+          <motion.div
+            className="space-y-3"
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
+          >
             {pendingSeries.map((s) => (
-              <SeriesReviewCard key={s.id} series={s} />
+              <MotionListItem key={s.id}>
+                <SeriesReviewCard series={s} />
+              </MotionListItem>
             ))}
-          </div>
+          </motion.div>
         </section>
       )}
     </div>

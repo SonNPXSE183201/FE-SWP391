@@ -24,6 +24,8 @@ import { seriesStatusMatchesFilter, toSelectFilterOptions } from '../../../utils
 import { getSeriesStatusConfig } from '../constants';
 import type { ChapterWithSeriesTitle, NormalizedSeriesDto } from '../hooks/useSeries';
 import { resolveSeriesCover } from '../utils/series.utils';
+import { MotionListItem, containerVariants } from '../../../components/common/animation';
+import { motion } from 'framer-motion';
 
 type SeriesGroup = NormalizedSeriesDto & { chapters: ChapterWithSeriesTitle[] };
 
@@ -99,7 +101,7 @@ export const ManuscriptsFeature = () => {
   }
 
   return (
-    <div className="animate-fade-in">
+    <div>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -130,16 +132,21 @@ export const ManuscriptsFeature = () => {
       </div>
 
       {/* Series accordion */}
-      <div className="space-y-3 mt-5">
+      <motion.div
+        className="space-y-3 mt-5"
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+      >
         {seriesGroups.map((group) => {
           const isExpanded = expandedSeriesIds.has(String(group.id));
           const seriesStatus = getSeriesStatusConfig(group.status);
           const coverUrl = resolveSeriesCover(group);
 
           return (
+            <MotionListItem key={group.id}>
             <div
-              key={group.id}
-              className="bg-bg-secondary border border-border-custom rounded-xl overflow-hidden"
+              className="ui-card bg-bg-secondary border border-border-custom rounded-xl overflow-hidden"
             >
               <div className="flex items-center gap-3 p-4">
                 <button
@@ -274,9 +281,10 @@ export const ManuscriptsFeature = () => {
                 </div>
               )}
             </div>
+            </MotionListItem>
           );
         })}
-      </div>
+      </motion.div>
 
       {seriesGroups.length === 0 && (
         <div className="mt-8 bg-bg-secondary border border-border-custom rounded-xl p-12 flex flex-col items-center gap-4">

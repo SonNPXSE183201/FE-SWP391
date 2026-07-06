@@ -62,7 +62,7 @@ export const SeriesListFeature = () => {
   }), [series]);
 
   return (
-    <div className="animate-fade-in">
+    <div>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -84,7 +84,7 @@ export const SeriesListFeature = () => {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6" data-stagger>
         {[
           { label: 'Tổng bộ truyện', value: stats.total, icon: BookOpen, color: 'text-brand' },
           { label: 'Đang xuất bản', value: stats.published, icon: TrendingUp, color: 'text-success' },
@@ -151,13 +151,13 @@ export const SeriesListFeature = () => {
       {/* Series Grid / List — using feature components */}
       {filteredSeries.length > 0 ? (
         viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4" data-stagger>
             {pagination.paginatedData.map((series, i) => (
               <SeriesCard key={series.id} series={series} index={i} />
             ))}
           </div>
         ) : (
-          <div className="flex flex-col gap-3 mt-4">
+          <div className="flex flex-col gap-3 mt-4" data-stagger>
             {pagination.paginatedData.map((series, i) => (
               <SeriesRow key={series.id} series={series} index={i} />
             ))}

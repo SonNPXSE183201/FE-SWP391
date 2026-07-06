@@ -80,7 +80,6 @@ export const useMangakaOnLeave = () => {
         normalizeUserId(useAuthStore.getState().user?.id) ?? getPersistedAuthUserId();
       setOverride(onLeave);
       writeStoredOnLeave(id, onLeave);
-      toast.success(onLeave ? 'Đã bật trạng thái Tạm nghỉ' : 'Đã tắt trạng thái Tạm nghỉ');
     },
     onError: () => {
       toast.error('Không thể cập nhật trạng thái Tạm nghỉ. Vui lòng thử lại.');
