@@ -15,7 +15,7 @@ interface ChartCardProps {
 export const ChartCard = ({ title, subtitle, icon: Icon, action, className, children }: ChartCardProps) => {
   return (
     <div
-      className={`bg-bg-secondary border border-border-custom rounded-xl p-5 transition-colors hover:border-brand/20 ${className ?? ''}`}
+      className={`ui-card bg-bg-secondary border border-border-custom rounded-xl p-5 transition-all hover:border-brand/20 ${className ?? ''}`}
     >
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-center gap-2.5 min-w-0">

@@ -30,6 +30,8 @@ import { CustomSelect } from '../../../components/common/CustomSelect';
 import type { PageDto } from '../../../api/generated/types';
 import { reviewApi } from '../../review/api/review.api';
 import { countPagesByStatus, normalizeChapterStatus, pageStatusMatchesFilter, toSelectFilterOptions } from '../../../utils/status';
+import { MotionStagger, MotionItem } from '../../../components/common/animation';
+import { motion } from 'framer-motion';
 
 export const ChapterDetailFeature = () => {
   const { chapterId } = useParams<{ chapterId: string }>();
@@ -118,7 +120,12 @@ export const ChapterDetailFeature = () => {
 
   if (!chapter) {
     return (
-      <div className="animate-fade-in flex flex-col items-center justify-center py-20 gap-4">
+      <motion.div
+        className="flex flex-col items-center justify-center py-20 gap-4"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+      >
         <FileText size={48} className="text-text-muted" />
         <p className="text-text-secondary">Chương không tồn tại</p>
         <button
@@ -127,7 +134,7 @@ export const ChapterDetailFeature = () => {
         >
           ← Quay lại Bản thảo
         </button>
-      </div>
+      </motion.div>
     );
   }
 
@@ -139,7 +146,7 @@ export const ChapterDetailFeature = () => {
   const ChapterStatusIcon = chapterStatusCfg.icon;
 
   return (
-    <div className="animate-fade-in">
+    <div>
       {/* Header */}
       <div className="flex flex-col gap-4">
         <button
@@ -227,7 +234,7 @@ export const ChapterDetailFeature = () => {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-6">
+      <MotionStagger className="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-6">
         {[
           { label: 'Tổng trang', value: stats.total, icon: FileText, color: 'text-brand', bgColor: 'bg-brand/10' },
           { label: PAGE_STATUS_CONFIG.Completed.label, value: stats.completed, icon: CheckCircle2, color: 'text-success', bgColor: 'bg-success/10' },
@@ -235,7 +242,8 @@ export const ChapterDetailFeature = () => {
           { label: PAGE_STATUS_CONFIG.Pending.label, value: stats.pending, icon: Clock, color: 'text-text-muted', bgColor: 'bg-bg-surface' },
           { label: PAGE_STATUS_CONFIG.NeedsRevision.label, value: stats.revision, icon: AlertTriangle, color: 'text-warning', bgColor: 'bg-warning/10' },
         ].map(({ label, value, icon: Icon, color, bgColor }) => (
-          <div key={label} className="bg-bg-secondary border border-border-custom rounded-xl p-3.5 flex items-center gap-3 hover:border-brand/20 transition-colors">
+          <MotionItem key={label}>
+          <div className="ui-card bg-bg-secondary border border-border-custom rounded-xl p-3.5 flex items-center gap-3 hover:border-brand/20 transition-colors h-full">
             <div className={`w-9 h-9 rounded-lg ${bgColor} flex items-center justify-center ${color}`}>
               <Icon size={16} />
             </div>
@@ -244,8 +252,9 @@ export const ChapterDetailFeature = () => {
               <div className="text-[10px] text-text-muted">{label}</div>
             </div>
           </div>
+          </MotionItem>
         ))}
-      </div>
+      </MotionStagger>
 
       {/* Standalone annotation section — only show when NOT in revision mode (panel already has it) */}
       {!isRevision && revisionAnnotations.length > 0 && (
@@ -321,22 +330,23 @@ export const ChapterDetailFeature = () => {
 
       {/* Page Grid (Feature Components) */}
       {filteredPages.length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3.5 mt-4">
+        <MotionStagger className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3.5 mt-4">
           {pagination.paginatedData.map((page) => {
             const globalIdx = filteredPages.findIndex((p) => p.id === page.id);
             const pageId = String(page.id);
             return (
+              <MotionItem key={pageId}>
               <PageCard
-                key={pageId}
                 page={page}
                 editorAnnotationCount={annotationCountByPageId.get(pageId) ?? 0}
                 canReplaceImage={canReplacePageImage}
                 onReplaceImage={() => setReplacePage(page)}
                 onClick={() => setLightboxIndex(globalIdx)}
               />
+              </MotionItem>
             );
           })}
-        </div>
+        </MotionStagger>
       ) : (
         <div className="mt-8 bg-bg-secondary border border-border-custom rounded-xl p-12 flex flex-col items-center gap-4">
           <Image size={40} className="text-text-muted" />

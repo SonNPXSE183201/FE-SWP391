@@ -16,6 +16,13 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { HelpTip } from '../../../components/common/HelpTip';
+import {
+  MotionStagger,
+  MotionItem,
+  MotionListItem,
+  containerVariants,
+} from '../../../components/common/animation';
+import { motion } from 'framer-motion';
 import { useReviewQueue } from '../hooks/useReview';
 import { formatVND, getDeadlineStatus } from '../constants';
 import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
@@ -145,7 +152,7 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
   const allClear = queue.length === 0;
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="space-y-6">
       <div className="page-header">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
@@ -164,20 +171,24 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <MotionStagger className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <MotionItem>
         <SummaryStat
           label="Chương chờ biên tập"
           value={stats.chaptersPending}
           icon={FileText}
           tone="bg-brand/10 text-brand"
         />
+        </MotionItem>
+        <MotionItem>
         <SummaryStat
           label="Chương yêu cầu sửa"
           value={stats.chaptersRevision}
           icon={RotateCcw}
           tone="bg-orange-500/10 text-orange-400"
         />
-      </div>
+        </MotionItem>
+      </MotionStagger>
 
       {allClear ? (
         <EmptyBlock
@@ -228,7 +239,12 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
                 }
               />
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <motion.div
+                className="grid grid-cols-1 lg:grid-cols-2 gap-3"
+                initial="hidden"
+                animate="visible"
+                variants={containerVariants}
+              >
                 {filteredChapters.map((c) => {
                   const status = getChapterStatusConfig(c.status);
                   const deadline = getDeadlineStatus(c.submissionDeadline || new Date().toISOString());
@@ -241,11 +257,11 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
                   const genkouryoPrice = c.appliedGenkouryoPrice || 0;
 
                   return (
+                    <MotionListItem key={c.id}>
                     <button
-                      key={c.id}
                       type="button"
                       onClick={() => onSelect(String(c.id))}
-                      className="group text-left rounded-xl border border-border-custom bg-bg-primary/50 p-4 hover:border-brand/35 hover:bg-brand/[0.02] transition-all cursor-pointer"
+                      className="group w-full text-left rounded-xl border border-border-custom bg-bg-primary/50 p-4 hover:border-brand/35 hover:bg-brand/[0.02] transition-all cursor-pointer"
                     >
                       <div className="flex gap-3">
                         <div className="w-14 h-[72px] rounded-lg overflow-hidden bg-bg-surface shrink-0 border border-border-custom">
@@ -314,9 +330,10 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
                         </div>
                       </div>
                     </button>
+                    </MotionListItem>
                   );
                 })}
-              </div>
+              </motion.div>
             )}
           </SectionShell>
         </div>

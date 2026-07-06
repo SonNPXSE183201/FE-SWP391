@@ -156,6 +156,14 @@ export default {
           '0%': { transform: 'rotate(0deg) translateX(150px) rotate(0deg)' },
           '100%': { transform: 'rotate(360deg) translateX(150px) rotate(-360deg)' },
         },
+        'page-enter': {
+          from: { opacity: '0', transform: 'translateY(12px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'backdrop-enter': {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
       },
       animation: {
         'float': 'float 20s ease-in-out infinite',
@@ -183,6 +191,8 @@ export default {
         'hero-text-reveal': 'hero-text-reveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) both',
         'orbit': 'orbit 25s linear infinite',
         'text-float': 'text-float 5s ease-in-out infinite',
+        'page-enter': 'page-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) both',
+        'backdrop-enter': 'backdrop-enter 0.2s ease-out both',
       },
     },
   },

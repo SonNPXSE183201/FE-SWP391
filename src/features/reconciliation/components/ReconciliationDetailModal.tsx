@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { createPortal } from 'react-dom';
+import { AnimatedModal } from '../../../components/common/animation';
 import { X, AlertTriangle, CreditCard, Scale } from 'lucide-react';
 import { HelpTip } from '../../../components/common/HelpTip';
 import type { ReconciliationRecord } from '../types/reconciliation.types';
@@ -42,10 +42,13 @@ export const ReconciliationDetailModal = ({
   const primaryAmount = record.internalAmount ?? record.vnpayAmount ?? 0;
   const amountMismatch = (record.vnpayAmount ?? 0) !== (record.internalAmount ?? 0);
 
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity" onClick={onClose} />
-      <div className="relative bg-bg-secondary border border-border-custom/60 rounded-3xl w-full max-w-md shadow-2xl animate-modal-enter overflow-hidden flex flex-col max-h-[90vh]">
+  return (
+    <AnimatedModal
+      open
+      onClose={onClose}
+      backdropClassName="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
+      panelClassName="relative bg-bg-secondary border border-border-custom/60 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+    >
         {/* Decorative top gradient */}
         <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-brand/40 via-brand to-brand/40" />
 
@@ -191,8 +194,6 @@ export const ReconciliationDetailModal = ({
           </button>
         </div>
 
-      </div>
-    </div>,
-    document.body,
+    </AnimatedModal>
   );
 };

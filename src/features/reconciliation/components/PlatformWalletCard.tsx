@@ -5,12 +5,8 @@ import { usePlatformWalletDepositListener } from '../hooks/usePlatformWalletDepo
 import { formatReconciliationCurrency } from '../utils/reconciliation.utils';
 import { showAppError } from '../../../utils/appToast';
 import { formatVND } from '../../wallet/constants';
+import { HelpTip } from '../../../components/common/HelpTip';
 
-const QUICK_AMOUNTS = [
-  { label: '100M', value: 100_000_000 },
-  { label: '500M', value: 500_000_000 },
-  { label: '1B', value: 1_000_000_000 },
-];
 
 type PlatformWalletCardProps = {
   className?: string;
@@ -21,18 +17,17 @@ export const PlatformWalletCard = ({ className = '' }: PlatformWalletCardProps) 
   const { data, isLoading, isError, refetch } = usePlatformWallet();
   const topUpMutation = useTopUpPlatformWallet();
   const [amount, setAmount] = useState('');
-  const [note, setNote] = useState('');
   const [showTopUp, setShowTopUp] = useState(false);
 
   const parsedAmount = Number(amount.replace(/\D/g, '') || 0);
 
   const handleTopUp = () => {
-    if (!parsedAmount || parsedAmount < 10000) {
-      showAppError('Số tiền nạp tối thiểu 10.000 VND');
+    if (!parsedAmount || parsedAmount < 10000 || parsedAmount > 1000000000) {
+      showAppError('Số tiền nạp không hợp lệ (từ 10.000 đến 1.000.000.000 VND)');
       return;
     }
     topUpMutation.mutate(
-      { amount: parsedAmount, note: note.trim() || undefined },
+      { amount: parsedAmount },
       {
         onSuccess: (paymentUrl) => {
           window.location.assign(paymentUrl);
@@ -90,53 +85,50 @@ export const PlatformWalletCard = ({ className = '' }: PlatformWalletCardProps) 
         </button>
 
         {showTopUp && (
-          <div className="mt-3 pt-3 border-t border-border-custom space-y-2.5 animate-fade-in">
-            <div className="flex flex-wrap gap-1.5">
-              {QUICK_AMOUNTS.map((qa) => (
-                <button
-                  key={qa.value}
-                  type="button"
-                  onClick={() => setAmount(String(qa.value))}
-                  className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border cursor-pointer ${
-                    parsedAmount === qa.value
-                      ? 'bg-brand text-white border-brand'
-                      : 'bg-bg-primary border-border-custom text-text-secondary'
-                  }`}
-                >
-                  {qa.label}
-                </button>
-              ))}
+          <div className="mt-3 pt-3 border-t border-border-custom space-y-2 animate-fade-in-up">
+            
+            <div>
+              <div className="flex items-center gap-1.5 px-1 mb-1.5">
+                <label className="text-[10px] font-medium text-text-secondary uppercase tracking-wider">Số tiền nạp (VND)</label>
+                <HelpTip content="Giới hạn mỗi giao dịch từ 10.000 VND đến 1.000.000.000 VND. Thông tin nạp quỹ sẽ được tự động ghi nhận." />
+              </div>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={amount ? new Intl.NumberFormat('vi-VN').format(Number(amount)) : ''}
+                onChange={(e) => setAmount(e.target.value.replace(/\D/g, ''))}
+                placeholder="Ví dụ: 50.000.000"
+                className="w-full px-3 py-2.5 bg-bg-primary border border-border-custom rounded-lg text-sm font-medium text-text-primary focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/50 transition-all placeholder:text-text-muted/40"
+              />
+              {parsedAmount > 0 && (
+                <div className="flex items-center px-1 mt-1.5">
+                  {parsedAmount < 10000 && (
+                    <p className="text-[11px] text-danger font-medium animate-fade-in">Tối thiểu 10.000 VND</p>
+                  )}
+                  {parsedAmount > 1000000000 && (
+                    <p className="text-[11px] text-danger font-medium animate-fade-in">Tối đa 1.000.000.000 VND</p>
+                  )}
+                  {parsedAmount >= 10000 && parsedAmount <= 1000000000 && (
+                    <p className="text-[11px] text-brand font-medium animate-fade-in">{formatVND(parsedAmount)}</p>
+                  )}
+                </div>
+              )}
             </div>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value.replace(/[^\d]/g, ''))}
-              placeholder="Số tiền VND"
-              className="w-full px-2.5 py-2 bg-bg-primary border border-border-custom rounded-lg text-xs text-text-primary focus:outline-none focus:border-brand"
-            />
-            {parsedAmount > 0 && (
-              <p className="text-[10px] text-brand font-medium -mt-1">{formatVND(parsedAmount)}</p>
-            )}
-            <input
-              type="text"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Ghi chú (tuỳ chọn)"
-              className="w-full px-2.5 py-2 bg-bg-primary border border-border-custom rounded-lg text-xs text-text-primary focus:outline-none focus:border-brand"
-            />
-            <button
-              type="button"
-              onClick={handleTopUp}
-              disabled={topUpMutation.isPending || parsedAmount < 10000}
-              className="w-full inline-flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg bg-brand text-white hover:bg-brand/90 cursor-pointer disabled:opacity-50"
-            >
-              {topUpMutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <Wallet size={13} />}
-              Thanh toán VNPay
-            </button>
-            <p className="text-[10px] text-text-muted text-center leading-relaxed">
-              Chuyển sang cổng VNPay Sandbox — thẻ test NCB · OTP 123456
-            </p>
+
+            <div className="pt-1.5">
+              <button
+                type="button"
+                onClick={handleTopUp}
+                disabled={topUpMutation.isPending || parsedAmount < 10000 || parsedAmount > 1000000000}
+                className="w-full inline-flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-lg bg-brand text-white hover:bg-brand-hover shadow-md shadow-brand/20 hover:shadow-brand/40 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+              >
+                {topUpMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Wallet size={16} />}
+                Thanh toán qua VNPay
+              </button>
+              <p className="text-[10px] text-text-muted text-center leading-relaxed mt-2.5">
+                Cổng thanh toán an toàn VNPay
+              </p>
+            </div>
           </div>
         )}
       </div>

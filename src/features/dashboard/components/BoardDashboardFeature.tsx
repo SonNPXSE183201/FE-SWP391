@@ -33,7 +33,7 @@ export const BoardDashboardFeature = () => {
   }
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="space-y-6">
       {/* Page Header */}
       <div className="page-header">
         <div className="flex items-center gap-3">
@@ -41,14 +41,14 @@ export const BoardDashboardFeature = () => {
             <LayoutDashboard size={20} className="text-brand" />
           </div>
           <div>
-            <h1 className="page-header__title">Dashboard Hội đồng BT</h1>
+            <h1 className="page-header__title">Dashboard Hội đồng Biên tập</h1>
             <p className="page-header__subtitle">Quản lý hoạt động bỏ phiếu và ngân sách</p>
           </div>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" data-stagger>
         <StatCard
           label="Đề xuất cần Vote"
           value={stats.votes}
@@ -81,7 +81,7 @@ export const BoardDashboardFeature = () => {
 
       {/* Charts */}
       {charts && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" data-stagger>
           <ChartCard
             title="Hoạt động bỏ phiếu"
             subtitle="Số đề xuất xét duyệt 6 tháng gần đây"

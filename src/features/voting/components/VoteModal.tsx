@@ -2,24 +2,17 @@ import { useMemo } from 'react';
 
 import type { UseMutationResult } from '@tanstack/react-query';
 
+import { AnimatedModal } from '../../../components/common/animation';
+
 import {
-
   Vote,
-
   X,
-
   CheckCircle,
-
   XCircle,
-
   MessageSquare,
-
   Banknote,
-
   Sparkles,
-
   Copy,
-
 } from 'lucide-react';
 
 import { HelpTip } from '../../../components/common/HelpTip';
@@ -225,20 +218,13 @@ export const VoteModal = ({
 
 
   return (
-
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-
-      <div className="absolute inset-0 bg-black/65 backdrop-blur-sm" onClick={onClose} aria-hidden />
-
-      <div
-
-        role="dialog"
-
-        aria-labelledby="vote-modal-title"
-
-        className="relative bg-bg-secondary border border-border-custom rounded-t-2xl sm:rounded-2xl w-full max-w-4xl shadow-2xl animate-fade-in flex flex-col max-h-full overflow-hidden"
-
-      >
+    <AnimatedModal
+      open
+      onClose={onClose}
+      containerClassName="flex items-center justify-center p-4 sm:p-6"
+      backdropClassName="absolute inset-0 bg-black/65 backdrop-blur-sm"
+      panelClassName="relative bg-bg-secondary border border-border-custom rounded-t-2xl sm:rounded-2xl w-full max-w-4xl shadow-2xl flex flex-col max-h-full overflow-hidden"
+    >
 
         <div className="flex items-center justify-between p-5 sm:p-6 border-b border-border-custom shrink-0">
 
@@ -626,9 +612,7 @@ export const VoteModal = ({
 
         </form>
 
-      </div>
-
-    </div>
+    </AnimatedModal>
 
   );
 

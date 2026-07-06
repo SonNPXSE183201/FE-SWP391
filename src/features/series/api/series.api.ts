@@ -77,7 +77,7 @@ export const seriesApi = {
     ),
 
   getAll: async (params?: { page?: number; pageSize?: number; status?: string }) =>
-    axiosInstance.get<PagedApiResponse<SeriesDto>>('/api/series/my-list', { params }),
+    axiosInstance.get<PagedApiResponse<SeriesDto>>('/api/series', { params }),
 
   getById: async (seriesId: string) =>
     axiosInstance.get<ApiResponse<SeriesDto>>(`/api/series/${seriesId}`),

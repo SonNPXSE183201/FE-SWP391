@@ -6,6 +6,7 @@ import { CustomSelect } from '../../../components/common/CustomSelect';
 import { useMySeries } from '../../series/hooks/useSeries';
 import { SeriesTeamSection } from './SeriesTeamSection';
 import { SystemAssistantDirectory } from './SystemAssistantDirectory';
+import { MotionTabPanel } from '../../../components/common/animation';
 
 type AssistantTab = 'directory' | 'series';
 
@@ -61,7 +62,7 @@ export const AssistantManagementFeature = () => {
   };
 
   return (
-    <div className="flex flex-col animate-fade-in">
+    <div className="flex flex-col">
       <div className="page-header flex justify-between items-center shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
@@ -109,6 +110,7 @@ export const AssistantManagementFeature = () => {
       </div>
 
       <div className="mt-6 flex-1 min-h-0">
+        <MotionTabPanel tabKey={activeTab}>
         {activeTab === 'directory' && (
           <SystemAssistantDirectory />
         )}
@@ -146,6 +148,7 @@ export const AssistantManagementFeature = () => {
             )}
           </div>
         )}
+        </MotionTabPanel>
       </div>
     </div>
   );

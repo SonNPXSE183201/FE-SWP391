@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo, useCallback } from 'react';
-import { createPortal } from 'react-dom';
+import { AnimatedModal } from '../../../components/common/animation';
 import toast from 'react-hot-toast';
 import {
   X, Eye, UserCheck, Calendar, DollarSign, FileText,
@@ -180,10 +180,13 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
     }
   };
 
-  const revisionConfirmModal = showRevisionConfirm && createPortal(
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowRevisionConfirm(false)} />
-      <div className="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-lg-custom w-full max-w-md animate-modal-enter">
+  const revisionConfirmModal = showRevisionConfirm && (
+    <AnimatedModal
+      open
+      onClose={() => setShowRevisionConfirm(false)}
+      zIndex={60}
+      panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-lg-custom w-full max-w-md"
+    >
         <div className="flex items-center justify-between p-5 border-b border-border-custom">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center">
@@ -294,15 +297,16 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
             Xác nhận gửi yêu cầu
           </button>
         </div>
-      </div>
-    </div>,
-    document.body,
+    </AnimatedModal>
   );
 
-  const disputeModal = showDisputeModal && createPortal(
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowDisputeModal(false)} />
-      <div className="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-lg-custom w-full max-w-md animate-modal-enter">
+  const disputeModal = showDisputeModal && (
+    <AnimatedModal
+      open
+      onClose={() => setShowDisputeModal(false)}
+      zIndex={60}
+      panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-lg-custom w-full max-w-md"
+    >
         <div className="flex items-center justify-between p-5 border-b border-border-custom">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-danger/15 flex items-center justify-center">
@@ -363,17 +367,16 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
             Xác nhận gửi
           </button>
         </div>
-      </div>
-    </div>,
-    document.body,
+    </AnimatedModal>
   );
 
-  return createPortal(
+  return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-        <div className={`relative bg-bg-secondary border border-border-custom rounded-2xl flex flex-col shadow-lg-custom animate-modal-enter overflow-hidden ${revising ? 'w-full max-w-6xl h-[900px] max-h-full' : 'w-full max-w-4xl h-[900px] max-h-full'
-          }`}>
+      <AnimatedModal
+        open
+        onClose={onClose}
+        panelClassName={`relative bg-bg-secondary border border-border-custom rounded-2xl flex flex-col shadow-lg-custom overflow-hidden ${revising ? 'w-full max-w-6xl h-[900px] max-h-full' : 'w-full max-w-4xl h-[900px] max-h-full'}`}
+      >
           {/* Header */}
           <div className="shrink-0 border-b border-border-custom px-5 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
@@ -670,11 +673,9 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
               </>
             )}
           </div>
-        </div>
-      </div>
+      </AnimatedModal>
       {revisionConfirmModal}
       {disputeModal}
-    </>,
-    document.body,
+    </>
   );
 };

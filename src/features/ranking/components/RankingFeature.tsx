@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { createPortal } from 'react-dom';
+import { AnimatedModal } from '../../../components/common/animation';
 import toast from 'react-hot-toast';
 import {
   BarChart3,
@@ -9,6 +9,7 @@ import {
   X,
   Loader2,
 } from 'lucide-react';
+import { CustomSelect } from '../../../components/common/CustomSelect';
 import type { RankingRecord } from '../../../api/generated/types';
 import { useRankingList, useSubmitRankingVote } from '../hooks/useRanking';
 import {
@@ -18,8 +19,23 @@ import {
   getRankingRecordTitle,
   getRankingUiStatus,
 } from '../ranking.utils';
+import {
+  MotionTableRow,
+  containerVariants,
+  listItemVariants,
+} from '../../../components/common/animation';
+import { motion } from 'framer-motion';
 
-const GENRES = ['All', 'Action', 'Adventure', 'Sci-Fi', 'Mystery', 'Romance', 'Drama', 'Thriller'];
+const GENRE_OPTIONS = [
+  { value: 'All', label: 'Tất cả thể loại' },
+  { value: 'Action', label: 'Hành động' },
+  { value: 'Adventure', label: 'Phiêu lưu' },
+  { value: 'Sci-Fi', label: 'Khoa học viễn tưởng' },
+  { value: 'Mystery', label: 'Bí ẩn' },
+  { value: 'Romance', label: 'Lãng mạn' },
+  { value: 'Drama', label: 'Kịch tính' },
+  { value: 'Thriller', label: 'Giật gân' },
+];
 const PERIODS = [
   { value: 'week', label: 'Hàng tuần (Weekly)' },
   { value: 'month', label: 'Hàng tháng (Monthly)' },
@@ -84,7 +100,7 @@ export const RankingFeature = () => {
   );
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="space-y-6">
       <div className="page-header">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
@@ -126,17 +142,14 @@ export const RankingFeature = () => {
             ))}
           </div>
 
-          <select
-            value={genre}
-            onChange={(e) => setGenre(e.target.value)}
-            className="bg-bg-secondary border border-border-custom rounded-xl px-3 py-2 text-xs font-semibold text-text-primary focus:outline-none"
-          >
-            {GENRES.map((g) => (
-              <option key={g} value={g}>
-                Thể loại: {g === 'All' ? 'Tất cả' : g}
-              </option>
-            ))}
-          </select>
+          <div className="w-44">
+            <CustomSelect
+              options={GENRE_OPTIONS}
+              value={genre}
+              onChange={setGenre}
+              size="sm"
+            />
+          </div>
         </div>
       </div>
 
@@ -154,13 +167,17 @@ export const RankingFeature = () => {
                 <tr>
                   <th className="px-6 py-4 w-16">Hạng</th>
                   <th className="px-6 py-4">Tác phẩm</th>
-                  <th className="px-6 py-4">Lượt xem (Views)</th>
                   <th className="px-6 py-4">Phiếu hiện tại</th>
                   <th className="px-6 py-4">Trạng thái</th>
                   <th className="px-6 py-4 text-right">Hành động</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border-custom">
+              <motion.tbody
+                className="divide-y divide-border-custom"
+                initial="hidden"
+                animate="visible"
+                variants={containerVariants}
+              >
                 {filteredRanking.map((record, index) => {
                   const rank = record.rankPosition ?? index + 1;
                   const title = getRankingRecordTitle(record);
@@ -168,7 +185,11 @@ export const RankingFeature = () => {
                   const status = getRankingUiStatus(record);
 
                   return (
-                    <tr key={getRankingRecordId(record, index)} className="hover:bg-bg-surface/30 transition-colors">
+                    <MotionTableRow
+                      key={getRankingRecordId(record, index)}
+                      variants={listItemVariants}
+                      className="hover:bg-bg-surface/30 transition-colors"
+                    >
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg font-bold text-xs ${
                           rank === 1 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
@@ -198,7 +219,6 @@ export const RankingFeature = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 font-mono font-medium text-text-primary">0</td>
                       <td className="px-6 py-4 font-semibold text-text-primary">
                         {record.voteCount ?? 0} phiếu
                       </td>
@@ -237,19 +257,17 @@ export const RankingFeature = () => {
                           </div>
                         )}
                       </td>
-                    </tr>
+                    </MotionTableRow>
                   );
                 })}
-              </tbody>
+              </motion.tbody>
             </table>
           </div>
         )}
       </div>
 
-      {showVoteModal && selectedRecord && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowVoteModal(false)} />
-          <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-md p-6 shadow-xl animate-fade-in">
+      {showVoteModal && selectedRecord && (
+        <AnimatedModal open onClose={() => setShowVoteModal(false)} panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-md p-6 shadow-xl">
             <div className="flex justify-between items-center border-b border-border-custom pb-4 mb-4">
               <div>
                 <h3 className="text-base font-bold text-text-primary flex items-center gap-2">
@@ -311,9 +329,7 @@ export const RankingFeature = () => {
                 </button>
               </div>
             </form>
-          </div>
-        </div>,
-        document.body,
+        </AnimatedModal>
       )}
     </div>
   );

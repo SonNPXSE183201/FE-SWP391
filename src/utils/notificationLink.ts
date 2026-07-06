@@ -68,11 +68,11 @@ const fixLegacyPath = (path: string, role: UserRole, seriesId: string | null): s
   if (path.startsWith('/chapters/')) {
     const chapterId = path.split('/')[2];
     if (role === 'Mangaka' && chapterId) return `/mangaka/manuscripts/${chapterId}`;
-    if (role === 'Editor') return '/editor/review';
+    if (role === 'Editor') return '/editor/series-review';
     return null;
   }
 
-  if (path === '/editor/review' || path.startsWith('/editor/review/')) {
+  if (path === '/editor/review' || path.startsWith('/editor/review/') || path === '/editor/series-review' || path.startsWith('/editor/series-review/')) {
     return role === 'Editor' ? path : null;
   }
 
@@ -140,7 +140,7 @@ export const resolveNotificationLink = (
   }
 
   if (type === 'Series_Pending_Review' && userRole === 'Editor') {
-    return seriesId ? `/editor/review/${seriesId}` : '/editor/review';
+    return seriesId ? `/editor/review/${seriesId}` : '/editor/series-review';
   }
 
   if (type === 'Series_Submitted_To_Board' && userRole === 'Mangaka') {

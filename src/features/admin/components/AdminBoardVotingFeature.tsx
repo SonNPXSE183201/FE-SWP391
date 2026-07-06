@@ -13,7 +13,6 @@ import {
   Settings2,
   Crown,
   RefreshCw,
-  Radio,
   UserX,
   Scale,
   ArrowRight,
@@ -30,6 +29,7 @@ import {
 } from '../hooks/useBoardVotingAdmin';
 import type { BoardVotingConfigDto } from '../api/boardVoting.api';
 import { calcBoardVotesRequired, calcEffectiveThresholdPercent } from '../../voting';
+import { MotionStagger, MotionItem } from '../../../components/common/animation';
 
 const PRESETS = [
   { label: '51% (Quá bán)', approve: 51 },
@@ -177,7 +177,7 @@ export const AdminBoardVotingFeature = () => {
   }
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="page-header">
         <div className="flex flex-wrap items-start gap-3">
@@ -204,20 +204,9 @@ export const AdminBoardVotingFeature = () => {
                 width="20rem"
               />
             </div>
-            <p className="text-sm text-text-muted mt-1 max-w-2xl">
-              Trọng số tự điều chỉnh theo số TV HĐ đang Active. Khóa tài khoản → danh sách và quy tắc cập nhật realtime.
-            </p>
+
             <div className="flex flex-wrap items-center gap-2 mt-2">
-              <span
-                className={`inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full border font-medium ${
-                  isLiveSyncing
-                    ? 'bg-brand/10 text-brand border-brand/25'
-                    : 'bg-success/10 text-success border-success/20'
-                }`}
-              >
-                <Radio size={10} className={isLiveSyncing ? 'animate-pulse' : ''} />
-                {isLiveSyncing ? 'Đang đồng bộ…' : 'Đồng bộ realtime'}
-              </span>
+
               {hasUnsavedChanges && (
                 <span className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/25 font-medium">
                   <CircleDot size={10} />
@@ -281,8 +270,9 @@ export const AdminBoardVotingFeature = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-bg-secondary border border-border-custom rounded-xl px-4 py-3 flex items-center gap-3">
+      <MotionStagger className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <MotionItem>
+        <div className="ui-card bg-bg-secondary border border-border-custom rounded-xl px-4 py-3 flex items-center gap-3 h-full">
           <div className="w-9 h-9 rounded-lg bg-brand/10 text-brand flex items-center justify-center shrink-0">
             <Users size={17} />
           </div>
@@ -292,7 +282,9 @@ export const AdminBoardVotingFeature = () => {
             <p className="text-[10px] text-text-muted/80 mt-0.5 truncate">Không tính tài khoản khóa</p>
           </div>
         </div>
-        <div className="bg-bg-secondary border border-border-custom rounded-xl px-4 py-3 flex items-center gap-3">
+        </MotionItem>
+        <MotionItem>
+        <div className="ui-card bg-bg-secondary border border-border-custom rounded-xl px-4 py-3 flex items-center gap-3 h-full">
           <div className="w-9 h-9 rounded-lg bg-success/10 text-success flex items-center justify-center shrink-0">
             <CheckCircle size={17} />
           </div>
@@ -304,7 +296,9 @@ export const AdminBoardVotingFeature = () => {
             <p className="text-[10px] text-success/80 mt-0.5">≈ {approveEffectivePercent}% tổng</p>
           </div>
         </div>
-        <div className="bg-bg-secondary border border-border-custom rounded-xl px-4 py-3 flex items-center gap-3">
+        </MotionItem>
+        <MotionItem>
+        <div className="ui-card bg-bg-secondary border border-border-custom rounded-xl px-4 py-3 flex items-center gap-3 h-full">
           <div className="w-9 h-9 rounded-lg bg-brand/10 text-brand flex items-center justify-center shrink-0">
             <Scale size={17} />
           </div>
@@ -314,7 +308,9 @@ export const AdminBoardVotingFeature = () => {
             <p className="text-[10px] text-text-muted/80 mt-0.5">Luôn lẻ — không hòa</p>
           </div>
         </div>
-        <div className="bg-bg-secondary border border-border-custom rounded-xl px-4 py-3 flex items-center gap-3">
+        </MotionItem>
+        <MotionItem>
+        <div className="ui-card bg-bg-secondary border border-border-custom rounded-xl px-4 py-3 flex items-center gap-3 h-full">
           <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0">
             <Crown size={17} />
           </div>
@@ -330,11 +326,13 @@ export const AdminBoardVotingFeature = () => {
             </p>
           </div>
         </div>
-      </div>
+        </MotionItem>
+      </MotionStagger>
 
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+      <MotionStagger className="grid grid-cols-1 xl:grid-cols-5 gap-6">
         {/* Form */}
-        <form onSubmit={handleSaveConfig} className="xl:col-span-3 space-y-4">
+        <MotionItem className="xl:col-span-3">
+        <form onSubmit={handleSaveConfig} className="space-y-4">
           <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 space-y-5">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-2">
@@ -551,9 +549,10 @@ export const AdminBoardVotingFeature = () => {
             </div>
           </div>
         </form>
+        </MotionItem>
 
         {/* Live preview */}
-        <div className="xl:col-span-2 space-y-4">
+        <MotionItem className="xl:col-span-2 space-y-4">
           <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 space-y-4 h-full">
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-2">
@@ -688,8 +687,8 @@ export const AdminBoardVotingFeature = () => {
               Tổng trọng số luôn lẻ — không hòa phiếu. Ngân sách duyệt = trung bình có trọng số các phiếu Approve.
             </div>
           </div>
-        </div>
-      </div>
+        </MotionItem>
+      </MotionStagger>
     </div>
   );
 };

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useState } from 'react';
+import { AnimatedModal } from '../../../components/common/animation';
 import {
   Star,
   Clock,
@@ -48,37 +48,14 @@ export const AssistantSystemDetailModal = ({
   const safeActiveTasks = assistant.currentActiveTasks ?? 0;
   const safeDisputeRate = assistant.disputeRate ?? 0;
 
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKeyDown);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [onClose]);
-
-
-
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-md"
-        onClick={onClose}
-        aria-hidden
-      />
-
-      {/* Modal container */}
-      <div
-        className="relative w-full max-w-[58rem] bg-bg-secondary rounded-[24px] shadow-[0_32px_80px_rgba(0,0,0,0.6)] animate-scale-in overflow-hidden max-h-[min(92vh,52rem)] flex flex-col border border-white/[0.07]"
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Chi tiết ${displayName}`}
-      >
+  return (
+    <AnimatedModal
+      open
+      onClose={onClose}
+      containerClassName="flex items-center justify-center p-4 sm:p-6"
+      backdropClassName="absolute inset-0 bg-black/70 backdrop-blur-md"
+      panelClassName="relative w-full max-w-[58rem] bg-bg-secondary rounded-[24px] shadow-[0_32px_80px_rgba(0,0,0,0.6)] overflow-hidden max-h-[min(92vh,52rem)] flex flex-col border border-white/[0.07]"
+    >
         {/* Decorative gradient orbs */}
         <div className="pointer-events-none absolute -top-20 -left-20 w-60 h-60 bg-brand/20 rounded-full blur-[80px]" />
         <div className="pointer-events-none absolute -top-10 right-20 w-40 h-40 bg-info/10 rounded-full blur-[60px]" />
@@ -262,8 +239,6 @@ export const AssistantSystemDetailModal = ({
             onClose={() => setShowInvitePopover(false)}
           />
         )}
-      </div>
-    </div>,
-    document.body,
+    </AnimatedModal>
   );
 };

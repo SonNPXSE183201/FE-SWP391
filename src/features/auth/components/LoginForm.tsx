@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import { Mail, Lock, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore, type UserRole } from '../../../stores/authStore';
 import { authApi } from '../api/auth.api';
+import type { AuthResponseDto } from '../../../api/generated/types';
 import { loadRememberedEmail, persistRememberedEmail } from '../utils/rememberCredentials';
 
 export const LoginForm: React.FC = () => {
@@ -40,11 +41,18 @@ export const LoginForm: React.FC = () => {
         else if (mappedRole === 'Tantou Editor') mappedRole = 'Editor';
         else if (mappedRole === 'Editorial Board') mappedRole = 'Board';
 
+        const profile = response.data as AuthResponseDto;
+
         setAuth({
           id: response.data.userId?.toString() || '0',
           fullName: response.data.fullName || response.data.userName || 'User',
           email: response.data.email || email,
           role: mappedRole as UserRole,
+          avatarUrl: profile.avatarUrl ?? undefined,
+          penName: profile.penName ?? undefined,
+          portfolioUrl: profile.portfolioUrl ?? undefined,
+          skills: profile.skills ?? undefined,
+          phoneNumber: profile.phoneNumber ?? undefined,
         }, response.data.token, response.data.refreshToken || '');
 
         toast.success(response.message || 'Đăng nhập thành công');

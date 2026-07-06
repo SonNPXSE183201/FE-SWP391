@@ -1,5 +1,6 @@
 import { Outlet, Link } from 'react-router-dom';
 import { Logo } from '../components/common/Logo';
+import { AnimatedPage } from '../components/common/animation';
 import { ArrowLeft } from 'lucide-react';
 
 export const AuthLayout = () => {
@@ -24,7 +25,9 @@ export const AuthLayout = () => {
         </header>
 
         {/* Page content */}
-        <Outlet />
+        <AnimatedPage>
+          <Outlet />
+        </AnimatedPage>
       </div>
     </div>
   );

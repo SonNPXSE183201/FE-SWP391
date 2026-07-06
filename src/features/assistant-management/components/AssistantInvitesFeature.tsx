@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { assistantInvitesKeys } from '../hooks/useAssistantInvites';
 import { InviteDetailModal } from './InviteDetailModal';
+import { MotionStagger, MotionItem } from '../../../components/common/animation';
 
 export const AssistantInvitesFeature = () => {
   const { data: invites = [], isLoading } = useAssistantInvites();
@@ -32,16 +33,17 @@ export const AssistantInvitesFeature = () => {
   }
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="space-y-4">
+      <MotionStagger className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {invites.map((invite) => (
+          <MotionItem key={`${invite.seriesId}-${invite.roleInTeam}`}>
           <InviteCard
-            key={`${invite.seriesId}-${invite.roleInTeam}`}
             invite={invite}
             onViewDetail={() => setSelectedInvite(invite)}
           />
+          </MotionItem>
         ))}
-      </div>
+      </MotionStagger>
 
       {selectedInvite && (
         <InviteDetailModalWrapper

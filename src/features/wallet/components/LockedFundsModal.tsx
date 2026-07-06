@@ -1,5 +1,5 @@
-import { createPortal } from 'react-dom';
 import { X, Lock, Loader2, Calendar } from 'lucide-react';
+import { AnimatedModal } from '../../../components/common/animation';
 import { formatVND } from '../constants';
 import { useMangakaTasks, OPEN_TASK_STATUSES, getTaskStatusConfig, formatDeadline } from '../../tasks';
 import { normalizeTaskStatus } from '../../../utils/status';
@@ -16,10 +16,12 @@ export const LockedFundsModal = ({ onClose }: LockedFundsModalProps) => {
     return tasks.filter((t) => t.status && OPEN_TASK_STATUSES.includes(normalizeTaskStatus(t.status)));
   }, [tasks]);
 
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-lg-custom animate-modal-enter">
+  return (
+    <AnimatedModal
+      open
+      onClose={onClose}
+      panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-lg-custom"
+    >
         {/* Header */}
         <div className="px-6 py-4 border-b border-border-custom flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
@@ -97,8 +99,6 @@ export const LockedFundsModal = ({ onClose }: LockedFundsModalProps) => {
             Đóng
           </button>
         </div>
-      </div>
-    </div>,
-    document.body,
+    </AnimatedModal>
   );
 };
