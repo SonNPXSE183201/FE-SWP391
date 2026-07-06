@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { taskApi } from '../api/task.api';
 import type { ApiResponse, TasksDto, TaskVersionDto, AnnotationDto } from '../../../api/generated/types';
-import type { Task } from '../../../types/entities';
 import { unwrapPaged } from '../../../api/apiResponse';
 import { normalizeTaskStatus } from '../../../utils/status';
 
@@ -24,30 +23,6 @@ export { normalizeTaskStatus } from '../../../utils/status';
 /** Trả về bản sao DTO với status đã chuẩn hóa về union TaskStatus của frontend. */
 export const normalizeTaskDto = (dto: TasksDto): TasksDto =>
   ({ ...dto, status: normalizeTaskStatus(dto.status) as TasksDto['status'] });
-
-export const mapTaskDtoToEntity = (dto: TasksDto): Task => {
-  return {
-    id: String(dto.id || ''),
-    createdAt: dto.createAt || new Date().toISOString(),
-    updatedAt: dto.updateAt || dto.createAt || new Date().toISOString(),
-    regionId: String(dto.regionId || ''),
-    pageId: '',
-    chapterId: '',
-    seriesId: '',
-    mangakaId: String(dto.mangakaId || ''),
-    assignedAssistantId: dto.assistantId ? String(dto.assistantId) : undefined,
-    assignedAssistantName: dto.assistantName || undefined,
-    description: dto.description || undefined,
-    status: normalizeTaskStatus(dto.status),
-    amount: dto.paymentAmount || 0,
-    deadline: dto.deadline || '',
-    extensionUsed: !!dto.extensionRequestDays,
-    extensionReason: dto.extensionReason || undefined,
-    extensionStatus: dto.extensionStatus || undefined,
-    extensionRequestDays: dto.extensionRequestDays || undefined,
-    onLeave: false,
-  };
-};
 
 // ─── Mangaka Tasks ───────────────────────────────────────────
 export const useMangakaTasks = (params?: { page?: number; pageSize?: number; status?: string }) => {
@@ -209,7 +184,7 @@ export const useRequestExtension = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ taskId, days, reason }: { taskId: string; days: 1 | 2; reason: string }) =>
-      taskApi.requestExtension({ taskId, days, reason }),
+      taskApi.requestExtension(taskId, { days, reason }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', 'assistant-my'] });
       queryClient.invalidateQueries({ queryKey: ['tasks', 'mangaka'] });
@@ -246,7 +221,7 @@ export const useTaskVersionAnnotations = (taskVersionId?: string) => {
 
 // ─── Task Detail ─────────────────────────────────────────────
 export const useTaskDetail = (taskId?: string) => {
-  return useQuery<Task | null, Error>({
+  return useQuery<TasksDto | null, Error>({
     queryKey: ['task', taskId],
     queryFn: async () => {
       const res = await taskApi.getById(taskId as string);
@@ -254,7 +229,7 @@ export const useTaskDetail = (taskId?: string) => {
       if (!payload.success) return null;
       const data = payload.data;
       if (!data) return null;
-      return mapTaskDtoToEntity(data);
+      return normalizeTaskDto(data);
     },
     enabled: !!taskId,
     retry: 1,

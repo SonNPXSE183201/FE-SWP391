@@ -5,7 +5,8 @@ import type {
   RegionDto,
   UpdateRegionDto,
 } from '../../../api/generated/types';
-import type { Annotation, AnnotationType, Region } from '../../../types/entities';
+import type { AnnotationType } from '../../../types/status.types';
+import type { CanvasAnnotation, CanvasRegion } from '../types/canvas.types';
 import type { FabricImage } from 'fabric';
 
 const ANNOTATION_TYPES: AnnotationType[] = ['Technical', 'Art', 'Content'];
@@ -21,7 +22,7 @@ interface Coordinates {
 
 export const parseCoordinatesJson = (
   json?: string | null,
-): Pick<Region, 'x' | 'y' | 'width' | 'height'> => {
+): Pick<CanvasRegion, 'x' | 'y' | 'width' | 'height'> => {
   if (!json) return { x: 0, y: 0, width: 0, height: 0 };
   try {
     const c = JSON.parse(json) as Coordinates;
@@ -76,7 +77,7 @@ export const toCoordinatesJson = (coords: {
     height: coords.height,
   });
 
-export const mapRegionDtoToEntity = (dto: RegionDto): Region => {
+export const mapRegionDtoToEntity = (dto: RegionDto): CanvasRegion => {
   const coords = parseCoordinatesJson(dto.coordinatesJson);
   return {
     id: String(dto.id ?? ''),
@@ -101,7 +102,7 @@ export const toCreateRegionDto = (data: {
   coordinatesJson: toCoordinatesJson(data),
 });
 
-export const toUpdateRegionDto = (data: Partial<Region>): UpdateRegionDto => {
+export const toUpdateRegionDto = (data: Partial<CanvasRegion>): UpdateRegionDto => {
   const result: UpdateRegionDto = {};
   if (data.label !== undefined) result.name = data.label;
   if (
@@ -120,7 +121,7 @@ export const toUpdateRegionDto = (data: Partial<Region>): UpdateRegionDto => {
   return result;
 };
 
-export const mapAnnotationDtoToEntity = (dto: AnnotationDto): Annotation => {
+export const mapAnnotationDtoToEntity = (dto: AnnotationDto): CanvasAnnotation => {
   const coords = parseCoordinatesJson(dto.coordinatesJson);
   const type = ANNOTATION_TYPES.includes(dto.type as AnnotationType)
     ? (dto.type as AnnotationType)
@@ -182,5 +183,3 @@ export const sceneRectToImagePixels = (
   };
 };
 
-/** @deprecated Dùng resolveMediaUrl từ utils — giữ alias cho canvas feature */
-export { resolveMediaUrl as resolvePageImageUrl } from '../../../utils/resolveMediaUrl';

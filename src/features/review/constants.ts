@@ -1,4 +1,4 @@
-import type { AnnotationType } from '../../types/entities';
+import type { AnnotationType } from '../../types/status.types';
 
 // ─── Phân loại ghim lỗi (kiểm duyệt) — F3.2 ─────────────
 export const ANNOTATION_TYPE_CONFIG: Record<

@@ -44,8 +44,8 @@ export const COVER_UPLOAD_LABEL = 'tải lên ảnh bìa';
 export const MANUSCRIPT_UPLOADING_LABEL = 'Đang tải lên và lưu bản phác thảo…';
 export const MANUSCRIPT_DROP_HINT = 'Kéo thả hoặc bấm để chọn file PDF';
 
-export const MANGAKA_RESUBMIT_NOTE_LABEL = 'Ghi chú gửi Editor';
+export const MANGAKA_RESUBMIT_NOTE_LABEL = 'Ghi chú gửi Biên tập viên';
 export const MANGAKA_RESUBMIT_NOTE_HINT =
-  'Giải thích thay đổi (ví dụ: lý do chấp nhận hoặc điều chỉnh ngân sách). Editor sẽ đọc trước khi xét duyệt lại.';
+  'Giải thích thay đổi (ví dụ: lý do chấp nhận hoặc điều chỉnh ngân sách). Biên tập viên sẽ đọc trước khi xét duyệt lại.';
 export const MANGAKA_RESUBMIT_NOTE_PLACEHOLDER =
   'Ví dụ: Tôi đồng ý mức ngân sách 2.200.000 đ vì phù hợp phạm vi bản phác thảo hiện tại…';

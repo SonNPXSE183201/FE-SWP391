@@ -3,7 +3,7 @@ import type {
   PageStatus,
   SeriesStatus,
   TaskStatus,
-} from '../types/entities';
+} from '../types/status.types';
 
 // ─── Series ──────────────────────────────────────────────────
 

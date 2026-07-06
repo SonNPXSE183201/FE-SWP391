@@ -54,7 +54,7 @@ import { useChapterDetail, ReplacePageImageModal, useReplacePageImage, getPageSt
 import { getTaskStatusConfig } from "../../tasks";
 import { CreateTaskModal } from "../../tasks";
 import { formatVND } from "../../wallet";
-import type { Annotation, Region } from "../../../types/entities";
+import type { CanvasAnnotation, CanvasRegion } from "../types/canvas.types";
 import { ANNOTATION_TYPE_CONFIG } from "../../review/constants";
 import type { TasksDto } from "../../../api/generated/types";
 import type { CanvasViewerHandle } from "../../../components/canvas/CanvasViewer";
@@ -142,7 +142,7 @@ export const PageCanvasFeature = ({
 
   // ─── Region handlers ───
   const handleRegionCreated = useCallback(
-    (region: Omit<Region, "id" | "createdAt" | "updatedAt">) => {
+    (region: Omit<CanvasRegion, "id" | "createdAt" | "updatedAt">) => {
       if (!regionLabel.trim()) {
         toast.error("Vui lòng nhập tên vùng trước khi vẽ.");
         setRegionLabelError(true);
@@ -183,7 +183,7 @@ export const PageCanvasFeature = ({
 
   const handleUpdateLabel = useCallback(
     (regionId: string, newLabel: string) => {
-      const current = regions.find((r: Region) => r.id === regionId);
+      const current = regions.find((r: CanvasRegion) => r.id === regionId);
       updateRegion.mutate(
         {
           regionId,
@@ -215,7 +215,7 @@ export const PageCanvasFeature = ({
   );
 
   const handleRegionUpdated = useCallback(
-    (region: Region) => {
+    (region: CanvasRegion) => {
       updateRegion.mutate(
         {
           regionId: region.id,
@@ -688,7 +688,7 @@ export const PageCanvasFeature = ({
                       Lỗi Editor ghim ({editorAnnotations.length})
                     </p>
                   </div>
-                  {editorAnnotations.map((anno: Annotation) => {
+                  {editorAnnotations.map((anno: CanvasAnnotation) => {
                     const cfg = ANNOTATION_TYPE_CONFIG[anno.type];
                     const isSelected = anno.id === selectedAnnotationId;
                     return (
@@ -807,7 +807,7 @@ export const PageCanvasFeature = ({
                   )}
                 </div>
               ) : (
-                regions.map((region: Region, idx: number) => {
+                regions.map((region: CanvasRegion, idx: number) => {
                   const task = tasksByRegion.get(region.id);
                   const isSelected = region.id == selectedRegionId;
                   const taskCfg = task ? getTaskStatusConfig(task.status) : null;
@@ -974,11 +974,11 @@ export const PageCanvasFeature = ({
           initialContext={
             chapterDetail && currentPage
               ? {
-                  seriesId: chapterDetail.seriesId,
-                  chapterId: chapterDetail.id,
+                  seriesId: String(chapterDetail.seriesId ?? ''),
+                  chapterId: String(chapterDetail.id ?? ''),
                   pageId: currentPage.id,
                   taskName:
-                    regions.find((r: Region) => r.id == selectedRegionId)
+                    regions.find((r: CanvasRegion) => r.id == selectedRegionId)
                       ?.label || "",
                   regionId: selectedRegionId || undefined,
                 }

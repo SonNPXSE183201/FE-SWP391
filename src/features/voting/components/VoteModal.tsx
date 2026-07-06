@@ -431,25 +431,15 @@ export const VoteModal = ({
                     </div>
 
                     <div className="relative">
-
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-text-muted">₫</span>
-
                       <input
-
                         type="text"
-
                         inputMode="numeric"
-
                         value={formatVNDInput(voteBudget)}
-
                         onChange={(e) => setVoteBudget(parseVndInput(e.target.value))}
-
-                        className="w-full bg-bg-primary border border-border-custom rounded-xl pl-8 pr-4 py-2.5 text-sm font-medium text-text-primary focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/25 transition-colors"
-
+                        className="w-full bg-bg-primary border border-border-custom rounded-xl pl-4 pr-12 py-2.5 text-sm font-medium text-text-primary focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/25 transition-colors"
                         placeholder="0"
-
                       />
-
+                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm text-text-muted font-medium pointer-events-none">VND</span>
                     </div>
 
                     {authorBudget > 0 && (

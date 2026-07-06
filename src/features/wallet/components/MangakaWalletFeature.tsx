@@ -12,17 +12,18 @@ import { LockedFundsModal } from './LockedFundsModal';
 import { useWallet } from '../hooks/useWallet';
 import { useWalletDepositListener } from '../hooks/useWalletDepositListener';
 
-import { calculateMonthlyStats, getTransactionAmountDisplay, formatTransactionDateTime, normalizeTransactionType } from '../utils';
+import { calculateMonthlyStats, getTransactionAmountDisplay, formatTransactionDateTime, normalizeTransactionType, getWalletLockedAmount, getWalletTotalBalance, getTransactionDescription } from '../utils';
 import { usePagination } from '../../../hooks/usePagination';
 import { Pagination } from '../../../components/common/Pagination';
 import { CustomSelect } from '../../../components/common/CustomSelect';
-import type { Transaction, TransactionType } from '../../../types/entities';
+import type { TransactionDto } from '../../../api/generated/types';
+import type { TransactionType } from '../../../types/status.types';
 
 export const MangakaWalletFeature = () => {
   const [txTypeFilter, setTxTypeFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [walletAction, setWalletAction] = useState<'deposit' | 'withdraw' | null>(null);
-  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+  const [selectedTx, setSelectedTx] = useState<TransactionDto | null>(null);
   const [isLockedFundsModalOpen, setIsLockedFundsModalOpen] = useState(false);
 
   useWalletDepositListener();
@@ -34,10 +35,12 @@ export const MangakaWalletFeature = () => {
 
   const filteredTx = useMemo(() => {
     return transactions.filter((tx) => {
-      const matchesType = !txTypeFilter || tx.type === txTypeFilter;
+      const txType = normalizeTransactionType(tx.type ?? '');
+      const description = getTransactionDescription(tx);
+      const matchesType = !txTypeFilter || txType === txTypeFilter;
       const matchesSearch = !searchQuery ||
-        tx.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tx.referenceCode.toLowerCase().includes(searchQuery.toLowerCase());
+        description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (tx.referenceCode ?? '').toLowerCase().includes(searchQuery.toLowerCase());
       return matchesType && matchesSearch;
     });
   }, [transactions, txTypeFilter, searchQuery]);
@@ -109,7 +112,7 @@ export const MangakaWalletFeature = () => {
               <span className="text-xs font-medium text-info uppercase tracking-wider">Quỹ sản xuất</span>
             </div>
             <div className="text-3xl font-bold text-text-primary mt-2">
-              {formatVND(wallet.setupFundBalance)}
+              {formatVND(wallet.setupFundBalance ?? 0)}
             </div>
 
             <div className="flex items-center gap-2 mt-3">
@@ -118,7 +121,7 @@ export const MangakaWalletFeature = () => {
                 onClick={() => setIsLockedFundsModalOpen(true)}
               >
                 <Lock size={10} />
-                Đang khóa: {formatVND(wallet.lockedAmount)}
+                Đang khóa: {formatVND(getWalletLockedAmount(wallet))}
               </span>
             </div>
           </div>
@@ -133,7 +136,7 @@ export const MangakaWalletFeature = () => {
               <span className="text-xs font-medium text-success uppercase tracking-wider">Quỹ khả dụng</span>
             </div>
             <div className="text-3xl font-bold text-text-primary mt-2">
-              {formatVND(wallet.withdrawableBalance)}
+              {formatVND(wallet.withdrawableBalance ?? 0)}
             </div>
 
             <div className="flex items-center gap-2 mt-3">
@@ -151,7 +154,7 @@ export const MangakaWalletFeature = () => {
         <div className="flex items-center gap-2">
           <Wallet size={16} className="text-text-muted" />
           <span className="text-sm text-text-secondary">Tổng số dư:</span>
-          <span className="text-sm font-bold text-text-primary">{formatVND(wallet.totalBalance)}</span>
+          <span className="text-sm font-bold text-text-primary">{formatVND(getWalletTotalBalance(wallet))}</span>
         </div>
 
       </div>
@@ -193,10 +196,11 @@ export const MangakaWalletFeature = () => {
             const cfg = TX_TYPE_CONFIG[txType] || TX_TYPE_CONFIG[tx.type as TransactionType] || { icon: Wallet, bg: 'bg-bg-surface', color: 'text-text-muted', label: tx.type, sign: '' as const };
             const TxIcon = cfg.icon;
             const amountDisplay = getTransactionAmountDisplay(tx);
-            const date = formatTransactionDateTime(tx.createdAt);
+            const date = formatTransactionDateTime(tx.createAt);
+            const description = getTransactionDescription(tx);
 
             return (
-              <div key={tx.id} onClick={() => setSelectedTx(tx)} className="group bg-bg-secondary border border-border-custom rounded-xl p-4 hover:border-brand/15 transition-all cursor-pointer">
+              <div key={String(tx.id)} onClick={() => setSelectedTx(tx)} className="group bg-bg-secondary border border-border-custom rounded-xl p-4 hover:border-brand/15 transition-all cursor-pointer">
                 <div className="flex items-center gap-3">
                   <div className={`w-9 h-9 rounded-lg ${cfg.bg} flex items-center justify-center flex-shrink-0`}>
                     <TxIcon size={16} className={cfg.color} />
@@ -207,9 +211,9 @@ export const MangakaWalletFeature = () => {
                       <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${cfg.bg} ${cfg.color}`}>
                         {cfg.label}
                       </span>
-                      <span className="text-[10px] text-text-muted font-mono">{tx.referenceCode}</span>
+                      <span className="text-[10px] text-text-muted font-mono">{tx.referenceCode ?? '—'}</span>
                     </div>
-                    <p className="text-sm text-text-primary mt-0.5 truncate">{tx.description}</p>
+                    <p className="text-sm text-text-primary mt-0.5 truncate">{description}</p>
                   </div>
 
                   <div className="text-right flex-shrink-0">
@@ -221,16 +225,16 @@ export const MangakaWalletFeature = () => {
                 </div>
 
                 {/* Fund breakdown */}
-                {(tx.setupFundAmount !== 0 || tx.withdrawableAmount !== 0) && (
+                {(Number(tx.setupFundAmount ?? 0) !== 0 || Number(tx.withdrawableAmount ?? 0) !== 0) && (
                   <div className="flex items-center gap-3 mt-2 ml-12 text-[10px]">
-                    {tx.setupFundAmount !== 0 && (
+                    {Number(tx.setupFundAmount ?? 0) !== 0 && (
                       <span className="text-info">
-                        Quỹ sản xuất: {tx.setupFundAmount > 0 ? '+' : '-'}{formatVND(Math.abs(tx.setupFundAmount))}
+                        Quỹ sản xuất: {Number(tx.setupFundAmount) > 0 ? '+' : '-'}{formatVND(Math.abs(Number(tx.setupFundAmount)))}
                       </span>
                     )}
-                    {tx.withdrawableAmount !== 0 && (
-                      <span className={tx.withdrawableAmount >= 0 ? 'text-success' : 'text-danger'}>
-                        Quỹ khả dụng: {tx.withdrawableAmount > 0 ? '+' : '-'}{formatVND(Math.abs(tx.withdrawableAmount))}
+                    {Number(tx.withdrawableAmount ?? 0) !== 0 && (
+                      <span className={Number(tx.withdrawableAmount) >= 0 ? 'text-success' : 'text-danger'}>
+                        Quỹ khả dụng: {Number(tx.withdrawableAmount) > 0 ? '+' : '-'}{formatVND(Math.abs(Number(tx.withdrawableAmount)))}
                       </span>
                     )}
                   </div>
@@ -268,7 +272,7 @@ export const MangakaWalletFeature = () => {
       {walletAction && (
         <WalletActionModal
           mode={walletAction}
-          maxWithdrawAmount={wallet.withdrawableBalance}
+          maxWithdrawAmount={wallet.withdrawableBalance ?? 0}
           onClose={() => setWalletAction(null)}
         />
       )}

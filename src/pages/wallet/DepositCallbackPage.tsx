@@ -1,4 +1,4 @@
-import { DepositCallbackFeature } from '../../features/wallet/components/DepositCallbackFeature';
+import { DepositCallbackFeature } from '../../features/wallet';
 
 export const DepositCallbackPage = () => {
   return (

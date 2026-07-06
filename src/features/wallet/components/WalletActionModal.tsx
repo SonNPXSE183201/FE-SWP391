@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom';
 import {
   ArrowDownToLine, ArrowUpFromLine, CreditCard, ExternalLink,
 } from 'lucide-react';
-import { formatVND, VIETNAM_BANKS } from '../constants';
+import { formatVND, formatVNDInput, parseVND, VIETNAM_BANKS } from '../constants';
 import { CustomSelect } from '../../../components/common/CustomSelect';
 import { useWalletActions } from '../hooks/useWalletActions';
 
@@ -56,13 +56,20 @@ export const WalletActionModal = ({ mode, maxWithdrawAmount, onClose, onSuccess 
 
           <div>
             <label className="block text-xs font-medium text-text-secondary mb-1.5">Số tiền (VND)</label>
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="Nhập số tiền..."
-              className="w-full px-4 py-3 bg-bg-surface border border-border-custom rounded-xl text-base text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                inputMode="numeric"
+                value={formatVNDInput(amount)}
+                onChange={(e) => {
+                  const digits = parseVND(e.target.value);
+                  setAmount(digits ? String(digits) : '');
+                }}
+                placeholder="Nhập số tiền..."
+                className="w-full pl-4 pr-12 py-3 bg-bg-surface border border-border-custom rounded-xl text-base font-semibold text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all"
+              />
+              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm text-text-muted font-medium pointer-events-none">VND</span>
+            </div>
           </div>
           <div className="flex flex-wrap gap-2">
             {presetAmounts.map((a) => (

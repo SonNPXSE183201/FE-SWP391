@@ -1,4 +1,5 @@
-import type { TaskStatus } from '../../types/entities';
+// UI presentation — labels/colors/icons; không có trong OpenAPI schema
+import type { TaskStatus } from '../../types/status.types';
 import {
   Clock,
   ClipboardList,

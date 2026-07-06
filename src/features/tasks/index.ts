@@ -34,5 +34,6 @@ export {
   useApproveExtension,
 } from './hooks/useTasks';
 export type { AvailableTaskDto } from './hooks/useTasks';
+export type { CreateTaskDto, TasksDto, RejectTaskDto } from './api/task.api';
 export { TaskReviewModal } from './components/TaskReviewModal';
 export { AssistantTaskDetailModal } from './components/AssistantTaskDetailModal';

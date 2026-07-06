@@ -25,16 +25,17 @@ import {
   useSeriesBudgetEdit,
   useSeriesDetail,
 } from '../index';
-import type { SeriesStatus } from '../../../types/entities';
+import type { SeriesStatus } from '../../../types/status.types';
 import type { SeriesNameUpdateSnapshot } from '../api/series.api';
 import { NEMU_BUDGET_LABEL_SHORT, NEMU_MANUSCRIPT_LABEL } from '../constants/seriesCopy';
 import { parseEditorRevisionNote } from '../utils/editorRevision.utils';
+import { parseGenreList, resolveSeriesCover } from '../utils/series.utils';
 
 export const SeriesDetailFeature = () => {
   const { seriesId } = useParams<{ seriesId: string }>();
   const navigate = useNavigate();
 
-  // Fetch series via hook (USE_MOCK handled in API layer)
+  // Fetch series via API hook
   const { data: series, isLoading } = useSeriesDetail(seriesId);
 
   const [statusOverride, setStatusOverride] = useState<SeriesStatus | null>(null);
@@ -43,10 +44,10 @@ export const SeriesDetailFeature = () => {
 
   const seriesSnapshot: SeriesNameUpdateSnapshot | undefined = series
     ? {
-        title: series.title,
-        synopsis: series.synopsis,
-        genre: series.genre,
-        coverImageUrl: series.coverImageUrl,
+        title: series.title ?? '',
+        synopsis: series.synopsis ?? '',
+        genre: parseGenreList(series.genre),
+        coverImageUrl: resolveSeriesCover(series),
         estimatedProductionBudget: series.estimatedProductionBudget ?? 0,
       }
     : undefined;
@@ -119,6 +120,7 @@ export const SeriesDetailFeature = () => {
     : getSeriesStatusConfig(currentStatus);
 
   const revisionParsed = hasRevisionRequest ? parseEditorRevisionNote(series.editorNote!) : null;
+  const coverUrl = resolveSeriesCover(series);
 
   const needsFieldRevision = (field: 'synopsis' | 'genre' | 'name' | 'budget' | 'cover') =>
     revisionParsed?.checklistIds.includes(field as 'synopsis' | 'genre' | 'name' | 'budget') ?? false;
@@ -127,7 +129,7 @@ export const SeriesDetailFeature = () => {
   const checklistItems = [
     {
       label: 'Ảnh bìa',
-      completed: !!series.coverImageUrl,
+      completed: !!coverUrl,
       needsRevision: needsFieldRevision('cover'),
     },
     {
@@ -186,8 +188,8 @@ export const SeriesDetailFeature = () => {
               <h2 className="text-sm font-semibold text-text-primary">Ảnh bìa</h2>
             </div>
             <div className="aspect-[3/4] rounded-xl overflow-hidden bg-bg-surface border border-border-custom">
-              {series.coverImageUrl ? (
-                <img src={series.coverImageUrl} alt={series.title} className="w-full h-full object-cover" />
+              {coverUrl ? (
+                <img src={coverUrl} alt={series.title ?? ''} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-text-muted">
                   <ImagePlus size={28} />
@@ -213,7 +215,7 @@ export const SeriesDetailFeature = () => {
           <SeriesInfoCard series={series} />
 
           {canManageTeam && seriesId && (
-            <SeriesTeamPanel seriesId={seriesId} seriesTitle={series.title} />
+            <SeriesTeamPanel seriesId={seriesId} seriesTitle={series.title ?? ''} />
           )}
 
           {/* Upload Name — Draft only (Feature Component) */}
@@ -236,10 +238,10 @@ export const SeriesDetailFeature = () => {
                 items={checklistItems}
                 isSubmitting={seriesSubmit.isSubmitting}
                 canSubmit={nameUpload.hasNameManuscript && !nameUpload.isUploading && !nameUpload.isRemoving}
-                onSubmit={() => seriesSubmit.submitForApproval(hasRevisionRequest ? resubmitNote : undefined)}
+                onSubmit={() => seriesSubmit.submitForApproval(resubmitNote)}
                 isRevisionResubmit={hasRevisionRequest}
                 resubmitNote={resubmitNote}
-                onResubmitNoteChange={hasRevisionRequest ? setResubmitNote : undefined}
+                onResubmitNoteChange={setResubmitNote}
             />
           )}
 

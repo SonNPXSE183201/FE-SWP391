@@ -18,7 +18,7 @@ import type { LucideIcon } from 'lucide-react';
 import { TASK_STATUS_CONFIG, formatDeadline } from '../constants';
 import { formatVND } from '../../wallet';
 import type { AvailableTaskDto } from '../hooks/useTasks';
-import type { TaskStatus } from '../../../types/entities';
+import type { TaskStatus } from '../../../types/status.types';
 import { TaskRegionPreview } from './TaskRegionPreview';
 
 const DETAIL_CTA: Partial<Record<TaskStatus, { label: string; icon: LucideIcon; cls: string }>> = {

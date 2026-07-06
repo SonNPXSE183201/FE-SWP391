@@ -59,11 +59,11 @@ export const SubmitChecklist = ({
 
       <p className="text-xs text-text-muted mb-4">
         {isRevisionResubmit
-          ? 'Sau khi xử lý phản hồi Editor, gửi lại để tiếp tục quy trình duyệt.'
-          : 'Gửi hồ sơ cho Editor phụ trách đánh giá.'}
+          ? 'Sau khi xử lý phản hồi Biên tập viên, gửi lại để tiếp tục quy trình duyệt.'
+          : 'Gửi hồ sơ cho Biên tập viên phụ trách đánh giá.'}
         {revisionCount > 0 && (
           <span className="block mt-1 text-amber-400">
-            Còn {revisionCount} mục Editor yêu cầu kiểm tra lại.
+            Còn {revisionCount} mục Biên tập viên yêu cầu kiểm tra lại.
           </span>
         )}
       </p>
@@ -119,24 +119,26 @@ export const SubmitChecklist = ({
                 {item.label}
               </span>
               {item.needsRevision && (
-                <span className="block text-[10px] text-amber-400/80 mt-0.5">Cần xử lý theo phản hồi Editor</span>
+                <span className="block text-[10px] text-amber-400/80 mt-0.5">Cần xử lý theo phản hồi Biên tập viên</span>
               )}
             </div>
           </div>
         ))}
       </div>
 
-      {isRevisionResubmit && onResubmitNoteChange && (
+      {onResubmitNoteChange && (
         <div className="mb-5 rounded-lg border border-brand/20 bg-brand/5 px-4 py-3">
           <div className="flex items-center gap-1.5 text-[11px] font-medium text-brand mb-1.5">
             <MessageSquareQuote size={13} />
-            {MANGAKA_RESUBMIT_NOTE_LABEL}
+            {isRevisionResubmit ? MANGAKA_RESUBMIT_NOTE_LABEL : 'Lời nhắn cho Biên tập viên'}
           </div>
-          <p className="text-[11px] text-text-muted mb-2">{MANGAKA_RESUBMIT_NOTE_HINT}</p>
+          <p className="text-[11px] text-text-muted mb-2">
+            {isRevisionResubmit ? MANGAKA_RESUBMIT_NOTE_HINT : 'Bạn có thể để lại vài lời nhắn gửi cho Biên tập viên (không bắt buộc).'}
+          </p>
           <textarea
             value={resubmitNote}
             onChange={(e) => onResubmitNoteChange(e.target.value)}
-            placeholder={MANGAKA_RESUBMIT_NOTE_PLACEHOLDER}
+            placeholder={isRevisionResubmit ? MANGAKA_RESUBMIT_NOTE_PLACEHOLDER : 'Nhập lời nhắn...'}
             rows={3}
             maxLength={2000}
             className="w-full px-3 py-2.5 bg-bg-primary border border-border-custom rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 resize-y min-h-[80px]"

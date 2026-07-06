@@ -7,7 +7,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import type { SeriesStatus } from '../../../types/entities';
+import type { SeriesStatus } from '../../../types/status.types';
 import {
   dashboardApi,
   type ActivityType,

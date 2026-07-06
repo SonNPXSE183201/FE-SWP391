@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { seriesApi } from '../api/series.api';
 import { isApiSuccess } from '../../../api/apiResponse';
 import type { ApiResponse } from '../../../api/generated/types';
-import type { SeriesStatus } from '../../../types/entities';
+import type { SeriesStatus } from '../../../types/status.types';
 
 interface UseSeriesSubmitOptions {
   seriesId?: string;

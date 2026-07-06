@@ -1,4 +1,4 @@
-import { AssistantInvitesFeature } from '../../features/assistant-management/components/AssistantInvitesFeature';
+import { AssistantInvitesFeature } from '../../features/assistant-management';
 import { PageScaffold } from '../../components/common/PageScaffold';
 import { Users } from 'lucide-react';
 

@@ -30,12 +30,13 @@ export const AssistantManagementFeature = () => {
   const seriesOptions = useMemo(
     () => mySeries
       .filter((s) => s.status === 'Published')
-      .map((s) => ({ value: s.id, label: s.title })),
+      .map((s) => ({ value: String(s.id ?? ''), label: s.title ?? '' })),
     [mySeries],
   );
 
   useEffect(() => {
     if (tabParam === 'directory' || tabParam === 'series') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync tab from URL search params
       setActiveTab(tabParam);
     }
   }, [tabParam]);

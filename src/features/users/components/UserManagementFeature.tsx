@@ -8,6 +8,7 @@ import {
   Lock,
   Unlock,
   Pencil,
+  MoreVertical,
 } from "lucide-react";
 import { CreateUserModal } from "./CreateUserModal";
 import { EditUserModal } from "./EditUserModal";
@@ -23,6 +24,22 @@ import {
   useUnlockUser,
 } from "../hooks/useAdminUsers";
 
+const ROLE_LABELS: Record<string, string> = {
+  'System Admin': 'Quản trị hệ thống',
+  'Admin': 'Quản trị viên',
+  'Editor': 'Biên tập viên',
+  'Board': 'Hội đồng duyệt',
+  'Mangaka': 'Tác giả',
+  'Assistant': 'Trợ lý',
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  'Active': 'Hoạt động',
+  'Pending': 'Chờ duyệt',
+  'Locked': 'Đã khóa',
+  'Rejected': 'Từ chối',
+};
+
 export const UserManagementFeature = () => {
   const [filterRole, setFilterRole] = useState("All");
   const [filterStatus, setFilterStatus] = useState("All");
@@ -32,6 +49,14 @@ export const UserManagementFeature = () => {
   const pageSize = 10;
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<components["schemas"]["UserListItemDto"] | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setOpenMenuId(null);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
 
   // Debounce search
   useEffect(() => {
@@ -108,10 +133,11 @@ export const UserManagementFeature = () => {
         <div className="flex gap-3 w-full md:w-auto">
           <CustomSelect
             options={[
-              { value: "All", label: "Tất cả Role" },
-              { value: "Assistant", label: "Assistant" },
-              { value: "Mangaka", label: "Mangaka" },
-              { value: "Editor", label: "Editor" },
+              { value: "All", label: "Tất cả vai trò" },
+              { value: "Assistant", label: "Trợ lý" },
+              { value: "Mangaka", label: "Tác giả" },
+              { value: "Editor", label: "Biên tập viên" },
+              { value: "Board", label: "Hội đồng duyệt" },
             ]}
             value={filterRole}
             onChange={setFilterRole}
@@ -183,7 +209,7 @@ export const UserManagementFeature = () => {
                                   : "bg-bg-surface text-text-secondary"
                               }`}
                             >
-                              {user.role}
+                              {user.role ? (ROLE_LABELS[user.role] || user.role) : '—'}
                             </span>
                           </td>
                           <td className="p-4">
@@ -202,7 +228,7 @@ export const UserManagementFeature = () => {
                               )}
                               {user.status === "Locked" && <Lock size={12} />}
                               {user.status === "Rejected" && <XCircle size={12} />}
-                              {user.status}
+                              {user.status ? (STATUS_LABELS[user.status] || user.status) : '—'}
                             </span>
                           </td>
                           <td className="p-4 text-text-secondary text-xs">
@@ -216,54 +242,89 @@ export const UserManagementFeature = () => {
                             {user.createdAt ? new Date(user.createdAt).toLocaleDateString("vi-VN") : "—"}
                           </td>
                           <td className="p-4 text-right">
-                            {user.status === "Pending" ? (
-                              <div className="flex justify-end gap-2">
-                                <button
-                                  onClick={() => approveMutation.mutate(Number(user.id))}
-                                  disabled={approveMutation.isPending}
-                                  className="px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 rounded-lg transition-colors text-xs font-medium flex items-center gap-1"
+                            <div className="relative inline-block text-left">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenMenuId(openMenuId === user.id ? null : user.id!);
+                                }}
+                                className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-primary transition-colors"
+                              >
+                                <MoreVertical size={18} />
+                              </button>
+                              {openMenuId === user.id && (
+                                <div
+                                  className="absolute right-0 mt-1 w-36 rounded-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.5)] bg-bg-surface border border-border-custom ring-1 ring-black/5 focus:outline-none z-50 overflow-hidden animate-dropdown-enter"
+                                  onClick={(e) => e.stopPropagation()}
                                 >
-                                  <CheckCircle size={14} /> Duyệt
-                                </button>
-                                <button
-                                  onClick={() => rejectMutation.mutate(Number(user.id))}
-                                  disabled={rejectMutation.isPending}
-                                  className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors text-xs font-medium flex items-center gap-1"
-                                >
-                                  <XCircle size={14} /> Từ chối
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="flex justify-end gap-2">
-                                {user.role === "Mangaka" && (user.status === "Active" || user.status === "Locked") && (
-                                  <button
-                                    type="button"
-                                    onClick={() => setEditingUser(user)}
-                                    className="px-3 py-1.5 bg-brand/10 hover:bg-brand/20 text-brand rounded-lg transition-colors text-xs font-medium flex items-center gap-1"
-                                  >
-                                    <Pencil size={14} /> Sửa
-                                  </button>
-                                )}
-                                {user.status === "Active" && (
-                                  <button
-                                    onClick={() => lockMutation.mutate(Number(user.id))}
-                                    disabled={lockMutation.isPending}
-                                    className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors text-xs font-medium flex items-center gap-1"
-                                  >
-                                    <Lock size={14} /> Khóa
-                                  </button>
-                                )}
-                                {user.status === "Locked" && (
-                                  <button
-                                    onClick={() => unlockMutation.mutate(Number(user.id))}
-                                    disabled={unlockMutation.isPending}
-                                    className="px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 rounded-lg transition-colors text-xs font-medium flex items-center gap-1"
-                                  >
-                                    <Unlock size={14} /> Mở khóa
-                                  </button>
-                                )}
-                              </div>
-                            )}
+                                  <div className="py-1">
+                                    {user.status === "Pending" ? (
+                                      <>
+                                        <button
+                                          onClick={() => {
+                                            approveMutation.mutate(Number(user.id));
+                                            setOpenMenuId(null);
+                                          }}
+                                          disabled={approveMutation.isPending}
+                                          className="w-full text-left px-4 py-2.5 text-xs font-medium text-success hover:bg-success/10 flex items-center gap-2 transition-colors disabled:opacity-50"
+                                        >
+                                          <CheckCircle size={14} /> Duyệt
+                                        </button>
+                                        <button
+                                          onClick={() => {
+                                            rejectMutation.mutate(Number(user.id));
+                                            setOpenMenuId(null);
+                                          }}
+                                          disabled={rejectMutation.isPending}
+                                          className="w-full text-left px-4 py-2.5 text-xs font-medium text-danger hover:bg-danger/10 flex items-center gap-2 transition-colors disabled:opacity-50"
+                                        >
+                                          <XCircle size={14} /> Từ chối
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <>
+                                        {user.role === "Mangaka" && (user.status === "Active" || user.status === "Locked") && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setEditingUser(user);
+                                              setOpenMenuId(null);
+                                            }}
+                                            className="w-full text-left px-4 py-2.5 text-xs font-medium text-brand hover:bg-brand/10 flex items-center gap-2 transition-colors"
+                                          >
+                                            <Pencil size={14} /> Sửa
+                                          </button>
+                                        )}
+                                        {user.status === "Active" && (
+                                          <button
+                                            onClick={() => {
+                                              lockMutation.mutate(Number(user.id));
+                                              setOpenMenuId(null);
+                                            }}
+                                            disabled={lockMutation.isPending}
+                                            className="w-full text-left px-4 py-2.5 text-xs font-medium text-danger hover:bg-danger/10 flex items-center gap-2 transition-colors disabled:opacity-50"
+                                          >
+                                            <Lock size={14} /> Khóa
+                                          </button>
+                                        )}
+                                        {user.status === "Locked" && (
+                                          <button
+                                            onClick={() => {
+                                              unlockMutation.mutate(Number(user.id));
+                                              setOpenMenuId(null);
+                                            }}
+                                            disabled={unlockMutation.isPending}
+                                            className="w-full text-left px-4 py-2.5 text-xs font-medium text-success hover:bg-success/10 flex items-center gap-2 transition-colors disabled:opacity-50"
+                                          >
+                                            <Unlock size={14} /> Mở khóa
+                                          </button>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))

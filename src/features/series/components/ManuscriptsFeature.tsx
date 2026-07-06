@@ -22,9 +22,10 @@ import {
 import { CustomSelect } from '../../../components/common/CustomSelect';
 import { seriesStatusMatchesFilter, toSelectFilterOptions } from '../../../utils/status';
 import { getSeriesStatusConfig } from '../constants';
-import type { Chapter, Series } from '../../../types/entities';
+import type { ChapterWithSeriesTitle, NormalizedSeriesDto } from '../hooks/useSeries';
+import { resolveSeriesCover } from '../utils/series.utils';
 
-type SeriesGroup = Series & { chapters: Chapter[] };
+type SeriesGroup = NormalizedSeriesDto & { chapters: ChapterWithSeriesTitle[] };
 
 export const ManuscriptsFeature = () => {
   const navigate = useNavigate();
@@ -39,18 +40,20 @@ export const ManuscriptsFeature = () => {
   const isLoading = seriesLoading || chaptersLoading;
 
   const seriesGroups = useMemo((): SeriesGroup[] => {
-    const chaptersBySeries = new Map<string, Chapter[]>();
+    const chaptersBySeries = new Map<string, ChapterWithSeriesTitle[]>();
     for (const chapter of chapters) {
-      const list = chaptersBySeries.get(chapter.seriesId) ?? [];
+      const seriesKey = String(chapter.seriesId ?? '');
+      const list = chaptersBySeries.get(seriesKey) ?? [];
       list.push(chapter);
-      chaptersBySeries.set(chapter.seriesId, list);
+      chaptersBySeries.set(seriesKey, list);
     }
 
     return seriesList
       .filter((series) => !statusFilter || seriesStatusMatchesFilter(series.status, statusFilter))
       .map((series) => {
-        const seriesChapters = (chaptersBySeries.get(series.id) ?? [])
-          .sort((a, b) => a.chapterNumber - b.chapterNumber);
+        const seriesKey = String(series.id ?? '');
+        const seriesChapters = (chaptersBySeries.get(seriesKey) ?? [])
+          .sort((a, b) => (a.chapterNumber ?? 0) - (b.chapterNumber ?? 0));
         return { ...series, chapters: seriesChapters };
       });
   }, [seriesList, chapters, statusFilter]);
@@ -129,8 +132,9 @@ export const ManuscriptsFeature = () => {
       {/* Series accordion */}
       <div className="space-y-3 mt-5">
         {seriesGroups.map((group) => {
-          const isExpanded = expandedSeriesIds.has(group.id);
+          const isExpanded = expandedSeriesIds.has(String(group.id));
           const seriesStatus = getSeriesStatusConfig(group.status);
+          const coverUrl = resolveSeriesCover(group);
 
           return (
             <div
@@ -140,7 +144,7 @@ export const ManuscriptsFeature = () => {
               <div className="flex items-center gap-3 p-4">
                 <button
                   type="button"
-                  onClick={() => toggleSeries(group.id)}
+                  onClick={() => toggleSeries(String(group.id))}
                   className="flex flex-1 items-center gap-3 min-w-0 text-left bg-transparent border-none cursor-pointer p-0"
                 >
                   <ChevronDown
@@ -150,10 +154,10 @@ export const ManuscriptsFeature = () => {
                     }`}
                   />
                   <div className="w-10 h-14 rounded-lg overflow-hidden bg-bg-surface border border-border-custom flex-shrink-0">
-                    {group.coverImageUrl ? (
+                    {coverUrl ? (
                       <img
-                        src={group.coverImageUrl}
-                        alt={group.title}
+                        src={coverUrl}
+                        alt={group.title ?? ''}
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -181,7 +185,7 @@ export const ManuscriptsFeature = () => {
 
                 <button
                   type="button"
-                  onClick={() => openUploadModal(group.id)}
+                  onClick={() => openUploadModal(String(group.id))}
                   className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-brand bg-brand/10 hover:bg-brand/15 border border-brand/20 cursor-pointer transition-colors flex-shrink-0"
                   title="Tạo chương nháp cho bộ truyện này"
                 >
@@ -198,7 +202,7 @@ export const ManuscriptsFeature = () => {
                       <p className="text-xs text-text-muted">Chưa có chương nào trong bộ truyện này</p>
                       <button
                         type="button"
-                        onClick={() => openUploadModal(group.id)}
+                        onClick={() => openUploadModal(String(group.id))}
                         className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium bg-brand text-white border-none cursor-pointer hover:bg-brand-hover transition-colors"
                       >
                         <Upload size={14} />
@@ -213,7 +217,7 @@ export const ManuscriptsFeature = () => {
 
                       return (
                         <div
-                          key={chapter.id}
+                          key={String(chapter.id)}
                           role="button"
                           tabIndex={0}
                           onClick={() => navigate(`/mangaka/manuscripts/${chapter.id}`)}
@@ -235,7 +239,7 @@ export const ManuscriptsFeature = () => {
                               Ch.{chapter.chapterNumber}: {chapter.title}
                             </h3>
                             <div className="flex items-center gap-2 mt-0.5 text-[11px] text-text-muted">
-                              <span>{chapter.pageCount} trang</span>
+                              <span>{chapter.validPageCount ?? 0} trang</span>
                               <span>·</span>
                               <span className="inline-flex items-center gap-1">
                                 <Clock size={10} />

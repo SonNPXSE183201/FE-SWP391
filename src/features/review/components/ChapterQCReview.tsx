@@ -12,7 +12,8 @@ import { AnnotationPinPanel } from '../../../components/canvas/AnnotationPinPane
 import { MobileCanvasWarning } from '../../../components/canvas/MobileCanvasWarning';
 import { useCanvasStore } from '../../../stores/canvasStore';
 import type { CanvasViewerHandle } from '../../../components/canvas/CanvasViewer';
-import type { Annotation, AnnotationType } from '../../../types/entities';
+import type { AnnotationType } from '../../../types/status.types';
+import type { CanvasAnnotation } from '../../canvas/types/canvas.types';
 import { useChapterReview, useApproveChapter, useRequireChapterRevision } from '../hooks/useReview';
 import { reviewApi, type AnnotationDto } from '../api/review.api';
 import { ANNOTATION_TYPE_CONFIG, QC_CHECKLIST_ITEMS, formatVND } from '../constants';
@@ -36,7 +37,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
     setActiveTool, setZoomLevel, setAnnotationType, setSelectedAnnotation, resetCanvas,
   } = useCanvasStore();
 
-  const [annotations, setAnnotations] = useState<Annotation[]>([]);
+  const [annotations, setAnnotations] = useState<CanvasAnnotation[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [annoComment, setAnnoComment] = useState('');
   const [showApprove, setShowApprove] = useState(false);
@@ -51,7 +52,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
     'Hiệu ứng ánh sáng/bóng đổ chưa đồng nhất giữa các trang.',
   ];
 
-  const toAnnotationEntity = useCallback((dto: AnnotationDto): Annotation => {
+  const toAnnotationEntity = useCallback((dto: AnnotationDto): CanvasAnnotation => {
     const coords = (() => {
       try {
         const parsed = JSON.parse(dto.coordinatesJson ?? '{}') as {
@@ -139,7 +140,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
         const list = await Promise.all(
           pages.map(async (p: PageDto) => {
             const pid = String(p.id ?? '');
-            if (!pid) return [] as Annotation[];
+            if (!pid) return [] as CanvasAnnotation[];
             const res = await reviewApi.listAnnotations({ pageId: pid });
             const rows = res.data?.data ?? [];
             return rows.map(toAnnotationEntity);
@@ -188,7 +189,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
   );
   const autoRevisionSummary = useMemo(() => {
     if (!unresolvedAnnotations.length) return '';
-    const byPage = new Map<string, Annotation[]>();
+    const byPage = new Map<string, CanvasAnnotation[]>();
     unresolvedAnnotations.forEach((a) => {
       const list = byPage.get(a.pageId) ?? [];
       list.push(a);
@@ -290,7 +291,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
       { chapterId, reason: finalReason },
       {
         onSuccess: () => {
-          toast.success('Đã trả chương về cho Mangaka chỉnh sửa');
+          toast.success('Đã trả chương về cho Tác giả chỉnh sửa');
           setShowRevision(false);
           onBack();
         },
@@ -789,7 +790,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-bg-surface border border-border-custom rounded-xl px-4 py-3">
                       <p className="text-[10px] uppercase tracking-wider text-text-muted font-semibold flex items-center gap-1.5">
-                        <User size={12} /> Mangaka
+                        <User size={12} /> Tác giả
                       </p>
                       <p className="text-sm font-semibold text-text-primary mt-1.5 truncate">
                         {chapter.series?.mangaka?.fullName || 'Chưa xác định'}
@@ -1002,7 +1003,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                   onChange={(e) => setRevisionReason(e.target.value)}
                   placeholder={unresolvedAnnotations.length > 0
                     ? 'Có thể chỉnh lại tóm tắt tự động trước khi gửi...'
-                    : 'Tóm tắt các điểm cần Mangaka xử lý...'}
+                    : 'Tóm tắt các điểm cần Tác giả xử lý...'}
                   rows={4}
                   className="w-full px-4 py-3 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 resize-none"
                   maxLength={500}

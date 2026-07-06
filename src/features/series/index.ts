@@ -11,8 +11,6 @@ export {
   getChapterStatusConfig,
   getPageStatusConfig,
 } from './constants';
-export { MOCK_SERIES, MOCK_CHAPTERS } from './data/mockData';
-export { getPagesByChapterId } from './data/mockPages';
 export { EditorRevisionPanel } from './components/EditorRevisionPanel';
 export { useSeriesBudgetEdit } from './hooks/useSeriesBudgetEdit';
 export { SeriesCard, SeriesRow } from './components/SeriesCard';
