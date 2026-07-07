@@ -22,11 +22,14 @@ export const TX_TYPE_CONFIG: Record<TransactionType, { label: string; color: str
   Escrow_Lock: { label: 'Tạm giữ tiền', color: 'text-warning', bg: 'bg-warning/10', icon: Lock, sign: '-' },
   Escrow_Unlock: { label: 'Hoàn trả quỹ', color: 'text-info', bg: 'bg-info/10', icon: Unlock, sign: '+' },
   Escrow_Release: { label: 'Giải ngân', color: 'text-danger', bg: 'bg-danger/10', icon: ArrowRightLeft, sign: '-' },
+  Escrow_Refund: { label: 'Hoàn tiền quỹ', color: 'text-success', bg: 'bg-success/10', icon: ArrowDownToLine, sign: '+' },
   Transfer: { label: 'Thanh toán', color: 'text-danger', bg: 'bg-danger/10', icon: ArrowRightLeft, sign: '-' },
+  Task_Payment: { label: 'Thù lao Task', color: 'text-success', bg: 'bg-success/10', icon: Banknote, sign: '+' },
   Funding: { label: 'Cấp vốn', color: 'text-brand', bg: 'bg-brand/10', icon: Shield, sign: '+' },
   Production_Funding: { label: NEMU_FUNDING_LABEL, color: 'text-brand', bg: 'bg-brand/10', icon: Shield, sign: '+' },
   Platform_TopUp: { label: 'Nạp quỹ NXB', color: 'text-info', bg: 'bg-info/10', icon: ArrowDownToLine, sign: '+' },
   Genkouryo: { label: 'Nhuận bút', color: 'text-success', bg: 'bg-success/10', icon: Banknote, sign: '+' },
+  Genkouryo_Payment: { label: 'Thanh toán nhuận bút', color: 'text-success', bg: 'bg-success/10', icon: Banknote, sign: '+' },
 };
 
 export const TX_FILTER_OPTIONS = [
@@ -39,11 +42,14 @@ export const TX_FILTER_OPTIONS = [
   { value: 'Escrow_Lock', label: 'Tạm giữ tiền' },
   { value: 'Escrow_Unlock', label: 'Hoàn trả quỹ' },
   { value: 'Escrow_Release', label: 'Giải ngân' },
+  { value: 'Escrow_Refund', label: 'Hoàn tiền quỹ' },
   { value: 'Transfer', label: 'Thanh toán' },
+  { value: 'Task_Payment', label: 'Thù lao Task' },
   { value: 'Funding', label: 'Cấp vốn' },
   { value: 'Production_Funding', label: NEMU_FUNDING_LABEL },
   { value: 'Platform_TopUp', label: 'Nạp quỹ NXB' },
   { value: 'Genkouryo', label: 'Nhuận bút' },
+  { value: 'Genkouryo_Payment', label: 'Thanh toán nhuận bút' },
 ];
 
 // ─── VND Formatter (nguồn dùng chung: src/utils/currency) ─────

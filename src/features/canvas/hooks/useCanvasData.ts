@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import { isAxiosError } from 'axios';
 import { canvasApi } from '../api/canvas.api';
 import type { AnnotationDto, PageDto, RegionDto } from '../../../api/generated/types';
 import type { AnnotationType } from '../../../types/status.types';
@@ -23,12 +24,22 @@ const mapPagesResponse = (res: { data?: { data?: unknown } }): CanvasPage[] => {
   const raw = res.data?.data;
   if (!Array.isArray(raw)) return [];
   if (raw.length > 0 && typeof raw[0] === 'object' && raw[0] !== null && 'pageNumber' in raw[0]) {
-    return (raw as PageDto[]).map((dto) => {
+    const pages = (raw as PageDto[]).map((dto) => {
       const page = normalizePageDto(dto);
-      const rawUrl = resolveMediaUrl(dto.rawImageUrl || '');
-      const compositeUrl = dto.compositeImageUrl
+      const v = page.updateAt ? new Date(page.updateAt).getTime() : undefined;
+
+      let rawUrl = resolveMediaUrl(dto.rawImageUrl || '');
+      if (rawUrl && v) {
+        rawUrl += `${rawUrl.includes('?') ? '&' : '?'}v=${v}`;
+      }
+
+      let compositeUrl = dto.compositeImageUrl
         ? resolveMediaUrl(dto.compositeImageUrl)
         : undefined;
+      if (compositeUrl && v) {
+        compositeUrl += `${compositeUrl.includes('?') ? '&' : '?'}v=${v}`;
+      }
+
       return {
         id: String(page.id ?? ''),
         chapterId: String(page.chapterId ?? ''),
@@ -41,6 +52,8 @@ const mapPagesResponse = (res: { data?: { data?: unknown } }): CanvasPage[] => {
         updatedAt: page.updateAt || new Date().toISOString(),
       };
     });
+
+    return pages.sort((a, b) => a.pageNumber - b.pageNumber);
   }
   return raw as CanvasPage[];
 };
@@ -149,3 +162,30 @@ export const useMarkPageReady = (chapterId: string) => {
   });
 };
 
+export const useUnmarkPageReady = (chapterId: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (pageId: string) => {
+      try {
+        const res = await canvasApi.unmarkPageReady(pageId);
+        return res.data;
+      } catch (err: unknown) {
+        if (isAxiosError(err)) {
+          throw new Error(err.response?.data?.message || 'Có lỗi xảy ra khi xử lý.', { cause: err });
+        }
+        throw err;
+      }
+    },
+    onSuccess: (_data, pageId) => {
+      toast.success('Đã bỏ đánh dấu sẵn sàng');
+      void qc.invalidateQueries({ queryKey: KEYS.pages(chapterId) });
+      void qc.invalidateQueries({ queryKey: ['pages', chapterId] });
+      void qc.invalidateQueries({ queryKey: ['chapter', chapterId] });
+      void qc.invalidateQueries({ queryKey: ['chapter', chapterId, 'production-readiness'] });
+      void qc.invalidateQueries({ queryKey: KEYS.regions(pageId) });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+};

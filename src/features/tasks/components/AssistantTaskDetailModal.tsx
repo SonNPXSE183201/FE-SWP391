@@ -5,9 +5,11 @@ import {
   X, RotateCcw, User, Calendar, FileText,
   Loader2, ImageOff, ExternalLink, MapPin, Upload, Clock,
   Image as ImageIcon, ClipboardList, Eye, CheckCircle2, AlertCircle,
-  Coins, FileCheck2, Hourglass, BookOpen,
+  Coins, FileCheck2, Hourglass, BookOpen, Sparkles,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+
+import { useColorizeImage } from '../../ai/hooks/useColorizeImage';
 
 import type { TasksDto } from '../../../api/generated/types';
 import type { CanvasAnnotation } from '../../canvas/types/canvas.types';
@@ -65,6 +67,28 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
   const [showDisputeModal, setShowDisputeModal] = useState(false);
   const [disputeReason, setDisputeReason] = useState('');
   const reportDisputeTask = useReportDisputeTask();
+
+  const { mutate: colorize, isPending: isColorizing } = useColorizeImage();
+
+  const handleAIColorize = () => {
+    let imageUrl = task.baseLayerUrl || task.pageImageUrl;
+    if (!imageUrl) {
+      toast.error('Không tìm thấy ảnh gốc để tô màu');
+      return;
+    }
+    if (imageUrl.startsWith('/')) {
+      imageUrl = `${window.location.origin}${imageUrl}`;
+    }
+    colorize(imageUrl, {
+      onSuccess: (url) => {
+        toast.success('Tô màu thành công! Đang mở ảnh màu (Base)...');
+        window.open(url, '_blank');
+      },
+      onError: (err) => {
+        toast.error(err.message || 'Lỗi khi gọi AI tô màu');
+      }
+    });
+  };
 
   if (versionResetKey !== versionResetSeen) {
     const rejectedIdx = versions.findIndex((v) => v.status === 'Rejected');
@@ -179,6 +203,28 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
           </p>
         </div>
       </div>
+
+      {(() => {
+        const desc = (task.description || '').toLowerCase();
+        const isColoringTask = ['tô màu', 'to mau', 'color', 'lên màu', 'len mau', 'flat color', 'phủ màu'].some(kw => desc.includes(kw));
+        return isColoringTask ? (
+          <div className="flex justify-between items-center bg-brand/5 border border-brand/20 p-3 rounded-xl">
+            <div>
+              <p className="text-xs font-semibold text-brand">✨ AI Trợ lý màu</p>
+              <p className="text-[10px] text-text-muted mt-0.5">Tạo base color nhanh trong 5s để tô tiếp</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleAIColorize}
+              disabled={isColorizing}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-brand hover:bg-brand-hover rounded-lg transition-colors disabled:opacity-50 disabled:cursor-wait shadow-sm"
+            >
+              <Sparkles size={14} className={isColorizing ? 'animate-pulse' : ''} />
+              {isColorizing ? 'Đang tô màu...' : 'Tô màu ảnh gốc'}
+            </button>
+          </div>
+        ) : null;
+      })()}
 
       <label
         className={`group relative flex flex-col items-center justify-center gap-2.5 px-4 py-7 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${
@@ -316,7 +362,6 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
               />
             ) : (
               <TaskRegionPreview
-                pageId={task.pageId}
                 imageUrl={task.pageImageUrl}
                 coordinatesJson={task.regionCoordinatesJson}
                 regionName={task.regionName}
@@ -586,7 +631,7 @@ export const AssistantTaskDetailModal = ({ task, onClose }: AssistantTaskDetailM
           >
             {canSubmit ? 'Hủy' : 'Đóng'}
           </button>
-          {canSubmit && (
+          {(task.status === 'Submitted' || task.status === 'Revision') && (
             <button
               type="button"
               onClick={() => setShowDisputeModal(true)}

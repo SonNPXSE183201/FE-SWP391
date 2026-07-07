@@ -49,7 +49,10 @@ export type TransactionType =
   | 'Withdraw'
   | 'Withdrawal'
   | 'Withdrawal_Refund'
-  | 'Genkouryo';
+  | 'Genkouryo'
+  | 'Genkouryo_Payment'
+  | 'Escrow_Refund'
+  | 'Task_Payment';
 
 export type AnnotationType =
   | 'Technical'

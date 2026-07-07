@@ -27,6 +27,9 @@ export const WalletActionModal = ({ mode, maxWithdrawAmount, onClose, onSuccess 
     setBankAccountName,
     presetAmounts,
     handleSubmit,
+    isBankAccountNameInvalid,
+    isBankAccountNumberInvalid,
+    isFormInvalid,
   } = useWalletActions(mode, maxWithdrawAmount, onClose, onSuccess);
 
   return (
@@ -105,10 +108,15 @@ export const WalletActionModal = ({ mode, maxWithdrawAmount, onClose, onSuccess 
                 <input
                   type="text"
                   value={bankAccountName}
-                  onChange={(e) => setBankAccountName(e.target.value)}
+                  onChange={(e) => setBankAccountName(e.target.value.toUpperCase())}
                   placeholder="VD: NGUYEN VAN A"
-                  className="w-full px-3 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 transition-all uppercase"
+                  className={`w-full px-3 py-2.5 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-all uppercase ${isBankAccountNameInvalid ? 'border-danger focus:border-danger' : 'border-border-custom focus:border-brand/50'}`}
                 />
+                {isBankAccountNameInvalid && (
+                  <p className="text-[11px] text-danger mt-1.5 ml-1">
+                    Tên không được chứa số, ký tự đặc biệt, và phải viết hoa không dấu.
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">Số tài khoản</label>
@@ -117,8 +125,13 @@ export const WalletActionModal = ({ mode, maxWithdrawAmount, onClose, onSuccess 
                   value={bankAccountNumber}
                   onChange={(e) => setBankAccountNumber(e.target.value)}
                   placeholder="VD: 1234567890"
-                  className="w-full px-3 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 transition-all"
+                  className={`w-full px-3 py-2.5 bg-bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-all ${isBankAccountNumberInvalid ? 'border-danger focus:border-danger' : 'border-border-custom focus:border-brand/50'}`}
                 />
+                {isBankAccountNumberInvalid && (
+                  <p className="text-[11px] text-danger mt-1.5 ml-1">
+                    Số tài khoản phải từ 9 đến 14 chữ số.
+                  </p>
+                )}
               </div>
               <div className="bg-info/5 border border-info/20 rounded-xl p-3">
                 <p className="text-[11px] text-info">
@@ -141,7 +154,7 @@ export const WalletActionModal = ({ mode, maxWithdrawAmount, onClose, onSuccess 
           <button onClick={onClose} className="px-4 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-secondary hover:text-text-primary transition-colors cursor-pointer">
             Hủy
           </button>
-          <button onClick={handleSubmit} disabled={loading || !amount} className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium border-none cursor-pointer transition-all ${loading || !amount ? 'bg-brand/40 text-white/60 cursor-not-allowed' : 'bg-brand hover:bg-brand-hover text-white shadow-brand'
+          <button onClick={handleSubmit} disabled={loading || !amount || (mode === 'withdraw' && isFormInvalid)} className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium border-none cursor-pointer transition-all ${loading || !amount || (mode === 'withdraw' && isFormInvalid) ? 'bg-brand/40 text-white/60 cursor-not-allowed' : 'bg-brand hover:bg-brand-hover text-white shadow-brand'
             }`}>
             {loading ? (
               <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Đang xử lý...</>

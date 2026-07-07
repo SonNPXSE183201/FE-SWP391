@@ -61,6 +61,7 @@ export const AssistantInviteDrawer = ({
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedRole(initialRole ?? composition.suggestedInviteRole);
   }, [initialRole, composition.suggestedInviteRole]);
 

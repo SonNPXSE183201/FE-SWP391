@@ -49,7 +49,6 @@ export const TaskRegionPreviewModal = ({
 
         <div className="p-5">
           <TaskRegionPreview
-            pageId={task.pageId}
             imageUrl={task.pageImageUrl}
             coordinatesJson={task.regionCoordinatesJson}
             regionName={task.regionName}

@@ -276,7 +276,8 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
 
       (async () => {
         try {
-          const img = await FabricImage.fromURL(imageUrl, { crossOrigin: 'anonymous' });
+          const isBlob = imageUrl.startsWith('blob:');
+          const img = await FabricImage.fromURL(imageUrl, { crossOrigin: isBlob ? undefined : 'anonymous' });
           if (cancelled || !fabricRef.current) return;
 
           // Fabric v7 mặc định origin = 'center'. Ép về top-left để toạ độ ảnh
