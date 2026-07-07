@@ -51,4 +51,6 @@ export const canvasApi = {
     axiosInstance.delete(`/api/annotations/${annotationId}`),
 
   markPageReady: (pageId: string) => seriesApi.markPageReady(pageId),
+
+  unmarkPageReady: (pageId: string) => seriesApi.unmarkPageReady(pageId),
 };

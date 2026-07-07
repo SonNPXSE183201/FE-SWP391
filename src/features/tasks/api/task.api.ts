@@ -102,7 +102,7 @@ export const taskApi = {
     }),
 
   getCompositePage: (pageId: string) =>
-    axiosInstance.get<Blob>(`/api/tasks/pages/${pageId}/composite`, {
+    axiosInstance.get<Blob>(`/api/tasks/pages/${pageId}/composite?v=${Date.now()}`, {
       responseType: 'blob',
     }),
 

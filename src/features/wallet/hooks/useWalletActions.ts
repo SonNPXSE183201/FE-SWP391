@@ -3,6 +3,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { walletApi } from '../api/wallet.api';
 import { getAxiosErrorMessage } from '../../../api/apiResponse';
+import { useAuthStore } from '../../../stores/authStore';
+
+const BANK_INFO_STORAGE_KEY = 'inkubus_last_bank_info';
 
 export const useWalletActions = (
   mode: 'deposit' | 'withdraw',
@@ -13,9 +16,12 @@ export const useWalletActions = (
   const [amount, setAmount] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const [bankName, setBankName] = useState('Vietcombank');
-  const [bankAccountNumber, setBankAccountNumber] = useState('');
-  const [bankAccountName, setBankAccountName] = useState('');
+  const { user } = useAuthStore();
+  const savedBankInfo = JSON.parse(localStorage.getItem(BANK_INFO_STORAGE_KEY) || '{}');
+
+  const [bankName, setBankName] = useState(savedBankInfo.bankName || 'Vietcombank');
+  const [bankAccountNumber, setBankAccountNumber] = useState(savedBankInfo.bankAccountNumber || '');
+  const [bankAccountName, setBankAccountName] = useState(user?.fullName?.toUpperCase() || '');
 
   const queryClient = useQueryClient();
 
@@ -38,6 +44,7 @@ export const useWalletActions = (
     mutationFn: (data: { amount: number; bankName: string; bankAccountNumber: string; bankAccountName: string }) => walletApi.withdraw(data),
     onSuccess: (response) => {
       if (response.data.success) {
+        localStorage.setItem(BANK_INFO_STORAGE_KEY, JSON.stringify({ bankName, bankAccountNumber }));
         queryClient.invalidateQueries({ queryKey: ['wallet'] });
         queryClient.invalidateQueries({ queryKey: ['notifications'] });
         toast.success('Đã gửi yêu cầu rút tiền. Vui lòng chờ Admin duyệt.');
@@ -90,6 +97,10 @@ export const useWalletActions = (
 
   const loading = depositMutation.isPending || withdrawMutation.isPending;
 
+  const isBankAccountNameInvalid = bankAccountName.length > 0 && !/^[A-Z\s]+$/.test(bankAccountName);
+  const isBankAccountNumberInvalid = bankAccountNumber.length > 0 && !/^\d{9,14}$/.test(bankAccountNumber);
+  const isFormInvalid = mode === 'withdraw' && (isBankAccountNameInvalid || isBankAccountNumberInvalid || !bankAccountName || !bankAccountNumber || !amount);
+
   return {
     amount,
     setAmount,
@@ -103,5 +114,8 @@ export const useWalletActions = (
     setBankAccountName,
     presetAmounts,
     handleSubmit,
+    isBankAccountNameInvalid,
+    isBankAccountNumberInvalid,
+    isFormInvalid,
   };
 };

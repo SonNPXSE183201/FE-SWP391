@@ -2,15 +2,15 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { Mail, Lock, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Loader2, ArrowRight, Eye, EyeOff, Check } from 'lucide-react';
 import { useAuthStore, type UserRole } from '../../../stores/authStore';
 import { authApi } from '../api/auth.api';
 import type { AuthResponseDto } from '../../../api/generated/types';
-import { loadRememberedEmail, persistRememberedEmail } from '../utils/rememberCredentials';
+import { loadRememberedEmail, loadRememberedPassword, persistRememberedCredentials } from '../utils/rememberCredentials';
 
 export const LoginForm: React.FC = () => {
   const [email, setEmail] = useState(() => loadRememberedEmail());
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState(() => loadRememberedPassword());
   const [rememberMe, setRememberMe] = useState(() => !!loadRememberedEmail());
   const [localError, setLocalError] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -34,7 +34,7 @@ export const LoginForm: React.FC = () => {
       const response = await authApi.login({ identifier: email, password });
 
       if (response.success && response.data && response.data.token) {
-        persistRememberedEmail(email, rememberMe);
+        persistRememberedCredentials(email, password, rememberMe);
 
         let mappedRole = response.data.roleName;
         if (mappedRole === 'System Admin') mappedRole = 'Admin';
@@ -53,7 +53,7 @@ export const LoginForm: React.FC = () => {
           portfolioUrl: profile.portfolioUrl ?? undefined,
           skills: profile.skills ?? undefined,
           phoneNumber: profile.phoneNumber ?? undefined,
-        }, response.data.token, response.data.refreshToken || '');
+        }, response.data.token, response.data.refreshToken || '', rememberMe);
 
         toast.success(response.message || 'Đăng nhập thành công');
 
@@ -169,16 +169,29 @@ export const LoginForm: React.FC = () => {
             className="flex items-center justify-between gap-4 animate-fade-in-up"
             style={{ animationDelay: '0.45s' }}
           >
-            <label htmlFor="rememberMe" className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                id="rememberMe"
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                disabled={isLoading}
-                className="w-4 h-4 rounded border-border-custom text-brand focus:ring-brand bg-bg-surface cursor-pointer"
-              />
-              <span className="text-sm text-text-secondary">Nhớ tài khoản</span>
+            <label htmlFor="rememberMe" className="flex items-center gap-2 cursor-pointer select-none group/checkbox">
+              <div className="relative flex items-center justify-center">
+                <input
+                  id="rememberMe"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  disabled={isLoading}
+                  className="sr-only peer"
+                />
+                <div className={`w-4 h-4 rounded flex items-center justify-center transition-all duration-200 border
+                  ${rememberMe 
+                    ? 'bg-brand border-brand text-white shadow-[0_0_10px_rgba(108,92,231,0.5)]' 
+                    : 'bg-bg-surface border-border-custom text-transparent group-hover/checkbox:border-brand/50'
+                  }
+                  ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
+                `}>
+                  <Check size={12} strokeWidth={3} className={rememberMe ? 'scale-100 opacity-100' : 'scale-50 opacity-0'} style={{ transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)' }} />
+                </div>
+              </div>
+              <span className={`text-sm transition-colors duration-200 ${rememberMe ? 'text-brand' : 'text-text-secondary group-hover/checkbox:text-text-primary'}`}>
+                Ghi nhớ đăng nhập
+              </span>
             </label>
             <Link
               to="/forgot-password"

@@ -27,11 +27,14 @@ const TX_TYPE_VI: Record<string, string> = {
   Escrow_Lock: 'Tạm giữ tiền',
   Escrow_Unlock: 'Hoàn trả quỹ',
   Escrow_Release: 'Giải ngân',
+  Escrow_Refund: 'Hoàn tiền quỹ',
   Transfer: 'Thanh toán',
+  Task_Payment: 'Thù lao Task',
   Funding: 'Cấp vốn',
   Production_Funding: NEMU_FUNDING_LABEL,
   Platform_TopUp: 'Nạp quỹ NXB',
   Genkouryo: 'Nhuận bút',
+  Genkouryo_Payment: 'Thanh toán nhuận bút',
 };
 
 export const getTransactionDescription = (tx: TransactionDto): string => {
@@ -80,7 +83,7 @@ export const getTransactionAmountDisplay = (tx: TransactionDto) => {
   };
 };
 
-const INCOME_TYPES = ['Deposit', 'Unlock', 'Genkouryo', 'Funding', 'Production_Funding', 'Platform_TopUp'];
+const INCOME_TYPES = ['Deposit', 'Unlock', 'Genkouryo', 'Genkouryo_Payment', 'Funding', 'Production_Funding', 'Platform_TopUp', 'Task_Payment', 'Escrow_Refund'];
 
 export const calculateMonthlyStats = (transactions: TransactionDto[]) => {
   const now = new Date();
@@ -93,7 +96,7 @@ export const calculateMonthlyStats = (transactions: TransactionDto[]) => {
   });
 
   const genkouryoIncome = monthlyTxs
-    .filter(tx => normalizeTransactionType(tx.type ?? '') === 'Genkouryo' && Number(tx.amount ?? 0) > 0)
+    .filter(tx => ['Genkouryo', 'Genkouryo_Payment'].includes(normalizeTransactionType(tx.type ?? '')) && Number(tx.amount ?? 0) > 0)
     .reduce((sum, tx) => sum + Math.abs(Number(tx.amount ?? 0)), 0);
 
   const taskPaymentIncome = monthlyTxs

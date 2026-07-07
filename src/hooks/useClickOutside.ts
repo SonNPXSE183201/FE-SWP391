@@ -8,7 +8,7 @@ import { useEffect, useRef } from 'react';
  * @returns Trả về một `ref` để bạn gắn vào thẻ HTML (Component) mà bạn muốn làm ranh giới giám sát
  */
 export const useClickOutside = (callback: () => void) => {
-  const ref = useRef<any>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {

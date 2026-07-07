@@ -160,6 +160,9 @@ export const seriesApi = {
   markPageReady: (pageId: string) =>
     axiosInstance.post<ApiResponse<PageDto>>(`/api/pages/${pageId}/mark-ready`),
 
+  unmarkPageReady: (pageId: string) =>
+    axiosInstance.post<ApiResponse<PageDto>>(`/api/pages/${pageId}/unmark-ready`),
+
   replacePageImage: async (pageId: string, file: File) => {
     const formData = new FormData();
     formData.append('file', file);
