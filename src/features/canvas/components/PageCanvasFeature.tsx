@@ -52,7 +52,6 @@ import {
 } from "../hooks/useCanvasData";
 import {
   useCompositedPageUrl,
-  useRefreshPageComposite,
   useMangakaTasks,
 } from "../../tasks/hooks/useTasks";
 import { useChapterDetail, ReplacePageImageModal, useReplacePageImage, getPageStatusConfig } from "../../series";
@@ -201,10 +200,8 @@ export const PageCanvasFeature = ({
 
   const {
     data: compositedUrl,
-    refetch: refetchComposite,
     isFetching: isCompositeLoading,
   } = useCompositedPageUrl(useLive ? pageId : undefined);
-  const refreshComposite = useRefreshPageComposite();
   const markPageReady = useMarkPageReady(chapterId);
   const unmarkPageReady = useUnmarkPageReady(chapterId);
   const replacePageImage = useReplacePageImage(chapterId);
@@ -270,20 +267,6 @@ export const PageCanvasFeature = ({
   const canvasImageUrl = compositedUrl || currentPage?.imageUrl || "";
   const hasCompositeOverlay =
     !!compositedUrl && canvasImageUrl !== currentPage?.imageUrl;
-
-  // ─── Composite refresh ───
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleRefreshComposite = useCallback(() => {
-    if (!pageId) return;
-    refreshComposite.mutate(pageId, {
-      onSuccess: () => {
-        toast.success("Đã làm mới ảnh gộp trang");
-        void refetchComposite();
-      },
-      onError: (err: unknown) =>
-        toast.error(getAxiosErrorMessage(err, "Không thể làm mới ảnh gộp")),
-    });
-  }, [pageId, refreshComposite, refetchComposite]);
 
   // ─── Region handlers ───
   const handleRegionCreated = useCallback(
@@ -757,8 +740,6 @@ export const PageCanvasFeature = ({
             </div>
             <div className="flex-1 overflow-y-auto p-2 space-y-2">
               {pages.map((page, idx) => {
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const cfg = getPageStatusConfig(page.status);
                 const isActive = idx === currentPageIndex;
                 return (
                   <CanvasThumbnail
