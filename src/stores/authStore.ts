@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
 
 export type UserRole = 'Admin' | 'Editor' | 'Mangaka' | 'Assistant' | 'Board';
 
@@ -21,10 +21,11 @@ interface AuthState {
   token: string | null;
   refreshToken: string | null;
   isLoading: boolean;
+  rememberMe: boolean;
 }
 
 interface AuthActions {
-  setAuth: (user: User, token: string, refreshToken: string) => void;
+  setAuth: (user: User, token: string, refreshToken: string, rememberMe?: boolean) => void;
   setLoading: (isLoading: boolean) => void;
   logout: () => void;
   isAuthenticated: () => boolean;
@@ -34,6 +35,30 @@ interface AuthActions {
 
 type AuthStore = AuthState & AuthActions;
 
+const customStorage: StateStorage = {
+  getItem: (name: string) => {
+    return localStorage.getItem(name) || sessionStorage.getItem(name) || null;
+  },
+  setItem: (name: string, value: string) => {
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed?.state?.rememberMe) {
+        localStorage.setItem(name, value);
+        sessionStorage.removeItem(name);
+      } else {
+        sessionStorage.setItem(name, value);
+        localStorage.removeItem(name);
+      }
+    } catch {
+      sessionStorage.setItem(name, value);
+    }
+  },
+  removeItem: (name: string) => {
+    localStorage.removeItem(name);
+    sessionStorage.removeItem(name);
+  }
+};
+
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
@@ -41,9 +66,10 @@ export const useAuthStore = create<AuthStore>()(
       token: null,
       refreshToken: null,
       isLoading: false,
-      setAuth: (user, token, refreshToken) => set({ user, token, refreshToken }),
+      rememberMe: false,
+      setAuth: (user, token, refreshToken, rememberMe = false) => set({ user, token, refreshToken, rememberMe }),
       setLoading: (isLoading) => set({ isLoading }),
-      logout: () => set({ user: null, token: null, refreshToken: null }),
+      logout: () => set({ user: null, token: null, refreshToken: null, rememberMe: false }),
       updateUser: (data) => set((state) => ({ 
         user: state.user ? { ...state.user, ...data } : null 
       })),
@@ -62,8 +88,8 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'auth-storage',
-      storage: createJSONStorage(() => sessionStorage),
-      partialize: (state) => ({ user: state.user, token: state.token, refreshToken: state.refreshToken }), // don't persist isLoading
+      storage: createJSONStorage(() => customStorage),
+      partialize: (state) => ({ user: state.user, token: state.token, refreshToken: state.refreshToken, rememberMe: state.rememberMe }),
     }
   )
 );

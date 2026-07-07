@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ImageOff, Loader2, ZoomIn } from 'lucide-react';
+import { ImageOff, ZoomIn } from 'lucide-react';
 
 import { parseCoordinatesJson } from '../../canvas/utils/canvas.utils';
-import { useCompositedPageUrl } from '../hooks/useTasks';
+
 import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
 
 interface ImageLayout {
@@ -30,7 +30,6 @@ const computeObjectContainLayout = (
 };
 
 export interface TaskRegionPreviewProps {
-  pageId?: string | number | null;
   imageUrl?: string | null;
   coordinatesJson?: string | null;
   regionName?: string | null;
@@ -41,7 +40,6 @@ export interface TaskRegionPreviewProps {
 }
 
 export const TaskRegionPreview = ({
-  pageId,
   imageUrl,
   coordinatesJson,
   regionName,
@@ -50,21 +48,17 @@ export const TaskRegionPreview = ({
   expandable = false,
   onExpand,
 }: TaskRegionPreviewProps) => {
-  const normalizedPageId = pageId != null && pageId !== '' ? String(pageId) : undefined;
-  const { data: compositeUrl, isFetching: isCompositeLoading } = useCompositedPageUrl(normalizedPageId);
   const containerRef = useRef<HTMLDivElement>(null);
   const [naturalSize, setNaturalSize] = useState<{ w: number; h: number } | null>(null);
   const [layout, setLayout] = useState<ImageLayout | null>(null);
   const coords = parseCoordinatesJson(coordinatesJson);
-  const staticUrl = imageUrl ? resolveMediaUrl(imageUrl) : '';
-  const displayUrl = compositeUrl || staticUrl;
+  const displayUrl = imageUrl ? resolveMediaUrl(imageUrl) : '';
   const hasRegion = coords.width > 0 && coords.height > 0;
 
   const updateLayout = useCallback(() => {
     const container = containerRef.current;
     if (!container || !naturalSize) return;
-    const rect = container.getBoundingClientRect();
-    setLayout(computeObjectContainLayout(rect.width, rect.height, naturalSize.w, naturalSize.h));
+    setLayout(computeObjectContainLayout(container.clientWidth, container.clientHeight, naturalSize.w, naturalSize.h));
   }, [naturalSize]);
 
   useEffect(() => {
@@ -76,23 +70,13 @@ export const TaskRegionPreview = ({
     return () => observer.disconnect();
   }, [updateLayout]);
 
-  if (!displayUrl && !isCompositeLoading) {
+  if (!displayUrl) {
     return (
       <div
         className={`flex flex-col items-center justify-center gap-2 rounded-xl border border-border-custom bg-bg-surface text-text-muted ${heightClassName} ${className}`}
       >
         <ImageOff size={22} className="opacity-50" />
         <span className="text-[11px]">Chưa có ảnh trang</span>
-      </div>
-    );
-  }
-
-  if (!displayUrl && isCompositeLoading) {
-    return (
-      <div
-        className={`flex items-center justify-center rounded-xl border border-border-custom bg-bg-surface ${heightClassName} ${className}`}
-      >
-        <Loader2 size={22} className="animate-spin text-brand" />
       </div>
     );
   }

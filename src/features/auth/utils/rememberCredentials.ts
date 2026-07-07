@@ -1,24 +1,22 @@
 const EMAIL_KEY = 'inku-remembered-email';
-
-// Legacy keys from earlier remember-password experiments — clear on read.
-const LEGACY_PASSWORD_KEYS = ['inku-remembered-password', 'inku-remember-password', 'inku-remember-mode'] as const;
-
-const clearLegacyRememberKeys = (): void => {
-  for (const key of LEGACY_PASSWORD_KEYS) {
-    localStorage.removeItem(key);
-  }
-};
+const PASSWORD_KEY = 'inku-remembered-password';
 
 export const loadRememberedEmail = (): string => {
-  clearLegacyRememberKeys();
   return localStorage.getItem(EMAIL_KEY) ?? '';
 };
 
-export const persistRememberedEmail = (email: string, remember: boolean): void => {
-  clearLegacyRememberKeys();
+export const loadRememberedPassword = (): string => {
+  return localStorage.getItem(PASSWORD_KEY) ?? '';
+};
+
+export const persistRememberedCredentials = (email: string, password: string | undefined, remember: boolean): void => {
   if (remember && email) {
     localStorage.setItem(EMAIL_KEY, email);
-    return;
+    if (password) {
+      localStorage.setItem(PASSWORD_KEY, password);
+    }
+  } else {
+    localStorage.removeItem(EMAIL_KEY);
+    localStorage.removeItem(PASSWORD_KEY);
   }
-  localStorage.removeItem(EMAIL_KEY);
 };

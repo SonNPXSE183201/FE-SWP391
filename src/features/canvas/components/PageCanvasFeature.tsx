@@ -8,7 +8,6 @@ import {
 } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Layers,
   SquareDashedBottom,
   Trash2,
   ArrowLeft,
@@ -30,8 +29,12 @@ import {
   Upload,
   Eye,
   EyeOff,
+  Wand2,
+  MoreVertical,
 } from "lucide-react";
 import toast from "react-hot-toast";
+
+import { useSegmentImage } from "../../ai/hooks/useSegmentImage";
 import { getAxiosErrorMessage } from "../../../api/axios";
 import { CanvasViewer } from "../../../components/canvas/CanvasViewer";
 import { MobileCanvasWarning } from "../../../components/canvas/MobileCanvasWarning";
@@ -43,7 +46,9 @@ import {
   useUpdateRegion,
   useCanvasPages,
   useMarkPageReady,
+  useUnmarkPageReady,
   useAnnotations,
+  useDeleteAnnotation,
 } from "../hooks/useCanvasData";
 import {
   useCompositedPageUrl,
@@ -52,14 +57,97 @@ import {
 } from "../../tasks/hooks/useTasks";
 import { useChapterDetail, ReplacePageImageModal, useReplacePageImage, getPageStatusConfig } from "../../series";
 import { getTaskStatusConfig } from "../../tasks";
+import { AnimatedModal } from "../../../components/common/animation/AnimatedModal";
 import { CreateTaskModal } from "../../tasks";
 import { formatVND } from "../../wallet";
-import type { CanvasAnnotation, CanvasRegion } from "../types/canvas.types";
+import type { CanvasAnnotation, CanvasRegion, CanvasPage } from "../types/canvas.types";
 import { ANNOTATION_TYPE_CONFIG } from "../../review/constants";
 import type { TasksDto } from "../../../api/generated/types";
 import type { CanvasViewerHandle } from "../../../components/canvas/CanvasViewer";
 import { AnimatePresence, motion } from "framer-motion";
 import { canvasPageVariants, canvasShellTransition } from "../../../components/common/animation";
+
+interface ToolButtonProps {
+  active?: boolean;
+  danger?: boolean;
+  title: string;
+  onClick: () => void;
+  children: ReactNode;
+}
+
+const ToolButton = ({
+  active,
+  danger,
+  title,
+  onClick,
+  children,
+}: ToolButtonProps) => (
+  <button
+    type="button"
+    title={title}
+    onClick={onClick}
+    className={`flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-150 border-none cursor-pointer ${
+      danger
+        ? "text-danger hover:bg-danger/10 bg-transparent"
+        : active
+          ? "bg-brand text-white shadow-lg shadow-brand/25"
+          : "text-text-secondary hover:text-text-primary hover:bg-bg-surface bg-transparent"
+    }`}
+  >
+    {children}
+  </button>
+);
+
+const CanvasThumbnail = ({
+  page,
+  isActive,
+  activeThumbUrl,
+  onClick,
+}: {
+  page: CanvasPage;
+  isActive: boolean;
+  activeThumbUrl?: string | null;
+  onClick: () => void;
+}) => {
+  const cfg = getPageStatusConfig(page.status);
+  const useLive = !!page.compositeImageUrl || page.status === 'InProgress' || page.status === 'Completed';
+  
+  // Lấy ảnh gộp live trực tiếp nếu là trang không active nhưng cần live (active page lấy từ parent)
+  const { data: liveUrl } = useCompositedPageUrl(!isActive && useLive ? page.id : undefined);
+
+  const thumbUrl = isActive && activeThumbUrl
+    ? activeThumbUrl
+    : liveUrl || page.compositeImageUrl || page.imageUrl;
+
+  return (
+    <button
+      onClick={onClick}
+      className={`group relative w-full aspect-[3/4] rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
+        isActive ? 'border-brand shadow-brand' : 'border-border-custom/60 hover:border-brand/40'
+      }`}
+      title={`Trang ${page.pageNumber}`}
+    >
+      {thumbUrl ? (
+        <img
+          src={thumbUrl}
+          alt={`Trang ${page.pageNumber}`}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center bg-bg-primary">
+          <ImageOff size={16} className="text-text-muted" />
+        </div>
+      )}
+      <div className="absolute top-1 left-1 w-5 h-5 rounded bg-black/65 backdrop-blur-sm flex items-center justify-center text-[10px] font-bold text-white">
+        {page.pageNumber}
+      </div>
+      <span
+        className={`absolute bottom-1 right-1 w-2 h-2 rounded-full ${cfg.dotColor} ring-2 ring-black/40`}
+      />
+    </button>
+  );
+};
 
 interface PageCanvasFeatureProps {
   chapterId?: string;
@@ -76,10 +164,12 @@ export const PageCanvasFeature = ({
   const [regionLabel, setRegionLabel] = useState("");
   const [regionLabelError, setRegionLabelError] = useState(false);
   const [editingRegionId, setEditingRegionId] = useState<string | null>(null);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [editingLabel, setEditingLabel] = useState("");
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [showReplaceImage, setShowReplaceImage] = useState(false);
   const [showRegions, setShowRegions] = useState(true);
+  const [pinToResolve, setPinToResolve] = useState<string | null>(null);
 
   const {
     activeTool,
@@ -102,18 +192,70 @@ export const PageCanvasFeature = ({
   const { data: regions = [] } = useRegions(pageId);
   const { data: editorAnnotations = [] } = useAnnotations(pageId);
   const { data: mangakaTasks = [] } = useMangakaTasks({ pageSize: 200 });
+  
+  const useLive = currentPage
+    ? !!currentPage.compositeImageUrl ||
+      currentPage.status === 'InProgress' ||
+      currentPage.status === 'Completed'
+    : false;
+
   const {
     data: compositedUrl,
     refetch: refetchComposite,
     isFetching: isCompositeLoading,
-  } = useCompositedPageUrl(pageId);
+  } = useCompositedPageUrl(useLive ? pageId : undefined);
   const refreshComposite = useRefreshPageComposite();
   const markPageReady = useMarkPageReady(chapterId);
+  const unmarkPageReady = useUnmarkPageReady(chapterId);
   const replacePageImage = useReplacePageImage(chapterId);
 
   const createRegion = useCreateRegion(pageId);
   const updateRegion = useUpdateRegion(pageId);
   const deleteRegion = useDeleteRegion(pageId);
+  const deleteAnnotation = useDeleteAnnotation(pageId);
+  
+  const { mutateAsync: segmentImage, isPending: isSegmenting } = useSegmentImage();
+
+  const handleAISegment = async () => {
+    // Luôn ưu tiên dùng currentPage?.imageUrl (URL thật trên server) để gửi cho AI
+    // Không dùng compositedUrl vì nó có thể là blob url (không thể gọi từ API python)
+    let imageUrl = currentPage?.imageUrl;
+    if (!imageUrl) {
+      toast.error("Không tìm thấy ảnh trang");
+      return;
+    }
+    
+    // Nếu imageUrl là đường dẫn tương đối (bắt đầu bằng /), chuyển thành đường dẫn tuyệt đối có domain của Vite
+    // Để server Python có thể dùng requests.get tải ảnh qua Vite proxy
+    if (imageUrl.startsWith('/')) {
+      imageUrl = `${window.location.origin}${imageUrl}`;
+    }
+    
+    try {
+      const detectedRegions = await segmentImage(imageUrl);
+      if (!detectedRegions || detectedRegions.length === 0) {
+        toast.error("AI không nhận diện được khung tranh nào.");
+        return;
+      }
+      
+      let successCount = 0;
+      for (const [x, y, w, h] of detectedRegions) {
+        await createRegion.mutateAsync({
+          pageId,
+          x,
+          y,
+          width: w,
+          height: h,
+          label: `Khung ${successCount + 1}`
+        });
+        successCount++;
+      }
+      
+      toast.success(`Đã tự động tạo ${successCount} vùng tranh!`);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Lỗi khi nhận diện khung tranh");
+    }
+  };
 
   // Map regionId → task (a region corresponds to a task assigned to an assistant).
   const tasksByRegion = useMemo(() => {
@@ -130,6 +272,7 @@ export const PageCanvasFeature = ({
     !!compositedUrl && canvasImageUrl !== currentPage?.imageUrl;
 
   // ─── Composite refresh ───
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleRefreshComposite = useCallback(() => {
     if (!pageId) return;
     refreshComposite.mutate(pageId, {
@@ -137,7 +280,7 @@ export const PageCanvasFeature = ({
         toast.success("Đã làm mới ảnh gộp trang");
         void refetchComposite();
       },
-      onError: (err) =>
+      onError: (err: unknown) =>
         toast.error(getAxiosErrorMessage(err, "Không thể làm mới ảnh gộp")),
     });
   }, [pageId, refreshComposite, refetchComposite]);
@@ -342,6 +485,10 @@ export const PageCanvasFeature = ({
     markPageReady.mutate(pageId);
   };
 
+  const handleUnmarkPageReady = () => {
+    unmarkPageReady.mutate(pageId);
+  };
+
   // ─── Loading skeleton ───
   if (pagesLoading) {
     return (
@@ -400,7 +547,7 @@ export const PageCanvasFeature = ({
         transition={canvasShellTransition}
       >
         {/* ═══ Top bar ═══ */}
-        <div className="flex items-center justify-between flex-shrink-0 bg-bg-secondary border border-border-custom rounded-xl px-4 py-2.5">
+        <div className="flex items-center justify-between gap-3 flex-shrink-0 bg-bg-secondary border border-border-custom rounded-xl px-4 py-2.5 overflow-x-auto hide-scrollbar">
           {/* Left: back + page info */}
           <div className="flex items-center gap-3 min-w-0">
             <button
@@ -428,63 +575,78 @@ export const PageCanvasFeature = ({
           </div>
 
           {/* Center: tools */}
-          <div className="flex items-center gap-1 rounded-2xl bg-bg-primary/90 border border-border-custom shadow-lg px-2 py-1.5">
+          <div className="flex items-center gap-1 rounded-2xl bg-bg-primary/90 border border-border-custom shadow-lg px-2 py-1.5 overflow-x-auto min-w-0 hide-scrollbar">
             <ToolButton
               active={activeTool === "select"}
               title="Chọn (V)"
               onClick={() => setActiveTool("select")}
             >
-              <MousePointer2 size={18} />
+              <MousePointer2 size={16} />
             </ToolButton>
             <ToolButton
               active={activeTool === "region"}
-              title="Khoanh vùng (R)"
+              title="Khoanh vùng thủ công (R)"
               onClick={() => setActiveTool("region")}
             >
-              <SquareDashedBottom size={18} />
+              <SquareDashedBottom size={16} />
             </ToolButton>
+            <div className="w-px h-5 bg-border-custom mx-0.5" />
+            <button
+              type="button"
+              onClick={handleAISegment}
+              disabled={isSegmenting || isPageCompleted}
+              className={`min-w-[2.25rem] h-8 rounded-lg flex items-center justify-center gap-1.5 px-2 text-[11px] font-medium transition-colors border-none cursor-pointer ${
+                isPageCompleted ? 'bg-bg-surface text-text-muted opacity-50 cursor-not-allowed' :
+                'text-brand bg-brand/10 hover:bg-brand/20'
+              }`}
+              title="AI tự động nhận diện & cắt khung tranh"
+            >
+              <Wand2 size={14} className={isSegmenting ? "animate-pulse" : ""} />
+              <span className="hidden lg:inline">{isSegmenting ? "Đang quét..." : "AI Phân vùng"}</span>
+            </button>
+            <div className="w-px h-5 bg-border-custom mx-0.5" />
             <ToolButton
               active={activeTool === "pan"}
               title="Di chuyển (Space)"
               onClick={() => setActiveTool("pan")}
             >
-              <Hand size={18} />
+              <Hand size={16} />
             </ToolButton>
-            <div className="w-px h-6 bg-border-custom mx-1" />
+            <div className="w-px h-5 bg-border-custom mx-0.5" />
             <ToolButton title="Thu nhỏ" onClick={handleZoomOut}>
-              <ZoomOut size={18} />
+              <ZoomOut size={16} />
             </ToolButton>
             <button
               type="button"
               onClick={handleZoomFit}
               title="Vừa khung hình"
-              className="min-w-[3.25rem] h-9 rounded-xl px-2 text-xs font-medium text-text-primary hover:bg-bg-surface transition-colors tabular-nums cursor-pointer bg-transparent border-none"
+              className="min-w-[3rem] h-8 rounded-lg px-1.5 text-[11px] font-medium text-text-primary hover:bg-bg-surface transition-colors tabular-nums cursor-pointer bg-transparent border-none"
             >
               {Math.round(zoomLevel * 100)}%
             </button>
             <ToolButton title="Phóng to" onClick={handleZoomIn}>
-              <ZoomIn size={18} />
+              <ZoomIn size={16} />
             </ToolButton>
             <ToolButton title="Vừa khung hình" onClick={handleZoomFit}>
-              <Maximize2 size={18} />
+              <Maximize2 size={16} />
             </ToolButton>
-            <div className="w-px h-6 bg-border-custom mx-1" />
+            <div className="w-px h-5 bg-border-custom mx-0.5" />
             <ToolButton
               active={!showRegions}
               title={showRegions ? "Ẩn khung vùng vẽ" : "Hiện khung vùng vẽ"}
               onClick={() => setShowRegions(!showRegions)}
             >
-              {showRegions ? <Eye size={18} /> : <EyeOff size={18} />}
+              {showRegions ? <Eye size={16} /> : <EyeOff size={16} />}
             </ToolButton>
             {selectedRegionId && !tasksByRegion.has(selectedRegionId) && (
               <>
-                <div className="w-px h-6 bg-border-custom mx-1" />
+                <div className="w-px h-5 bg-border-custom mx-0.5" />
                 <ToolButton
                   title="Xoá vùng đã chọn (Delete)"
                   onClick={() => handleDeleteRegion(selectedRegionId)}
                   danger
                 >
-                  <Trash2 size={18} />
+                  <Trash2 size={16} />
                 </ToolButton>
               </>
             )}
@@ -509,49 +671,68 @@ export const PageCanvasFeature = ({
               </button>
             )}
             {isPageCompleted && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-success/10 border border-success/20 text-[11px] font-semibold text-success whitespace-nowrap">
-                <CheckCircle2 size={14} />
-                Đã sẵn sàng
-              </span>
-            )}
-            {hasCompositeOverlay && (
-              <a
-                href={canvasImageUrl}
-                download={`trang-${currentPage.pageNumber}-composite.png`}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand/10 border border-brand/20 text-[11px] font-semibold text-brand whitespace-nowrap hover:bg-brand/20 transition-colors no-underline"
-                title="Tải file PNG trang đã gộp lớp Assistant"
+              <button
+                type="button"
+                onClick={handleUnmarkPageReady}
+                disabled={unmarkPageReady.isPending}
+                title="Bỏ đánh dấu sẵn sàng để tiếp tục vẽ vùng hoặc giao task"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-success/10 hover:bg-danger/10 border border-success/20 hover:border-danger/30 text-[11px] font-semibold text-success hover:text-danger whitespace-nowrap transition-colors cursor-pointer group"
               >
-                <Download size={14} /> Tải ảnh
-              </a>
+                {unmarkPageReady.isPending ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <CheckCircle2 size={14} className="group-hover:hidden" />
+                )}
+                <span className="group-hover:hidden">Đã sẵn sàng</span>
+                <span className="hidden group-hover:inline">Bỏ đánh dấu</span>
+              </button>
             )}
-            <button
-              type="button"
-              onClick={() => setShowReplaceImage(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand/10 border border-brand/25 text-[11px] font-semibold text-brand whitespace-nowrap hover:bg-brand/20 transition-colors cursor-pointer"
-              title="Tải lại ảnh trang hiện tại sau khi sửa ngoài Canvas"
+            <div 
+              className="relative"
+              onBlur={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget)) {
+                  setShowMoreMenu(false);
+                }
+              }}
             >
-              <Upload size={14} />
-              Tải lại ảnh
-            </button>
-            <button
-              type="button"
-              onClick={handleRefreshComposite}
-              disabled={
-                !pageId || refreshComposite.isPending || isCompositeLoading
-              }
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-bg-primary border border-border-custom text-[11px] font-semibold text-text-secondary whitespace-nowrap hover:text-text-primary hover:border-brand/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-              title="Tạo lại ảnh gộp từ các Task đã duyệt"
-            >
-              {refreshComposite.isPending || isCompositeLoading ? (
-                <Loader2 size={14} className="animate-spin" />
-              ) : (
-                <Layers size={14} />
+              <button
+                type="button"
+                onClick={() => setShowMoreMenu(!showMoreMenu)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-bg-primary transition-colors cursor-pointer"
+                title="Tùy chọn khác"
+              >
+                <MoreVertical size={16} />
+              </button>
+              
+              {showMoreMenu && (
+                <div className="absolute right-0 top-full mt-1 w-40 bg-bg-primary border border-border-custom rounded-lg shadow-lg z-50 flex flex-col overflow-hidden py-1">
+                  {hasCompositeOverlay && (
+                    <a
+                      href={canvasImageUrl}
+                      download={`trang-${currentPage.pageNumber}-composite.png`}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={() => setShowMoreMenu(false)}
+                      className="flex items-center gap-2 px-3 py-2 text-xs text-text-primary hover:bg-bg-surface transition-colors no-underline"
+                      title="Tải file PNG trang đã gộp lớp Assistant"
+                    >
+                      <Download size={14} className="text-text-muted" /> Tải ảnh
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMoreMenu(false);
+                      setShowReplaceImage(true);
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 text-xs text-text-primary hover:bg-bg-surface transition-colors cursor-pointer text-left w-full border-none bg-transparent"
+                    title="Tải lại ảnh trang hiện tại sau khi sửa ngoài Canvas"
+                  >
+                    <Upload size={14} className="text-text-muted" /> Tải lại ảnh
+                  </button>
+                </div>
               )}
-              Làm mới ảnh gộp
-            </button>
-
+            </div>
           </div>
         </div>
 
@@ -576,44 +757,17 @@ export const PageCanvasFeature = ({
             </div>
             <div className="flex-1 overflow-y-auto p-2 space-y-2">
               {pages.map((page, idx) => {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const cfg = getPageStatusConfig(page.status);
                 const isActive = idx === currentPageIndex;
                 return (
-                  <button
+                  <CanvasThumbnail
                     key={page.id}
+                    page={page}
+                    isActive={isActive}
+                    activeThumbUrl={compositedUrl}
                     onClick={() => setCurrentPageIndex(idx)}
-                    className={`group relative w-full aspect-[3/4] rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
-                      isActive
-                        ? "border-brand shadow-brand"
-                        : "border-border-custom/60 hover:border-brand/40"
-                    }`}
-                    title={`Trang ${page.pageNumber}`}
-                  >
-                    {(() => {
-                      const thumbUrl =
-                        idx === currentPageIndex && compositedUrl
-                          ? compositedUrl
-                          : page.compositeImageUrl || page.imageUrl;
-                      return thumbUrl ? (
-                      <img
-                        src={thumbUrl}
-                        alt={`Trang ${page.pageNumber}`}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-bg-primary">
-                        <ImageOff size={16} className="text-text-muted" />
-                      </div>
-                    );
-                    })()}
-                    <div className="absolute top-1 left-1 w-5 h-5 rounded bg-black/65 backdrop-blur-sm flex items-center justify-center text-[10px] font-bold text-white">
-                      {page.pageNumber}
-                    </div>
-                    <span
-                      className={`absolute bottom-1 right-1 w-2 h-2 rounded-full ${cfg.dotColor} ring-2 ring-black/40`}
-                    />
-                  </button>
+                  />
                 );
               })}
             </div>
@@ -746,6 +900,15 @@ export const PageCanvasFeature = ({
                             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                             className="mt-2 pt-2 border-t border-amber-500/20 flex gap-1.5 overflow-hidden"
                           >
+                            <button
+                              type="button"
+                              onClick={() => setPinToResolve(anno.id)}
+                              className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-success/10 border border-success/30 text-success hover:bg-success hover:text-white text-[10px] font-medium transition-colors cursor-pointer"
+                              title="Xóa ghim sau khi đã sửa xong lỗi"
+                            >
+                              <Check size={12} />
+                              Đã sửa xong
+                            </button>
                             <button
                               type="button"
                               onClick={() => setShowReplaceImage(true)}
@@ -1031,39 +1194,45 @@ export const PageCanvasFeature = ({
           }}
         />
       )}
+
+      {pinToResolve && (
+        <AnimatedModal
+          open={!!pinToResolve}
+          onClose={() => setPinToResolve(null)}
+          panelClassName="bg-bg-primary border border-border-custom w-full max-w-sm rounded-xl p-5 shadow-xl"
+        >
+          <div className="flex flex-col items-center text-center">
+            <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center text-success mb-4">
+              <Check size={24} />
+            </div>
+            <h3 className="text-base font-bold text-text-primary mb-2">Đã sửa xong lỗi này?</h3>
+            <p className="text-sm text-text-secondary mb-6">
+              Điểm ghim lỗi này sẽ được xóa khỏi trang. Bạn có chắc chắn không?
+            </p>
+            <div className="flex items-center gap-3 w-full">
+              <button
+                type="button"
+                onClick={() => setPinToResolve(null)}
+                className="flex-1 py-2 rounded-lg font-medium text-sm border border-border-custom text-text-secondary hover:text-text-primary hover:bg-bg-surface transition-colors cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  deleteAnnotation.mutate(pinToResolve);
+                  setPinToResolve(null);
+                }}
+                disabled={deleteAnnotation.isPending}
+                className="flex-1 py-2 rounded-lg font-bold text-sm bg-success text-white hover:bg-green-600 transition-colors cursor-pointer flex items-center justify-center gap-2"
+              >
+                {deleteAnnotation.isPending ? <Loader2 size={16} className="animate-spin" /> : 'Xác nhận'}
+              </button>
+            </div>
+          </div>
+        </AnimatedModal>
+      )}
     </>
   );
 };
 
-// ─── Small tool button ───────────────────────────────────────
-
-interface ToolButtonProps {
-  active?: boolean;
-  danger?: boolean;
-  title: string;
-  onClick: () => void;
-  children: ReactNode;
-}
-
-const ToolButton = ({
-  active,
-  danger,
-  title,
-  onClick,
-  children,
-}: ToolButtonProps) => (
-  <button
-    type="button"
-    title={title}
-    onClick={onClick}
-    className={`flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-150 border-none cursor-pointer ${
-      danger
-        ? "text-danger hover:bg-danger/10 bg-transparent"
-        : active
-          ? "bg-brand text-white shadow-lg shadow-brand/25"
-          : "text-text-secondary hover:text-text-primary hover:bg-bg-surface bg-transparent"
-    }`}
-  >
-    {children}
-  </button>
-);

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Check, Search, Tags, X } from 'lucide-react';
+import { Search, Tags, X, Trash2 } from 'lucide-react';
 import { HelpTip } from '../../../components/common/HelpTip';
 import { filterGenresByQuery, GENRE_OPTIONS, getGenreLabel } from '../constants/genres';
 import { GENRE_PICKER_HELP } from '../constants/seriesCopy';
@@ -89,8 +89,9 @@ export const GenrePicker = ({
             <button
               type="button"
               onClick={onClear}
-              className="text-[10px] text-text-muted hover:text-danger bg-transparent border-none cursor-pointer px-1 py-0.5"
+              className="inline-flex items-center gap-1 pl-1.5 pr-2 py-0.5 ml-1 rounded-lg bg-bg-surface text-text-secondary text-[11px] font-medium border border-border-custom cursor-pointer hover:bg-danger/10 hover:text-danger hover:border-danger/30 transition-colors"
             >
+              <Trash2 size={11} className="opacity-70" />
               Xóa hết
             </button>
           )}
@@ -101,55 +102,47 @@ export const GenrePicker = ({
         {filteredGroups.length === 0 ? (
           <p className="text-xs text-text-muted text-center py-4">Không tìm thấy thể loại phù hợp</p>
         ) : (
-          filteredGroups.map((group) => (
-            <div key={group.id}>
-              <div className="mb-2">
-                <div className="flex items-center gap-1.5">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">{group.label}</p>
-                  <HelpTip
-                    title={group.label}
-                    ariaLabel={`Giải thích ${group.label}`}
-                    placement="bottom-start"
-                    width="16rem"
-                    autoCloseMs={0}
-                    size="sm"
-                    content={group.hint}
-                  />
+          filteredGroups.map((group) => {
+            const unselectedGenres = group.genres.filter(
+              (genre) => !selected.includes(genre.value)
+            );
+
+            if (unselectedGenres.length === 0) return null;
+
+            return (
+              <div key={group.id}>
+                <div className="mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">{group.label}</p>
+                    <HelpTip
+                      title={group.label}
+                      ariaLabel={`Giải thích ${group.label}`}
+                      placement="bottom-start"
+                      width="16rem"
+                      autoCloseMs={0}
+                      size="sm"
+                      content={group.hint}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="flex flex-wrap gap-1.5" role="group" aria-label={group.label}>
-                {group.genres.map((genre) => {
-                  const isSelected = selected.includes(genre.value);
-                  return (
+                <div className="flex flex-wrap gap-1.5" role="group" aria-label={group.label}>
+                  {unselectedGenres.map((genre) => (
                     <button
                       key={genre.value}
                       type="button"
-                      aria-pressed={isSelected}
+                      aria-pressed={false}
                       aria-label={genre.label}
                       onClick={() => onToggle(genre.value)}
-                      className={`
-                        inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all duration-150 cursor-pointer
-                        ${
-                          isSelected
-                            ? 'bg-brand text-white border-brand shadow-sm shadow-brand/20 scale-[1.02]'
-                            : 'bg-bg-primary text-text-secondary border-border-custom hover:border-brand/35 hover:text-text-primary hover:bg-bg-surface'
-                        }
-                      `}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all duration-150 cursor-pointer bg-bg-primary text-text-secondary border-border-custom hover:border-brand/35 hover:text-text-primary hover:bg-bg-surface"
                     >
-                      <span
-                        className={`w-3.5 h-3.5 rounded flex items-center justify-center shrink-0 ${
-                          isSelected ? 'bg-white/20' : 'border border-border-custom bg-bg-surface'
-                        }`}
-                      >
-                        {isSelected && <Check size={10} strokeWidth={3} />}
-                      </span>
+                      <span className="w-3.5 h-3.5 rounded flex items-center justify-center shrink-0 border border-border-custom bg-bg-surface" />
                       {genre.label}
                     </button>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
