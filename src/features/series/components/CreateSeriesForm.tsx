@@ -12,8 +12,10 @@ import {
   FileText,
   ChevronRight,
   ListChecks,
+  Sparkles,
 } from 'lucide-react';
 
+import { useSuggestTags } from '../../ai/hooks/useSuggestTags';
 import { useSeriesForm } from '../hooks/useSeriesForm';
 import { HelpTip } from '../../../components/common/HelpTip';
 import { GenrePicker } from './GenrePicker';
@@ -61,6 +63,34 @@ export const CreateSeriesForm = () => {
     validate,
     reset,
   } = useSeriesForm();
+  const { mutate: suggestTags, isPending: isSuggestingTags } = useSuggestTags();
+
+  const handleSuggestTags = () => {
+    if (!formData.synopsis.trim()) {
+      toast.error('Vui lòng nhập Tóm tắt nội dung trước khi gợi ý!');
+      return;
+    }
+    
+    suggestTags(formData.synopsis, {
+      onSuccess: (suggestedGenres) => {
+        if (suggestedGenres.length === 0) {
+          toast.success('AI không tìm thấy thể loại phù hợp.');
+          return;
+        }
+        
+        const newGenres = suggestedGenres.filter(g => !formData.genre.includes(g));
+        if (newGenres.length > 0) {
+          updateField('genre', [...formData.genre, ...newGenres]);
+          toast.success(`Đã tự động thêm ${newGenres.length} thể loại từ AI!`);
+        } else {
+          toast.success('Các thể loại AI gợi ý đều đã được chọn.');
+        }
+      },
+      onError: (err) => {
+        toast.error(err.message || 'Lỗi khi gọi AI');
+      }
+    });
+  };
 
   const [showPreview, setShowPreview] = useState(false);
   const parsedBudget = Number(formData.requestedBudget.replace(/\D/g, '') || 0);
@@ -293,9 +323,20 @@ export const CreateSeriesForm = () => {
             </div>
 
             <div>
-              <label htmlFor="series-synopsis" className="text-xs font-medium text-text-secondary mb-1.5 block">
-                Tóm tắt nội dung <span className="text-danger">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label htmlFor="series-synopsis" className="text-xs font-medium text-text-secondary">
+                  Tóm tắt nội dung <span className="text-danger">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={handleSuggestTags}
+                  disabled={isSuggestingTags || !formData.synopsis.trim()}
+                  className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-brand bg-brand/10 hover:bg-brand/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Sparkles size={12} className={isSuggestingTags ? 'animate-pulse' : ''} />
+                  {isSuggestingTags ? 'AI đang phân tích...' : 'Gợi ý thể loại'}
+                </button>
+              </div>
               <textarea
                 id="series-synopsis"
                 value={formData.synopsis}

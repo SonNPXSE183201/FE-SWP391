@@ -100,6 +100,8 @@ const SERIES_DATA_REFRESH_TYPES = new Set([
   'Series_Revision_Required',
   'Series_Approved',
   'Series_Rejected',
+  'Series_Approved_Manual',
+  'Series_Rejected_Manual',
   'Series_Pending_Review',
   'Series_Team_Accepted',
   'Series_Team_Declined',
@@ -268,6 +270,7 @@ export const useSignalR = () => {
       queryClient.invalidateQueries({ queryKey: ['voting'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'board-voting'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'board-members'] });
+      queryClient.invalidateQueries({ queryKey: ['series'] });
     });
 
     // ─── Lifecycle logging ────────────────────────────────────

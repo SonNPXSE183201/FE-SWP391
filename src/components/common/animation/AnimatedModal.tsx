@@ -84,12 +84,12 @@ export const AnimatedModal = ({
           aria-modal="true"
         >
           <motion.div
-            className={backdropClassName}
+            className={`${backdropClassName} z-0`}
             {...backdropMotion}
             onClick={closeOnBackdrop ? onClose : undefined}
           />
           <motion.div
-            className={panelClassName}
+            className={`${panelClassName} relative z-10`}
             {...contentMotion}
             onClick={(e) => e.stopPropagation()}
           >

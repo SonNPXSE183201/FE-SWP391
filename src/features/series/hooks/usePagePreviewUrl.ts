@@ -14,7 +14,7 @@ export const getStaticPageDisplayUrl = (page: PageDto): string => {
   const composite = page.compositeImageUrl ? resolveMediaUrl(page.compositeImageUrl) : '';
   const raw = resolveMediaUrl(page.rawImageUrl || '');
   const base = composite || raw;
-  if (!base || !page.compositeImageUrl) return base;
+  if (!base) return base;
   const v = page.updateAt ? new Date(page.updateAt).getTime() : undefined;
   if (!v) return base;
   const sep = base.includes('?') ? '&' : '?';
