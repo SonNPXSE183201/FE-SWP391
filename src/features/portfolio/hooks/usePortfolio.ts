@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { portfolioApi } from '../api/portfolio.api';
+import { portfolioApi, type PortfolioSampleDto } from '../api/portfolio.api';
 
 export const usePortfolioStats = (assistantId?: number) => {
   return useQuery({
@@ -17,7 +17,7 @@ export const usePortfolioStats = (assistantId?: number) => {
 };
 
 export const usePortfolioSamples = (assistantId?: number) => {
-  return useQuery({
+  return useQuery<PortfolioSampleDto[]>({
     queryKey: ['portfolio', 'samples', assistantId],
     queryFn: async () => {
       const response = await portfolioApi.getSamples(assistantId);

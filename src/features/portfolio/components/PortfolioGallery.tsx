@@ -71,7 +71,7 @@ export const PortfolioGallery = ({ assistantId, readonly = false }: PortfolioGal
             {samples.map((sample) => (
               <MotionItem key={sample.id} className="relative group rounded-xl overflow-hidden bg-bg-surface border border-border-custom aspect-[3/4]">
                 <img
-                  src={sample.imageUrl}
+                  src={sample.imageUrl ?? undefined}
                   alt={sample.title || 'Portfolio sample'}
                   className="w-full h-full object-cover cursor-pointer transition-transform duration-500 group-hover:scale-110"
                   onClick={() => setSelectedImage(sample.imageUrl ?? null)}
