@@ -7,15 +7,33 @@ import type {
 export type { PortfolioSampleDto, CreatePortfolioSampleDto };
 
 export const portfolioApi = {
-  getPortfolioStats: async () => {
-    return axiosInstance.get('/api/assistant/portfolio/stats');
+  uploadImage: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return axiosInstance.post<{ success: boolean; data: string; message: string }>('/api/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
   },
 
-  getSamples: async () => {
-    return axiosInstance.get('/api/assistant/portfolio/samples');
+  getPortfolioStats: async (assistantId?: number) => {
+    return axiosInstance.get('/api/assistant/portfolio/stats', {
+      params: { assistantId }
+    });
+  },
+
+  getSamples: async (assistantId?: number) => {
+    return axiosInstance.get('/api/assistant/portfolio/samples', {
+      params: { assistantId }
+    });
   },
 
   uploadSample: async (payload: CreatePortfolioSampleDto) => {
     return axiosInstance.post('/api/assistant/portfolio/samples', payload);
+  },
+
+  deleteSample: async (id: number) => {
+    return axiosInstance.delete(`/api/assistant/portfolio/samples/${id}`);
   },
 };
