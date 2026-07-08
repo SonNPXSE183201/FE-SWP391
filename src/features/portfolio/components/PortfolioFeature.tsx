@@ -8,6 +8,7 @@ import {
   DollarSign,
 } from 'lucide-react';
 import { usePortfolioStats } from '../hooks/usePortfolio';
+import { PortfolioGallery } from './PortfolioGallery';
 import { getPagedItems } from '../../../api/apiResponse';
 import { taskApi } from '../../tasks/api/task.api';
 import { formatVND } from '../../wallet';
@@ -38,7 +39,7 @@ export const PortfolioFeature = () => {
   // Fetch tasks for history
   const { data: tasksRes, isLoading: tasksLoading } = useQuery({
     queryKey: ['portfolio', 'tasks'],
-    queryFn: () => taskApi.getMyTasks({ pageSize: 100 }),
+    queryFn: () => taskApi.getAssistantMyTasks({ pageSize: 100 }),
   });
   const tasks = getPagedItems<PortfolioHistoryTask>(tasksRes?.data?.data).map((task) => ({
     ...task,
@@ -108,6 +109,9 @@ export const PortfolioFeature = () => {
           </div>
         </MotionItem>
       </MotionStagger>
+
+      {/* Portfolio Gallery */}
+      <PortfolioGallery />
 
       {/* Task History Table */}
       <div className="bg-bg-secondary border border-border-custom rounded-xl overflow-hidden mt-6">

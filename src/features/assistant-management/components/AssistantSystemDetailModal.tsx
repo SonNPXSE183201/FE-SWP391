@@ -22,6 +22,7 @@ import {
 } from '../../series/utils/assistantInvite.utils';
 import { AssistantAvatar } from './AssistantAvatar';
 import { InviteConfirmPopover } from './InviteConfirmPopover';
+import { PortfolioGallery } from '../../portfolio/components/PortfolioGallery';
 
 interface AssistantSystemDetailModalProps {
   assistant: AssistantBrowseItem;
@@ -130,7 +131,7 @@ export const AssistantSystemDetailModal = ({
                     className="inline-flex items-center gap-1.5 mt-3 text-xs font-medium text-brand hover:text-brand-hover transition-colors no-underline group"
                   >
                     <ExternalLink size={13} className="group-hover:translate-x-0.5 transition-transform" />
-                    Xem Portfolio
+                    Link ngoài (Behance...)
                   </a>
                 )}
               </div>
@@ -217,6 +218,11 @@ export const AssistantSystemDetailModal = ({
                   <span className="text-sm text-text-muted italic">Chưa cập nhật kỹ năng</span>
                 )}
               </div>
+            </div>
+
+            {/* Portfolio Gallery */}
+            <div className="mt-4">
+              <PortfolioGallery assistantId={assistant.id} readonly />
             </div>
           </div>
         </div>
