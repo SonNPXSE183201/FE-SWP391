@@ -2575,6 +2575,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/pages/{id}/unmark-ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PageDtoApiResponse"];
+                        "application/json": components["schemas"]["PageDtoApiResponse"];
+                        "text/json": components["schemas"]["PageDtoApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/pages/{id}/replace-image": {
         parameters: {
             query?: never;

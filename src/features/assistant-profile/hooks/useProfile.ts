@@ -17,6 +17,10 @@ export const useUpdateAssistantProfile = () => {
   return useMutation({
     mutationFn: (payload: { portfolioUrl: string; skills: string[] }) =>
       profileApi.updateAssistantProfile(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.assistantProfile }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEYS.assistantProfile });
+      // Invalidate the browse assistants list so Mangakas see the new link immediately
+      qc.invalidateQueries({ queryKey: ['assistants'] });
+    },
   });
 };
