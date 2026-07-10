@@ -1,0 +1,15 @@
+Week A/B/C — 2026-06-25T07:32:27.296Z
+
+PASS | A GET mangaka-list has extension fields — HTTP 200, 6 tasks
+PASS | A seed task with ExtensionStatus=Pending — TaskId=6
+PASS | A POST /extension-approval route — HTTP 200 Chấp thuận yêu cầu gia hạn thành công.
+PASS | B GET /reviews/chapters — HTTP 200, queue=0
+PASS | B queue empty (seed không có Pending_Review chapter) — Chỉ smoke route; full approve/revision cần chapter Pending_Review
+PASS | B GET /reviews/chapters/{id} — HTTP 200
+PASS | B POST /revision (chapter 2 Draft→Rejected) — HTTP 200 Yêu cầu chỉnh sửa chapter thành công.
+PASS | B POST /approve route (ch1 đã Approved → 400) — HTTP 400
+PASS | C GET /disputes — HTTP 200
+PASS | C POST /disputes/{taskId}/resolve route exists — HTTP 404
+PASS | FE npm run build — 
+
+Total: 11/11
