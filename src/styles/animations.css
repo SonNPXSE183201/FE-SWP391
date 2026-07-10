@@ -1,0 +1,183 @@
+/* ─── Page & route transitions ─── */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-page-enter {
+  animation: page-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes backdrop-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-backdrop-enter {
+  animation: backdrop-enter 0.2s ease-out both;
+}
+
+@keyframes slide-up-fade {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up-fade {
+  animation: slide-up-fade 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ─── Stagger delay utilities ─── */
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
+.stagger-6 { animation-delay: 300ms; }
+.stagger-7 { animation-delay: 350ms; }
+.stagger-8 { animation-delay: 400ms; }
+.stagger-9 { animation-delay: 450ms; }
+.stagger-10 { animation-delay: 500ms; }
+
+/* ─── Global scroll-reveal (data-reveal attribute) ─── */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+[data-reveal].is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+[data-reveal][data-reveal-direction="left"] {
+  transform: translateX(-24px);
+}
+[data-reveal][data-reveal-direction="left"].is-revealed {
+  transform: translateX(0);
+}
+
+[data-reveal][data-reveal-direction="right"] {
+  transform: translateX(24px);
+}
+[data-reveal][data-reveal-direction="right"].is-revealed {
+  transform: translateX(0);
+}
+
+[data-reveal][data-reveal-direction="scale"] {
+  transform: scale(0.95);
+}
+[data-reveal][data-reveal-direction="scale"].is-revealed {
+  transform: scale(1);
+}
+
+[data-reveal][data-delay="1"] { transition-delay: 80ms; }
+[data-reveal][data-delay="2"] { transition-delay: 160ms; }
+[data-reveal][data-delay="3"] { transition-delay: 240ms; }
+[data-reveal][data-delay="4"] { transition-delay: 320ms; }
+[data-reveal][data-delay="5"] { transition-delay: 400ms; }
+[data-reveal][data-delay="6"] { transition-delay: 480ms; }
+
+/* ─── Stagger children container ─── */
+[data-stagger] > * {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-stagger].is-revealed > *:nth-child(1) { opacity: 1; transform: translateY(0); transition-delay: 0ms; }
+[data-stagger].is-revealed > *:nth-child(2) { opacity: 1; transform: translateY(0); transition-delay: 60ms; }
+[data-stagger].is-revealed > *:nth-child(3) { opacity: 1; transform: translateY(0); transition-delay: 120ms; }
+[data-stagger].is-revealed > *:nth-child(4) { opacity: 1; transform: translateY(0); transition-delay: 180ms; }
+[data-stagger].is-revealed > *:nth-child(5) { opacity: 1; transform: translateY(0); transition-delay: 240ms; }
+[data-stagger].is-revealed > *:nth-child(6) { opacity: 1; transform: translateY(0); transition-delay: 300ms; }
+[data-stagger].is-revealed > *:nth-child(7) { opacity: 1; transform: translateY(0); transition-delay: 360ms; }
+[data-stagger].is-revealed > *:nth-child(8) { opacity: 1; transform: translateY(0); transition-delay: 420ms; }
+[data-stagger].is-revealed > *:nth-child(9) { opacity: 1; transform: translateY(0); transition-delay: 480ms; }
+[data-stagger].is-revealed > *:nth-child(10) { opacity: 1; transform: translateY(0); transition-delay: 540ms; }
+[data-stagger].is-revealed > *:nth-child(n+11) { opacity: 1; transform: translateY(0); transition-delay: 600ms; }
+
+/* ─── Interactive UI patterns ─── */
+@layer components {
+  .ui-card {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .ui-card-interactive {
+    @apply transition-all duration-300 ease-out cursor-pointer hover:-translate-y-0.5 hover:shadow-md-custom active:translate-y-0 active:scale-[0.99];
+  }
+
+  .ui-btn-press {
+    @apply transition-all duration-200 active:scale-[0.97];
+  }
+
+  .ui-nav-item {
+    @apply transition-all duration-200;
+  }
+
+  .ui-table-row {
+    @apply transition-colors duration-200;
+  }
+
+  .ui-input-focus {
+    @apply transition-all duration-200 focus:ring-2 focus:ring-brand/20 focus:border-brand/40;
+  }
+}
+
+/* ─── Sidebar slide-in ─── */
+@keyframes sidebar-overlay-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-sidebar-overlay {
+  animation: sidebar-overlay-enter 0.25s ease-out both;
+}
+
+/* ─── Modal backdrop auto-animation ─── */
+.fixed.inset-0.z-50 > .absolute.inset-0[class*="bg-black"],
+.fixed.inset-0.z-\[50\] > .absolute.inset-0[class*="bg-black"],
+.fixed.inset-0.z-\[100\] > .absolute.inset-0[class*="bg-black"] {
+  animation: backdrop-enter 0.2s ease-out both;
+}
+
+.fixed.inset-0.z-50 > [class*="rounded"]:not(.absolute),
+.fixed.inset-0.z-\[50\] > [class*="rounded"]:not(.absolute) {
+  animation: modal-enter 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-page-enter,
+  .animate-fade-in,
+  .animate-modal-enter,
+  .animate-dropdown-enter,
+  .animate-backdrop-enter,
+  .animate-slide-up-fade,
+  [class*="animate-"] {
+    animation: none !important;
+  }
+
+  [data-reveal],
+  [data-stagger] > * {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
