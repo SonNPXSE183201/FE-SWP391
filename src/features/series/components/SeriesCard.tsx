@@ -4,7 +4,7 @@ import { FileText, Clock, Eye } from 'lucide-react';
 
 import type { SeriesDto } from '../../../api/generated/types';
 
-import { getGenreLabel } from '../constants/genres';
+import { getGenreLabel } from '../../../constants/genres';
 
 import { getSeriesStatusConfig } from '../constants';
 

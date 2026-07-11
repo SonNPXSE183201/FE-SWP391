@@ -27,7 +27,7 @@ import {
 } from '../index';
 import type { SeriesStatus } from '../../../types/status.types';
 import type { SeriesNameUpdateSnapshot } from '../api/series.api';
-import { NEMU_BUDGET_LABEL_SHORT, NEMU_MANUSCRIPT_LABEL } from '../constants/seriesCopy';
+import { NEMU_BUDGET_LABEL_SHORT, NEMU_MANUSCRIPT_LABEL } from '../../../constants/seriesCopy';
 import { parseEditorRevisionNote } from '../utils/editorRevision.utils';
 import { parseGenreList, resolveSeriesCover } from '../utils/series.utils';
 import { MotionStagger, MotionItem } from '../../../components/common/animation';

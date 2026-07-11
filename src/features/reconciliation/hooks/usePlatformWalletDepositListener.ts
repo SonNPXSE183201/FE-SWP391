@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { showAppError, showAppSuccess } from '../../../utils/appToast';
-import { formatVND } from '../../wallet/constants';
+import { formatVND } from '../../wallet';
 
 const topUpReturnToastKey = (referenceCode: string | null, amount: string | null) =>
   `platform-topup-toast:${referenceCode ?? 'unknown'}:${amount ?? '0'}`;

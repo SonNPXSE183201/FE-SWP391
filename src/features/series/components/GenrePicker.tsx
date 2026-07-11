@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Search, Tags, X, Trash2 } from 'lucide-react';
 import { HelpTip } from '../../../components/common/HelpTip';
-import { filterGenresByQuery, GENRE_OPTIONS, getGenreLabel } from '../constants/genres';
-import { GENRE_PICKER_HELP } from '../constants/seriesCopy';
+import { filterGenresByQuery, GENRE_OPTIONS, getGenreLabel } from '../../../constants/genres';
+import { GENRE_PICKER_HELP } from '../../../constants/seriesCopy';
 
 type GenrePickerProps = {
   selected: string[];

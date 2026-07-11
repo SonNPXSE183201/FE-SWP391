@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { HelpTip } from '../../../components/common/HelpTip';
 import { usePendingSeriesReview } from '../hooks/useReview';
-import { formatVND } from '../constants';
+import { formatVND } from '../constants/review.constants';
 import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
 import { getSeriesStatusConfig, getGenreLabel } from '../../series';
 import type { SeriesReviewDto } from '../api/review.api';

@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { SeriesFormData, SeriesFormErrors } from '../types/series.types';
-import { NEMU_BUDGET_REQUIRED } from '../constants/seriesCopy';
+import { NEMU_BUDGET_REQUIRED } from '../../../constants/seriesCopy';
 
 const INITIAL_FORM_DATA: SeriesFormData = {
   title: '',

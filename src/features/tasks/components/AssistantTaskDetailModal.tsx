@@ -20,7 +20,7 @@ import { TaskLayerPreview } from './TaskLayerPreview';
 import { useTaskVersions, useTaskVersionAnnotations, useRequestExtension, useReportDisputeTask } from '../hooks/useTasks';
 import { taskApi } from '../api/task.api';
 import { parseTaskRevisionPins } from '../../canvas/utils/canvas.utils';
-import { ANNOTATION_TYPE_CONFIG } from '../../review/constants';
+import { ANNOTATION_TYPE_CONFIG } from '../../../constants/annotation';
 import { TASK_STATUS_CONFIG, formatDeadline } from '../constants';
 import { formatVND } from '../../wallet';
 import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
