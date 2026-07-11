@@ -5,7 +5,7 @@ import {
   matchesVotingFilter,
   type VotingListFilter,
   type VotingSeriesDto,
-} from '../voting.utils';
+} from '../utils/voting.utils';
 
 type PendingBoardVotesPayload = {
   rules?: BoardVotingRulesDto;
@@ -38,7 +38,7 @@ export type VotingListResult = {
 };
 
 export type { VoteSeriesRequestDto, VotingListFilter, VotingSeriesDto };
-export type { VoteUiChoice, VoteResultSummary } from '../voting.utils';
+export type { VoteUiChoice, VoteResultSummary } from '../utils/voting.utils';
 export type { BoardVotingRulesDto };
 
 export const votingApi = {

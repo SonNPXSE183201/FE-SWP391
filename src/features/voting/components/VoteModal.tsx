@@ -31,13 +31,13 @@ import {
 
   type VoteUiChoice,
 
-} from '../voting.utils';
+} from '../utils/voting.utils';
 
 import { formatVND, formatVNDInput } from '../../../utils/currency';
 
 import type { VotingSeriesDto } from '../api/voting.api';
 
-import { MANGAKA_ROLE_LABEL, NEMU_BUDGET_LABEL } from '../../series/constants/seriesCopy';
+import { MANGAKA_ROLE_LABEL, NEMU_BUDGET_LABEL } from '../../../constants/seriesCopy';
 
 
 

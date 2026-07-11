@@ -38,4 +38,4 @@ export interface ChapterFormErrors {
 }
 
 // Genre options — re-export from constants (grouped + flat list)
-export { GENRE_OPTIONS, GENRE_GROUPS, getGenreLabel } from '../constants/genres';
+export { GENRE_OPTIONS, GENRE_GROUPS, getGenreLabel } from '../../../constants/genres';

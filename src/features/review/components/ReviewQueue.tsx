@@ -24,7 +24,7 @@ import {
 } from '../../../components/common/animation';
 import { motion } from 'framer-motion';
 import { useReviewQueue } from '../hooks/useReview';
-import { formatVND, getDeadlineStatus } from '../constants';
+import { formatVND, getDeadlineStatus } from '../constants/review.constants';
 import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
 import {
   EDITOR_CHAPTER_REVIEW_FILTER_OPTIONS,

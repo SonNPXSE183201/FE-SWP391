@@ -16,7 +16,7 @@ import type { AnnotationType } from '../../../types/status.types';
 import type { CanvasAnnotation } from '../../canvas/types/canvas.types';
 import { useChapterReview, useApproveChapter, useRequireChapterRevision } from '../hooks/useReview';
 import { reviewApi, type AnnotationDto } from '../api/review.api';
-import { ANNOTATION_TYPE_CONFIG, QC_CHECKLIST_ITEMS, formatVND } from '../constants';
+import { ANNOTATION_TYPE_CONFIG, QC_CHECKLIST_ITEMS, formatVND } from '../constants/review.constants';
 import { HelpTip } from '../../../components/common/HelpTip';
 import type { PageDto } from '../../../api/generated/types';
 import { Point } from 'fabric';

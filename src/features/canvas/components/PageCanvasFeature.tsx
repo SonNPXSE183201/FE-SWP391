@@ -60,7 +60,7 @@ import { AnimatedModal } from "../../../components/common/animation/AnimatedModa
 import { CreateTaskModal } from "../../tasks";
 import { formatVND } from "../../wallet";
 import type { CanvasAnnotation, CanvasRegion, CanvasPage } from "../types/canvas.types";
-import { ANNOTATION_TYPE_CONFIG } from "../../review/constants";
+import { ANNOTATION_TYPE_CONFIG } from '../../../constants/annotation';
 import type { TasksDto } from "../../../api/generated/types";
 import type { CanvasViewerHandle } from "../../../components/canvas/CanvasViewer";
 import { AnimatePresence, motion } from "framer-motion";
