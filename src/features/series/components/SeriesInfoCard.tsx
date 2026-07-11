@@ -2,9 +2,9 @@ import { BookOpen, AlignLeft, Tags, Banknote, FileText } from 'lucide-react';
 
 import type { SeriesDto } from '../../../api/generated/types';
 
-import { getGenreLabel } from '../constants/genres';
+import { getGenreLabel } from '../../../constants/genres';
 
-import { MANGAKA_PROPOSED_LABEL, NEMU_BUDGET_LABEL_SHORT } from '../constants/seriesCopy';
+import { MANGAKA_PROPOSED_LABEL, NEMU_BUDGET_LABEL_SHORT } from '../../../constants/seriesCopy';
 
 import { parseGenreList } from '../utils/series.utils';
 

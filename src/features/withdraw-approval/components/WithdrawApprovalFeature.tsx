@@ -16,8 +16,8 @@ import {
 import { usePendingWithdrawals } from '../hooks/usePendingWithdrawals';
 import { useApproveWithdraw } from '../hooks/useApproveWithdraw';
 import type { PendingWithdrawal } from '../types/withdrawApproval.types';
-import { formatVND } from '../../wallet/constants';
-import { formatTransactionDateTime } from '../../wallet/utils';
+import { formatVND } from '../../wallet';
+import { formatTransactionDateTime } from '../../wallet';
 import { getRequesterRoleLabel, getRequesterRoleStyle } from '../utils/withdrawApproval.utils';
 import {
   MotionStagger,

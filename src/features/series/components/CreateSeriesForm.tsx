@@ -28,12 +28,12 @@ import {
   BUDGET_BOARD_SUBTITLE,
   SERIES_DRAFT_STATUS_LABEL,
   COVER_UPLOAD_LABEL,
-} from '../constants/seriesCopy';
+} from '../../../constants/seriesCopy';
 import { SeriesPreviewModal } from './SeriesPreviewModal';
 import { seriesApi } from '../api/series.api';
 import type { ApiResponse } from '../../../api/axios';
 import type { SeriesDto } from '../../../api/generated/types';
-import { formatVND } from '../../wallet/constants';
+import { formatVND } from '../../wallet';
 import { formatVNDInput } from '../../../utils/currency';
 
 const QUICK_BUDGETS = [

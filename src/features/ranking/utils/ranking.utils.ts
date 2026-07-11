@@ -1,4 +1,4 @@
-import type { RankingRecord } from '../../api/generated/types';
+import type { RankingRecord } from '../../../api/generated/types';
 
 export type RankingUiStatus = 'Active' | 'UnderReview' | 'ProposedCancel';
 

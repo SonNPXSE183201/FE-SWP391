@@ -1,7 +1,7 @@
 import { BarChart3 } from 'lucide-react';
 import { useRankingList } from '../hooks/useRanking';
 import { PageScaffold } from '../../../components/common/PageScaffold';
-import { getRankingRecordTitle } from '../ranking.utils';
+import { getRankingRecordTitle } from '../utils/ranking.utils';
 
 export const RankingTable = () => {
   const { data: list = [], isLoading } = useRankingList();

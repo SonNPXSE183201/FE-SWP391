@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../../../stores/authStore';
-import { formatVND } from '../constants';
+import { formatVND } from '../constants/wallet.constants';
 
 const depositReturnToastKey = (referenceCode: string | null, amount: string | null) =>
   `wallet-deposit-toast:${referenceCode ?? 'unknown'}:${amount ?? '0'}`;

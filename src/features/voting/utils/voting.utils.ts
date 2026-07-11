@@ -1,4 +1,4 @@
-import type { BoardVoteDto, SeriesDto } from '../../api/generated/types';
+import type { BoardVoteDto, SeriesDto } from '../../../api/generated/types';
 
 /** Series pending vote — may include boardVotes when BE expands SeriesDto */
 export type VotingSeriesDto = SeriesDto & {

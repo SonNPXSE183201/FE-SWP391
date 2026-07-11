@@ -1,8 +1,8 @@
 import { AnimatedModal } from '../../../components/common/animation';
 import { Eye, X, ImagePlus, Banknote } from 'lucide-react';
 import type { SeriesFormData } from '../types/series.types';
-import { getGenreLabel } from '../constants/genres';
-import { NEMU_BUDGET_LABEL, PREVIEW_AFTER_CREATE_HINT, PREVIEW_WAIT_BOARD_LABEL, SERIES_DRAFT_STATUS_LABEL } from '../constants/seriesCopy';
+import { getGenreLabel } from '../../../constants/genres';
+import { NEMU_BUDGET_LABEL, PREVIEW_AFTER_CREATE_HINT, PREVIEW_WAIT_BOARD_LABEL, SERIES_DRAFT_STATUS_LABEL } from '../../../constants/seriesCopy';
 import { formatVND } from '../../wallet';
 
 interface SeriesPreviewModalProps {

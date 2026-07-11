@@ -1,5 +1,5 @@
 import { Upload, FileText, X, Loader2, ExternalLink } from 'lucide-react';
-import { NEMU_MANUSCRIPT_LABEL, NEMU_MANUSCRIPT_UPLOAD_HINT, MANUSCRIPT_DROP_HINT, MANUSCRIPT_UPLOADING_LABEL } from '../constants/seriesCopy';
+import { NEMU_MANUSCRIPT_LABEL, NEMU_MANUSCRIPT_UPLOAD_HINT, MANUSCRIPT_DROP_HINT, MANUSCRIPT_UPLOADING_LABEL } from '../../../constants/seriesCopy';
 
 interface NameUploaderProps {
   nameFileUrl: string | null;

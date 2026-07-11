@@ -1,7 +1,7 @@
 import { X, Receipt, Clock, ArrowRightLeft, Shield, Banknote, Hash } from 'lucide-react';
-import { AnimatedModal } from '../../../components/common/animation';import { TX_TYPE_CONFIG, formatVND } from '../constants';
+import { AnimatedModal } from '../../../components/common/animation';import { TX_TYPE_CONFIG, formatVND } from '../constants/wallet.constants';
 import type { TransactionDto } from '../../../api/generated/types';
-import { getTransactionAmountDisplay, formatTransactionDateTime, getTransactionDescription, normalizeTransactionType } from '../utils';
+import { getTransactionAmountDisplay, formatTransactionDateTime, getTransactionDescription, normalizeTransactionType } from '../utils/wallet.utils';
 
 interface TransactionDetailModalProps {
   transaction: TransactionDto;

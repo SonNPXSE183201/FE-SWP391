@@ -17,7 +17,7 @@ import type { CanvasViewerHandle } from '../../../components/canvas/CanvasViewer
 import type { CanvasTool } from '../../../stores/canvasStore';
 import { useTaskVersions, useApproveTask, useRequestRevisionTask, useCompositedPageUrl, useReportDisputeTask } from '../hooks/useTasks';
 import { TaskLayerPreview } from './TaskLayerPreview';
-import { ANNOTATION_TYPE_CONFIG } from '../../review/constants';
+import { ANNOTATION_TYPE_CONFIG } from '../../../constants/annotation';
 import { formatDeadline } from '../constants';
 import { formatVND } from '../../wallet';
 import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';

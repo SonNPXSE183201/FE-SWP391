@@ -1,4 +1,4 @@
-export { getGenreLabel, GENRE_OPTIONS, GENRE_GROUPS } from './constants/genres';
+export { getGenreLabel, GENRE_OPTIONS, GENRE_GROUPS } from '../../constants/genres';
 export {
   SERIES_STATUS_CONFIG,
   SERIES_STATUS_FILTER_OPTIONS,
