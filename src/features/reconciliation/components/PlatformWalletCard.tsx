@@ -4,7 +4,7 @@ import { usePlatformWallet, useTopUpPlatformWallet } from '../hooks/usePlatformW
 import { usePlatformWalletDepositListener } from '../hooks/usePlatformWalletDepositListener';
 import { formatReconciliationCurrency } from '../utils/reconciliation.utils';
 import { showAppError } from '../../../utils/appToast';
-import { formatVND } from '../../wallet/constants';
+import { formatVND } from '../../wallet';
 import { HelpTip } from '../../../components/common/HelpTip';
 
 

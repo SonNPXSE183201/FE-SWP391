@@ -14,7 +14,7 @@ export { useDepositCallback } from './hooks/useDepositCallback';
 export { useWalletSignalR } from './hooks/useWalletSignalR';
 
 // Utils
-export { calculateMonthlyStats } from './utils';
+export { getWalletLockedAmount, formatTransactionDateTime } from './utils/wallet.utils';
 
 // Constants & Config
-export { TX_TYPE_CONFIG, TX_FILTER_OPTIONS, formatVND, formatVNDNumber, parseVND, formatVNDInput } from './constants';
+export { TX_TYPE_CONFIG, TX_FILTER_OPTIONS, formatVND, formatVNDNumber, parseVND, formatVNDInput } from './constants/wallet.constants';

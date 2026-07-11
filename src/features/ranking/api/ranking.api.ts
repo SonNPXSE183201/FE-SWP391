@@ -2,7 +2,7 @@ import axios from 'axios';
 import { axiosInstance } from '../../../api/axios';
 import type { ApiResponse, RankingRecord } from '../../../api/generated/types';
 import type { components } from '../../../api/generated/schema';
-import { filterRankingByGenre, sortRankingByPosition } from '../ranking.utils';
+import { filterRankingByGenre, sortRankingByPosition } from '../utils/ranking.utils';
 
 type VoteRankingRequestDto = components['schemas'] extends { VoteRankingRequestDto: infer T }
   ? T

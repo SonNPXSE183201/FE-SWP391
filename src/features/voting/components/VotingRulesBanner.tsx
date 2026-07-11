@@ -1,7 +1,7 @@
 import { BarChart3, Clock, Crown, Users, AlertTriangle } from 'lucide-react';
 import { HelpTip } from '../../../components/common/HelpTip';
 import type { BoardVotingRulesDto } from '../../admin/api/boardVoting.api';
-import { calcEffectiveThresholdPercent } from '../voting.utils';
+import { calcEffectiveThresholdPercent } from '../utils/voting.utils';
 
 type VotingRulesBannerProps = {
   rules: BoardVotingRulesDto;

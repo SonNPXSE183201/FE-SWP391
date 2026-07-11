@@ -1,5 +1,5 @@
 import type { ReconciliationRecord, ReconciliationStatus } from '../types/reconciliation.types';
-import { NEMU_FUNDING_LABEL } from '../../series/constants/seriesCopy';
+import { NEMU_FUNDING_LABEL } from '../../../constants/seriesCopy';
 import { formatVND } from '../../../utils/currency';
 
 export const formatReconciliationCurrency = (value: number): string => formatVND(value);

@@ -1,4 +1,4 @@
-import type { PublishStatus } from './types';
+import type { PublishStatus } from '../types';
 
 // ─── Publish status config ───────────────────────────────────
 export const PUBLISH_STATUS_CONFIG: Record<

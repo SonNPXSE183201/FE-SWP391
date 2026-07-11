@@ -1,6 +1,6 @@
 import { ExternalLink, FileText, MessageSquareQuote, User } from 'lucide-react';
 import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
-import { NEMU_MANUSCRIPT_LABEL } from '../../series/constants/seriesCopy';
+import { NEMU_MANUSCRIPT_LABEL } from '../../../constants/seriesCopy';
 import type { VotingSeriesDto } from '../api/voting.api';
 
 type BoardSeriesDossierProps = {
