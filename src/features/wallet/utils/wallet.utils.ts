@@ -1,8 +1,8 @@
-import type { TransactionDto, WalletDto } from '../../api/generated/types';
-import { TX_TYPE_CONFIG } from './constants';
-import type { TransactionType } from '../../types/status.types';
-import { parseApiDate } from '../../utils/parseApiDate';
-import { NEMU_FUNDING_LABEL } from '../series/constants/seriesCopy';
+import type { TransactionDto, WalletDto } from '../../../api/generated/types';
+import { TX_TYPE_CONFIG } from '../constants/wallet.constants';
+import type { TransactionType } from '../../../types/status.types';
+import { parseApiDate } from '../../../utils/parseApiDate';
+import { NEMU_FUNDING_LABEL } from '../../../constants/seriesCopy';
 
 export { parseApiDate };
 

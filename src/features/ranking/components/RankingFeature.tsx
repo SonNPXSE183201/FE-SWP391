@@ -18,7 +18,7 @@ import {
   getRankingRecordId,
   getRankingRecordTitle,
   getRankingUiStatus,
-} from '../ranking.utils';
+} from '../utils/ranking.utils';
 import {
   MotionTableRow,
   containerVariants,

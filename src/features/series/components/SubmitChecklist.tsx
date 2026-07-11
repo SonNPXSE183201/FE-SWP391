@@ -5,7 +5,7 @@ import {
   MANGAKA_RESUBMIT_NOTE_LABEL,
   MANGAKA_RESUBMIT_NOTE_HINT,
   MANGAKA_RESUBMIT_NOTE_PLACEHOLDER,
-} from '../constants/seriesCopy';
+} from '../../../constants/seriesCopy';
 
 interface ChecklistItem {
   label: string;

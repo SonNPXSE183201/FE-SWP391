@@ -1,4 +1,4 @@
-import { components } from '../../api/generated/schema';
+import type { components } from '../../../api/generated/schema';
 
 // ─── Chapter Review (QC) Types ───────────────────────────────
 

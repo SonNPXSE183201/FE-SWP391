@@ -6,7 +6,7 @@ import {
   type VoteSeriesRequestDto,
 } from '../api/voting.api';
 import { useAuthStore } from '../../../stores/authStore';
-import type { VotingSeriesDto } from '../voting.utils';
+import type { VotingSeriesDto } from '../utils/voting.utils';
 
 const votingListKey = (userId?: number | string | null) => ['voting', 'list', userId] as const;
 

@@ -8,7 +8,7 @@ import {
   CheckCircle2, Type, Image, Wallet, UserCheck, Briefcase,
 } from 'lucide-react';
 import { useWallet, formatVND, formatVNDInput, parseVND } from '../../wallet';
-import { getWalletLockedAmount } from '../../wallet/utils';
+import { getWalletLockedAmount } from '../../wallet';
 import { useMySeries, useChapters, useChapterPages } from '../../series';
 import { useSeriesActiveTeam } from '../../series/hooks/useSeriesTeam';
 import { taskApi } from '../api/task.api';
