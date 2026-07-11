@@ -2,7 +2,7 @@ import {
   ArrowDownToLine, ArrowUpFromLine, CreditCard, ExternalLink,
 } from 'lucide-react';
 import { AnimatedModal } from '../../../components/common/animation';
-import { formatVND, formatVNDInput, parseVND, VIETNAM_BANKS } from '../constants';
+import { formatVND, formatVNDInput, parseVND, VIETNAM_BANKS } from '../constants/wallet.constants';
 import { CustomSelect } from '../../../components/common/CustomSelect';
 import { useWalletActions } from '../hooks/useWalletActions';
 

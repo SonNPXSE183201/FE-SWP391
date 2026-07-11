@@ -1,5 +1,5 @@
-import type { TransactionType } from '../../types/status.types';
-import { NEMU_FUNDING_LABEL } from '../series/constants/seriesCopy';
+import type { TransactionType } from '../../../types/status.types';
+import { NEMU_FUNDING_LABEL } from '../../../constants/seriesCopy';
 import {
   Wallet,
   ArrowDownToLine,
@@ -53,7 +53,7 @@ export const TX_FILTER_OPTIONS = [
 ];
 
 // ─── VND Formatter (nguồn dùng chung: src/utils/currency) ─────
-export { formatVND, formatVNDNumber, parseVND, formatVNDInput } from '../../utils/currency';
+export { formatVND, formatVNDNumber, parseVND, formatVNDInput } from '../../../utils/currency';
 
 // ─── Vietnam Banks ───────────────────────────────────────────
 export const VIETNAM_BANKS = [

@@ -29,7 +29,7 @@ import { CustomDatePicker } from '../../../components/common/CustomDatePicker';
 import { useApprovedSeries, useCreateContract, useUpdateContract } from '../hooks/useContract';
 import type { ApprovedSeriesContractDto, ContractAddendumDto } from '../api/contract.api';
 import { formatVND, formatVNDInput } from '../../../utils/currency';
-import { getGenreLabel } from '../../series/constants/genres';
+import { getGenreLabel } from '../../../constants/genres';
 import { MotionStagger, MotionItem, MotionListItem, containerVariants } from '../../../components/common/animation';
 import { motion } from 'framer-motion';
 

@@ -1,6 +1,6 @@
 import { X, Lock, Loader2, Calendar } from 'lucide-react';
 import { AnimatedModal } from '../../../components/common/animation';
-import { formatVND } from '../constants';
+import { formatVND } from '../constants/wallet.constants';
 import { useMangakaTasks, OPEN_TASK_STATUSES, getTaskStatusConfig, formatDeadline } from '../../tasks';
 import { normalizeTaskStatus } from '../../../utils/status';
 import { useMemo } from 'react';

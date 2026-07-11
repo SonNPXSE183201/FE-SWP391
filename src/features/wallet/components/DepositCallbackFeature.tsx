@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDepositCallback } from '../hooks/useDepositCallback';
 import { useAuthStore } from '../../../stores/authStore';
-import { formatVND } from '../constants';
+import { formatVND } from '../constants/wallet.constants';
 import { MotionItem, MotionStagger } from '../../../components/common/animation';
 
 /** Trang fallback khi FrontendReturnUrl trỏ về /wallet/deposit/callback */

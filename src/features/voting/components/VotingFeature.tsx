@@ -21,8 +21,8 @@ import {
 import { useAuthStore } from '../../../stores/authStore';
 import { useVotingList, useSubmitBoardVote } from '../hooks/useVoting';
 import type { VotingSeriesDto } from '../api/voting.api';
-import { getGenreLabel } from '../../series/constants/genres';
-import { MANGAKA_PROPOSED_LABEL, NEMU_BUDGET_LABEL } from '../../series/constants/seriesCopy';
+import { getGenreLabel } from '../../../constants/genres';
+import { MANGAKA_PROPOSED_LABEL, NEMU_BUDGET_LABEL } from '../../../constants/seriesCopy';
 import { HelpTip } from '../../../components/common/HelpTip';
 import { showAppSuccess, showAppError } from '../../../utils/appToast';
 import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
@@ -42,7 +42,7 @@ import {
   uiChoiceToVoteSeriesRequest,
   type VoteUiChoice,
   type VotingListFilter,
-} from '../voting.utils';
+} from '../utils/voting.utils';
 import { formatVND } from '../../../utils/currency';
 import { MotionStagger, MotionItem, MotionListItem, containerVariants } from '../../../components/common/animation';
 import { motion } from 'framer-motion';

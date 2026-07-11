@@ -1,6 +1,6 @@
 // Review feature — barrel export
 
-export { ANNOTATION_TYPE_CONFIG, QC_CHECKLIST_ITEMS, getDeadlineStatus } from './constants';
+export { ANNOTATION_TYPE_CONFIG, QC_CHECKLIST_ITEMS, getDeadlineStatus } from './constants/review.constants';
 
 // Components
 export { ReviewSeriesFeature } from './components/ReviewSeriesFeature';

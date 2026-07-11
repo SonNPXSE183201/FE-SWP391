@@ -1,4 +1,4 @@
-import type { AnnotationType } from '../../types/status.types';
+import type { AnnotationType } from '../../../types/status.types';
 
 // ─── Phân loại ghim lỗi (kiểm duyệt) — F3.2 ─────────────
 export const ANNOTATION_TYPE_CONFIG: Record<
@@ -40,7 +40,7 @@ export const QC_CHECKLIST_ITEMS: string[] = [
   'Số trang hợp lệ đã được xác nhận',
 ];
 
-export { formatVND } from '../../utils/currency';
+export { formatVND } from '../../../utils/currency';
 
 /**
  * Trạng thái deadline cho theo dõi F3.5.
