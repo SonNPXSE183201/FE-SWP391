@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { generateUUID } from '../../../utils/uuid';
 import toast from 'react-hot-toast';
 import { Plus, Trash2, Upload, Loader2, Database, ListChecks } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -22,7 +23,7 @@ type RankingInputRow = {
 };
 
 const emptyRow = (): RankingInputRow => ({
-  key: crypto.randomUUID(),
+  key: generateUUID(),
   seriesId: '',
   voteCount: '',
 });
@@ -92,7 +93,7 @@ export const RankingDataEntryFeature = () => {
       const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
       const parsed: RankingInputRow[] = lines.map((line) => {
         const [seriesId, voteCount] = line.split(/[,;\t]/).map((s) => s.trim());
-        return { key: crypto.randomUUID(), seriesId: seriesId || '', voteCount: voteCount || '' };
+        return { key: generateUUID(), seriesId: seriesId || '', voteCount: voteCount || '' };
       });
       if (parsed.length === 0) {
         toast.error('File CSV trống hoặc không đúng định dạng');
