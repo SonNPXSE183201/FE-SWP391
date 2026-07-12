@@ -1,5 +1,7 @@
 /* eslint-disable react-hooks/refs */
-import { useEffect, useRef, useCallback } from 'react';import {
+import { useEffect, useRef, useCallback } from 'react';
+import { generateUUID } from '../utils/uuid';
+import {
   HubConnectionBuilder,
   HubConnection,
   LogLevel,
@@ -59,7 +61,7 @@ const mapSignalRPayload = (payload: SignalRNotificationPayload): NotificationIte
   const rawType = getNotificationRawType(payload);
   const rawMessage = payload.Message ?? payload.message ?? payload.Content ?? payload.content ?? '';
   return {
-    id: String(payload.Id ?? payload.id ?? crypto.randomUUID()),
+    id: String(payload.Id ?? payload.id ?? generateUUID()),
     title: payload.Title ?? payload.title ?? getNotificationTitle(rawType),
     message: stripSeriesIdPrefix(rawMessage),
     isRead: false,
@@ -212,7 +214,7 @@ export const useSignalR = () => {
       logSignalR('ReceiveNotification received:', { content, type });
       const normalizedType = normalizeNotificationType(type);
       const item: NotificationItem = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         title: getNotificationTitle(type),
         message: stripSeriesIdPrefix(content || ''),
         isRead: false,
