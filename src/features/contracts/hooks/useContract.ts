@@ -9,6 +9,10 @@ export const useApprovedSeries = () =>
   useQuery({
     queryKey: KEYS.approvedSeries,
     queryFn: () => contractApi.getApprovedSeries(),
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchInterval: 5_000,
   });
 
 export const useCreateContract = () => {
@@ -16,7 +20,10 @@ export const useCreateContract = () => {
   return useMutation({
     mutationFn: ({ seriesId, baseGenkouryoPrice }: { seriesId: string; baseGenkouryoPrice: number }) =>
       contractApi.createContract(seriesId, baseGenkouryoPrice),
-    onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.approvedSeries }),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: KEYS.approvedSeries });
+      await qc.refetchQueries({ queryKey: KEYS.approvedSeries, type: 'active' });
+    },
   });
 };
 
@@ -29,6 +36,9 @@ export const useUpdateContract = () => {
         genkouryoPrice: payload.genkouryoPrice,
         endDate: payload.endDate,
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.approvedSeries }),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: KEYS.approvedSeries });
+      await qc.refetchQueries({ queryKey: KEYS.approvedSeries, type: 'active' });
+    },
   });
 };

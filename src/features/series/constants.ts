@@ -10,6 +10,8 @@ export const SERIES_STATUS_CONFIG: Record<SeriesStatus, { label: string; color: 
   PendingApproval: { label: 'Chờ BTV duyệt', color: 'text-warning', bg: 'bg-warning/10' },
   PendingBoardVote: { label: 'Chờ Hội đồng', color: 'text-brand', bg: 'bg-brand/10' },
   Approved: { label: 'Đã duyệt', color: 'text-info', bg: 'bg-info/10' },
+  Fund_Pending: { label: 'Chờ lập HĐ', color: 'text-warning', bg: 'bg-warning/10' },
+  'In Production': { label: 'Đang sản xuất', color: 'text-success', bg: 'bg-success/10' },
   Published: { label: 'Đang xuất bản', color: 'text-success', bg: 'bg-success/10' },
   OnHold: { label: 'Tạm dừng', color: 'text-text-muted', bg: 'bg-bg-surface' },
   Cancelled: { label: 'Đã hủy', color: 'text-danger', bg: 'bg-danger/10' },
@@ -21,6 +23,8 @@ export const SERIES_STATUS_FILTER_OPTIONS: StatusFilterOption[] = [
   { value: 'PendingApproval', label: SERIES_STATUS_CONFIG.PendingApproval.label },
   { value: 'PendingBoardVote', label: SERIES_STATUS_CONFIG.PendingBoardVote.label },
   { value: 'Approved', label: SERIES_STATUS_CONFIG.Approved.label },
+  { value: 'Fund_Pending', label: SERIES_STATUS_CONFIG.Fund_Pending.label },
+  { value: 'In Production', label: SERIES_STATUS_CONFIG['In Production'].label },
   { value: 'Published', label: SERIES_STATUS_CONFIG.Published.label },
   { value: 'OnHold', label: SERIES_STATUS_CONFIG.OnHold.label },
   { value: 'Cancelled', label: SERIES_STATUS_CONFIG.Cancelled.label },
@@ -122,7 +126,8 @@ export const SERIES_STATUS_STEPS: { key: SeriesStatus; label: string }[] = [
   { key: 'PendingApproval', label: 'Chờ Editor' },
   { key: 'PendingBoardVote', label: 'Hội đồng' },
   { key: 'Approved', label: 'Đã duyệt' },
-  { key: 'Published', label: 'Đang xuất bản' },
+  { key: 'Fund_Pending', label: 'Hợp đồng' },
+  { key: 'In Production', label: 'Sản xuất' },
 ];
 
 export type StepState = 'completed' | 'current' | 'inactive';

@@ -21,7 +21,7 @@ export const SeriesPreviewModal = ({ formData, onClose }: SeriesPreviewModalProp
         <div className="flex items-center justify-between px-6 py-4 border-b border-border-custom">
           <div className="flex items-center gap-2">
             <Eye size={16} className="text-brand" />
-            <h2 className="text-sm font-semibold text-text-primary">Xem trước Series</h2>
+            <h2 className="text-sm font-semibold text-text-primary">Xem trước bộ truyện</h2>
             <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/10 text-[10px] text-amber-500 font-semibold">
               ● {SERIES_DRAFT_STATUS_LABEL}
             </span>

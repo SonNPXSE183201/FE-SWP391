@@ -10,6 +10,9 @@ import { MotionTabPanel } from '../../../components/common/animation';
 
 type AssistantTab = 'directory' | 'series';
 
+const canManageAssistantTeam = (status?: string | null) =>
+  status === 'In Production' || status === 'Published';
+
 const TABS: { key: AssistantTab; label: string; icon: typeof Globe }[] = [
   { key: 'directory', label: 'Danh bạ hệ thống', icon: Globe },
   { key: 'series', label: 'Team bộ truyện', icon: BookOpen },
@@ -30,7 +33,7 @@ export const AssistantManagementFeature = () => {
 
   const seriesOptions = useMemo(
     () => mySeries
-      .filter((s) => s.status === 'Published')
+      .filter((s) => canManageAssistantTeam(s.status))
       .map((s) => ({ value: String(s.id ?? ''), label: s.title ?? '' })),
     [mySeries],
   );

@@ -123,7 +123,7 @@ export const VotingFeature = () => {
   const [voteBudget, setVoteBudget] = useState<number>(0);
 
   const { data: votingData, isLoading, isError, refetch } = useVotingList();
-  const votingList = votingData?.series ?? [];
+  const votingList = useMemo(() => votingData?.series ?? [], [votingData?.series]);
   const votingRules = votingData?.rules;
   const boardTotal = votingRules?.boardMemberCount ?? 0;
   const submitVoteMutation = useSubmitBoardVote();
@@ -184,6 +184,8 @@ export const VotingFeature = () => {
     const voteResults = getVoteResults(selectedItem);
     const genres = parseSeriesGenres(selectedItem.genre);
     const uiStatus = getVotingUiStatus(selectedItem, boardMemberId);
+    const myVote = findMyBoardVote(selectedItem.boardVotes, boardMemberId);
+    const myVoteDecision = boardVoteToUiChoice(myVote);
     return (
       <div>
         {/* Header */}
@@ -286,6 +288,37 @@ export const VotingFeature = () => {
 
           {/* RIGHT: Vote Results + Actions */}
           <MotionItem className="lg:col-span-2 space-y-5">
+            {myVote && myVoteDecision && (
+              <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Vote size={16} className="text-brand" />
+                  <h2 className="text-sm font-semibold text-text-primary">Phiếu đánh giá của bạn</h2>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3 rounded-xl bg-bg-surface border border-border-custom px-4 py-3">
+                    <span className="text-xs text-text-muted">Quyết định</span>
+                    <span className={`text-sm font-semibold ${getVoteDecisionConfig(myVoteDecision).color}`}>
+                      {getVoteDecisionConfig(myVoteDecision).label}
+                    </span>
+                  </div>
+                  {myVoteDecision === 'Approve' && (
+                    <div className="flex items-center justify-between gap-3 rounded-xl bg-bg-surface border border-border-custom px-4 py-3">
+                      <span className="text-xs text-text-muted">Vốn đề xuất</span>
+                      <span className="text-sm font-semibold text-text-primary">
+                        {formatVND(myVote.recommendedBudget ?? 0)}
+                      </span>
+                    </div>
+                  )}
+                  <div className="rounded-xl bg-bg-surface border border-border-custom px-4 py-3">
+                    <p className="text-xs text-text-muted mb-1">Nhận xét</p>
+                    <p className="text-sm text-text-secondary leading-relaxed">
+                      {myVote.comment?.trim() || 'Không có nhận xét.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Vote Distribution */}
             <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
               <div className="flex items-center gap-2 mb-5">

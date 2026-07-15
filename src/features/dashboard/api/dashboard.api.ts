@@ -196,6 +196,8 @@ const SERIES_STATUS_SLICE: Record<SeriesStatus, { label: string; color: string }
   PendingApproval: { label: 'Chờ duyệt', color: C.warning },
   PendingBoardVote: { label: 'Chờ hội đồng', color: C.brand },
   Approved: { label: 'Đã duyệt', color: C.info },
+  Fund_Pending: { label: 'Chờ lập HĐ', color: C.warning },
+  'In Production': { label: 'Đang sản xuất', color: C.success },
   Published: { label: 'Đã xuất bản', color: C.success },
   OnHold: { label: 'Tạm dừng', color: '#8B8B9E' },
   Cancelled: { label: 'Đã hủy', color: C.danger },

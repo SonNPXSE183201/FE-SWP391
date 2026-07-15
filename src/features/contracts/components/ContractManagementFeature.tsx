@@ -83,17 +83,28 @@ const formatSchedule = (schedule: string) => {
   return { label: SCHEDULE_LABELS[cleanSchedule] || cleanSchedule, muted: false };
 };
 
+const isSignedContract = (status?: string | null) =>
+  (status ?? '').trim().toLowerCase() === 'signed';
+
+const getContractStatusLabel = (status?: string | null) => {
+  const normalized = (status ?? '').trim().toLowerCase();
+  if (normalized === 'signed') return 'Đã ký HĐ';
+  if (normalized === 'pending') return 'Chờ tác giả ký';
+  if (normalized === 'active') return 'Đang hiệu lực';
+  return 'Chưa lập HĐ';
+};
+
 const getEmptyMessage = (filter: FilterStatus, search: string): { title: string; hint: string } => {
   if (search.trim()) {
     return {
       title: `Không tìm thấy kết quả cho "${search.trim()}"`,
-      hint: 'Thử tìm bằng tên bộ truyện hoặc tên Mangaka khác.',
+      hint: 'Thử tìm bằng tên bộ truyện hoặc tên tác giả khác.',
     };
   }
   if (filter === 'pending') {
     return {
       title: 'Không có bộ truyện nào đang chờ lập hợp đồng',
-      hint: 'Bộ truyện cần được Hội đồng phê duyệt (Fund_Pending) trước khi xuất hiện tại đây.',
+      hint: 'Bộ truyện chỉ xuất hiện khi tác giả đã xác nhận mức vốn và đang chờ lập hợp đồng.',
     };
   }
   if (filter === 'contracted') {
@@ -317,7 +328,7 @@ export const ContractManagementFeature = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm theo tên bộ truyện hoặc Mangaka..."
+            placeholder="Tìm theo tên bộ truyện hoặc tác giả..."
             className="w-full pl-9 pr-4 py-2.5 bg-bg-secondary border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 transition-colors"
           />
         </div>
@@ -409,6 +420,7 @@ export const ContractManagementFeature = () => {
             {filteredData.map((series) => {
               const schedule = formatSchedule(series.publishSchedule ?? '');
               const isContracted = series.hasContract;
+              const isSigned = isSignedContract(series.contractStatus);
 
               return (
                 <MotionListItem key={series.id}>
@@ -417,7 +429,7 @@ export const ContractManagementFeature = () => {
                   className={`
                     group relative px-5 py-4 transition-all
                     ${isContracted
-                      ? 'cursor-pointer hover:bg-bg-surface/60 border-l-2 border-l-emerald-500/40 hover:border-l-emerald-400'
+                      ? `${isSigned ? 'border-l-emerald-500/40 hover:border-l-emerald-400' : 'border-l-warning/40 hover:border-l-warning'} cursor-pointer hover:bg-bg-surface/60 border-l-2`
                       : 'border-l-2 border-l-transparent hover:bg-bg-surface/30'
                     }
                   `}
@@ -425,8 +437,8 @@ export const ContractManagementFeature = () => {
                   <div className="flex items-center gap-5">
                     {/* Series info — main content area */}
                     <div className="flex items-center gap-3 min-w-0 w-[260px] shrink-0">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isContracted ? 'bg-emerald-500/10' : 'bg-brand/10'}`}>
-                        <BookOpen size={15} className={isContracted ? 'text-emerald-400' : 'text-brand'} />
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isContracted ? (isSigned ? 'bg-emerald-500/10' : 'bg-warning/10') : 'bg-brand/10'}`}>
+                        <BookOpen size={15} className={isContracted ? (isSigned ? 'text-emerald-400' : 'text-warning') : 'text-brand'} />
                       </div>
                       <div className="min-w-0">
                         <p className="font-semibold text-sm text-text-primary truncate group-hover:text-brand transition-colors">
@@ -452,7 +464,7 @@ export const ContractManagementFeature = () => {
                       </div>
                     </div>
 
-                    {/* Mangaka */}
+                    {/* Author */}
                     <div className="hidden lg:flex items-center gap-1.5 w-[140px] shrink-0">
                       <div className="w-6 h-6 rounded-full bg-bg-surface flex items-center justify-center shrink-0">
                         <User size={11} className="text-text-muted" />
@@ -500,17 +512,24 @@ export const ContractManagementFeature = () => {
                     <div className="flex items-center gap-3 shrink-0">
                       {isContracted ? (
                         <>
-                          <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                            <Check size={10} />
-                            Đã ký HĐ
+                          <span className={`hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold ${isSigned ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-warning/10 text-warning border border-warning/20'}`}>
+                            {isSigned ? <Check size={10} /> : <Clock size={10} />}
+                            {getContractStatusLabel(series.contractStatus)}
                           </span>
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); handleOpenUpdateModal(series); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (isSigned) {
+                                handleOpenUpdateModal(series);
+                              } else {
+                                handleOpenDetailModal(series);
+                              }
+                            }}
                             className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-bg-surface hover:bg-brand/10 text-text-secondary hover:text-brand rounded-xl text-xs font-medium border border-border-custom cursor-pointer transition-all hover:border-brand/30 hover:shadow-sm"
                           >
                             <Pencil size={12} />
-                            Phụ lục
+                            {isSigned ? 'Phụ lục' : 'Chi tiết'}
                           </button>
                         </>
                       ) : (
@@ -579,7 +598,7 @@ export const ContractManagementFeature = () => {
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-xs text-text-secondary flex items-center gap-2">
                     <User size={13} className="text-text-muted" />
-                    Mangaka
+                    Tác giả
                   </span>
                   <span className="text-sm font-medium text-text-primary">{selectedSeries.mangakaName}</span>
                 </div>
@@ -705,7 +724,7 @@ export const ContractManagementFeature = () => {
               {/* Series context */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-bg-surface border border-border-custom rounded-xl px-3 py-2.5">
-                  <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Mangaka</p>
+                  <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Tác giả</p>
                   <p className="text-sm font-medium text-text-primary mt-1 flex items-center gap-1.5">
                     <User size={12} className="text-text-muted" />
                     {selectedSeries.mangakaName}
@@ -849,20 +868,20 @@ export const ContractManagementFeature = () => {
                     Trạng thái
                   </p>
                   <p className="text-sm mt-1">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                      <Check size={10} />
-                      {selectedSeries.contractStatus || 'Active'}
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${isSignedContract(selectedSeries.contractStatus) ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-warning/10 text-warning border border-warning/20'}`}>
+                      {isSignedContract(selectedSeries.contractStatus) ? <Check size={10} /> : <Clock size={10} />}
+                      {getContractStatusLabel(selectedSeries.contractStatus)}
                     </span>
                   </p>
                 </div>
               </div>
 
-              {/* Mangaka & Series */}
+              {/* Author and series */}
               <div className="bg-bg-surface border border-border-custom rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-xs text-text-secondary flex items-center gap-2">
                     <User size={13} className="text-text-muted" />
-                    Mangaka
+                    Tác giả
                   </span>
                   <span className="text-sm font-medium text-text-primary">{selectedSeries.mangakaName}</span>
                 </div>
@@ -870,7 +889,7 @@ export const ContractManagementFeature = () => {
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-xs text-text-secondary flex items-center gap-2">
                     <BookOpen size={13} className="text-text-muted" />
-                    Series
+                    Bộ truyện
                   </span>
                   <span className="text-sm font-medium text-text-primary">{selectedSeries.title}</span>
                 </div>
@@ -958,17 +977,19 @@ export const ContractManagementFeature = () => {
 
             {/* Footer */}
             <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border-custom bg-bg-secondary/80 rounded-b-2xl shrink-0">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowDetailModal(false);
-                  handleOpenUpdateModal(selectedSeries);
-                }}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium border-none cursor-pointer transition-colors shadow-sm shadow-brand/20"
-              >
-                <Pencil size={14} />
-                Tạo phụ lục mới
-              </button>
+              {isSignedContract(selectedSeries.contractStatus) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDetailModal(false);
+                    handleOpenUpdateModal(selectedSeries);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium border-none cursor-pointer transition-colors shadow-sm shadow-brand/20"
+                >
+                  <Pencil size={14} />
+                  Tạo phụ lục mới
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setShowDetailModal(false)}

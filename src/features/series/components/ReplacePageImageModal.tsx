@@ -63,7 +63,7 @@ export const ReplacePageImageModal = ({
 
         <div className="p-6 space-y-4">
           <p className="text-xs text-text-secondary leading-relaxed">
-            Chọn file ảnh đã chỉnh sửa để thay thế trang này. Vùng Canvas chưa giao task sẽ được xóa tự động.
+            Chọn tệp ảnh đã chỉnh sửa để thay thế trang này. Vùng khung vẽ chưa giao việc sẽ được xóa tự động.
           </p>
 
           <div
@@ -81,7 +81,7 @@ export const ReplacePageImageModal = ({
                 <div className="w-10 h-10 rounded-lg bg-bg-surface flex items-center justify-center mx-auto group-hover:bg-brand/10 transition-colors">
                   <ImagePlus size={20} className="text-text-muted group-hover:text-brand transition-colors" />
                 </div>
-                <p className="text-xs text-text-secondary mt-2 font-medium">Click để chọn ảnh đã sửa</p>
+                <p className="text-xs text-text-secondary mt-2 font-medium">Nhấn để chọn ảnh đã sửa</p>
                 <p className="text-[10px] text-text-muted mt-0.5">PNG, JPG, WebP</p>
               </>
             )}
