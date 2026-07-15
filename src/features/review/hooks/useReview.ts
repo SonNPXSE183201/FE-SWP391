@@ -14,6 +14,10 @@ export const usePendingSeriesReview = () =>
     queryKey: KEYS.pendingSeries,
     queryFn: () => reviewApi.getPendingSeries(),
     select: (res) => res.data?.data ?? [],
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchInterval: 15_000,
   });
 
 export const useReviewSeriesDetail = (seriesId: string) =>

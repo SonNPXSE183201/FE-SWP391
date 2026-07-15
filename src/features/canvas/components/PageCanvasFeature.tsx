@@ -1,4 +1,4 @@
-import {
+﻿import {
   useState,
   useRef,
   useEffect,
@@ -31,6 +31,7 @@ import {
   EyeOff,
   Wand2,
   MoreVertical,
+  Plus,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -157,6 +158,7 @@ export const PageCanvasFeature = ({
 }: PageCanvasFeatureProps) => {
   const navigate = useNavigate();
   const canvasRef = useRef<CanvasViewerHandle>(null);
+  const regionLabelInputRef = useRef<HTMLInputElement>(null);
 
   // ─── Local UI state ───
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
@@ -287,7 +289,7 @@ export const PageCanvasFeature = ({
         },
         {
           onSuccess: (res) => {
-            toast.success("Đã tạo vùng — bạn có thể giao việc cho Assistant.");
+            toast.success("Đã tạo vùng. Bạn có thể giao việc cho trợ lý.");
             setRegionLabel("");
             setRegionLabelError(false);
             setActiveTool("select");
@@ -454,6 +456,17 @@ export const PageCanvasFeature = ({
   }, []);
 
   const isPageCompleted = currentPage?.status === 'Completed';
+
+  const handleStartAddRegion = useCallback(() => {
+    if (isPageCompleted) {
+      toast.error("Bỏ đánh dấu sẵn sàng trước khi thêm vùng mới.");
+      return;
+    }
+    setShowRegions(true);
+    setSelectedRegion(null);
+    setActiveTool("region");
+    window.setTimeout(() => regionLabelInputRef.current?.focus(), 0);
+  }, [isPageCompleted, setActiveTool, setSelectedRegion]);
   
   const allTasksDone = regions.length > 0 && regions.every(r => {
     const task = tasksByRegion.get(r.id);
@@ -484,7 +497,7 @@ export const PageCanvasFeature = ({
               className="animate-spin text-brand opacity-60 mb-4"
             />
             <span className="text-sm font-medium text-text-muted">
-              Đang tải Canvas & dữ liệu trang…
+              Đang tải khung vẽ và dữ liệu trang...
             </span>
           </div>
           <div className="w-80 flex-shrink-0 bg-bg-secondary border border-border-custom rounded-xl" />
@@ -504,7 +517,7 @@ export const PageCanvasFeature = ({
       >
         <ImageOff size={48} className="text-text-muted" />
         <p className="text-text-secondary">
-          Chapter này chưa có trang nào để chỉnh sửa.
+          Chương này chưa có trang nào để chỉnh sửa.
         </p>
         <button
           onClick={() => navigate(`/mangaka/manuscripts/${chapterId}`)}
@@ -524,25 +537,25 @@ export const PageCanvasFeature = ({
     <>
       <MobileCanvasWarning />
       <motion.div
-        className="hidden md:flex flex-col gap-3 h-[calc(100vh-100px)]"
+        className="hidden md:flex flex-col gap-3 h-[calc(100dvh-6rem)] overflow-hidden"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={canvasShellTransition}
       >
         {/* ═══ Top bar ═══ */}
-        <div className="flex items-center justify-between gap-3 flex-shrink-0 bg-bg-secondary border border-border-custom rounded-xl px-4 py-2.5 overflow-x-auto hide-scrollbar">
+        <div className="relative z-30 flex items-center justify-between gap-3 flex-shrink-0 bg-bg-secondary border border-border-custom rounded-xl px-4 py-2.5 overflow-visible">
           {/* Left: back + page info */}
           <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => navigate(`/mangaka/manuscripts/${chapterId}`)}
               className="w-9 h-9 rounded-lg bg-bg-primary border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary hover:border-brand/30 transition-colors cursor-pointer flex-shrink-0"
-              title="Quay lại Chapter"
+              title="Quay lại chương"
             >
               <ArrowLeft size={16} />
             </button>
             <div className="min-w-0 flex items-center gap-2">
               <h2 className="text-[13px] font-bold text-text-primary whitespace-nowrap">
-                {chapterDetail ? `Chương ${chapterDetail.chapterNumber}` : "Trang canvas"}
+                {chapterDetail ? `Chương ${chapterDetail.chapterNumber}` : "Trang khung vẽ"}
               </h2>
               <span
                 className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium ${statusConfig.bg} ${statusConfig.color}`}
@@ -551,7 +564,7 @@ export const PageCanvasFeature = ({
               </span>
               {editorAnnotations.length > 0 && (
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-amber-500/10 text-amber-400">
-                  {editorAnnotations.length} lỗi Editor
+                  {editorAnnotations.length} lỗi biên tập viên
                 </span>
               )}
             </div>
@@ -569,7 +582,7 @@ export const PageCanvasFeature = ({
             <ToolButton
               active={activeTool === "region"}
               title="Khoanh vùng thủ công (R)"
-              onClick={() => setActiveTool("region")}
+              onClick={handleStartAddRegion}
             >
               <SquareDashedBottom size={16} />
             </ToolButton>
@@ -582,10 +595,10 @@ export const PageCanvasFeature = ({
                 isPageCompleted ? 'bg-bg-surface text-text-muted opacity-50 cursor-not-allowed' :
                 'text-brand bg-brand/10 hover:bg-brand/20'
               }`}
-              title="AI tự động nhận diện & cắt khung tranh"
+              title="AI tự động nhận diện và cắt khung tranh"
             >
               <Wand2 size={14} className={isSegmenting ? "animate-pulse" : ""} />
-              <span className="hidden lg:inline">{isSegmenting ? "Đang quét..." : "AI Phân vùng"}</span>
+              <span className="hidden lg:inline">{isSegmenting ? "Đang quét..." : "AI phân vùng"}</span>
             </button>
             <div className="w-px h-5 bg-border-custom mx-0.5" />
             <ToolButton
@@ -625,7 +638,7 @@ export const PageCanvasFeature = ({
               <>
                 <div className="w-px h-5 bg-border-custom mx-0.5" />
                 <ToolButton
-                  title="Xoá vùng đã chọn (Delete)"
+                  title="Xoá vùng đã chọn"
                   onClick={() => handleDeleteRegion(selectedRegionId)}
                   danger
                 >
@@ -636,14 +649,14 @@ export const PageCanvasFeature = ({
           </div>
 
           {/* Right: composite + page nav */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {canMarkPageReady && (
               <button
                 type="button"
                 onClick={handleMarkPageReady}
                 disabled={markPageReady.isPending}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/15 border border-emerald-500/30 text-[11px] font-semibold text-emerald-400 whitespace-nowrap hover:bg-emerald-600/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                title={regions.length === 0 ? "Trang upload đã xong — không cần vẽ vùng hay giao Assistant" : "Đánh dấu trang đã hoàn thiện sau khi gộp lớp Assistant"}
+                title={regions.length === 0 ? "Trang đã tải lên hoàn chỉnh, không cần vẽ vùng hay giao trợ lý" : "Đánh dấu trang đã hoàn thiện sau khi gộp lớp trợ lý"}
               >
                 {markPageReady.isPending ? (
                   <Loader2 size={14} className="animate-spin" />
@@ -658,7 +671,7 @@ export const PageCanvasFeature = ({
                 type="button"
                 onClick={handleUnmarkPageReady}
                 disabled={unmarkPageReady.isPending}
-                title="Bỏ đánh dấu sẵn sàng để tiếp tục vẽ vùng hoặc giao task"
+                title="Bỏ đánh dấu sẵn sàng để tiếp tục vẽ vùng hoặc giao việc"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-success/10 hover:bg-danger/10 border border-success/20 hover:border-danger/30 text-[11px] font-semibold text-success hover:text-danger whitespace-nowrap transition-colors cursor-pointer group"
               >
                 {unmarkPageReady.isPending ? (
@@ -681,23 +694,27 @@ export const PageCanvasFeature = ({
               <button
                 type="button"
                 onClick={() => setShowMoreMenu(!showMoreMenu)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-bg-primary transition-colors cursor-pointer"
+                className={`w-8 h-8 rounded-lg border transition-colors cursor-pointer flex items-center justify-center ${
+                  showMoreMenu
+                    ? 'border-brand/50 bg-bg-primary text-text-primary'
+                    : 'border-border-custom text-text-muted hover:text-text-primary hover:bg-bg-primary'
+                }`}
                 title="Tùy chọn khác"
               >
                 <MoreVertical size={16} />
               </button>
               
               {showMoreMenu && (
-                <div className="absolute right-0 top-full mt-1 w-40 bg-bg-primary border border-border-custom rounded-lg shadow-lg z-50 flex flex-col overflow-hidden py-1">
+                <div className="absolute right-0 top-[calc(100%+0.5rem)] z-[100] w-48 overflow-hidden rounded-xl border border-border-custom bg-bg-secondary shadow-2xl shadow-black/40 py-1">
                   {hasCompositeOverlay && (
                     <a
                       href={canvasImageUrl}
-                      download={`trang-${currentPage.pageNumber}-composite.png`}
+                      download={`trang-${currentPage.pageNumber}-anh-gop.png`}
                       target="_blank"
                       rel="noreferrer"
                       onClick={() => setShowMoreMenu(false)}
-                      className="flex items-center gap-2 px-3 py-2 text-xs text-text-primary hover:bg-bg-surface transition-colors no-underline"
-                      title="Tải file PNG trang đã gộp lớp Assistant"
+                      className="flex items-center gap-2 px-3.5 py-2.5 text-xs text-text-primary hover:bg-bg-surface transition-colors no-underline"
+                      title="Tải tệp PNG của trang đã gộp lớp trợ lý"
                     >
                       <Download size={14} className="text-text-muted" /> Tải ảnh
                     </a>
@@ -708,8 +725,8 @@ export const PageCanvasFeature = ({
                       setShowMoreMenu(false);
                       setShowReplaceImage(true);
                     }}
-                    className="flex items-center gap-2 px-3 py-2 text-xs text-text-primary hover:bg-bg-surface transition-colors cursor-pointer text-left w-full border-none bg-transparent"
-                    title="Tải lại ảnh trang hiện tại sau khi sửa ngoài Canvas"
+                    className="flex items-center gap-2 px-3.5 py-2.5 text-xs text-text-primary hover:bg-bg-surface transition-colors cursor-pointer text-left w-full border-none bg-transparent"
+                    title="Tải lại ảnh trang hiện tại sau khi sửa ngoài khung vẽ"
                   >
                     <Upload size={14} className="text-text-muted" /> Tải lại ảnh
                   </button>
@@ -723,8 +740,8 @@ export const PageCanvasFeature = ({
           <div className="flex items-start gap-2 px-3 py-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-200/90 shrink-0">
             <MapPin size={14} className="text-amber-400 mt-0.5 shrink-0" />
             <p>
-              Editor đã ghim <strong className="text-amber-300">{editorAnnotations.length} lỗi</strong> trên
-              trang này. Click ghim trên ảnh hoặc mục bên phải để xem vị trí và mô tả cần sửa.
+              Biên tập viên đã ghim <strong className="text-amber-300">{editorAnnotations.length} lỗi</strong> trên
+              trang này. Nhấn ghim trên ảnh hoặc mục bên phải để xem vị trí và mô tả cần sửa.
             </p>
           </div>
         )}
@@ -754,7 +771,7 @@ export const PageCanvasFeature = ({
             </div>
           </div>
 
-          {/* ── Canvas ── */}
+          {/* ── Drawing surface ── */}
           <div className="flex-1 relative bg-bg-secondary border border-border-custom rounded-xl overflow-hidden min-h-0">
             {(isCompositeLoading && !compositedUrl) ? (
               <div className="h-full w-full flex flex-col items-center justify-center bg-bg-surface">
@@ -791,22 +808,43 @@ export const PageCanvasFeature = ({
               </AnimatePresence>
             )}
 
-            {/* Region-name prompt overlay while drawing */}
-            {isDrawingTool && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 w-[min(420px,90%)]">
-                <div className="bg-bg-surface/95 backdrop-blur-md border border-brand/40 rounded-xl shadow-lg p-3">
+          </div>
+
+          {/* ── Region / work sidebar ── */}
+          <div className="w-80 flex-shrink-0 bg-bg-secondary border border-border-custom rounded-xl flex flex-col">
+            <div className="p-4 border-b border-border-custom">
+              <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                <SquareDashedBottom size={14} className="text-brand" />
+                Vùng & Công việc
+              </h3>
+              <p className="text-[11px] text-text-muted mt-1">
+                Mỗi vùng tương ứng một công việc giao cho trợ lý.
+              </p>
+              <button
+                type="button"
+                onClick={handleStartAddRegion}
+                disabled={isPageCompleted}
+                className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-brand/25 bg-brand/10 px-3 py-2 text-[12px] font-semibold text-brand transition-colors hover:bg-brand/20 disabled:cursor-not-allowed disabled:border-border-custom disabled:bg-bg-surface disabled:text-text-muted"
+                title={isPageCompleted ? "Bỏ đánh dấu sẵn sàng trước khi thêm vùng" : "Thêm vùng mới"}
+              >
+                <Plus size={13} />
+                Thêm vùng
+              </button>
+
+              {isDrawingTool && (
+                <div className="mt-3 rounded-lg border border-brand/30 bg-brand/5 p-2.5">
                   <label className="text-[10px] text-text-muted mb-1 block">
-                    Tên vùng <span className="text-danger">*</span> — nhập rồi
-                    kéo chuột để khoanh vùng trên trang
+                    Tên vùng <span className="text-danger">*</span> - nhập rồi kéo chuột để khoanh vùng trên trang
                   </label>
                   <input
+                    ref={regionLabelInputRef}
                     type="text"
                     value={regionLabel}
                     onChange={(e) => {
                       setRegionLabel(e.target.value);
                       if (e.target.value.trim()) setRegionLabelError(false);
                     }}
-                    placeholder="VD: Nền bầu trời, Tô bóng nhân vật…"
+                    placeholder="VD: Nền bầu trời, Tô bóng nhân vật..."
                     autoFocus
                     className={`w-full px-3 py-2 text-sm bg-bg-primary border rounded-lg text-text-primary placeholder:text-text-muted/50 focus:outline-none transition-colors ${
                       regionLabelError
@@ -820,20 +858,7 @@ export const PageCanvasFeature = ({
                     </p>
                   )}
                 </div>
-              </div>
-            )}
-          </div>
-
-          {/* ── Region / Task sidebar ── */}
-          <div className="w-80 flex-shrink-0 bg-bg-secondary border border-border-custom rounded-xl flex flex-col">
-            <div className="p-4 border-b border-border-custom">
-              <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
-                <SquareDashedBottom size={14} className="text-brand" />
-                Vùng & Công việc
-              </h3>
-              <p className="text-[11px] text-text-muted mt-1">
-                Mỗi vùng tương ứng một Task giao cho Assistant.
-              </p>
+              )}
             </div>
 
             <div className="flex-1 overflow-y-auto p-3 space-y-2">
@@ -842,7 +867,7 @@ export const PageCanvasFeature = ({
                   <div className="flex items-center gap-1.5">
                     <MapPin size={13} className="text-amber-400" />
                     <p className="text-[11px] font-semibold text-text-primary">
-                      Lỗi Editor ghim ({editorAnnotations.length})
+                      Lỗi biên tập viên ghim ({editorAnnotations.length})
                     </p>
                   </div>
                   {editorAnnotations.map((anno: CanvasAnnotation) => {
@@ -870,7 +895,7 @@ export const PageCanvasFeature = ({
                             {anno.comment}
                           </p>
                           <p className="text-[9px] text-text-muted mt-1">
-                            {anno.editorName || "Editor"}
+                            {anno.editorName || "Biên tập viên"}
                           </p>
                         </div>
 
@@ -903,7 +928,7 @@ export const PageCanvasFeature = ({
                               type="button"
                               onClick={() => setActiveTool("region")}
                               className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-bg-surface border border-border-custom text-text-secondary hover:text-text-primary hover:border-brand/40 text-[10px] font-medium transition-colors cursor-pointer"
-                              title="Khoanh vùng vị trí lỗi để giao việc cho Assistant"
+                              title="Khoanh vùng vị trí lỗi để giao việc cho trợ lý"
                             >
                               <SquareDashedBottom size={12} />
                               Khoanh vùng
@@ -917,11 +942,11 @@ export const PageCanvasFeature = ({
                     <p className="text-[10px] font-semibold text-text-primary">Cách xử lý</p>
                     <ol className="text-[10px] text-text-secondary space-y-1 list-decimal list-inside leading-relaxed">
                       <li>
-                        <span className="text-text-primary font-medium">Tự sửa (khuyến nghị):</span> chỉnh file
+                        <span className="text-text-primary font-medium">Tự sửa (khuyến nghị):</span> chỉnh tệp
                         ngoài → tải lại ảnh trang → <span className="text-emerald-400">Đánh dấu sẵn sàng</span>
                       </li>
                       <li>
-                        <span className="text-text-primary font-medium">Nhờ Assistant:</span> chỉ khi phần lỗi cần
+                        <span className="text-text-primary font-medium">Nhờ trợ lý:</span> chỉ khi phần lỗi cần
                         trợ lý vẽ lại — khoanh vùng rồi giao việc
                       </li>
                     </ol>
@@ -949,14 +974,14 @@ export const PageCanvasFeature = ({
                       <p className="text-xs text-center px-4">
                         {editorAnnotations.length > 0 ? (
                           <>
-                            Bạn có thể <b className="text-text-secondary">tự sửa file</b> rồi đánh dấu sẵn sàng,
-                            hoặc khoanh vùng để giao Assistant nếu cần trợ lý vẽ lại.
+                            Bạn có thể <b className="text-text-secondary">tự sửa tệp</b> rồi đánh dấu sẵn sàng,
+                            hoặc khoanh vùng để giao trợ lý nếu cần vẽ lại.
                           </>
                         ) : (
                           <>
                             Chưa có vùng nào.
                             <br />
-                            Nếu ảnh upload đã hoàn chỉnh, bấm{" "}
+                            Nếu ảnh đã tải lên hoàn chỉnh, bấm{" "}
                             <b className="text-text-secondary">Đánh dấu sẵn sàng</b> thay vì khoanh vùng.
                           </>
                         )}
@@ -1082,7 +1107,7 @@ export const PageCanvasFeature = ({
                         </span>
                       </div>
 
-                      {/* Task association */}
+                      {/* Work association */}
                       {task && taskCfg ? (
                         <div className="mt-2 pt-2 border-t border-border-custom/60 space-y-1">
                           <div className="flex items-center justify-between">
@@ -1099,7 +1124,7 @@ export const PageCanvasFeature = ({
                             <span className="truncate">
                               {task.assistantName
                                 ? `👤 ${task.assistantName}`
-                                : "Chờ Assistant nhận"}
+                                : "Chờ trợ lý nhận"}
                             </span>
                             {task.deadline && (
                               <span className="inline-flex items-center gap-0.5">
@@ -1122,7 +1147,7 @@ export const PageCanvasFeature = ({
                           className="mt-2 w-full inline-flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-brand/10 text-brand text-[11px] font-semibold hover:bg-brand/20 transition-colors border-none cursor-pointer"
                         >
                           <UserPlus size={12} />
-                          Giao việc cho Assistant
+                          Giao việc cho trợ lý
                         </button>
                       )}
                     </div>
@@ -1134,13 +1159,13 @@ export const PageCanvasFeature = ({
         </div>
       </motion.div>
 
-      {/* Create Task modal */}
+      {/* Create work modal */}
       {showCreateTask && (
         <CreateTaskModal
           onClose={() => setShowCreateTask(false)}
           onTaskCreated={() => {
             setShowCreateTask(false);
-            toast.success("Đã đăng Task từ vùng đã chọn!");
+            toast.success("Đã đăng công việc từ vùng đã chọn!");
           }}
           initialContext={
             chapterDetail && currentPage
