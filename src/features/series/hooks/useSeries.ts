@@ -50,6 +50,9 @@ export const useSeriesList = (params?: { page?: number; pageSize?: number; statu
       return dtoArray.map(normalizeSeriesDto);
     },
     staleTime: 1000 * 60,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchInterval: 15_000,
     retry: 1,
   });
 };
@@ -69,7 +72,12 @@ export const useSeriesDetail = (id?: string) => {
     retry: 1,
     refetchInterval: (query) => {
       const status = query.state.data?.status;
-      if (status === 'PendingApproval' || status === 'PendingBoardVote') {
+      if (
+        status === 'PendingApproval'
+        || status === 'PendingBoardVote'
+        || status === 'Approved'
+        || status === 'Fund_Pending'
+      ) {
         return 15_000;
       }
       return false;
@@ -88,6 +96,9 @@ export const useMySeries = (params?: { page?: number; pageSize?: number }) => {
       return dtoArray.map(normalizeSeriesDto);
     },
     staleTime: 1000 * 60,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchInterval: 15_000,
     retry: 1,
   });
 };

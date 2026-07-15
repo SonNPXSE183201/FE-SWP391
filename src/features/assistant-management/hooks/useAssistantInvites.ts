@@ -40,5 +40,7 @@ export const useAssistantInvites = () => {
       return res.data.data ?? [];
     },
     enabled: user?.role === 'Assistant',
+    refetchInterval: user?.role === 'Assistant' ? 5_000 : false,
+    refetchIntervalInBackground: false,
   });
 };

@@ -1,13 +1,15 @@
 import { useState, useCallback } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { useSignalR } from '../hooks/useSignalR';
 import { AnimatedPage } from '../components/common/animation';
 
 export const MainLayout = () => {
+  const location = useLocation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isCanvasPage = location.pathname.startsWith('/mangaka/canvas');
 
   // Initialize SignalR connection for the whole app
   useSignalR();
@@ -45,7 +47,13 @@ export const MainLayout = () => {
         <Header onMobileMenuToggle={handleMobileMenuToggle} />
 
         {/* Page content */}
-        <main className="flex-1 p-6 max-w-[1440px] w-full">
+        <main
+          className={`flex-1 w-full ${
+            isCanvasPage
+              ? 'p-4 max-w-none overflow-hidden'
+              : 'p-6 max-w-[1440px]'
+          }`}
+        >
           <AnimatedPage>
             <Outlet />
           </AnimatedPage>

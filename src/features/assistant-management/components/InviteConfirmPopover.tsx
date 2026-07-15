@@ -40,6 +40,9 @@ const roleStatusIcon = (status: string) => {
   return <CircleDashed size={12} className="text-text-muted shrink-0" />;
 };
 
+const canRecruitAssistant = (status?: string | null) =>
+  status === 'In Production' || status === 'Published';
+
 export const InviteConfirmPopover = ({
   assistant,
   onClose,
@@ -61,7 +64,7 @@ export const InviteConfirmPopover = ({
 
   const seriesOptions = useMemo(
     () => mySeries
-      .filter((s) => s.status === 'Published')
+      .filter((s) => canRecruitAssistant(s.status))
       .map((s) => ({ value: String(s.id ?? ''), label: s.title ?? '' })),
     [mySeries],
   );
@@ -94,9 +97,9 @@ export const InviteConfirmPopover = ({
       return;
     }
 
-    // Only pick from roles the user doesn't already have
+    // Một vai trò có thể có nhiều trợ lý; chỉ bỏ qua vai trò trợ lý này đã giữ.
     const availableItems = composition.items.filter(
-      (item) => item.status !== 'filled' && !currentRoles.includes(item.role)
+      (item) => !currentRoles.includes(item.role)
     );
 
     const matchingMissing = availableItems.find(
@@ -160,7 +163,7 @@ export const InviteConfirmPopover = ({
           const isMatch = assistantTags.includes(item.role);
           const isSelected = selectedRoles.includes(item.role);
           const isRoleHeld = currentRoles.includes(item.role);
-          const isDisabled = item.status === 'filled' || isRoleHeld;
+          const isDisabled = isRoleHeld;
 
           return (
             <button
@@ -280,7 +283,7 @@ export const InviteConfirmPopover = ({
             ) : (
               <div className="rounded-xl border border-dashed border-border-custom bg-bg-surface/50 px-4 py-3 text-center">
                 <p className="text-sm font-medium text-text-secondary mb-1">Không có dự án nào khả dụng</p>
-                <p className="text-xs text-text-muted">Chỉ bộ truyện đang xuất bản mới có thể tuyển trợ lý.</p>
+                <p className="text-xs text-text-muted">Chỉ bộ truyện đang sản xuất hoặc đã xuất bản mới có thể tuyển trợ lý.</p>
               </div>
             )}
           </div>
@@ -292,7 +295,7 @@ export const InviteConfirmPopover = ({
               Chọn vai trò
               {selectedSeriesId && (
                 <span className="text-text-muted font-normal ml-auto">
-                  {composition.filledCount}/{composition.totalRoles} đã có
+                  {composition.filledCount}/{composition.totalRoles} vai trò đã có người
                 </span>
               )}
             </label>

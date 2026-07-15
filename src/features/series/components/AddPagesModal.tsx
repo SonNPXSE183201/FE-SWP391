@@ -24,7 +24,7 @@ export const AddPagesModal = ({ chapterId, onClose }: AddPagesModalProps) => {
     const files = Array.from(e.target.files || []);
     const imageFiles = files.filter((f) => f.type.startsWith('image/'));
     if (imageFiles.length === 0) {
-      toast.error('Vui lòng chọn file ảnh');
+      toast.error('Vui lòng chọn tệp ảnh');
       return;
     }
     setPages((prev) => [...prev, ...imageFiles]);
@@ -49,7 +49,7 @@ export const AddPagesModal = ({ chapterId, onClose }: AddPagesModalProps) => {
       const apiData = res.data as ApiResponse<PageDto[]>;
 
       if (isApiSuccess(apiData)) {
-        toast.success(`Đã thêm ${pages.length} trang vào chapter`, {
+        toast.success(`Đã thêm ${pages.length} trang vào chương`, {
           icon: <CheckCircle2 size={18} className="text-success" />,
           duration: 4000,
         });
@@ -63,7 +63,7 @@ export const AddPagesModal = ({ chapterId, onClose }: AddPagesModalProps) => {
         toast.error(apiData.message || 'Thêm trang thất bại');
       }
     } catch (err) {
-      toast.error(getAxiosErrorMessage(err, 'Upload thất bại. Vui lòng thử lại.'));
+      toast.error(getAxiosErrorMessage(err, 'Tải lên thất bại. Vui lòng thử lại.'));
     } finally {
       setUploading(false);
     }
@@ -83,8 +83,8 @@ export const AddPagesModal = ({ chapterId, onClose }: AddPagesModalProps) => {
               <ImagePlus size={18} className="text-brand" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-text-primary">Upload thêm trang</h2>
-              <p className="text-[11px] text-text-muted">Bổ sung trang ảnh vào chapter hiện tại</p>
+              <h2 className="text-base font-semibold text-text-primary">Tải thêm trang</h2>
+              <p className="text-[11px] text-text-muted">Bổ sung trang ảnh vào chương hiện tại</p>
             </div>
           </div>
           <button
@@ -100,7 +100,7 @@ export const AddPagesModal = ({ chapterId, onClose }: AddPagesModalProps) => {
             <label className="block text-xs font-medium text-text-secondary mb-2">
               Trang bản thảo <span className="text-danger">*</span>
               <span className="text-text-muted font-normal ml-1">
-                ({pages.length} trang đã chọn{pages.length > 0 ? ` — ${totalSizeMB} MB` : ''})
+                ({pages.length} trang đã chọn{pages.length > 0 ? ` - ${totalSizeMB} MB` : ''})
               </span>
             </label>
             <div
@@ -110,8 +110,8 @@ export const AddPagesModal = ({ chapterId, onClose }: AddPagesModalProps) => {
               <div className="w-10 h-10 rounded-lg bg-bg-surface flex items-center justify-center mx-auto group-hover:bg-brand/10 transition-colors">
                 <ImagePlus size={20} className="text-text-muted group-hover:text-brand transition-colors" />
               </div>
-              <p className="text-xs text-text-secondary mt-2 font-medium">Click để chọn hoặc kéo thả</p>
-              <p className="text-[10px] text-text-muted mt-0.5">PNG, JPG, WebP — có thể chọn nhiều file</p>
+              <p className="text-xs text-text-secondary mt-2 font-medium">Nhấn để chọn hoặc kéo thả</p>
+              <p className="text-[10px] text-text-muted mt-0.5">PNG, JPG, WebP - có thể chọn nhiều tệp</p>
             </div>
             <input
               ref={fileInputRef}
@@ -129,7 +129,7 @@ export const AddPagesModal = ({ chapterId, onClose }: AddPagesModalProps) => {
               <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-[200px] overflow-y-auto pr-1">
                 {previews.map((url, i) => (
                   <div key={i} className="relative group aspect-[3/4] rounded-lg overflow-hidden border border-border-custom">
-                    <img src={url} alt={`Page ${i + 1}`} className="w-full h-full object-cover" />
+                    <img src={url} alt={`Trang ${i + 1}`} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <button
                         onClick={() => removePage(i)}
@@ -168,7 +168,7 @@ export const AddPagesModal = ({ chapterId, onClose }: AddPagesModalProps) => {
             {uploading ? (
               <>
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Đang upload...
+                Đang tải lên...
               </>
             ) : (
               <>
