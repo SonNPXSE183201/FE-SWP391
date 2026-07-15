@@ -5836,6 +5836,7 @@ export interface components {
             /** Format: int32 */
             assistantId?: number | null;
             description?: string | null;
+            acceptanceCriteria?: string | null;
             /** Format: double */
             paymentAmount?: number;
             /** Format: date-time */
@@ -6616,6 +6617,13 @@ export interface components {
             updateAt?: string | null;
             boardVotes?: components["schemas"]["BoardVoteDto"][] | null;
             hasContract?: boolean;
+            /** Format: int32 */
+            contractId?: number | null;
+            contractStatus?: string | null;
+            /** Format: double */
+            baseGenkouryoPrice?: number | null;
+            /** Format: date-time */
+            contractSignedDate?: string | null;
         };
         SeriesDtoApiResponse: {
             success?: boolean;
@@ -6763,6 +6771,7 @@ export interface components {
             /** Format: int32 */
             assistantId?: number | null;
             description?: string | null;
+            acceptanceCriteria?: string | null;
             /** Format: double */
             paymentAmount?: number;
             /** Format: date-time */
@@ -6793,6 +6802,7 @@ export interface components {
             /** Format: int32 */
             assistantId?: number | null;
             description?: string | null;
+            acceptanceCriteria?: string | null;
             /** Format: double */
             paymentAmount?: number;
             /** Format: date-time */

@@ -153,7 +153,7 @@ export const CanvasToolbar = ({
 
         <button
           type="button"
-          title="Đặt lại canvas"
+          title="Đặt lại khung vẽ"
           onClick={onZoomReset}
           className="flex items-center justify-center w-9 h-9 rounded-xl text-text-secondary hover:text-text-primary hover:bg-bg-surface transition-colors duration-150"
         >

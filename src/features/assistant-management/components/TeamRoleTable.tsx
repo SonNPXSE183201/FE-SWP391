@@ -36,7 +36,7 @@ export const TeamRoleTable = ({
           <HelpTip
             size="sm"
             title="Tiêu chí nhóm dự án"
-            content="Mỗi vai trò cần ít nhất 1 trợ lý Active. Bấm vai trò còn thiếu để lọc ứng viên phù hợp."
+            content="Mỗi vai trò cần ít nhất 1 trợ lý đang hoạt động. Một vai trò có thể có nhiều trợ lý, và một trợ lý có thể đảm nhận nhiều vai trò."
           />
         </div>
         <span
@@ -62,7 +62,7 @@ export const TeamRoleTable = ({
           {items.map((item, index) => {
             const badge = statusBadge[item.status];
             const isSelected = selectedRole === item.role;
-            const isClickable = interactive && item.status !== 'filled';
+            const isClickable = interactive;
 
             const row = (
               <>

@@ -19,7 +19,15 @@ export const resolveMediaUrl = (url: string): string => {
     }
   }
 
-  if (/^https?:\/\//i.test(url)) return url;
+  if (/^https?:\/\//i.test(url)) {
+    // Tự động chuyển đổi link MinIO localhost sang Firebase trên môi trường Deploy
+    if (!import.meta.env.DEV && url.includes('localhost:9000/manga-publishing/')) {
+      const path = url.split('localhost:9000/manga-publishing/')[1];
+      const encodedPath = encodeURIComponent(path);
+      return `https://firebasestorage.googleapis.com/v0/b/manga-32554.firebasestorage.app/o/${encodedPath}?alt=media`;
+    }
+    return url;
+  }
 
   const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
   const mediaBase =
