@@ -16,6 +16,9 @@ export const useVotingList = () => {
     queryKey: votingListKey(userId),
     queryFn: () => votingApi.fetchVotingList('All', userId),
     staleTime: 1000 * 30,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchInterval: 15_000,
   });
 };
 

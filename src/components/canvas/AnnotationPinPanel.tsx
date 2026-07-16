@@ -100,13 +100,13 @@ export const AnnotationPinPanel = ({
           value={comment}
           onChange={(e) => onCommentChange(e.target.value)}
           onFocus={onStartPinning}
-          placeholder="Nhập mô tả lỗi (bắt buộc) rồi click lên ảnh để ghim..."
+          placeholder="Nhập mô tả lỗi (bắt buộc) rồi nhấn lên ảnh để ghim..."
           rows={2}
           maxLength={maxCommentLength}
           className="w-full px-2.5 py-2 text-xs bg-bg-primary border border-border-custom rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 resize-none"
         />
         <div className="flex items-center justify-between text-[9px] text-text-muted">
-          <span>Click ảnh để ghim vị trí</span>
+          <span>Nhấn ảnh để ghim vị trí</span>
           <span className="tabular-nums">{comment.length}/{maxCommentLength}</span>
         </div>
       </div>

@@ -124,6 +124,9 @@ export const seriesApi = {
   acceptFund: (seriesId: string) =>
     axiosInstance.post<ApiResponse<null>>(`/api/series/${seriesId}/accept-fund`),
 
+  signContract: (seriesId: string) =>
+    axiosInstance.post<ApiResponse<null>>(`/api/series/${seriesId}/sign-contract`),
+
   declineFund: (seriesId: string) =>
     axiosInstance.post<ApiResponse<null>>(`/api/series/${seriesId}/decline-fund`),
 
