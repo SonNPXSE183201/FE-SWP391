@@ -37,10 +37,10 @@ import { formatVND } from '../../wallet';
 import { formatVNDInput } from '../../../utils/currency';
 
 const QUICK_BUDGETS = [
-  { label: '5M', value: 5_000_000 },
-  { label: '10M', value: 10_000_000 },
-  { label: '50M', value: 50_000_000 },
-  { label: '100M', value: 100_000_000 },
+  { label: '5.000.000', value: 5_000_000 },
+  { label: '10.000.000', value: 10_000_000 },
+  { label: '50.000.000', value: 50_000_000 },
+  { label: '100.000.000', value: 100_000_000 },
 ];
 
 const WORKFLOW_STEPS = [

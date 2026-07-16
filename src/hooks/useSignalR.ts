@@ -78,6 +78,8 @@ const normalizeNotificationType = (type: string): NotificationItem['type'] => {
     || type === 'Series_Submitted'
     || type === 'Series_Submitted_To_Board'
     || type === 'Chapter_Submitted'
+    || type === 'Chapter_Rejected'
+    || type === 'Chapter_Revision_Required'
   ) {
     return 'Review';
   }
@@ -101,6 +103,7 @@ const SERIES_DATA_REFRESH_TYPES = new Set([
   'Series_Submitted_To_Board',
   'Series_Revision_Required',
   'Series_Approved',
+  'Series_Fund_Approved',
   'Series_Rejected',
   'Series_Approved_Manual',
   'Series_Rejected_Manual',
@@ -109,8 +112,20 @@ const SERIES_DATA_REFRESH_TYPES = new Set([
   'Series_Team_Declined',
 ]);
 
+const CHAPTER_DATA_REFRESH_TYPES = new Set([
+  'Chapter_Submitted',
+  'Chapter_Rejected',
+  'Chapter_Revision_Required',
+]);
+
 const refreshSeriesQueries = (queryClient: QueryClient) => {
   queryClient.invalidateQueries({ queryKey: ['series'] });
+  queryClient.refetchQueries({ queryKey: ['series'], type: 'active' });
+};
+
+const refreshActiveQueries = (queryClient: QueryClient, queryKey: readonly unknown[]) => {
+  queryClient.invalidateQueries({ queryKey });
+  queryClient.refetchQueries({ queryKey, type: 'active' });
 };
 
 const WITHDRAW_ADMIN_PENDING = 'Wallet_Withdrawal_Admin_Pending';
@@ -135,6 +150,11 @@ const shouldShowNotificationToast = (rawType: string) =>
 const refreshEditorReviewQueries = (queryClient: QueryClient) => {
   queryClient.invalidateQueries({ queryKey: ['review'] });
   queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+};
+
+const refreshChapterQueries = (queryClient: QueryClient) => {
+  refreshActiveQueries(queryClient, ['chapters']);
+  refreshActiveQueries(queryClient, ['chapter']);
 };
 
 /**
@@ -182,21 +202,38 @@ export const useSignalR = () => {
       if (SERIES_DATA_REFRESH_TYPES.has(rawType)) {
         refreshSeriesQueries(queryClient);
       }
+      if (CHAPTER_DATA_REFRESH_TYPES.has(rawType)) {
+        refreshChapterQueries(queryClient);
+        refreshEditorReviewQueries(queryClient);
+        queryClient.invalidateQueries({ queryKey: ['chapter-revision-annotations'] });
+      }
       if (rawType === WITHDRAW_ADMIN_PENDING) {
         queryClient.invalidateQueries({ queryKey: ['admin', 'withdraw-pending'] });
       }
       if (item.type === 'WalletUpdate') {
         queryClient.invalidateQueries({ queryKey: ['wallet'] });
       }
+      if (rawType === 'Fund_Accepted' || rawType === 'Contract_Ready_To_Create') {
+        refreshActiveQueries(queryClient, ['contracts']);
+        refreshSeriesQueries(queryClient);
+      }
       if (rawType === 'Contract_Created') {
-        queryClient.invalidateQueries({ queryKey: ['series'] });
+        refreshSeriesQueries(queryClient);
+        refreshActiveQueries(queryClient, ['contracts']);
+      }
+      if (rawType === 'Contract_Signed') {
+        refreshSeriesQueries(queryClient);
+        refreshActiveQueries(queryClient, ['contracts']);
+        refreshActiveQueries(queryClient, ['wallet']);
       }
       if (rawType.startsWith('Task_')) {
-        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        refreshActiveQueries(queryClient, ['tasks']);
       }
 
-      if (rawType === 'Series_Team_Invite') {
+      if (rawType === 'Series_Team_Invite' || rawType === 'Series_Team_Role_Assigned') {
         queryClient.invalidateQueries({ queryKey: ['assistant-invites'] });
+        queryClient.refetchQueries({ queryKey: ['assistant-invites'], type: 'active' });
+        queryClient.invalidateQueries({ queryKey: ['series'] });
       }
 
       if (shouldRefreshAdminUsers(item.type, item.link)) {
@@ -230,9 +267,28 @@ export const useSignalR = () => {
       if (SERIES_DATA_REFRESH_TYPES.has(type)) {
         refreshSeriesQueries(queryClient);
       }
+      if (CHAPTER_DATA_REFRESH_TYPES.has(type)) {
+        refreshChapterQueries(queryClient);
+        refreshEditorReviewQueries(queryClient);
+        queryClient.invalidateQueries({ queryKey: ['chapter-revision-annotations'] });
+      }
+      if (type === 'Fund_Accepted' || type === 'Contract_Ready_To_Create' || type === 'Contract_Created') {
+        refreshSeriesQueries(queryClient);
+        refreshActiveQueries(queryClient, ['contracts']);
+      }
+      if (type === 'Contract_Signed') {
+        refreshSeriesQueries(queryClient);
+        refreshActiveQueries(queryClient, ['contracts']);
+        refreshActiveQueries(queryClient, ['wallet']);
+      }
+      if (type.startsWith('Task_')) {
+        refreshActiveQueries(queryClient, ['tasks']);
+      }
 
-      if (type === 'Series_Team_Invite') {
+      if (type === 'Series_Team_Invite' || type === 'Series_Team_Role_Assigned') {
         queryClient.invalidateQueries({ queryKey: ['assistant-invites'] });
+        queryClient.refetchQueries({ queryKey: ['assistant-invites'], type: 'active' });
+        queryClient.invalidateQueries({ queryKey: ['series'] });
       }
 
       if (shouldRefreshAdminUsers(item.type)) {
@@ -248,7 +304,7 @@ export const useSignalR = () => {
     // TaskStatusChanged: task status update → refresh task data (F1.6)
     connection.on('TaskStatusChanged', (payload: SignalRTaskStatusChangedPayload) => {
       logSignalR('TaskStatusChanged received (refreshing queries):', payload);
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      refreshActiveQueries(queryClient, ['tasks']);
       queryClient.invalidateQueries({ queryKey: ['canvas'] });
     });
 
@@ -273,6 +329,11 @@ export const useSignalR = () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'board-voting'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'board-members'] });
       queryClient.invalidateQueries({ queryKey: ['series'] });
+      queryClient.invalidateQueries({ queryKey: ['review'] });
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      queryClient.refetchQueries({ queryKey: ['series'], type: 'active' });
+      queryClient.refetchQueries({ queryKey: ['review'], type: 'active' });
+      queryClient.refetchQueries({ queryKey: ['contracts'], type: 'active' });
     });
 
     // ─── Lifecycle logging ────────────────────────────────────

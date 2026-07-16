@@ -1,9 +1,18 @@
+interface PngValidationOptions {
+  minTransparentRatio?: number;
+}
+
 /**
- * F2.8 — Validate PNG has transparent background before task result upload.
+ * F2.8 — If the uploaded file is PNG, validate it has transparent background.
+ * Other image formats are allowed for testing/flexible upload flows.
  */
-export async function validatePngTransparent(file: File): Promise<{ valid: boolean; message?: string }> {
-  if (!file.type.includes('png') && !file.name.toLowerCase().endsWith('.png')) {
-    return { valid: false, message: 'File phải là định dạng PNG.' };
+export async function validatePngTransparent(
+  file: File,
+  options: PngValidationOptions = {},
+): Promise<{ valid: boolean; message?: string }> {
+  const isPng = file.type.includes('png') || file.name.toLowerCase().endsWith('.png');
+  if (!isPng) {
+    return { valid: true };
   }
 
   const objectUrl = URL.createObjectURL(file);
@@ -41,10 +50,11 @@ export async function validatePngTransparent(file: File): Promise<{ valid: boole
     }
 
     const ratio = transparentPixels / sampled;
-    if (ratio < 0.02) {
+    const minTransparentRatio = options.minTransparentRatio ?? 0.02;
+    if (ratio < minTransparentRatio) {
       return {
         valid: false,
-        message: 'Ảnh gần như không có vùng trong suốt. Assistant cần nộp PNG nền trong suốt theo quy định F2.8.',
+        message: 'Ảnh chưa có nền trong suốt đủ rõ. Vui lòng nộp PNG đã xóa nền, không dùng ảnh nền trắng hoặc ảnh minh họa nguyên khung.',
       };
     }
 

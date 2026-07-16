@@ -55,8 +55,8 @@ export const TeamRoleChecklist = ({
             title="Tiêu chí nhóm dự án"
             content={
               <>
-                Một nhóm vẽ manga cần đủ 7 vai trò trong pipeline sản xuất.
-                Mỗi vai trò cần ít nhất 1 trợ lý <strong>Active</strong> trước khi giao Task ổn định.
+                Một nhóm vẽ manga cần đủ các vai trò trong quy trình sản xuất.
+                Mỗi vai trò cần ít nhất 1 trợ lý đang hoạt động; một vai trò vẫn có thể có nhiều trợ lý cùng tham gia.
               </>
             }
           />
@@ -77,7 +77,7 @@ export const TeamRoleChecklist = ({
           const config = statusConfig[item.status];
           const Icon = config.icon;
           const isSelected = selectedRole === item.role;
-          const isClickable = interactive && item.status !== 'filled';
+          const isClickable = interactive;
 
           const content = (
             <>
@@ -143,8 +143,8 @@ export const TeamRoleChecklist = ({
         <p className="text-[11px] text-text-muted flex items-start gap-1.5">
           <HelpCircle size={12} className="shrink-0 mt-0.5" />
           {interactive
-            ? 'Bấm vai trò còn thiếu để lọc ứng viên phù hợp và mời đúng vị trí.'
-            : 'Nhóm chưa đủ vai trò — mời trợ lý theo checklist pipeline bên dưới.'}
+            ? 'Bấm vai trò để lọc ứng viên phù hợp; có thể mời thêm nhiều trợ lý cho cùng một vai trò.'
+            : 'Nhóm chưa đủ vai trò — mời trợ lý theo danh sách bên dưới.'}
         </p>
       )}
     </div>

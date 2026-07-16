@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { AnimatedModal } from '../../../components/common/animation';
 import {
-  Calendar, ChevronLeft, ChevronRight, Loader2, BookOpen, User,
+  Calendar, ChevronLeft, ChevronRight, Loader2, User,
   X, CheckCircle2, CalendarClock, GripVertical,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -244,15 +244,11 @@ export const PublishScheduleFeature = () => {
 
             <div className="p-5 space-y-4">
               <div className="flex gap-3">
-                <div className="w-16 h-[88px] rounded-lg overflow-hidden bg-bg-surface flex-shrink-0 border border-border-custom">
-                  {selected.coverUrl ? (
+                {selected.coverUrl && (
+                  <div className="w-16 h-[88px] rounded-lg overflow-hidden bg-bg-surface flex-shrink-0 border border-border-custom">
                     <img src={selected.coverUrl} alt={selected.seriesTitle} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-text-muted">
-                      <BookOpen size={20} />
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${PUBLISH_STATUS_CONFIG[selected.status].chip} ${PUBLISH_STATUS_CONFIG[selected.status].text}`}>
                     {PUBLISH_STATUS_CONFIG[selected.status].label}

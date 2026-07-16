@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus, X, Send, Calendar, DollarSign, AlertCircle,
   BookOpen, FileText, Shield, Banknote, Loader2,
-  CheckCircle2, Type, Image, Wallet, UserCheck, Briefcase,
+  CheckCircle2, Type, Image, Wallet, UserCheck,
 } from 'lucide-react';
 import { useWallet, formatVND, formatVNDInput, parseVND } from '../../wallet';
 import { getWalletLockedAmount } from '../../wallet';
@@ -17,6 +17,8 @@ import type { TasksDto } from '../../../api/generated/types';
 import { CustomDatePicker } from '../../../components/common/CustomDatePicker';
 import { HelpTip } from '../../../components/common/HelpTip';
 import { CustomSelect } from '../../../components/common/CustomSelect';
+import { TEAM_ROLES, TeamRole } from '../../series/constants/teamRoles';
+import { ACCEPTANCE_CRITERIA_TEMPLATES } from '../constants/acceptanceTemplates';
 
 // ─── Types ───────────────────────────────────────────────────
 interface CreateTaskFormData {
@@ -24,6 +26,7 @@ interface CreateTaskFormData {
   chapterId: string;
   pageId: string;
   taskName: string;
+  acceptanceCriteria: string;
   amount: string;
   deadline: string;
   note: string;
@@ -36,6 +39,7 @@ interface CreateTaskFormErrors {
   chapterId?: string;
   pageId?: string;
   taskName?: string;
+  acceptanceCriteria?: string;
   amount?: string;
   deadline?: string;
   assistantId?: string;
@@ -57,20 +61,38 @@ interface CreateTaskModalProps {
 
 const AMOUNT_PRESETS = [100000, 200000, 350000, 500000];
 
+const parseCriteriaItems = (value: string) =>
+  value
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith('- [ ] ') || line.startsWith('- [x] '))
+    .map((line) => line.replace(/^- \[[ x]\]\s*/, '').trim())
+    .filter(Boolean);
+
+const buildCriteriaMarkdown = (items: string[]) =>
+  items
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => `- [ ] ${item}`)
+    .join('\n');
+
 // ─── Component ───────────────────────────────────────────────
 export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: CreateTaskModalProps) => {
   const queryClient = useQueryClient();
+  const initialAcceptanceTemplate = ACCEPTANCE_CRITERIA_TEMPLATES[initialContext.taskName as TeamRole] ?? '';
   const [formData, setFormData] = useState<CreateTaskFormData>({
     seriesId: initialContext.seriesId,
     chapterId: initialContext.chapterId,
     pageId: initialContext.pageId,
     taskName: initialContext.taskName || '',
+    acceptanceCriteria: initialAcceptanceTemplate,
     amount: '',
     deadline: '',
     note: '',
     assistantId: '',
     regionId: initialContext.regionId,
   });
+  const [criteriaItems, setCriteriaItems] = useState<string[]>(() => parseCriteriaItems(initialAcceptanceTemplate));
   const [errors, setErrors] = useState<CreateTaskFormErrors>({});
   const [success, setSuccess] = useState(false);
 
@@ -83,20 +105,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
   const { data: pagesList = [] } = useChapterPages(formData.chapterId);
   const { data: activeTeam = [], isLoading: teamLoading } = useSeriesActiveTeam(formData.seriesId);
 
-  const [selectedRole, setSelectedRole] = useState<string>('');
 
-  const availableRoles = useMemo(() => {
-    const roles = new Set<string>();
-    activeTeam.forEach(member => {
-      if (member.roleInTeam) {
-        member.roleInTeam.split(',').forEach(r => {
-          const trimmed = r.trim();
-          if (trimmed) roles.add(trimmed);
-        });
-      }
-    });
-    return Array.from(roles).sort();
-  }, [activeTeam]);
 
   const availablePages = pagesList;
 
@@ -125,8 +134,11 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
   const validate = (): boolean => {
     const newErrors: CreateTaskFormErrors = {};
 
-    if (!formData.taskName || formData.taskName.trim().length < 3) {
-      newErrors.taskName = 'Tên công việc phải có ít nhất 3 ký tự';
+    if (!formData.taskName) {
+      newErrors.taskName = 'Vui lòng chọn Kỹ thuật vẽ (Tên công việc)';
+    }
+    if (criteriaItems.filter((item) => item.trim()).length === 0) {
+      newErrors.acceptanceCriteria = 'Vui lòng thêm ít nhất 1 tiêu chí nghiệm thu';
     }
     if (!formData.amount || amountNum <= 0) {
       newErrors.amount = 'Số tiền phải lớn hơn 0';
@@ -154,6 +166,32 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
+  const updateCriteriaItems = (items: string[]) => {
+    setCriteriaItems(items);
+    updateField('acceptanceCriteria', buildCriteriaMarkdown(items));
+  };
+
+  const handleCriteriaChange = (index: number, value: string) => {
+    updateCriteriaItems(criteriaItems.map((item, i) => (i === index ? value : item)));
+  };
+
+  const handleAddCriteria = () => {
+    updateCriteriaItems([...criteriaItems, '']);
+  };
+
+  const handleRemoveCriteria = (index: number) => {
+    updateCriteriaItems(criteriaItems.filter((_, i) => i !== index));
+  };
+
+  const handleRoleChange = (role: TeamRole) => {
+    updateField('taskName', role);
+    if (!formData.acceptanceCriteria || formData.acceptanceCriteria === '' || Object.values(ACCEPTANCE_CRITERIA_TEMPLATES).includes(formData.acceptanceCriteria)) {
+      const template = ACCEPTANCE_CRITERIA_TEMPLATES[role];
+      setCriteriaItems(parseCriteriaItems(template));
+      updateField('acceptanceCriteria', template);
+    }
+  };
+
   // ─── Submit Mutation ────────────────────────────────────────
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -168,7 +206,8 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
 
       const res = await taskApi.create({
         regionId: finalRegionId,
-        description: formData.taskName,
+        description: formData.taskName + (formData.note ? `\\n\\nGhi chú thêm:\\n${formData.note}` : ''),
+        acceptanceCriteria: formData.acceptanceCriteria,
         assistantId: Number(formData.assistantId),
         paymentAmount: amountNum,
         deadline: new Date(formData.deadline + 'T23:59:59Z').toISOString(),
@@ -226,7 +265,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
       open
       onClose={onClose}
       backdropClassName="absolute inset-0 bg-black/70 backdrop-blur-sm"
-      panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-4xl shadow-lg-custom flex flex-col overflow-hidden"
+      panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-4xl max-h-[90vh] shadow-lg-custom flex flex-col overflow-hidden"
     >
 
         {/* ─── Header ─── */}
@@ -241,11 +280,11 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
                 <HelpTip
                   size="sm"
                   title="Giao việc trong nhóm dự án"
-                  content={<>Chỉ có thể giao Task cho <strong>Trợ lý thuộc nhóm Series</strong>. Mời thành viên tại trang chi tiết Series trước khi giao việc.</>}
+                  content={<>Chỉ có thể giao việc cho <strong>trợ lý thuộc nhóm bộ truyện</strong>. Mời thành viên tại trang chi tiết bộ truyện trước khi giao việc.</>}
                 />
               </div>
               <p className="text-xs text-text-muted mt-0.5">
-                Chọn Trợ lý trong team → Khoá tiền → Giao việc
+                Chọn trợ lý trong nhóm, khoá tiền rồi giao việc
               </p>
             </div>
           </div>
@@ -255,7 +294,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
         </div>
 
         {/* ─── Body ─── */}
-        <div className="p-6">
+        <div className="p-6 flex-1 overflow-y-auto custom-scrollbar">
 
           {/* ─── Two columns: form | lock preview ─── */}
           <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_1fr] gap-5 items-start">
@@ -293,48 +332,101 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
                 )}
               </div>
 
-              {/* Task name (only if not provided by context) */}
-              {!initialContext.taskName && (
-                <div>
-                  <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
-                    <Type size={13} />
-                    Tên công việc <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.taskName}
-                    onChange={(e) => updateField('taskName', e.target.value)}
-                    placeholder="VD: Vẽ nền trang 5, Tô bóng nhân vật chính..."
-                    maxLength={100}
-                    className={`${inputBase} ${errors.taskName ? 'border-danger/50' : 'border-border-custom'}`}
-                  />
-                  {errors.taskName && <p className="text-[11px] text-danger mt-1">{errors.taskName}</p>}
+              {/* Work name */}
+              <div>
+                <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-2">
+                  <Type size={13} />
+                  Kỹ thuật vẽ (Tên công việc) <span className="text-danger">*</span>
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {TEAM_ROLES.map((role) => (
+                    <label
+                      key={role}
+                      className={`flex items-center justify-center py-2 px-3 rounded-lg border text-[11px] font-medium cursor-pointer transition-colors ${
+                        formData.taskName === role
+                          ? 'bg-brand/10 border-brand/50 text-brand'
+                          : 'bg-bg-surface border-border-custom text-text-secondary hover:border-brand/30 hover:bg-brand/5'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="taskRole"
+                        value={role}
+                        checked={formData.taskName === role}
+                        onChange={() => handleRoleChange(role)}
+                        className="sr-only"
+                      />
+                      {role}
+                    </label>
+                  ))}
                 </div>
-              )}
+                {errors.taskName && <p className="text-[11px] text-danger mt-1">{errors.taskName}</p>}
+              </div>
 
-              {/* Role filter */}
-              {availableRoles.length > 0 && (
-                <div className="mb-4">
-                  <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
-                    <Briefcase size={13} />
-                    Vai trò cần tuyển
+              {/* Acceptance Criteria */}
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary">
+                    <CheckCircle2 size={13} />
+                    Tiêu chí nghiệm thu <span className="text-danger">*</span>
                   </label>
-                  <CustomSelect
-                    options={availableRoles.map(r => ({ value: r, label: r }))}
-                    value={selectedRole}
-                    onChange={(val) => {
-                       setSelectedRole(val);
-                       const currentAsst = activeTeam.find(m => String(m.assistantId) === formData.assistantId);
-                       if (currentAsst && val && !currentAsst.roleInTeam?.includes(val)) {
-                           updateField('assistantId', '');
-                       }
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (formData.taskName && ACCEPTANCE_CRITERIA_TEMPLATES[formData.taskName as TeamRole]) {
+                        const template = ACCEPTANCE_CRITERIA_TEMPLATES[formData.taskName as TeamRole];
+                        setCriteriaItems(parseCriteriaItems(template));
+                        updateField('acceptanceCriteria', template);
+                      }
                     }}
-                    placeholder="— Tất cả vai trò —"
-                  />
+                    disabled={!formData.taskName}
+                    className="text-[11px] font-medium text-brand hover:text-brand-hover disabled:text-text-muted disabled:cursor-not-allowed bg-transparent border-none cursor-pointer"
+                  >
+                    Điền lại mẫu
+                  </button>
                 </div>
-              )}
+                <div className={`rounded-xl border bg-bg-surface/45 p-2.5 space-y-2 ${errors.acceptanceCriteria ? 'border-danger/50' : 'border-border-custom'}`}>
+                  {criteriaItems.length === 0 ? (
+                    <div className="rounded-lg border border-dashed border-border-custom bg-bg-primary/40 px-3 py-4 text-center">
+                      <p className="text-xs text-text-muted">Chọn kỹ thuật để tự động điền mẫu tiêu chí.</p>
+                    </div>
+                  ) : (
+                    criteriaItems.map((item, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <span className="mt-2 h-3.5 w-3.5 rounded-[4px] border-2 border-text-muted/40 shrink-0" />
+                        <input
+                          type="text"
+                          value={item}
+                          onChange={(e) => handleCriteriaChange(index, e.target.value)}
+                          placeholder="Nhập tiêu chí nghiệm thu..."
+                          className="flex-1 px-3 py-2 bg-bg-primary border border-border-custom rounded-lg text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/15 transition-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCriteria(index)}
+                          className="mt-0.5 w-8 h-8 rounded-lg text-text-muted hover:text-danger hover:bg-danger/10 bg-transparent border-none cursor-pointer transition-colors flex items-center justify-center shrink-0"
+                          aria-label="Xóa tiêu chí"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleAddCriteria}
+                    className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-dashed border-brand/35 bg-brand/5 text-xs font-medium text-brand hover:bg-brand/10 transition-colors cursor-pointer"
+                  >
+                    <Plus size={13} />
+                    Thêm tiêu chí
+                  </button>
+                </div>
+                {errors.acceptanceCriteria && <p className="text-[11px] text-danger mt-1">{errors.acceptanceCriteria}</p>}
+              </div>
 
-              {/* Assistant picker — chỉ thành viên Active trong Series_Assistant */}
+
+
+              {/* Assistant picker: chỉ thành viên đang hoạt động trong nhóm bộ truyện */}
               <div>
                 <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
                   <UserCheck size={13} />
@@ -346,19 +438,28 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
                   </div>
                 ) : activeTeam.length === 0 ? (
                   <p className="text-[11px] text-warning bg-warning/10 border border-warning/20 rounded-lg px-3 py-2">
-                    Chưa có Trợ lý Active trong nhóm. Vào trang Series → mời thành viên trước khi giao việc.
+                    Chưa có trợ lý đang hoạt động trong nhóm. Vào trang bộ truyện để mời thành viên trước khi giao việc.
                   </p>
                 ) : (
                   <CustomSelect
-                    options={activeTeam
-                      .filter(m => !selectedRole || m.roleInTeam?.includes(selectedRole))
-                      .map((m) => ({
-                      value: String(m.assistantId),
-                      label: m.assistantName ?? 'Unknown'
-                    }))}
+                    options={(() => {
+                      if (!formData.taskName) {
+                        return activeTeam.map((m) => ({
+                          value: String(m.assistantId),
+                          label: m.assistantName ?? 'Chưa rõ'
+                        }));
+                      }
+                      // Strict filter: only show assistants who have this role
+                      const matches = activeTeam.filter(m => m.roleInTeam?.includes(formData.taskName));
+
+                      return matches.map((m) => ({
+                        value: String(m.assistantId),
+                        label: m.assistantName ?? 'Chưa rõ'
+                      }));
+                    })()}
                     value={formData.assistantId}
                     onChange={(val) => updateField('assistantId', val)}
-                    placeholder="— Chọn Trợ lý —"
+                    placeholder="-- Chọn trợ lý --"
                     error={!!errors.assistantId}
                   />
                 )}
@@ -389,7 +490,7 @@ export const CreateTaskModal = ({ onClose, onTaskCreated, initialContext }: Crea
                 <textarea
                   value={formData.note}
                   onChange={(e) => updateField('note', e.target.value)}
-                  placeholder="Mô tả yêu cầu chi tiết cho Trợ lý..."
+                  placeholder="Mô tả yêu cầu chi tiết cho trợ lý..."
                   rows={3}
                   className={`${inputBase} border-border-custom resize-none`}
                 />

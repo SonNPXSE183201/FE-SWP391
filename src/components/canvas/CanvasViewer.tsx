@@ -63,6 +63,7 @@ export interface CanvasViewerProps {
   regions?: CanvasRegion[];
   annotations?: CanvasAnnotation[];
   mode?: CanvasMode;
+  backdrop?: 'dark' | 'light' | 'checkerboard';
   onRegionCreated?: (region: Omit<CanvasRegion, 'id' | 'createdAt' | 'updatedAt'>) => void;
   onRegionUpdated?: (region: CanvasRegion) => void;
   onRegionSelect?: (regionId: string) => void;
@@ -98,6 +99,7 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
       regions = [],
       annotations = [],
       mode = 'view',
+      backdrop = 'dark',
       onRegionCreated,
       onRegionUpdated,
       onAnnotationCreated,
@@ -119,6 +121,19 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
 
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
+    const backdropClassName =
+      backdrop === 'light' || backdrop === 'checkerboard'
+        ? 'bg-white'
+        : 'bg-bg-primary';
+    const backdropStyle = backdrop === 'checkerboard'
+      ? {
+          backgroundColor: '#ffffff',
+          backgroundImage:
+            'linear-gradient(45deg, #e5e7eb 25%, transparent 25%), linear-gradient(-45deg, #e5e7eb 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e5e7eb 75%), linear-gradient(-45deg, transparent 75%, #e5e7eb 75%)',
+          backgroundPosition: '0 0, 0 12px, 12px -12px, -12px 0',
+          backgroundSize: '24px 24px',
+        }
+      : undefined;
 
     // Live coordinate readout shown while drawing / dragging / resizing a region
     const [liveCoords, setLiveCoords] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
@@ -745,7 +760,8 @@ export const CanvasViewer = forwardRef<CanvasViewerHandle, CanvasViewerProps>(
     return (
       <div
         ref={containerRef}
-        className={`relative w-full h-full overflow-hidden bg-bg-primary border border-border-custom rounded-xl ${cursorClassForMode(mode)} ${className ?? ''}`}
+        style={backdropStyle}
+        className={`relative w-full h-full overflow-hidden ${backdropClassName} border border-border-custom rounded-xl ${cursorClassForMode(mode)} ${className ?? ''}`}
       >
         <canvas ref={canvasElRef} />
 

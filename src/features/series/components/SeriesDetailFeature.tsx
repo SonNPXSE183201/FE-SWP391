@@ -33,6 +33,16 @@ import { parseGenreList, resolveSeriesCover } from '../utils/series.utils';
 import { MotionStagger, MotionItem } from '../../../components/common/animation';
 import { motion } from 'framer-motion';
 
+const SERIES_STATUS_ORDER: Partial<Record<SeriesStatus, number>> = {
+  Draft: 0,
+  PendingApproval: 1,
+  PendingBoardVote: 2,
+  Approved: 3,
+  Fund_Pending: 4,
+  'In Production': 5,
+  Published: 6,
+};
+
 export const SeriesDetailFeature = () => {
   const { seriesId } = useParams<{ seriesId: string }>();
   const navigate = useNavigate();
@@ -42,7 +52,12 @@ export const SeriesDetailFeature = () => {
 
   const [statusOverride, setStatusOverride] = useState<SeriesStatus | null>(null);
   const [resubmitNote, setResubmitNote] = useState('');
-  const currentStatus = statusOverride ?? series?.status ?? 'Draft';
+  const serverStatus = series?.status ?? 'Draft';
+  const currentStatus =
+    statusOverride
+      && (SERIES_STATUS_ORDER[statusOverride] ?? 0) > (SERIES_STATUS_ORDER[serverStatus] ?? 0)
+      ? statusOverride
+      : serverStatus;
 
   const seriesSnapshot: SeriesNameUpdateSnapshot | undefined = series
     ? {
@@ -116,12 +131,10 @@ export const SeriesDetailFeature = () => {
 
   const isDraft = series.status === 'Draft' && currentStatus === 'Draft';
   const hasRevisionRequest = isDraft && !!series.editorNote?.trim();
-  const isPendingEditorReview =
-    currentStatus === 'PendingApproval' || series.status === 'PendingApproval';
-  const isPendingBoardVote =
-    currentStatus === 'PendingBoardVote' || series.status === 'PendingBoardVote';
-  const isFundPending = currentStatus === 'Approved';
-  const canManageTeam = currentStatus === 'Published';
+  const isPendingEditorReview = currentStatus === 'PendingApproval';
+  const isPendingBoardVote = currentStatus === 'PendingBoardVote';
+  const isFundPending = currentStatus === 'Approved' || currentStatus === 'Fund_Pending';
+  const canManageTeam = currentStatus === 'Published' || currentStatus === 'In Production';
   const statusConfig = hasRevisionRequest
     ? { label: 'Cần chỉnh sửa', color: 'text-amber-400', bg: 'bg-amber-500/10' }
     : getSeriesStatusConfig(currentStatus);
@@ -331,10 +344,13 @@ export const SeriesDetailFeature = () => {
                 estimatedBudget={series.estimatedProductionBudget ?? 0}
                 approvedBudget={series.approvedProductionBudget ?? 0}
                 hasContract={series.hasContract || false}
-                isAccepting={acceptFund.isAccepting}
-                isDeclining={acceptFund.isDeclining}
-                onAccept={acceptFund.acceptFund}
-                onDecline={acceptFund.declineFund}
+                contractId={series.contractId}
+                contractStatus={series.contractStatus}
+                baseGenkouryoPrice={series.baseGenkouryoPrice}
+                contractSignedDate={series.contractSignedDate}
+                contractFileUrl={(series as { contractFileUrl?: string | null }).contractFileUrl}
+                isSigning={acceptFund.isSigning}
+                onSign={acceptFund.signContract}
               />
             </div>
           )}

@@ -69,9 +69,16 @@ export const useSubmitChapterForReview = () => {
     },
     onSuccess: (_data, chapterId) => {
       toast.success('Đã nộp chapter lên Editor — chờ biên tập QC');
+      queryClient.setQueryData(['chapter', chapterId], (old: unknown) => {
+        if (!old || typeof old !== 'object') return old;
+        return { ...old, status: 'UnderReview' };
+      });
       void queryClient.invalidateQueries({ queryKey: ['chapter', chapterId] });
       void queryClient.invalidateQueries({ queryKey: ['chapter', chapterId, 'production-readiness'] });
       void queryClient.invalidateQueries({ queryKey: ['chapters'] });
+      void queryClient.refetchQueries({ queryKey: ['chapters'], type: 'active' });
+      void queryClient.invalidateQueries({ queryKey: ['review'] });
+      void queryClient.refetchQueries({ queryKey: ['review'], type: 'active' });
       void queryClient.invalidateQueries({ queryKey: ['pages', chapterId] });
     },
     onError: (error: Error) => {

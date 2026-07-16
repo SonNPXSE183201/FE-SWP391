@@ -34,6 +34,8 @@ export const useMangakaTasks = (params?: { page?: number; pageSize?: number; sta
       return unwrapPaged<TasksDto>(payload).items.map(normalizeTaskDto);
     },
     staleTime: 1000 * 60,
+    refetchInterval: 5_000,
+    refetchIntervalInBackground: false,
     retry: 1,
   });
 };
@@ -50,6 +52,8 @@ export const useAvailableTasks = (params?: { page?: number; pageSize?: number; s
     },
     staleTime: 0,
     refetchOnWindowFocus: true,
+    refetchInterval: 5_000,
+    refetchIntervalInBackground: false,
     retry: 1,
   });
 };
@@ -65,6 +69,8 @@ export const useAssistantMyTasks = (params?: { page?: number; pageSize?: number 
     },
     staleTime: 0,
     refetchOnWindowFocus: true,
+    refetchInterval: 5_000,
+    refetchIntervalInBackground: false,
     retry: 1,
   });
 };

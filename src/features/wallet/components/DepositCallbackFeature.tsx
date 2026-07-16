@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader2, Wallet, Clock, Hash, Banknote } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -22,9 +22,11 @@ export const DepositCallbackFeature = () => {
   const amountStr = search.get('amount') || search.get('vnp_Amount');
   const amount = amountStr ? (search.has('vnp_Amount') ? Number(amountStr) / 100 : Number(amountStr)) : null;
   const referenceCode = search.get('referenceCode') || search.get('vnp_TxnRef');
+  const hasHandled = useRef(false);
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (status === 'loading' || hasHandled.current) return;
+    hasHandled.current = true;
 
     if (status === 'success') {
       toast.success(
@@ -39,7 +41,11 @@ export const DepositCallbackFeature = () => {
     }
 
     const timer = window.setTimeout(() => {
-      navigate(walletPath, { replace: true });
+      if (user?.role !== 'Mangaka' && user?.role !== 'Assistant') {
+        navigate(useAuthStore.getState().getRoleRedirectPath(), { replace: true });
+      } else {
+        navigate(walletPath, { replace: true });
+      }
     }, 1200);
 
     return () => window.clearTimeout(timer);
