@@ -8,6 +8,8 @@ import {
   ChevronRight,
   FileText,
   Loader2,
+  ScrollText,
+  Eye,
 } from 'lucide-react';
 
 import {
@@ -350,8 +352,44 @@ export const SeriesDetailFeature = () => {
                 contractSignedDate={series.contractSignedDate}
                 contractFileUrl={(series as { contractFileUrl?: string | null }).contractFileUrl}
                 isSigning={acceptFund.isSigning}
+                isRejecting={acceptFund.isRejecting}
                 onSign={acceptFund.signContract}
+                onReject={acceptFund.rejectContract}
               />
+            </div>
+          )}
+
+          {/* Hợp đồng đã ký kết và có hiệu lực */}
+          {series.hasContract && ['signed', 'active'].includes((series.contractStatus ?? '').trim().toLowerCase()) && (
+            <div className="mt-8 bg-bg-secondary border border-emerald-500/20 rounded-xl p-5 animate-fade-in">
+              <div className="flex items-center gap-2 mb-3">
+                <ScrollText size={16} className="text-emerald-400" />
+                <h2 className="text-sm font-semibold text-text-primary">Hợp đồng đã ký kết</h2>
+              </div>
+              <p className="text-xs text-text-muted leading-relaxed">
+                Bản hợp đồng chính thức đã được hai bên ký điện tử và đang có hiệu lực. Bạn có thể xem hoặc tải về bản PDF bất cứ lúc nào dưới đây.
+              </p>
+              {(series as { contractFileUrl?: string | null }).contractFileUrl && (
+                <div className="mt-4 rounded-xl border border-emerald-500/10 bg-emerald-500/5 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
+                      <ScrollText size={18} className="text-emerald-400" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-text-primary">Bản hợp đồng PDF (Đã ký)</p>
+                      <p className="text-xs text-text-muted mt-0.5">Mã hợp đồng: #{series.contractId}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => window.open((series as { contractFileUrl?: string | null }).contractFileUrl!, '_blank', 'noopener,noreferrer')}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-medium border-none cursor-pointer hover:bg-emerald-500 transition-colors"
+                  >
+                    <Eye size={14} />
+                    Xem hợp đồng đã ký
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </MotionItem>
