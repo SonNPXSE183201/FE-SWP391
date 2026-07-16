@@ -150,7 +150,7 @@ const RECONCILIATION_HELP = (
       <strong className="text-brand">Quỹ NXB:</strong> Admin nạp quỹ vào ví hệ thống trước khi cấp vốn series.
     </li>
     <li>
-      <strong className="text-success">Cấp vốn SX:</strong> Tác giả xác nhận nhận vốn → 2 giao dịch liên kết, mã{' '}
+      <strong className="text-success">Cấp vốn SX:</strong> Tác giả ký hợp đồng → 2 giao dịch liên kết, mã{' '}
       <span className="font-mono">FUND-S{'{seriesId}'}-...</span>
     </li>
     <li>

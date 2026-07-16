@@ -16,7 +16,7 @@ import type { AnnotationType } from '../../../types/status.types';
 import type { CanvasAnnotation } from '../../canvas/types/canvas.types';
 import { useChapterReview, useApproveChapter, useRequireChapterRevision } from '../hooks/useReview';
 import { reviewApi, type AnnotationDto } from '../api/review.api';
-import { ANNOTATION_TYPE_CONFIG, QC_CHECKLIST_ITEMS, formatVND } from '../constants/review.constants';
+import { ANNOTATION_TYPE_CONFIG, QC_CHECKLIST_ITEMS, QC_CRITERIA, formatVND } from '../constants/review.constants';
 import { HelpTip } from '../../../components/common/HelpTip';
 import type { PageDto } from '../../../api/generated/types';
 import { Point } from 'fabric';
@@ -42,15 +42,9 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
   const [annoComment, setAnnoComment] = useState('');
   const [showApprove, setShowApprove] = useState(false);
   const [showRevision, setShowRevision] = useState(false);
-  const [revisionReason, setRevisionReason] = useState('');
   const [manualValidPageCount, setManualValidPageCount] = useState<number | null>(null);
   const [checklist, setChecklist] = useState<boolean[]>(QC_CHECKLIST_ITEMS.map(() => false));
   const canvasRef = useRef<CanvasViewerHandle>(null);
-  const revisionTemplates = [
-    'Bố cục khung hình chưa rõ điểm nhấn, cần cân lại bố cục.',
-    'Chi tiết biểu cảm và cử chỉ nhân vật chưa khớp nội dung thoại.',
-    'Hiệu ứng ánh sáng/bóng đổ chưa đồng nhất giữa các trang.',
-  ];
 
   const toAnnotationEntity = useCallback((dto: AnnotationDto): CanvasAnnotation => {
     const coords = (() => {
@@ -187,6 +181,16 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
     () => annotations.filter((a) => !a.resolved),
     [annotations],
   );
+  const activeCriteria = QC_CRITERIA[annotationType];
+  const handleApplyCriterion = useCallback((criterion: { code: string; description: string }) => {
+    setAnnoComment((current) => {
+      const prefix = `[${criterion.code}] `;
+      if (current.includes(prefix)) return current;
+      const next = `${prefix}${criterion.description}`;
+      return next.slice(0, 200);
+    });
+    setActiveTool('annotate');
+  }, [setActiveTool]);
   const autoRevisionSummary = useMemo(() => {
     if (!unresolvedAnnotations.length) return '';
     const byPage = new Map<string, CanvasAnnotation[]>();
@@ -198,12 +202,18 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
 
     const lines = Array.from(byPage.entries())
       .sort((a, b) => Number(a[0]) - Number(b[0]))
-      .map(([pid, list]) => {
+      .flatMap(([pid, list]) => {
         const page = pages.find((p: PageDto) => String(p.id) === pid);
         const pageNo = page?.pageNumber ?? pid;
         const topIssues = list.slice(0, 2).map((item) => item.comment).filter(Boolean);
-        const suffix = list.length > 2 ? ` (+${list.length - 2} lỗi khác)` : '';
-        return `- Trang ${pageNo}: ${topIssues.join('; ')}${suffix}`;
+        const pageLines = [
+          `- Trang ${pageNo}:`,
+          ...topIssues.map((issue) => `  + ${issue}`),
+        ];
+        if (list.length > 2) {
+          pageLines.push(`  + Còn ${list.length - 2} lỗi khác đã ghim trên trang này.`);
+        }
+        return pageLines;
       });
 
     return `Vui lòng chỉnh sửa theo các lỗi đã ghim:\n${lines.join('\n')}`.slice(0, 500);
@@ -211,8 +221,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
 
   const openRevisionModal = useCallback(() => {
     setShowRevision(true);
-    setRevisionReason((current) => current.trim() || autoRevisionSummary || '');
-  }, [autoRevisionSummary]);
+  }, []);
 
   // ─── Handlers ───
   const handleCreate = useCallback(
@@ -282,9 +291,9 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
   };
 
   const handleRevision = () => {
-    const finalReason = revisionReason.trim() || autoRevisionSummary.trim();
+    const finalReason = autoRevisionSummary.trim();
     if (!finalReason) {
-      toast.error('Vui lòng nhập lý do yêu cầu sửa');
+      toast.error('Vui lòng ghim ít nhất một lỗi trước khi gửi yêu cầu sửa');
       return;
     }
     requireRevision.mutate(
@@ -298,10 +307,6 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
         onError: () => toast.error('Có lỗi khi gửi yêu cầu sửa'),
       },
     );
-  };
-
-  const handleApplyRevisionTemplate = (template: string) => {
-    setRevisionReason((prev) => (prev.trim() ? `${prev.trim()}\n- ${template}`.slice(0, 500) : `- ${template}`));
   };
 
   const handleZoomIn = useCallback(() => {
@@ -645,6 +650,50 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
               </div>
             </div>
 
+            <div className="bg-bg-secondary border border-border-custom rounded-xl p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
+                    <ClipboardCheck size={13} className="text-brand" />
+                    Tiêu chí QC
+                  </h3>
+                  <p className="mt-0.5 text-[10px] text-text-muted">
+                    Chọn tiêu chí để điền mô tả ghim lỗi.
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${ANNOTATION_TYPE_CONFIG[annotationType].bg} ${ANNOTATION_TYPE_CONFIG[annotationType].color}`}>
+                    {ANNOTATION_TYPE_CONFIG[annotationType].short}
+                  </span>
+                  <HelpTip
+                    size="sm"
+                    title="Tiêu chí QC"
+                    content="Kỹ thuật, Mỹ thuật và Nội dung là nhóm lỗi. Mỗi nhóm có mã tiêu chí cụ thể để Editor dùng khi ghim lỗi."
+                  />
+                </div>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-1.5">
+                {activeCriteria.map((criterion) => (
+                  <button
+                    key={criterion.code}
+                    type="button"
+                    onClick={() => handleApplyCriterion(criterion)}
+                    title={criterion.description}
+                    className="group min-h-[48px] text-left rounded-lg border border-border-custom bg-bg-primary px-2.5 py-2 hover:border-brand/35 hover:bg-brand/[0.03] transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] font-bold text-brand bg-brand/10 rounded px-1.5 py-0.5">
+                        {criterion.code}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[11px] font-semibold text-text-primary group-hover:text-brand line-clamp-1">
+                      {criterion.label}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <AnnotationPinPanel
               contextLabel={`Trang ${currentPage?.pageNumber ?? '?'}`}
               annotations={pageAnnotations.map((a) => ({
@@ -679,7 +728,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
           aria-labelledby="approve-chapter-title"
         >
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowApprove(false)} />
-          <div className="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-lg-custom w-full max-w-4xl max-h-[min(90vh,720px)] flex flex-col animate-modal-enter">
+          <div className="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-lg-custom w-full max-w-4xl max-h-[min(94vh,720px)] flex flex-col animate-modal-enter overflow-hidden">
             {/* Header */}
             <div className="flex items-start justify-between gap-3 p-5 border-b border-border-custom shrink-0">
               <div className="flex items-start gap-3 min-w-0">
@@ -708,13 +757,13 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
               </button>
             </div>
 
-            {/* Body — scrollable */}
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
+            {/* Body */}
+            <div className="flex-1 overflow-hidden p-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 h-full min-h-0">
                 
                 {/* ─── LEFT COLUMN: CHECKLIST ─── */}
                 <div className="flex flex-col">
-                  <div className="flex items-center justify-between gap-2 mb-4">
+                  <div className="flex items-center justify-between gap-2 mb-3">
                     <div className="flex items-center gap-2 min-w-0">
                       <ClipboardCheck size={16} className="text-text-muted shrink-0" />
                       <p className="text-xs uppercase tracking-wider text-text-muted font-semibold">
@@ -744,14 +793,14 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                     </div>
                   </div>
                   
-                  <div className="h-1.5 rounded-full bg-bg-surface overflow-hidden mb-4 border border-border-custom/50">
+                  <div className="h-1 rounded-full bg-bg-surface overflow-hidden mb-3 border border-border-custom/50">
                     <div
                       className="h-full bg-gradient-to-r from-brand to-success transition-all duration-300"
                       style={{ width: `${(checklistDoneCount / checklistTotal) * 100}%` }}
                     />
                   </div>
                   
-                  <div className="space-y-2 flex-1">
+                  <div className="space-y-2 flex-1 min-h-0">
                     {QC_CHECKLIST_ITEMS.map((item, idx) => {
                       const isChecked = checklist[idx];
                       return (
@@ -760,7 +809,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                           onClick={() =>
                             setChecklist((prev) => prev.map((v, i) => (i === idx ? !v : v)))
                           }
-                          className={`flex items-start gap-3 p-3.5 rounded-xl cursor-pointer transition-all border ${
+                          className={`flex items-start gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all border ${
                             isChecked
                               ? 'bg-success/10 border-success/30 shadow-[0_0_12px_rgba(16,185,129,0.1)]'
                               : 'bg-bg-surface border-border-custom hover:border-text-muted/30'
@@ -773,7 +822,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                               <div className="w-4 h-4 mt-0.5 rounded-full border border-border-custom bg-bg-primary" />
                             )}
                           </div>
-                          <span className={`text-[13px] leading-relaxed mt-0.5 ${
+                          <span className={`text-[13px] leading-5 mt-0.5 ${
                             isChecked ? 'text-success font-semibold' : 'text-text-secondary'
                           }`}>
                             {item}
@@ -785,7 +834,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                 </div>
 
                 {/* ─── RIGHT COLUMN: DETAILS & CALCULATION ─── */}
-                <div className="flex flex-col space-y-6">
+                <div className="flex flex-col space-y-4 min-h-0">
                   {/* Chapter summary */}
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-bg-surface border border-border-custom rounded-xl px-4 py-3">
@@ -819,7 +868,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                   )}
 
                   {/* Disbursement calculator */}
-                  <div className="bg-bg-surface border border-border-custom rounded-xl p-5 space-y-4 flex-1 flex flex-col justify-center">
+                  <div className="bg-bg-surface border border-border-custom rounded-xl p-5 space-y-4 flex-1 min-h-0 flex flex-col justify-center">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-text-secondary font-medium">Số trang hợp lệ</span>
                       <div className="flex items-center gap-2">
@@ -937,93 +986,85 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
       {showRevision && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowRevision(false)} />
-          <div className="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-xl w-full max-w-md animate-fade-in">
-            <div className="flex items-center justify-between p-5 border-b border-border-custom">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                  <Ban size={16} className="text-amber-400" />
+          <div className="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-xl w-full max-w-lg max-h-[calc(100vh-2rem)] animate-fade-in overflow-hidden flex flex-col">
+            <div className="flex items-start justify-between gap-4 p-5 border-b border-border-custom shrink-0">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                  <Ban size={18} className="text-amber-400" />
                 </div>
-                <h3 className="text-base font-semibold text-text-primary">Yêu cầu sửa chương</h3>
+                <div className="min-w-0">
+                  <h3 className="text-lg font-semibold text-text-primary">Yêu cầu sửa chương</h3>
+                  <p className="mt-0.5 text-xs text-text-muted truncate">
+                    Trả chương cho tác giả xử lý các lỗi QC đã ghi nhận
+                  </p>
+                </div>
               </div>
               <button onClick={() => setShowRevision(false)} className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-surface cursor-pointer bg-transparent border-none">
                 <X size={18} />
               </button>
             </div>
-            <div className="p-5 space-y-4">
-              <p className="text-sm text-text-secondary">
-                Chương sẽ được trả về cho <span className="text-text-primary font-medium">{chapter.series?.mangaka?.fullName || 'Chưa xác định'}</span> kèm {totalUnresolved} lỗi đã ghim để chỉnh sửa.
-              </p>
+            <div className="p-5 space-y-4 overflow-y-auto min-h-0">
+              <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-4 py-3">
+                <div className="flex items-start gap-3">
+                  <AlertCircle size={16} className="mt-0.5 text-amber-400 shrink-0" />
+                  <p className="text-sm leading-6 text-text-secondary">
+                    Chương sẽ được chuyển về trạng thái cần sửa cho{' '}
+                    <span className="text-text-primary font-semibold">{chapter.series?.mangaka?.fullName || 'Chưa xác định'}</span>.
+                    Nội dung bên dưới là phần tác giả nhìn thấy khi nhận yêu cầu.
+                  </p>
+                </div>
+              </div>
               {unresolvedAnnotations.length > 0 && (
-                <div className="rounded-xl border border-border-custom bg-bg-surface p-3">
+                <div className="rounded-xl border border-border-custom bg-bg-surface p-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-[11px] font-medium text-text-primary">
-                      Lỗi đã ghim ({unresolvedAnnotations.length})
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setRevisionReason(autoRevisionSummary)}
-                      className="text-[11px] text-brand hover:underline bg-transparent border-none cursor-pointer"
-                    >
-                      Dùng tóm tắt tự động
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-xs font-semibold text-text-primary">
+                        Lỗi đã ghim ({unresolvedAnnotations.length})
+                      </p>
+                      <HelpTip
+                        size="sm"
+                        content="Danh sách này lấy từ các vị trí lỗi Editor đã ghim trên trang. Nên dùng làm căn cứ trước khi gửi yêu cầu sửa."
+                      />
+                    </div>
                   </div>
-                  <ul className="mt-2 space-y-1.5 text-[11px] text-text-secondary">
+                  <ul className="mt-3 space-y-2 text-xs text-text-secondary">
                     {unresolvedAnnotations.slice(0, 6).map((item) => {
                       const page = pages.find((p: PageDto) => String(p.id) === item.pageId);
                       return (
-                        <li key={item.id} className="leading-4">
-                          • Trang {page?.pageNumber ?? item.pageId}: {item.comment}
+                        <li key={item.id} className="flex gap-2 leading-5">
+                          <span className="mt-2 h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
+                          <span>
+                            <span className="font-medium text-text-primary">Trang {page?.pageNumber ?? item.pageId}:</span> {item.comment}
+                          </span>
                         </li>
                       );
                     })}
                     {unresolvedAnnotations.length > 6 && (
-                      <li className="text-text-muted">• ... và {unresolvedAnnotations.length - 6} lỗi khác</li>
+                      <li className="text-text-muted">Còn {unresolvedAnnotations.length - 6} lỗi khác trong danh sách ghim.</li>
                     )}
                   </ul>
                 </div>
               )}
-              <div>
-                <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                  Lý do / Tóm tắt yêu cầu sửa {unresolvedAnnotations.length === 0 && <span className="text-danger">*</span>}
-                </label>
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {revisionTemplates.map((template) => (
-                    <button
-                      key={template}
-                      type="button"
-                      onClick={() => handleApplyRevisionTemplate(template)}
-                      className="px-2 py-1 text-[10px] rounded-md border border-border-custom bg-bg-primary hover:border-brand/30 text-text-muted hover:text-text-primary cursor-pointer"
-                    >
-                      + {template.slice(0, 26)}...
-                    </button>
-                  ))}
+              <div className="rounded-xl border border-border-custom bg-bg-primary/40 px-4 py-3">
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 size={15} className="mt-0.5 text-success shrink-0" />
+                  <p className="text-xs leading-5 text-text-secondary">
+                    Khi gửi yêu cầu, hệ thống sẽ tự đính kèm toàn bộ lỗi đã ghim để tác giả xem và chỉnh sửa.
+                  </p>
                 </div>
-                <textarea
-                  value={revisionReason}
-                  onChange={(e) => setRevisionReason(e.target.value)}
-                  placeholder={unresolvedAnnotations.length > 0
-                    ? 'Có thể chỉnh lại tóm tắt tự động trước khi gửi...'
-                    : 'Tóm tắt các điểm cần Tác giả xử lý...'}
-                  rows={4}
-                  className="w-full px-4 py-3 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 resize-none"
-                  maxLength={500}
-                  onKeyDown={(e) => {
-                    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') handleRevision();
-                  }}
-                />
-                <p className="text-[10px] text-text-muted mt-1 text-right">{revisionReason.length}/500</p>
               </div>
             </div>
-            <div className="flex items-center justify-end gap-2 px-5 pb-5">
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-border-custom bg-bg-primary/40 shrink-0">
               <button onClick={() => setShowRevision(false)} className="px-4 py-2 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-secondary hover:text-text-primary cursor-pointer">
                 Hủy
               </button>
               <button
                 onClick={handleRevision}
-                disabled={requireRevision.isPending}
-                className={`inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium border-none transition-all ${requireRevision.isPending
+                disabled={requireRevision.isPending || unresolvedAnnotations.length === 0}
+                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border-none transition-all ${
+                  requireRevision.isPending || unresolvedAnnotations.length === 0
                     ? 'bg-amber-500/50 text-white/70 cursor-not-allowed'
-                    : 'bg-amber-500 hover:bg-amber-600 text-white cursor-pointer'
+                    : 'bg-amber-500 hover:bg-amber-600 text-white cursor-pointer shadow-[0_0_16px_rgba(245,158,11,0.22)]'
                   }`}
               >
                 {requireRevision.isPending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}

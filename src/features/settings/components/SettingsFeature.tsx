@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import {
   Settings,
@@ -16,7 +16,11 @@ import {
   Copy,
   Check,
   Camera,
+  BadgeCheck,
+  CalendarDays,
+  MapPin,
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore, type UserRole } from '../../../stores/authStore';
 import { ChangePasswordModal } from '../../auth';
 import { useMangakaOnLeave } from '../hooks/useMangakaOnLeave';
@@ -24,6 +28,7 @@ import { useUpdateProfile } from '../hooks/useUpdateProfile';
 import { useUploadAvatar } from '../hooks/useUploadAvatar';
 import { EditProfileModal } from './EditProfileModal';
 import { HelpTip } from '../../../components/common/HelpTip';
+import { profileApi } from '../api/profileApi';
 import { MotionTabPanel, MotionStagger, MotionItem } from '../../../components/common/animation';
 import { motion } from 'framer-motion';
 
@@ -92,6 +97,13 @@ const saveNotificationPrefs = (userId: string | number | undefined, prefs: Notif
   localStorage.setItem(getNotificationPrefsStorageKey(userId), JSON.stringify(saved));
 };
 
+const formatDate = (value?: string) => {
+  if (!value) return 'Chưa cập nhật';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString('vi-VN');
+};
+
 const DEFAULT_NOTIFICATION_PREFS: NotificationPref[] = [
   {
     id: 'email',
@@ -157,7 +169,7 @@ const ToggleSwitch = ({ enabled, onChange }: ToggleSwitchProps) => (
 
 // ─── Main Component ──────────────────────────────────────────
 export const SettingsFeature = () => {
-  const { user } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
   const [activeTab, setActiveTab] = useState<TabId>('profile');
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -168,6 +180,29 @@ export const SettingsFeature = () => {
   const [notificationPrefs, setNotificationPrefs] = useState<NotificationPref[]>(() =>
     loadNotificationPrefs(user?.id)
   );
+  const { data: profileResponse } = useQuery({
+    queryKey: ['profile', 'me'],
+    queryFn: profileApi.getProfile,
+    enabled: !!user?.id,
+    staleTime: 60_000,
+  });
+
+  useEffect(() => {
+    const profile = profileResponse?.data.data;
+    if (!profile) return;
+
+    updateUser({
+      fullName: profile.fullName ?? user?.fullName,
+      penName: profile.penName ?? undefined,
+      portfolioUrl: profile.portfolioUrl ?? undefined,
+      skills: profile.skills ?? undefined,
+      phoneNumber: profile.phoneNumber ?? undefined,
+      avatarUrl: profile.avatarUrl ?? undefined,
+      citizenId: profile.citizenId ?? undefined,
+      citizenIdIssueDate: profile.citizenIdIssueDate ?? undefined,
+      citizenIdIssuePlace: profile.citizenIdIssuePlace ?? undefined,
+    });
+  }, [profileResponse, updateUser, user?.fullName]);
 
   const role = user?.role ?? 'Mangaka';
   const showPenName = ['Mangaka'].includes(role);
@@ -435,6 +470,53 @@ export const SettingsFeature = () => {
             </div>
           </div>
         </div>
+
+        {role === 'Mangaka' && (
+          <div className="bg-bg-secondary border border-border-custom rounded-2xl overflow-hidden">
+            <div className="px-5 sm:px-6 py-4 border-b border-border-custom">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-text-primary">Thông tin lập hợp đồng</h3>
+                <HelpTip
+                  size="sm"
+                  content="Các thông tin này được dùng khi hệ thống tạo file hợp đồng PDF cho bộ truyện."
+                />
+              </div>
+              <p className="text-xs text-text-muted mt-0.5">Kiểm tra kỹ trước khi yêu cầu tạo hợp đồng mới</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border-custom">
+              <div className="flex items-center gap-3.5 px-5 sm:px-6 py-4 hover:bg-bg-surface/25 transition-colors">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                  <BadgeCheck size={18} className="text-amber-400" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-text-muted uppercase tracking-wide">Số CMND/CCCD</p>
+                  <p className="text-sm text-text-primary mt-0.5 truncate">{user?.citizenId || 'Chưa cập nhật'}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3.5 px-5 sm:px-6 py-4 hover:bg-bg-surface/25 transition-colors">
+                <div className="w-10 h-10 rounded-xl bg-sky-500/10 flex items-center justify-center flex-shrink-0">
+                  <CalendarDays size={18} className="text-sky-400" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-text-muted uppercase tracking-wide">Ngày cấp</p>
+                  <p className="text-sm text-text-primary mt-0.5 truncate">{formatDate(user?.citizenIdIssueDate)}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3.5 px-5 sm:px-6 py-4 hover:bg-bg-surface/25 transition-colors">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                  <MapPin size={18} className="text-emerald-400" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-text-muted uppercase tracking-wide">Nơi cấp</p>
+                  <p className="text-sm text-text-primary mt-0.5 truncate">{user?.citizenIdIssuePlace || 'Chưa cập nhật'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };

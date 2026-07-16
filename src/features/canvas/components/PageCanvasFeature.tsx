@@ -57,6 +57,7 @@ import {
 } from "../../tasks/hooks/useTasks";
 import { useChapterDetail, ReplacePageImageModal, useReplacePageImage, getPageStatusConfig } from "../../series";
 import { getTaskStatusConfig } from "../../tasks";
+import { normalizeChapterStatus } from "../../../utils/status";
 import { AnimatedModal } from "../../../components/common/animation/AnimatedModal";
 import { CreateTaskModal } from "../../tasks";
 import { formatVND } from "../../wallet";
@@ -455,7 +456,17 @@ export const PageCanvasFeature = ({
     canvasRef.current?.resetView();
   }, []);
 
-  const isPageCompleted = currentPage?.status === 'Completed';
+  const isChapterRevision = normalizeChapterStatus(chapterDetail?.status) === 'Revision';
+  const latestEditorPinAt = editorAnnotations.reduce((latest, annotation) => {
+    const timestamp = new Date(annotation.updatedAt || annotation.createdAt).getTime();
+    return Number.isFinite(timestamp) ? Math.max(latest, timestamp) : latest;
+  }, 0);
+  const currentPageUpdatedAt = currentPage?.updatedAt ? new Date(currentPage.updatedAt).getTime() : 0;
+  const hasUnfixedEditorPins =
+    isChapterRevision
+    && editorAnnotations.length > 0
+    && (!Number.isFinite(currentPageUpdatedAt) || currentPageUpdatedAt <= latestEditorPinAt);
+  const isPageCompleted = currentPage?.status === 'Completed' && !hasUnfixedEditorPins;
 
   const handleStartAddRegion = useCallback(() => {
     if (isPageCompleted) {
@@ -529,7 +540,7 @@ export const PageCanvasFeature = ({
     );
   }
 
-  const statusConfig = getPageStatusConfig(currentPage.status);
+  const statusConfig = getPageStatusConfig(hasUnfixedEditorPins ? 'InProgress' : currentPage.status);
 
   const isDrawingTool = activeTool === "region";
 

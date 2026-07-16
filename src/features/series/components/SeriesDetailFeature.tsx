@@ -343,17 +343,13 @@ export const SeriesDetailFeature = () => {
               <AcceptFundPanel
                 estimatedBudget={series.estimatedProductionBudget ?? 0}
                 approvedBudget={series.approvedProductionBudget ?? 0}
-                workflowStatus={currentStatus}
                 hasContract={series.hasContract || false}
                 contractId={series.contractId}
                 contractStatus={series.contractStatus}
                 baseGenkouryoPrice={series.baseGenkouryoPrice}
                 contractSignedDate={series.contractSignedDate}
-                isAccepting={acceptFund.isAccepting}
-                isDeclining={acceptFund.isDeclining}
+                contractFileUrl={(series as { contractFileUrl?: string | null }).contractFileUrl}
                 isSigning={acceptFund.isSigning}
-                onAccept={acceptFund.acceptFund}
-                onDecline={acceptFund.declineFund}
                 onSign={acceptFund.signContract}
               />
             </div>

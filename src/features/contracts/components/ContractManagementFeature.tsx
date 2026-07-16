@@ -19,14 +19,16 @@ import {
   Zap,
   CalendarClock,
   Eye,
+  ExternalLink,
   Hash,
   FileText,
 } from 'lucide-react';
 
 import { CustomSelect } from '../../../components/common/CustomSelect';
+import { HelpTip } from '../../../components/common/HelpTip';
 import type { SelectOption } from '../../../components/common/CustomSelect';
 import { CustomDatePicker } from '../../../components/common/CustomDatePicker';
-import { useApprovedSeries, useCreateContract, useUpdateContract } from '../hooks/useContract';
+import { useApprovedSeries, useContractTemplates, useCreateContract, useUpdateContract } from '../hooks/useContract';
 import type { ApprovedSeriesContractDto, ContractAddendumDto } from '../api/contract.api';
 import { formatVND, formatVNDInput } from '../../../utils/currency';
 import { getGenreLabel } from '../../../constants/genres';
@@ -35,13 +37,6 @@ import { motion } from 'framer-motion';
 
 type FilterStatus = 'all' | 'pending' | 'contracted';
 type EffectiveDateMode = 'immediate' | 'scheduled';
-
-const PRESET_PRICES: SelectOption[] = [
-  { value: 'custom', label: 'Nhập thủ công...' },
-  { value: '400000', label: '400.000 VND / trang' },
-  { value: '500000', label: '500.000 VND / trang' },
-  { value: '600000', label: '600.000 VND / trang' },
-];
 
 const EFFECTIVE_DATE_OPTIONS: SelectOption[] = [
   { value: 'immediate', label: 'Có hiệu lực ngay', icon: <Zap size={14} /> },
@@ -76,15 +71,15 @@ const SCHEDULE_LABELS: Record<string, string> = {
 };
 
 const formatSchedule = (schedule: string) => {
-  if (!schedule || schedule === 'Chưa thiết lập') {
-    return { label: 'Chưa thiết lập', muted: true };
+  if (!schedule || schedule === 'Chưa thiết lập' || schedule === 'Not configured') {
+    return { label: 'Chưa có lịch', muted: true };
   }
   const cleanSchedule = schedule.split(' (')[0];
   return { label: SCHEDULE_LABELS[cleanSchedule] || cleanSchedule, muted: false };
 };
 
 const isSignedContract = (status?: string | null) =>
-  (status ?? '').trim().toLowerCase() === 'signed';
+  ['signed', 'active'].includes((status ?? '').trim().toLowerCase());
 
 const getContractStatusLabel = (status?: string | null) => {
   const normalized = (status ?? '').trim().toLowerCase();
@@ -104,7 +99,7 @@ const getEmptyMessage = (filter: FilterStatus, search: string): { title: string;
   if (filter === 'pending') {
     return {
       title: 'Không có bộ truyện nào đang chờ lập hợp đồng',
-      hint: 'Bộ truyện chỉ xuất hiện khi tác giả đã xác nhận mức vốn và đang chờ lập hợp đồng.',
+      hint: 'Bộ truyện sẽ xuất hiện ngay sau khi Hội đồng phê duyệt vốn thực tế.',
     };
   }
   if (filter === 'contracted') {
@@ -128,17 +123,27 @@ export const ContractManagementFeature = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedSeries, setSelectedSeries] = useState<ApprovedSeriesContractDto | null>(null);
   const [baseGenkouryoPrice, setBaseGenkouryoPrice] = useState('');
-  const [createPricePreset, setCreatePricePreset] = useState('custom');
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [updateGenkouryoPrice, setUpdateGenkouryoPrice] = useState('');
-  const [updatePricePreset, setUpdatePricePreset] = useState('custom');
   const [effectiveDateMode, setEffectiveDateMode] = useState<EffectiveDateMode>('immediate');
   const [updateEndDate, setUpdateEndDate] = useState('');
 
   const minEffectiveDate = useMemo(() => toDateInputValue(new Date()), []);
 
   const { data: seriesList = [], isLoading, isError, refetch, isFetching } = useApprovedSeries();
+  const { data: contractTemplates = [], isLoading: isLoadingTemplates } = useContractTemplates();
   const createContract = useCreateContract();
   const updateContract = useUpdateContract();
+
+  const templateOptions = useMemo<SelectOption[]>(
+    () =>
+      contractTemplates.map((template) => ({
+        value: String(template.id ?? ''),
+        label: `Mẫu v${template.version ?? template.id}${template.isActive ? ' - Đang dùng' : ''}`,
+        icon: <FileText size={14} />,
+      })),
+    [contractTemplates],
+  );
 
   const pendingCount = useMemo(
     () => seriesList.filter((s) => !s.hasContract).length,
@@ -174,20 +179,6 @@ export const ContractManagementFeature = () => {
     setBaseGenkouryoPrice(e.target.value.replace(/[^0-9]/g, ''));
   };
 
-  const handleCreatePricePresetChange = (value: string) => {
-    setCreatePricePreset(value);
-    if (value !== 'custom') {
-      setBaseGenkouryoPrice(value);
-    }
-  };
-
-  const handleUpdatePricePresetChange = (value: string) => {
-    setUpdatePricePreset(value);
-    if (value !== 'custom') {
-      setUpdateGenkouryoPrice(value);
-    }
-  };
-
   const handleOpenDetailModal = (series: ApprovedSeriesContractDto) => {
     setSelectedSeries(series);
     setShowDetailModal(true);
@@ -196,18 +187,15 @@ export const ContractManagementFeature = () => {
   const handleOpenContractModal = (series: ApprovedSeriesContractDto) => {
     setSelectedSeries(series);
     setBaseGenkouryoPrice('');
-    setCreatePricePreset('custom');
+    const activeTemplate = contractTemplates.find((template) => template.isActive) ?? contractTemplates[0];
+    setSelectedTemplateId(activeTemplate?.id ? String(activeTemplate.id) : '');
     setShowContractModal(true);
   };
 
   const handleOpenUpdateModal = (series: ApprovedSeriesContractDto) => {
     setSelectedSeries(series);
     const existingPrice = series.genkouryoPrice ? String(series.genkouryoPrice) : '';
-    const matchedPreset = PRESET_PRICES.find(
-      (opt) => opt.value !== 'custom' && opt.value === existingPrice,
-    );
     setUpdateGenkouryoPrice(existingPrice);
-    setUpdatePricePreset(matchedPreset ? matchedPreset.value : 'custom');
     setEffectiveDateMode('immediate');
     setUpdateEndDate('');
     setShowUpdateModal(true);
@@ -248,10 +236,18 @@ export const ContractManagementFeature = () => {
       toast.error('Vui lòng nhập đơn giá nhuận bút hợp lệ.');
       return;
     }
+    if (!selectedTemplateId || Number(selectedTemplateId) <= 0) {
+      toast.error('Vui lòng chọn mẫu hợp đồng.');
+      return;
+    }
     if (!selectedSeries) return;
 
     createContract.mutate(
-      { seriesId: selectedSeries.id ?? '', baseGenkouryoPrice: Number(baseGenkouryoPrice) },
+      {
+        seriesId: selectedSeries.id ?? '',
+        baseGenkouryoPrice: Number(baseGenkouryoPrice),
+        templateId: Number(selectedTemplateId),
+      },
       {
         onSuccess: () => {
           toast.success(`Đã tạo hợp đồng cho "${selectedSeries.title}"!`);
@@ -495,7 +491,7 @@ export const ContractManagementFeature = () => {
                       </div>
                     </div>
 
-                    {/* Schedule + Date */}
+                    {/* Publishing cadence + approval date */}
                     <div className="hidden xl:flex flex-col items-end gap-1 w-[120px] shrink-0">
                       <div className="flex items-center gap-1">
                         <Calendar size={10} className="text-text-muted" />
@@ -503,9 +499,11 @@ export const ContractManagementFeature = () => {
                           {schedule.label}
                         </span>
                       </div>
-                      <span className="text-[10px] text-text-muted whitespace-nowrap">
-                        {formatApprovedDate(series.approvedAt ?? '')}
-                      </span>
+                      {series.approvedAt && (
+                        <span className="text-[10px] text-text-muted whitespace-nowrap">
+                          Duyệt {formatApprovedDate(series.approvedAt)}
+                        </span>
+                      )}
                     </div>
 
                     {/* Status + Action */}
@@ -599,6 +597,7 @@ export const ContractManagementFeature = () => {
                   <span className="text-xs text-text-secondary flex items-center gap-2">
                     <User size={13} className="text-text-muted" />
                     Tác giả
+                    <HelpTip size="sm" content="Tác giả sở hữu bộ truyện và sẽ là bên ký hợp đồng điện tử." />
                   </span>
                   <span className="text-sm font-medium text-text-primary">{selectedSeries.mangakaName}</span>
                 </div>
@@ -607,6 +606,7 @@ export const ContractManagementFeature = () => {
                   <span className="text-xs text-text-secondary flex items-center gap-2">
                     <Calendar size={13} className="text-text-muted" />
                     Lịch xuất bản
+                    <HelpTip size="sm" content="Tần suất xuất bản đã được khai báo cho bộ truyện, dùng làm căn cứ trong hợp đồng." />
                   </span>
                   <span className="text-sm font-medium text-text-primary text-right">
                     {formatSchedule(selectedSeries.publishSchedule ?? '').label}
@@ -617,8 +617,9 @@ export const ContractManagementFeature = () => {
               <div className="bg-brand/5 border border-brand/20 rounded-xl p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">
-                      Ngân sách Board đã duyệt
+                    <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium flex items-center gap-1.5">
+                      Ngân sách Hội đồng đã duyệt
+                      <HelpTip size="sm" content="Mức vốn thực tế Hội đồng đã phê duyệt cho bộ truyện. Admin chỉ lập hợp đồng theo mức vốn này." />
                     </p>
                     <p className="text-xl font-bold text-text-primary mt-1">
                       {formatVND(selectedSeries.approvedBudget)}
@@ -631,39 +632,46 @@ export const ContractManagementFeature = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                  Đơn giá nhuận bút cơ bản / trang (VND) <span className="text-danger">*</span>
+                <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
+                  Mẫu hợp đồng <span className="text-danger">*</span>
+                  <HelpTip size="sm" content="Chọn mẫu nội dung dùng để sinh file PDF hợp đồng cho tác giả xem và ký." />
                 </label>
                 <CustomSelect
-                  options={PRESET_PRICES}
-                  value={createPricePreset}
-                  onChange={handleCreatePricePresetChange}
-                  placeholder="Chọn mức giá..."
-                  icon={<Banknote size={14} />}
+                  options={templateOptions}
+                  value={selectedTemplateId}
+                  onChange={setSelectedTemplateId}
+                  placeholder={isLoadingTemplates ? 'Đang tải mẫu hợp đồng...' : 'Chọn mẫu hợp đồng...'}
+                  icon={<FileText size={14} />}
+                  disabled={isLoadingTemplates || templateOptions.length === 0}
                 />
-                {createPricePreset === 'custom' && (
-                  <div className="relative mt-2">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={baseGenkouryoPrice ? formatVNDInput(baseGenkouryoPrice) : ''}
-                      onChange={handlePriceInputChange}
-                      placeholder="VD: 50.000"
-                      className="w-full px-4 py-2.5 pr-20 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 transition-colors"
-                    />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-text-muted">
-                      VND/trang
-                    </span>
-                  </div>
-                )}
-                {createPricePreset !== 'custom' && baseGenkouryoPrice && (
-                  <p className="text-[11px] text-brand/80 mt-1.5 font-medium">
-                    Đã chọn: {formatVND(Number(baseGenkouryoPrice.replace(/\D/g, '')))} / trang
+                {templateOptions.length === 0 && !isLoadingTemplates && (
+                  <p className="text-[11px] text-danger mt-1.5">
+                    Chưa có mẫu hợp đồng khả dụng. Vui lòng tạo hoặc kích hoạt một mẫu trước.
                   </p>
                 )}
-                <p className="text-[11px] text-text-muted mt-1.5">
-                  Genkōryō = đơn giá × số trang hợp lệ. Có thể điều chỉnh sau qua phụ lục hợp đồng.
-                </p>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
+                  Đơn giá nhuận bút cơ bản / trang (VND) <span className="text-danger">*</span>
+                  <HelpTip
+                    size="sm"
+                    content="Nhập số tiền trả cho mỗi trang hợp lệ. Khoản này dùng để tính nhuận bút và có thể điều chỉnh sau bằng phụ lục hợp đồng."
+                  />
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={baseGenkouryoPrice ? formatVNDInput(baseGenkouryoPrice) : ''}
+                    onChange={handlePriceInputChange}
+                    placeholder="VD: 50.000"
+                    className="w-full px-4 py-2.5 pr-20 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 transition-colors"
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-text-muted">
+                    VND/trang
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -678,7 +686,7 @@ export const ContractManagementFeature = () => {
               <button
                 type="button"
                 onClick={handleCreateContract}
-                disabled={createContract.isPending}
+                disabled={createContract.isPending || isLoadingTemplates || templateOptions.length === 0}
                 className={`
                   inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border-none cursor-pointer transition-all
                   ${createContract.isPending
@@ -743,34 +751,24 @@ export const ContractManagementFeature = () => {
                 <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-1.5">
                   <Banknote size={12} />
                   Đơn giá nhuận bút mới <span className="text-danger">*</span>
+                  <HelpTip
+                    size="sm"
+                    content="Đơn giá mới sẽ thay thế mức đang áp dụng từ thời điểm hiệu lực của phụ lục."
+                  />
                 </label>
-                <CustomSelect
-                  options={PRESET_PRICES}
-                  value={updatePricePreset}
-                  onChange={handleUpdatePricePresetChange}
-                  placeholder="Chọn mức giá..."
-                  icon={<Banknote size={14} />}
-                />
-                {updatePricePreset === 'custom' && (
-                  <div className="relative mt-2">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={updateGenkouryoPrice ? formatVNDInput(updateGenkouryoPrice) : ''}
-                      onChange={(e) => setUpdateGenkouryoPrice(e.target.value.replace(/[^0-9]/g, ''))}
-                      placeholder="VD: 60.000"
-                      className="w-full px-4 py-2.5 pr-20 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 transition-colors"
-                    />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-text-muted">
-                      VND/trang
-                    </span>
-                  </div>
-                )}
-                {updatePricePreset !== 'custom' && updateGenkouryoPrice && (
-                  <p className="text-[11px] text-brand/80 mt-1.5 font-medium">
-                    Đã chọn: {formatVND(Number(updateGenkouryoPrice.replace(/\D/g, '')))} / trang
-                  </p>
-                )}
+                <div className="relative">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={updateGenkouryoPrice ? formatVNDInput(updateGenkouryoPrice) : ''}
+                    onChange={(e) => setUpdateGenkouryoPrice(e.target.value.replace(/[^0-9]/g, ''))}
+                    placeholder="VD: 60.000"
+                    className="w-full px-4 py-2.5 pr-20 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50 transition-colors"
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-text-muted">
+                    VND/trang
+                  </span>
+                </div>
               </div>
 
               {/* Effective date */}
@@ -830,16 +828,22 @@ export const ContractManagementFeature = () => {
 
       {/* Contract Detail Modal */}
       {showDetailModal && selectedSeries && selectedSeries.hasContract && (
-        <AnimatedModal open onClose={() => setShowDetailModal(false)} panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-lg-custom w-full max-w-lg max-h-[90vh] flex flex-col">
+        <AnimatedModal open onClose={() => setShowDetailModal(false)} panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-lg-custom w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border-custom shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-info/10 flex items-center justify-center">
-                  <FileText size={16} className="text-info" />
+            <div className="flex items-start justify-between px-6 py-5 border-b border-border-custom bg-bg-primary/35 shrink-0">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-info/10 flex items-center justify-center shrink-0">
+                  <FileText size={18} className="text-info" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h3 className="text-base font-semibold text-text-primary">Chi tiết Hợp đồng</h3>
-                  <p className="text-xs text-text-muted mt-0.5">{selectedSeries.title}</p>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <p className="text-xs text-text-muted truncate">{selectedSeries.title}</p>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${isSignedContract(selectedSeries.contractStatus) ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-warning/10 text-warning border border-warning/20'}`}>
+                      {isSignedContract(selectedSeries.contractStatus) ? <Check size={10} /> : <Clock size={10} />}
+                      {getContractStatusLabel(selectedSeries.contractStatus)}
+                    </span>
+                  </div>
                 </div>
               </div>
               <button
@@ -853,6 +857,49 @@ export const ContractManagementFeature = () => {
 
             {/* Content */}
             <div className="p-6 space-y-5 overflow-y-auto">
+              {selectedSeries.contractFileUrl ? (
+                <div className="rounded-2xl border border-info/25 bg-info/5 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="w-11 h-11 rounded-xl bg-info/10 flex items-center justify-center shrink-0">
+                      <FileCheck size={19} className="text-info" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-text-primary">Bản hợp đồng PDF</p>
+                        <HelpTip
+                          size="sm"
+                          width="20rem"
+                          content="Đây là file PDF backend đã tạo và upload lên Firebase. Nút xem sẽ mở trực tiếp file trong tab mới, giống khi kiểm tra bằng Swagger."
+                        />
+                      </div>
+                      <p className="text-xs text-text-muted mt-1 leading-relaxed">
+                        Dùng để đối chiếu nội dung hợp đồng trước và sau khi tác giả ký.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => window.open(selectedSeries.contractFileUrl ?? '', '_blank', 'noopener,noreferrer')}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-info hover:bg-info/90 text-white text-sm font-semibold border-none cursor-pointer transition-colors shrink-0"
+                  >
+                    <Eye size={14} />
+                    Xem hợp đồng
+                    <ExternalLink size={13} />
+                  </button>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-warning/25 bg-warning/5 p-4">
+                  <div className="flex items-center gap-2">
+                    <FileText size={16} className="text-warning" />
+                    <p className="text-sm font-semibold text-text-primary">Chưa có file PDF</p>
+                    <HelpTip
+                      size="sm"
+                      content="Hợp đồng có dữ liệu trong hệ thống nhưng chưa có đường dẫn PDF. Hãy kiểm tra lại API tạo hợp đồng hoặc trạng thái upload Firebase."
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Contract info grid */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-bg-surface border border-border-custom rounded-xl px-3 py-2.5">
@@ -863,21 +910,27 @@ export const ContractManagementFeature = () => {
                   <p className="text-sm font-semibold text-text-primary mt-1 font-mono">#{selectedSeries.contractId}</p>
                 </div>
                 <div className="bg-bg-surface border border-border-custom rounded-xl px-3 py-2.5">
-                  <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium flex items-center gap-1">
-                    <Check size={10} />
-                    Trạng thái
+                  <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium flex items-center gap-1.5">
+                    <Calendar size={10} />
+                    Ngày ký
+                    <HelpTip size="sm" content="Ngày này chỉ có sau khi tác giả xác nhận ký hợp đồng trên hệ thống." />
                   </p>
-                  <p className="text-sm mt-1">
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${isSignedContract(selectedSeries.contractStatus) ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-warning/10 text-warning border border-warning/20'}`}>
-                      {isSignedContract(selectedSeries.contractStatus) ? <Check size={10} /> : <Clock size={10} />}
-                      {getContractStatusLabel(selectedSeries.contractStatus)}
-                    </span>
+                  <p className="text-sm font-semibold text-text-primary mt-1">
+                    {selectedSeries.signedDate ? formatApprovedDate(selectedSeries.signedDate) : '-'}
                   </p>
                 </div>
               </div>
 
               {/* Author and series */}
               <div className="bg-bg-surface border border-border-custom rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-text-primary">Thông tin bộ truyện</p>
+                  <HelpTip
+                    size="sm"
+                    content="Các thông tin này được lấy từ hồ sơ bộ truyện đã được Hội đồng duyệt vốn."
+                  />
+                </div>
+                <div className="h-px bg-border-custom" />
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-xs text-text-secondary flex items-center gap-2">
                     <User size={13} className="text-text-muted" />
@@ -909,9 +962,12 @@ export const ContractManagementFeature = () => {
               <div className="bg-brand/5 border border-brand/20 rounded-xl p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">
-                      Đơn giá nhuận bút cơ bản
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">
+                        Đơn giá nhuận bút cơ bản
+                      </p>
+                      <HelpTip size="sm" content="Đơn giá đang áp dụng cho mỗi trang hợp lệ của bộ truyện." />
+                    </div>
                     <p className="text-xl font-bold text-text-primary mt-1">
                       {selectedSeries.genkouryoPrice ? formatVND(selectedSeries.genkouryoPrice).replace(' VND', '') : '—'}
                       <span className="text-xs font-normal text-text-muted ml-1">VND / trang</span>
@@ -923,7 +979,10 @@ export const ContractManagementFeature = () => {
                 </div>
                 <div className="mt-3 pt-3 border-t border-brand/10 grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Ngân sách duyệt</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Ngân sách duyệt</p>
+                      <HelpTip size="sm" content="Đây là mức vốn Hội đồng đã duyệt. Hệ thống dùng quỹ này để thanh toán nhuận bút theo tiến độ." />
+                    </div>
                     <p className="text-sm font-semibold text-text-primary mt-0.5">{formatVND(selectedSeries.approvedBudget)}</p>
                   </div>
                   <div>
@@ -941,6 +1000,11 @@ export const ContractManagementFeature = () => {
                   <p className="text-xs font-medium text-text-secondary mb-2 flex items-center gap-1.5">
                     <FileSignature size={12} />
                     Lịch sử phụ lục ({selectedSeries.addendums.length})
+                    <HelpTip
+                      size="sm"
+                      width="20rem"
+                      content="Phụ lục được dùng khi cần đổi đơn giá hoặc điều khoản sau khi hợp đồng chính đã có hiệu lực."
+                    />
                   </p>
                   <div className="space-y-2">
                     {selectedSeries.addendums.map((addendum: ContractAddendumDto, idx: number) => (
@@ -969,14 +1033,21 @@ export const ContractManagementFeature = () => {
               )}
 
               {(!selectedSeries.addendums || selectedSeries.addendums.length === 0) && (
-                <div className="text-center py-4">
+                <div className="text-center py-5 rounded-xl border border-dashed border-border-custom bg-bg-surface/40">
                   <p className="text-xs text-text-muted">Chưa có phụ lục nào được tạo.</p>
                 </div>
               )}
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border-custom bg-bg-secondary/80 rounded-b-2xl shrink-0">
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border-custom bg-bg-primary/35 rounded-b-2xl shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowDetailModal(false)}
+                className="px-4 py-2.5 border border-border-custom hover:bg-bg-surface rounded-xl text-sm bg-transparent cursor-pointer text-text-secondary transition-colors"
+              >
+                Đóng
+              </button>
               {isSignedContract(selectedSeries.contractStatus) && (
                 <button
                   type="button"
@@ -990,16 +1061,10 @@ export const ContractManagementFeature = () => {
                   Tạo phụ lục mới
                 </button>
               )}
-              <button
-                type="button"
-                onClick={() => setShowDetailModal(false)}
-                className="px-4 py-2.5 border border-border-custom hover:bg-bg-surface rounded-xl text-sm bg-transparent cursor-pointer text-text-secondary transition-colors"
-              >
-                Đóng
-              </button>
             </div>
         </AnimatedModal>
       )}
+
     </div>
   );
 };
