@@ -69,4 +69,11 @@ export const contractApi = {
     );
     return res.data;
   },
+
+  rejectContract: async (contractId: number) => {
+    const res = await axiosInstance.post<ApiResponse<unknown>>(
+      `/api/contracts/${contractId}/reject`
+    );
+    return res.data;
+  },
 };

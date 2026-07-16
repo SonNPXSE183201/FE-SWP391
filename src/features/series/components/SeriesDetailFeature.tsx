@@ -350,7 +350,9 @@ export const SeriesDetailFeature = () => {
                 contractSignedDate={series.contractSignedDate}
                 contractFileUrl={(series as { contractFileUrl?: string | null }).contractFileUrl}
                 isSigning={acceptFund.isSigning}
+                isRejecting={acceptFund.isRejecting}
                 onSign={acceptFund.signContract}
+                onReject={acceptFund.rejectContract}
               />
             </div>
           )}
