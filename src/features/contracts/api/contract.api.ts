@@ -76,4 +76,29 @@ export const contractApi = {
     );
     return res.data;
   },
+
+  createContractTemplate: async (content: string, isActive: boolean) => {
+    const payload = { content, isActive };
+    const res = await axiosInstance.post<ApiResponse<ContractTemplateDto>>(
+      '/api/contract-templates',
+      payload,
+    );
+    return res.data?.data;
+  },
+
+  updateContractTemplate: async (id: number, content: string, isActive: boolean) => {
+    const payload = { content, isActive };
+    const res = await axiosInstance.put<ApiResponse<ContractTemplateDto>>(
+      `/api/contract-templates/${id}`,
+      payload,
+    );
+    return res.data?.data;
+  },
+
+  deleteContractTemplate: async (id: number) => {
+    const res = await axiosInstance.delete<ApiResponse<unknown>>(
+      `/api/contract-templates/${id}`,
+    );
+    return res.data;
+  },
 };
