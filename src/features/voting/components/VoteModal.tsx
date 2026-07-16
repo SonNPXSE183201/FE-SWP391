@@ -11,6 +11,7 @@ import {
   XCircle,
   MessageSquare,
   Banknote,
+  CalendarClock,
   Sparkles,
   Copy,
 } from 'lucide-react';
@@ -113,6 +114,12 @@ const COMMENT_PLACEHOLDER: Record<VoteUiChoice, string> = {
 
 
 
+const PUBLICATION_SCHEDULE_OPTIONS = [
+  { value: 'Weekly', label: '1 tuần 1 lần', hint: 'Phù hợp khi đội sản xuất đủ lực và truyện cần nhịp ra đều.' },
+  { value: 'Bi-weekly', label: '2 tuần 1 lần', hint: 'Cân bằng giữa tốc độ phát hành và thời gian hoàn thiện chương.' },
+  { value: 'Monthly', label: '1 tháng 1 lần', hint: 'Phù hợp với truyện phức tạp hoặc đội sản xuất nhỏ.' },
+];
+
 type VoteModalProps = {
 
   voteTarget: VotingSeriesDto;
@@ -128,6 +135,10 @@ type VoteModalProps = {
   voteBudget: number;
 
   setVoteBudget: (v: number) => void;
+
+  publicationSchedule: string;
+
+  setPublicationSchedule: (v: string) => void;
 
   boardTotal: number;
 
@@ -160,6 +171,10 @@ export const VoteModal = ({
   voteBudget,
 
   setVoteBudget,
+
+  publicationSchedule,
+
+  setPublicationSchedule,
 
   boardTotal,
 
@@ -203,11 +218,13 @@ export const VoteModal = ({
 
       if (authorBudget > 0 && !isRecommendedBudgetInRange(voteBudget, authorBudget)) return false;
 
+      if (!publicationSchedule) return false;
+
     }
 
     return voteComment.trim().length >= 3;
 
-  }, [voteDecision, voteBudget, voteComment, authorBudget]);
+  }, [voteDecision, voteBudget, voteComment, authorBudget, publicationSchedule]);
 
 
 
@@ -448,6 +465,41 @@ export const VoteModal = ({
 
                     )}
 
+                  </div>
+
+                  <div>
+                    <label className="flex items-center gap-1.5 text-xs font-medium text-text-secondary mb-2">
+                      <CalendarClock size={12} />
+                      Lịch phát hành <span className="text-danger">*</span>
+                      <HelpTip
+                        content="Hội đồng chọn nhịp phát hành cho toàn bộ bộ truyện. Khi chương được duyệt, hệ thống dựa vào lịch này để tạo ngày xuất bản dự kiến."
+                        title="Lịch phát hành"
+                        ariaLabel="Giải thích lịch phát hành"
+                        size="sm"
+                        placement="bottom-start"
+                        autoCloseMs={0}
+                      />
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {PUBLICATION_SCHEDULE_OPTIONS.map((option) => {
+                        const selected = publicationSchedule === option.value;
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => setPublicationSchedule(option.value)}
+                            className={`rounded-xl border px-3 py-2.5 text-left transition-all cursor-pointer ${
+                              selected
+                                ? 'border-brand/60 bg-brand/10 text-text-primary ring-1 ring-brand/30'
+                                : 'border-border-custom bg-bg-primary text-text-secondary hover:border-brand/30'
+                            }`}
+                          >
+                            <span className="block text-xs font-semibold">{option.label}</span>
+                            <span className="mt-1 block text-[10px] leading-snug text-text-muted">{option.hint}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
                 </div>

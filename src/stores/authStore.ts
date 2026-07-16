@@ -14,6 +14,9 @@ export interface User {
   portfolioUrl?: string;
   skills?: string;
   phoneNumber?: string;
+  citizenId?: string;
+  citizenIdIssueDate?: string;
+  citizenIdIssuePlace?: string;
 }
 
 interface AuthState {

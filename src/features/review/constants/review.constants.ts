@@ -40,6 +40,81 @@ export const QC_CHECKLIST_ITEMS: string[] = [
   'Số trang hợp lệ đã được xác nhận',
 ];
 
+export type QCCriterion = {
+  code: string;
+  label: string;
+  description: string;
+};
+
+export const QC_CRITERIA: Record<AnnotationType, QCCriterion[]> = {
+  Technical: [
+    {
+      code: 'KT-01',
+      label: 'Độ phân giải',
+      description: 'Trang bị mờ, vỡ nét hoặc độ phân giải không đủ để xuất bản.',
+    },
+    {
+      code: 'KT-02',
+      label: 'Khung/cắt trang',
+      description: 'Khung tranh, bleed hoặc vùng cắt trang bị lệch, mất chi tiết quan trọng.',
+    },
+    {
+      code: 'KT-03',
+      label: 'Nét/scan',
+      description: 'Nét vẽ bị bẩn, nhiễu, đứt nét hoặc còn artefact sau khi xử lý ảnh.',
+    },
+    {
+      code: 'KT-04',
+      label: 'Thứ tự đọc',
+      description: 'Thứ tự panel, bong bóng thoại hoặc hướng đọc gây nhầm lẫn.',
+    },
+  ],
+  Art: [
+    {
+      code: 'MT-01',
+      label: 'Giải phẫu/tỉ lệ',
+      description: 'Tỉ lệ cơ thể, gương mặt hoặc phối cảnh nhân vật chưa hợp lý.',
+    },
+    {
+      code: 'MT-02',
+      label: 'Biểu cảm/cử chỉ',
+      description: 'Biểu cảm hoặc cử chỉ nhân vật chưa khớp cảm xúc/kịch bản.',
+    },
+    {
+      code: 'MT-03',
+      label: 'Ánh sáng/bóng',
+      description: 'Ánh sáng, đổ bóng hoặc tương phản chưa thống nhất giữa các khung hình.',
+    },
+    {
+      code: 'MT-04',
+      label: 'Bố cục hình',
+      description: 'Bố cục khung hình chưa rõ điểm nhấn hoặc làm người đọc khó theo dõi.',
+    },
+  ],
+  Content: [
+    {
+      code: 'ND-01',
+      label: 'Sai thoại/chính tả',
+      description: 'Thoại sai chính tả, sai ngữ pháp hoặc không khớp kịch bản.',
+    },
+    {
+      code: 'ND-02',
+      label: 'Liên tục cảnh',
+      description: 'Diễn biến, đạo cụ, trang phục hoặc vị trí nhân vật bị thiếu liên tục.',
+    },
+    {
+      code: 'ND-03',
+      label: 'Nội dung nhạy cảm',
+      description: 'Nội dung có yếu tố nhạy cảm hoặc không phù hợp tiêu chuẩn xuất bản.',
+    },
+    {
+      code: 'ND-04',
+      label: 'Thiếu thông tin',
+      description: 'Khung hình thiếu lời thoại, SFX, chú thích hoặc thông tin cần có.',
+    },
+  ],
+};
+
 export { formatVND } from '../../../utils/currency';
 
 /**

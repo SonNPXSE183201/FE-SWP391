@@ -88,11 +88,13 @@ export const uiChoiceToVoteSeriesRequest = (
   choice: VoteUiChoice,
   comment: string,
   recommendedBudget?: number,
+  publicationSchedule?: string,
 ) => ({
   voteChoice: choice,
   approved: choice === 'Approve',
   comment: comment || undefined,
   recommendedBudget,
+  publicationSchedule: choice === 'Approve' ? publicationSchedule : undefined,
 });
 
 export const getSeriesIdString = (series: SeriesDto): string => String(series.id ?? '');

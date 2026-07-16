@@ -9,6 +9,7 @@ import type { SeriesNameUpdateSnapshot } from '../api/series.api';
 
 const MAX_FILE_SIZE_MB = 20;
 const ACCEPTED_TYPE = 'application/pdf';
+const PDF_HEADER = '%PDF-';
 
 const fileNameFromUrl = (url: string): string => {
   try {
@@ -19,6 +20,34 @@ const fileNameFromUrl = (url: string): string => {
     const segment = url.split('/').pop();
     return segment ? decodeURIComponent(segment) : 'name-manuscript.pdf';
   }
+};
+
+const readPdfText = async (file: File): Promise<string> => {
+  const buffer = await file.arrayBuffer();
+  return new TextDecoder('latin1').decode(buffer);
+};
+
+const validatePdfContent = async (file: File): Promise<string | null> => {
+  if (file.size === 0) {
+    return 'File PDF đang trống. Vui lòng chọn bản phác thảo có nội dung.';
+  }
+
+  const text = await readPdfText(file);
+  if (!text.startsWith(PDF_HEADER) || !text.includes('%%EOF')) {
+    return 'File không phải PDF hợp lệ. Vui lòng xuất lại file PDF rồi upload.';
+  }
+
+  const pageCount = text.match(/\/Type\s*\/Page\b/g)?.length ?? 0;
+  if (pageCount === 0) {
+    return 'File PDF không có trang nào. Vui lòng kiểm tra lại bản phác thảo.';
+  }
+
+  const hasRenderableContent = /\/Contents\b/.test(text) && /stream[\r\n]/.test(text);
+  if (!hasRenderableContent) {
+    return 'File PDF chưa có nội dung hiển thị. Vui lòng upload bản phác thảo có hình hoặc chữ.';
+  }
+
+  return null;
 };
 
 interface UseNameUploadOptions {
@@ -91,6 +120,13 @@ export const useNameUpload = ({
       }
       if (file.type !== ACCEPTED_TYPE) {
         toast.error('Vui lòng chọn file PDF');
+        return;
+      }
+
+      const pdfError = await validatePdfContent(file);
+      if (pdfError) {
+        toast.error(pdfError);
+        if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
 

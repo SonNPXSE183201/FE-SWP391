@@ -7,6 +7,8 @@ export type SeriesStatus =
   | 'PendingApproval'
   | 'PendingBoardVote'
   | 'Approved'
+  | 'Fund_Pending'
+  | 'In Production'
   | 'Published'
   | 'OnHold'
   | 'Cancelled';

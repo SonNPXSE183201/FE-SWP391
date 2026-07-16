@@ -1,13 +1,33 @@
 import { axiosInstance } from '../../../api/axios';
 import type {
   ApiResponse,
-  ApprovedSeriesContractDto,
+  ApprovedSeriesContractDto as GeneratedApprovedSeriesContractDto,
   CreateContractRequestDto,
   UpdateContractRequestDto,
   CreateContractResponseDto,
+  ContractAddendumDto,
 } from '../../../api/generated/types';
 
-export type { ApprovedSeriesContractDto, ContractAddendumDto } from '../../../api/generated/types';
+export type { ContractAddendumDto } from '../../../api/generated/types';
+
+export type ApprovedSeriesContractDto = GeneratedApprovedSeriesContractDto & {
+  contractFileUrl?: string | null;
+  addendums?: ContractAddendumDto[] | null;
+};
+
+export type ContractTemplateDto = {
+  id?: number;
+  content?: string | null;
+  version?: number;
+  isActive?: boolean;
+  createdByUserId?: number;
+  createAt?: string;
+  updateAt?: string | null;
+};
+
+type CreateContractWithTemplateRequestDto = CreateContractRequestDto & {
+  templateId?: number;
+};
 
 export const contractApi = {
   getApprovedSeries: async (): Promise<ApprovedSeriesContractDto[]> => {
@@ -17,8 +37,15 @@ export const contractApi = {
     return res.data?.data ?? [];
   },
 
-  createContract: async (seriesId: string, baseGenkouryoPrice: number) => {
-    const payload: CreateContractRequestDto = { seriesId, baseGenkouryoPrice };
+  getContractTemplates: async (): Promise<ContractTemplateDto[]> => {
+    const res = await axiosInstance.get<ApiResponse<ContractTemplateDto[]>>(
+      '/api/contract-templates',
+    );
+    return res.data?.data ?? [];
+  },
+
+  createContract: async (seriesId: string, baseGenkouryoPrice: number, templateId: number) => {
+    const payload: CreateContractWithTemplateRequestDto = { seriesId, baseGenkouryoPrice, templateId };
     const res = await axiosInstance.post<ApiResponse<CreateContractResponseDto>>(
       '/api/admin/contracts',
       payload,
