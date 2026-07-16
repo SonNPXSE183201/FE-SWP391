@@ -1,1130 +1,1052 @@
-# 📖 Tài liệu Mô tả Frontend — MangaPress
+# Frontend Architecture Guide - MangaPress
 
-> **Người xây dựng**: Phúc  
-> **Dự án**: Hệ thống Xuất bản Manga (MangaPress)  
-> **Ngày tạo**: 14/07/2026  
-> **Mục đích**: Chuẩn bị cho buổi chấm Assessment 03 — Checkpoint (Week 9-10)
-
----
-
-## 📑 Mục lục
-
-1. [Tổng quan Kiến trúc](#1-tổng-quan-kiến-trúc)
-2. [Tech Stack & Dependencies](#2-tech-stack--dependencies)
-3. [Cấu trúc Thư mục](#3-cấu-trúc-thư-mục)
-4. [Luồng Dữ liệu (Data Flow)](#4-luồng-dữ-liệu-data-flow)
-5. [Hệ thống Authentication & Authorization](#5-hệ-thống-authentication--authorization)
-6. [Hệ thống Layout & Routing](#6-hệ-thống-layout--routing)
-7. [Các Feature Module chi tiết](#7-các-feature-module-chi-tiết)
-   - 7.1 [Landing Page](#71-landing-page)
-   - 7.2 [Auth (Đăng nhập/Đăng ký)](#72-auth-đăng-nhậpđăng-ký)
-   - 7.3 [Dashboard (Bảng tin)](#73-dashboard-bảng-tin)
-   - 7.4 [Series (Quản lý bộ truyện)](#74-series-quản-lý-bộ-truyện)
-   - 7.5 [Canvas (Vẽ & Phân vùng trang)](#75-canvas-vẽ--phân-vùng-trang)
-   - 7.6 [Tasks (Giao việc & Tiến độ)](#76-tasks-giao-việc--tiến-độ)
-   - 7.7 [Wallet (Ví tiền)](#77-wallet-ví-tiền)
-   - 7.8 [Review (Biên tập & Duyệt)](#78-review-biên-tập--duyệt)
-   - 7.9 [Voting (Bỏ phiếu Hội đồng)](#79-voting-bỏ-phiếu-hội-đồng)
-   - 7.10 [Ranking (Xếp hạng)](#710-ranking-xếp-hạng)
-   - 7.11 [Schedule (Lịch xuất bản)](#711-schedule-lịch-xuất-bản)
-   - 7.12 [Contracts (Hợp đồng)](#712-contracts-hợp-đồng)
-   - 7.13 [Notifications (Thông báo real-time)](#713-notifications-thông-báo-real-time)
-   - 7.14 [Users & Admin](#714-users--admin)
-   - 7.15 [Portfolio & Assistant Profile](#715-portfolio--assistant-profile)
-   - 7.16 [Reconciliation & Withdraw Approval](#716-reconciliation--withdraw-approval)
-   - 7.17 [Settings (Cài đặt)](#717-settings-cài-đặt)
-   - 7.18 [AI Features](#718-ai-features)
-   - 7.19 [Disputes (Tranh chấp)](#719-disputes-tranh-chấp)
-   - 7.20 [Assistant Management](#720-assistant-management)
-8. [Hệ thống Real-time (SignalR)](#8-hệ-thống-real-time-signalr)
-9. [Shared Hooks & Utilities](#9-shared-hooks--utilities)
-10. [Luồng Demo theo vai trò](#10-luồng-demo-theo-vai-trò)
-11. [Các câu hỏi Cô có thể hỏi & Gợi ý trả lời](#11-các-câu-hỏi-cô-có-thể-hỏi--gợi-ý-trả-lời)
+> **Author / Owner**: Phuc  
+> **Project**: Manga Publishing System (MangaPress)  
+> **Created**: 2026-07-14  
+> **Purpose**: Assessment 03 checkpoint preparation and frontend architecture explanation  
+> **Audience**: Lecturer, project reviewers, Software Engineering students, and new frontend contributors
 
 ---
 
-## 1. Tổng quan Kiến trúc
+## Table of Contents
+
+1. [Architecture Overview](#1-architecture-overview)
+2. [Technology Stack and Dependencies](#2-technology-stack-and-dependencies)
+3. [Folder Structure](#3-folder-structure)
+4. [Data Flow](#4-data-flow)
+5. [Authentication and Authorization](#5-authentication-and-authorization)
+6. [Layout and Routing System](#6-layout-and-routing-system)
+7. [Feature Modules](#7-feature-modules)
+8. [Real-Time Communication with SignalR](#8-real-time-communication-with-signalr)
+9. [Shared Hooks, Utilities, and Components](#9-shared-hooks-utilities-and-components)
+10. [Role-Based Demo Flows](#10-role-based-demo-flows)
+11. [Assessment and Interview Questions](#11-assessment-and-interview-questions)
+12. [Final Preparation Checklist](#12-final-preparation-checklist)
+
+---
+
+## 1. Architecture Overview
+
+MangaPress is implemented as a **React Single Page Application (SPA)**. The frontend is responsible for presenting role-specific workspaces, handling user interactions, communicating with the backend API gateway, managing client-side state, and reacting to real-time events.
+
+The architecture follows a **feature-based structure**. Instead of grouping all components, hooks, and API calls by technical type only, the application groups business capabilities under `features/`. This is a deliberate design decision: the project has many workflows, and each workflow is easier to understand when its API calls, hooks, components, types, and utilities are colocated.
 
 ```mermaid
 graph TB
-    subgraph Frontend["Frontend (React SPA)"]
+    subgraph Frontend["Frontend - React SPA"]
+        App["App.tsx - Route Composition"]
         Pages["Pages Layer"]
+        Layouts["Layouts"]
         Features["Feature Modules"]
         Components["Shared Components"]
         Hooks["Custom Hooks"]
         Stores["Zustand Stores"]
-        API["API Layer (Axios)"]
+        API["API Layer - Axios"]
+        Query["TanStack Query Cache"]
     end
 
-    subgraph Backend["Backend (ASP.NET Core)"]
-        Gateway["API Gateway :5000"]
-        Services["Microservices"]
-        SignalR["SignalR Hub"]
+    subgraph Backend["Backend"]
+        Gateway["Ocelot API Gateway :5000"]
+        MangaAPI["ASP.NET Core API :5010"]
+        SignalR["SignalR Notification Hub"]
     end
 
+    App --> Pages
+    App --> Layouts
     Pages --> Features
-    Features --> Hooks
     Features --> Components
-    Hooks --> API
+    Features --> Hooks
+    Hooks --> Query
     Hooks --> Stores
-    API -->|"REST API /api/v1/*"| Gateway
-    SignalR -->|"WebSocket"| Hooks
-    Gateway --> Services
+    Hooks --> API
+    API -->|"REST /api/v1/*"| Gateway
+    Gateway --> MangaAPI
+    SignalR -->|"WebSocket events"| Hooks
 ```
 
-**Kiến trúc tổng thể:**
-- **Frontend** là một Single Page Application (SPA) dùng React + TypeScript
-- **Kiến trúc Feature-based**: Mỗi tính năng nghiệp vụ được đóng gói thành 1 feature module riêng biệt
-- **Giao tiếp**: REST API qua Axios + Real-time qua SignalR WebSocket
-- **State Management**: Zustand cho global state (auth, notifications, canvas)
-- **Server State**: TanStack React Query cho caching, sync và invalidation
+### Key Architectural Decisions
+
+- **React SPA**: The application runs in the browser and changes pages through client-side routing without full page reloads.
+- **Feature-based modules**: Each business capability owns its API calls, hooks, components, types, constants, and utilities.
+- **React Router**: The route tree separates public pages, authentication pages, and role-protected workspaces.
+- **TanStack Query**: Server-owned data is cached, refetched, retried, and invalidated through query keys.
+- **Zustand**: Client-owned global state is used for authentication, canvas tool state, and notifications.
+- **Axios**: HTTP communication is centralized through one configured Axios instance with interceptors.
+- **SignalR**: Real-time backend events update notification state and invalidate relevant query caches.
+- **Tailwind CSS and CSS variables**: Styling is consistent, tokenized, and practical for a large dashboard-style application.
+
+### Why This Architecture Works
+
+The frontend is not only a set of screens. It is a workflow application. Mangaka, Assistants, Editors, Board members, and Admins all interact with different parts of the same business domain. A feature-based architecture keeps those workflows understandable and maintainable.
+
+For example, the `tasks` feature contains task API calls, task hooks, task UI components, task constants, and task types. A developer who needs to update task behavior can work mostly inside one bounded area instead of searching across the entire project.
 
 ---
 
-## 2. Tech Stack & Dependencies
+## 2. Technology Stack and Dependencies
 
-| Thành phần | Thư viện | Phiên bản | Vai trò |
-|---|---|---|---|
-| **Framework** | React | 19.x | UI Library chính |
-| **Language** | TypeScript | 6.x | Type-safe JavaScript |
-| **Build Tool** | Vite | 8.x | Dev server + bundler |
-| **Routing** | react-router-dom | 7.x | Client-side routing |
-| **State (Global)** | Zustand | 5.x | Lightweight state management |
-| **State (Server)** | TanStack React Query | 5.x | Caching & server state sync |
-| **HTTP Client** | Axios | 1.x | REST API calls |
-| **Real-time** | @microsoft/signalr | 10.x | WebSocket notifications |
-| **Styling** | TailwindCSS | 3.x | Utility-first CSS |
-| **Animation** | Framer Motion | 12.x | Page transitions & micro-animations |
-| **Canvas** | Fabric.js | 7.x | Vẽ region, annotation trên trang manga |
-| **Charts** | Recharts | 3.x | Dashboard charts |
-| **Icons** | lucide-react | 0.445 | Icon system |
-| **Toast** | react-hot-toast | 2.x | Notification toasts |
-| **UI Primitives** | Radix UI, class-variance-authority | — | Accessible UI components |
-| **API Gen** | openapi-typescript | 7.x | Tự sinh TypeScript types từ Swagger |
+| Area | Library / Tool | Version | Responsibility |
+|---|---|---:|---|
+| UI framework | React | 19.x | Component-based user interface |
+| Language | TypeScript | 6.x | Static typing and safer API contracts |
+| Build tool | Vite | 8.x | Development server and production bundling |
+| Routing | react-router-dom | 7.x | Client-side routing and nested layouts |
+| Global client state | Zustand | 5.x | Lightweight global state stores |
+| Server state | TanStack React Query | 5.x | API caching, refetching, loading state, and invalidation |
+| HTTP client | Axios | 1.x | REST API requests and interceptors |
+| Real-time | @microsoft/signalr | 10.x | WebSocket-based notifications and live updates |
+| Styling | Tailwind CSS | 3.x | Utility-first styling |
+| Animation | Framer Motion | 12.x | Page transitions and micro-interactions |
+| Canvas | Fabric.js | 7.x | Manga page canvas, regions, and annotations |
+| Charts | Recharts | 3.x | Dashboard and ranking visualizations |
+| Icons | lucide-react | 0.445 | Consistent icon system |
+| Toasts | react-hot-toast | 2.x | User feedback notifications |
+| UI primitives | Radix UI, class-variance-authority | - | Accessible UI primitives and class variants |
+| API type generation | openapi-typescript | 7.x | TypeScript types generated from backend Swagger/OpenAPI |
 
-> [!IMPORTANT]
-> **Điểm nổi bật**: Types TypeScript được **tự động sinh** từ Swagger/OpenAPI schema của backend (`npm run generate-api`), đảm bảo type-safe 100% giữa FE-BE.
+### Why Type Generation Matters
+
+The frontend imports generated DTO types from the backend OpenAPI schema. This reduces integration risk between frontend and backend. If the backend changes a field name or response shape, TypeScript can catch many mismatches during development.
+
+Command:
+
+```bash
+npm run generate-api
+```
+
+This command generates API schema/types from backend Swagger and places them under `src/api/generated/`.
+
+### Senior Engineering View
+
+The stack separates state ownership:
+
+- **React state** owns local UI state.
+- **Zustand** owns global client state.
+- **TanStack Query** owns server state.
+- **Axios** owns transport behavior.
+- **React Router** owns navigation state.
+
+This separation prevents the common frontend anti-pattern of putting all application state into one global store.
 
 ---
 
-## 3. Cấu trúc Thư mục
+## 3. Folder Structure
 
-```
+```text
 frontend/src/
-├── main.tsx                  # Entry point — khởi tạo React, QueryClient
-├── App.tsx                   # Routing chính — định nghĩa tất cả routes
-│
-├── api/                      # API Layer
-│   ├── axios.ts              # Axios instance + interceptors (Auth, Refresh Token)
-│   ├── apiResponse.ts        # Helper unwrap API response
-│   └── generated/            # Auto-generated từ Swagger
-│       ├── schema.ts         # OpenAPI schema types (242KB)
-│       └── types.ts          # DTO interfaces dùng trong app
-│
-├── stores/                   # Zustand Global Stores
-│   ├── authStore.ts          # Auth state (user, token, refreshToken)
-│   ├── notificationStore.ts  # Notifications in-memory
-│   └── canvasStore.ts        # Canvas tool state (activeTool, zoom, selection)
-│
-├── routes/
-│   └── RoleGuard.tsx         # Route protection theo role
-│
-├── layouts/                  # Layout components
-│   ├── MainLayout.tsx        # Sidebar + Header + Content (cho user đã login)
-│   ├── AuthLayout.tsx        # Layout cho Login/Register
-│   ├── Sidebar.tsx           # Navigation sidebar theo role
-│   ├── Header.tsx            # Top bar + Breadcrumb + Notifications + UserDropdown
-│   └── UserDropdown.tsx      # Menu user (Cài đặt, Đăng xuất)
-│
-├── pages/                    # Page components (thin wrappers)
-│   ├── landing/              # Trang chủ
-│   ├── auth/                 # Login, Register, Forgot/Reset Password
-│   ├── mangaka/              # 11 pages cho Tác giả
-│   ├── assistant/            # 8 pages cho Trợ lý vẽ
-│   ├── editor/               # 7 pages cho Biên tập viên
-│   ├── board/                # 6 pages cho Hội đồng
-│   ├── admin/                # 8 pages cho Admin
-│   └── wallet/               # DepositCallbackPage (VNPay redirect)
-│
-├── features/                 # Feature modules (CORE BUSINESS LOGIC)
-│   ├── auth/                 # Đăng nhập, Đăng ký, Quên mật khẩu
-│   ├── landing/              # Landing page sections
-│   ├── dashboard/            # Dashboard cho 5 roles
-│   ├── series/               # CRUD bộ truyện, chapters, pages
-│   ├── canvas/               # Canvas editor (vẽ region, annotation)
-│   ├── tasks/                # Giao việc, nhận việc, review
-│   ├── wallet/               # Nạp/rút tiền, lịch sử giao dịch
-│   ├── review/               # Editor duyệt chapter, QC
-│   ├── voting/               # Board bỏ phiếu
-│   ├── ranking/              # Xếp hạng truyện
-│   ├── schedule/             # Lịch xuất bản
-│   ├── contracts/            # Quản lý hợp đồng
-│   ├── notifications/        # Dropdown thông báo
-│   ├── users/                # Admin quản lý user
-│   ├── admin/                # Admin board voting config
-│   ├── portfolio/            # Portfolio của Assistant
-│   ├── assistant-profile/    # Hồ sơ nghề nghiệp Assistant
-│   ├── assistant-management/ # Mangaka tìm & mời Assistant
-│   ├── disputes/             # Editor phân xử tranh chấp
-│   ├── reconciliation/       # Admin đối soát giao dịch
-│   ├── withdraw-approval/    # Admin duyệt rút tiền
-│   ├── settings/             # Cài đặt chung
-│   └── ai/                   # AI: colorize, segment, suggest tags
-│
-├── components/               # Shared UI components
-│   ├── common/               # Logo, Pagination, Select, DatePicker, Toast...
-│   └── canvas/               # CanvasViewer, CanvasToolbar, AnnotationPinPanel
-│
-├── hooks/                    # Shared hooks
-│   ├── useSignalR.ts         # WebSocket connection (350 lines)
-│   ├── usePagination.ts      # Client-side pagination logic
-│   ├── useClickOutside.ts    # Click outside detector
-│   ├── useDebounce.ts        # Debounce values
-│   ├── useScrollReveal.ts    # Scroll animation
-│   └── useWindowSize.ts      # Responsive breakpoints
-│
-├── types/                    # Global TypeScript type re-exports
-├── utils/                    # Utility functions
-├── constants/                # App-wide constants (genres, annotations...)
-└── styles/                   # CSS files
-    ├── index.css             # Main stylesheet entry
-    ├── variables.css         # CSS custom properties
-    ├── reset.css             # Browser reset
-    └── animations.css        # Keyframe animations
+|-- main.tsx                  # Entry point; creates React root and QueryClientProvider
+|-- App.tsx                   # Main route tree and top-level providers
+|
+|-- api/                      # Shared API layer
+|   |-- axios.ts              # Axios instance and interceptors
+|   |-- apiResponse.ts        # Helpers for ApiResponse<T>
+|   `-- generated/            # Generated OpenAPI TypeScript types
+|       |-- schema.ts
+|       `-- types.ts
+|
+|-- stores/                   # Zustand global stores
+|   |-- authStore.ts          # User, access token, refresh token, remember-me state
+|   |-- notificationStore.ts  # Notification list, unread count, dropdown state
+|   `-- canvasStore.ts        # Canvas tools, zoom, selection, annotation type
+|
+|-- routes/
+|   `-- RoleGuard.tsx         # Route-level authentication and role protection
+|
+|-- layouts/
+|   |-- MainLayout.tsx        # Sidebar, header, content outlet, SignalR initialization
+|   |-- AuthLayout.tsx        # Login/register page layout
+|   |-- Sidebar.tsx           # Role-aware navigation
+|   |-- Header.tsx            # Top bar, notifications, user dropdown
+|   `-- UserDropdown.tsx      # User menu and logout actions
+|
+|-- pages/                    # Route-level page components
+|   |-- landing/
+|   |-- auth/
+|   |-- mangaka/
+|   |-- assistant/
+|   |-- editor/
+|   |-- board/
+|   |-- admin/
+|   `-- wallet/
+|
+|-- features/                 # Business feature modules
+|   |-- auth/
+|   |-- landing/
+|   |-- dashboard/
+|   |-- series/
+|   |-- canvas/
+|   |-- tasks/
+|   |-- wallet/
+|   |-- review/
+|   |-- voting/
+|   |-- ranking/
+|   |-- schedule/
+|   |-- contracts/
+|   |-- notifications/
+|   |-- users/
+|   |-- admin/
+|   |-- portfolio/
+|   |-- assistant-profile/
+|   |-- assistant-management/
+|   |-- disputes/
+|   |-- reconciliation/
+|   |-- withdraw-approval/
+|   |-- settings/
+|   `-- ai/
+|
+|-- components/               # Shared UI components
+|   |-- common/
+|   `-- canvas/
+|
+|-- hooks/                    # Shared reusable hooks
+|   |-- useSignalR.ts
+|   |-- usePagination.ts
+|   |-- useClickOutside.ts
+|   |-- useDebounce.ts
+|   |-- useScrollReveal.ts
+|   `-- useWindowSize.ts
+|
+|-- types/                    # Global TypeScript exports
+|-- utils/                    # Cross-feature utility functions
+|-- constants/                # Application-wide constants
+`-- styles/                   # CSS entry, variables, reset, animations
 ```
 
-> [!TIP]
-> **Pattern quan trọng**: Mỗi feature module tuân theo cấu trúc nhất quán:
-> ```
-> features/<tên-feature>/
-> ├── api/           # API calls (axios requests)
-> ├── components/    # React components
-> ├── hooks/         # Custom hooks (business logic + React Query)
-> ├── types/         # TypeScript interfaces
-> ├── constants/     # Config, options
-> ├── utils/         # Helper functions
-> └── index.ts       # Barrel export (public API)
-> ```
+### Feature Module Convention
+
+Most feature modules follow this convention:
+
+```text
+features/<feature-name>/
+|-- api/           # Axios-based API calls
+|-- components/    # Feature-specific UI components
+|-- hooks/         # React Query hooks and business UI logic
+|-- types/         # TypeScript interfaces and type aliases
+|-- constants/     # Options, labels, status values
+|-- utils/         # Feature-specific helper functions
+`-- index.ts       # Barrel export for the feature public API
+```
+
+### Why This Structure Is Used
+
+This structure optimizes for change. When the task workflow changes, most changes should happen inside `features/tasks`. When wallet behavior changes, most changes should happen inside `features/wallet`. This reduces accidental coupling and makes code review easier.
 
 ---
 
-## 4. Luồng Dữ liệu (Data Flow)
+## 4. Data Flow
 
 ```mermaid
 sequenceDiagram
-    participant U as User (Browser)
-    participant P as Page Component
-    participant F as Feature Component
-    participant H as Custom Hook
-    participant RQ as React Query
-    participant AX as Axios Instance
-    participant BE as Backend API
-    participant SR as SignalR Hub
+    actor User
+    participant Page as Page Component
+    participant Feature as Feature Component
+    participant Hook as Custom Hook
+    participant Query as TanStack Query
+    participant Axios as Axios Instance
+    participant API as Backend API
+    participant Store as Zustand Store
+    participant SignalR as SignalR Hub
 
-    U->>P: Truy cập route
-    P->>F: Render Feature Component
-    F->>H: Gọi hook (useSeries, useTasks...)
-    H->>RQ: useQuery / useMutation
-    RQ->>AX: HTTP Request
-    AX->>AX: Interceptor: attach Bearer token
-    AX->>AX: Interceptor: rewrite /api/ → /api/v1/
-    AX->>BE: GET/POST/PUT/DELETE
-    BE-->>AX: Response {success, data, message}
-    AX-->>RQ: Unwrapped response
-    RQ-->>H: Cache & return data
-    H-->>F: Data + Loading + Error state
-    F-->>U: Render UI
+    User->>Page: Opens route or performs an action
+    Page->>Feature: Renders feature component
+    Feature->>Hook: Calls feature hook
+    Hook->>Query: useQuery or useMutation
+    Query->>Axios: HTTP request
+    Axios->>Axios: Add Bearer token
+    Axios->>Axios: Rewrite /api/ to /api/v1/
+    Axios->>API: Send REST request
+    API-->>Axios: ApiResponse<T>
+    Axios-->>Query: Response data
+    Query-->>Hook: data, isLoading, error
+    Hook-->>Feature: UI-ready state
+    Feature-->>User: Render result
 
-    Note over SR,H: Real-time updates
-    SR-->>H: SignalR event (NewNotification, WalletUpdated...)
-    H->>RQ: invalidateQueries → auto refetch
-    RQ-->>F: Updated data
-    F-->>U: UI tự động cập nhật
+    SignalR-->>Hook: Real-time event
+    Hook->>Store: Update notification state
+    Hook->>Query: Invalidate affected query keys
 ```
 
-### Giải thích chi tiết:
+### Detailed Explanation
 
-1. **User truy cập route** → `App.tsx` match route → render `Page` component
-2. **Page** là thin wrapper, chỉ import & render **Feature** component
-3. **Feature component** gọi **custom hook** để lấy dữ liệu
-4. **Hook** sử dụng **React Query** (`useQuery`/`useMutation`) để gọi API
-5. **Axios interceptors** tự động:
-   - Gắn `Authorization: Bearer <token>` vào mọi request
-   - Rewrite URL `/api/` → `/api/v1/` cho API Gateway
-   - **Auto refresh token** khi nhận 401 (Token Rotation)
-6. **Response** được unwrap qua helper functions (`isApiSuccess`, `unwrapPaged`...)
-7. **SignalR** push real-time events → hook nhận sự kiện → `invalidateQueries` → React Query tự fetch lại data mới
+1. A user opens a page or clicks an action.
+2. React Router renders the matching page component.
+3. The page composes a feature component.
+4. The feature component calls a custom hook.
+5. The hook uses TanStack Query for server state or Zustand for client state.
+6. The feature API function calls the shared Axios instance.
+7. Axios attaches authentication headers and rewrites API gateway paths.
+8. The backend returns a normalized `ApiResponse<T>`.
+9. React Query caches the data and exposes loading/error states.
+10. The UI renders data, loading, empty, or error states.
+11. SignalR events can invalidate query caches so the UI refreshes automatically.
+
+### Why This Flow Is Important
+
+The application avoids direct API calls inside arbitrary UI components. Instead, network access is routed through feature APIs and hooks. This creates a clean separation between rendering and data orchestration.
 
 ---
 
-## 5. Hệ thống Authentication & Authorization
+## 5. Authentication and Authorization
 
-### 5.1 Auth Store ([authStore.ts](file:///d:/Manga/frontend/src/stores/authStore.ts))
+Authentication identifies the current user. Authorization determines whether that user can access a route or perform an action.
 
-```typescript
-// State lưu trữ
-interface AuthState {
-  user: User | null;        // Thông tin user (id, email, fullName, role, avatar...)
-  token: string | null;     // JWT Access Token
-  refreshToken: string | null;  // Refresh Token
-  rememberMe: boolean;      // Ghi nhớ đăng nhập
-}
+### 5.1 Auth Store
 
-// 5 vai trò trong hệ thống
-type UserRole = 'Admin' | 'Editor' | 'Mangaka' | 'Assistant' | 'Board';
-```
+File: `src/stores/authStore.ts`
 
-**Cơ chế lưu trữ thông minh:**
-- **Remember Me = true** → Lưu vào `localStorage` (persist sau khi đóng browser)
-- **Remember Me = false** → Lưu vào `sessionStorage` (mất khi đóng tab)
-- Sử dụng `customStorage` adapter: tìm data ở cả 2 storage, ghi đúng nơi
+The auth store contains:
 
-### 5.2 Token Refresh tự động ([axios.ts](file:///d:/Manga/frontend/src/api/axios.ts))
+- `user`
+- `token`
+- `refreshToken`
+- `isLoading`
+- `rememberMe`
+- `setAuth`
+- `logout`
+- `isAuthenticated`
+- `getRoleRedirectPath`
+- `updateUser`
+
+The store uses Zustand with persistence. If `rememberMe` is enabled, auth state is stored in `localStorage`. Otherwise, it is stored in `sessionStorage`.
+
+### 5.2 Automatic Token Refresh
+
+File: `src/api/axios.ts`
 
 ```mermaid
-flowchart TD
-    A[API Request] --> B{Response 401?}
-    B -->|No| C[Return response]
-    B -->|Yes| D{Đang refresh?}
-    D -->|Yes| E[Đưa vào failedQueue]
-    D -->|No| F[Gọi API refresh-token]
-    F --> G{Refresh thành công?}
-    G -->|Yes| H[Cập nhật token mới]
-    H --> I[Retry original request]
-    H --> J[Process failedQueue với token mới]
-    G -->|No| K[Logout + redirect /login]
-    E --> L[Chờ... khi refresh xong → retry]
+sequenceDiagram
+    participant UI as Feature Hook
+    participant Axios
+    participant API as Backend API
+    participant Store as Auth Store
+    participant Queue as Failed Request Queue
+
+    UI->>Axios: Request with expired access token
+    Axios->>API: API call
+    API-->>Axios: 401 Unauthorized
+    Axios->>Axios: Check refresh state
+    alt No refresh in progress
+        Axios->>API: POST refresh-token
+        API-->>Axios: New access token and refresh token
+        Axios->>Store: Update tokens
+        Axios->>Queue: Resolve queued requests
+        Axios->>API: Retry original request
+    else Refresh already in progress
+        Axios->>Queue: Queue request until refresh completes
+    end
 ```
 
-**Đặc biệt**: Hỗ trợ **concurrent requests** — nếu nhiều request cùng bị 401, chỉ refresh token 1 lần, các request khác xếp vào `failedQueue` và retry sau.
+The refresh queue prevents multiple simultaneous requests from starting multiple refresh-token calls. This is important because refresh-token rotation can invalidate old refresh tokens.
 
-### 5.3 Route Guard ([RoleGuard.tsx](file:///d:/Manga/frontend/src/routes/RoleGuard.tsx))
+### 5.3 Route Guard
 
-```typescript
-const RoleGuard = ({ allowedRoles }) => {
-  // 1. Chưa đăng nhập → redirect /login
-  if (!isAuthenticated()) return <Navigate to="/login" />;
-  
-  // 2. Sai role → redirect /unauthorized
-  if (user && !allowedRoles.includes(user.role)) 
-    return <Navigate to="/unauthorized" />;
-  
-  // 3. Đúng role → render children (Outlet)
-  return <Outlet />;
-};
+File: `src/routes/RoleGuard.tsx`
+
+`RoleGuard` protects route groups:
+
+```tsx
+<Route element={<RoleGuard allowedRoles={['Mangaka']} />}>
+  <Route element={<MainLayout />}>
+    <Route path="/mangaka" element={<MangakaDashboardPage />} />
+  </Route>
+</Route>
 ```
 
-Mỗi nhóm route được bọc bởi `RoleGuard`:
-- `/mangaka/*` → chỉ role `Mangaka`
-- `/assistant/*` → chỉ role `Assistant`
-- `/editor/*` → chỉ role `Editor`
-- `/board/*` → chỉ role `Board`
-- `/admin/*` → chỉ role `Admin`
+Rules:
+
+- If the user is not authenticated, redirect to `/login`.
+- If the user has the wrong role, redirect to `/unauthorized`.
+- If the user has the allowed role, render the nested route with `<Outlet />`.
+
+### Important Security Note
+
+Frontend authorization improves user experience but is not a complete security control. Backend APIs must still enforce authorization because browser code can be inspected or modified.
 
 ---
 
-## 6. Hệ thống Layout & Routing
+## 6. Layout and Routing System
 
 ### 6.1 Layout System
 
 ```mermaid
-graph LR
-    subgraph Public
-        Landing["/ — LandingPage"]
-        Unauth["/unauthorized — 403"]
-    end
+graph TB
+    App["App.tsx"]
+    BrowserRouter["BrowserRouter"]
+    AnimationProvider["AnimationProvider"]
+    ToastProvider["ToastProvider"]
+    AuthLayout["AuthLayout"]
+    MainLayout["MainLayout"]
+    Sidebar["Sidebar"]
+    Header["Header"]
+    Outlet["Outlet"]
+    Page["Page Component"]
 
-    subgraph AuthLayout
-        Login["/login"]
-        Register["/register"]
-        Forgot["/forgot-password"]
-        Reset["/reset-password"]
-    end
-
-    subgraph MainLayout["MainLayout (Sidebar + Header)"]
-        Mangaka["/mangaka/*"]
-        Assistant["/assistant/*"]
-        Editor["/editor/*"]
-        Board["/board/*"]
-        Admin["/admin/*"]
-    end
+    App --> BrowserRouter
+    BrowserRouter --> AnimationProvider
+    AnimationProvider --> ToastProvider
+    BrowserRouter --> AuthLayout
+    BrowserRouter --> MainLayout
+    MainLayout --> Sidebar
+    MainLayout --> Header
+    MainLayout --> Outlet
+    Outlet --> Page
 ```
 
-**MainLayout** ([MainLayout.tsx](file:///d:/Manga/frontend/src/layouts/MainLayout.tsx)):
-- **Sidebar** bên trái: navigation menu theo role, hỗ trợ collapse/expand
-- **Header** bên trên: breadcrumb tự động, notification dropdown, user dropdown
-- **Content area**: render page con qua `<Outlet />`
-- **SignalR**: khởi tạo kết nối WebSocket (`useSignalR()`) ở đây → tất cả page con đều nhận real-time
+#### `MainLayout`
 
-**Sidebar** ([Sidebar.tsx](file:///d:/Manga/frontend/src/layouts/Sidebar.tsx)):
-- **Responsive**: mobile có overlay + hamburger menu
-- **Collapsible**: thu gọn thành icon only (72px) hoặc full (260px)
-- **Dynamic nav**: `getNavSections(role)` trả về menu items theo role
-- **Badge count**: hiển thị số lời mời chưa đọc cho Assistant
+`MainLayout` is used for authenticated workspaces. It includes:
 
-**Header** ([Header.tsx](file:///d:/Manga/frontend/src/layouts/Header.tsx)):
-- **Auto breadcrumb**: parse URL path → map sang label tiếng Việt
-- **Notification bell**: dropdown real-time
-- **User dropdown**: avatar, tên, role, Cài đặt, Đăng xuất
+- Sidebar navigation.
+- Header.
+- Page content outlet.
+- SignalR initialization through `useSignalR()`.
+- Responsive behavior for sidebar collapse and mobile drawer.
 
-### 6.2 Danh sách Routes đầy đủ
+#### `AuthLayout`
 
-| Route | Role | Page | Mô tả |
-|---|---|---|---|
-| `/` | Public | LandingPage | Trang giới thiệu |
-| `/login` | Public | LoginPage | Đăng nhập |
-| `/register` | Public | RegisterPage | Đăng ký |
-| `/forgot-password` | Public | ForgotPasswordPage | Quên mật khẩu |
-| `/reset-password` | Public | ResetPasswordPage | Đặt lại mật khẩu |
-| `/wallet/deposit/callback` | Public | DepositCallbackPage | VNPay redirect |
-| `/mangaka` | Mangaka | Dashboard | Bảng tin tác giả |
-| `/mangaka/series` | Mangaka | SeriesList | Danh sách bộ truyện |
-| `/mangaka/series/create` | Mangaka | CreateSeries | Tạo bộ truyện mới |
-| `/mangaka/series/:seriesId` | Mangaka | SeriesDetail | Chi tiết bộ truyện |
-| `/mangaka/manuscripts` | Mangaka | Manuscripts | Quản lý bản thảo |
-| `/mangaka/manuscripts/:chapterId` | Mangaka | ChapterDetail | Chi tiết chapter |
-| `/mangaka/tasks` | Mangaka | Tasks | Giao việc & tiến độ |
-| `/mangaka/assistants` | Mangaka | Assistants | Tìm cộng sự |
-| `/mangaka/wallet` | Mangaka | Wallet | Quản lý doanh thu |
-| `/mangaka/canvas/:chapterId` | Mangaka | Canvas | Vẽ, phân vùng trang |
-| `/mangaka/settings` | Mangaka | Settings | Cài đặt |
-| `/assistant` | Assistant | Dashboard | Bảng tin trợ lý |
-| `/assistant/tasks` | Assistant | TaskQueue | Bảng việc làm |
-| `/assistant/invites` | Assistant | Invites | Lời mời dự án |
-| `/assistant/series-invites/:id` | Assistant | InviteRespond | Trả lời mời |
-| `/assistant/portfolio` | Assistant | Portfolio | Hồ sơ tác phẩm |
-| `/assistant/profile` | Assistant | Profile | Hồ sơ nghề nghiệp |
-| `/assistant/wallet` | Assistant | Wallet | Thu nhập |
-| `/assistant/settings` | Assistant | Settings | Cài đặt |
-| `/editor` | Editor | Dashboard | Bảng tin biên tập |
-| `/editor/series-review` | Editor | SeriesReview | Thẩm định dự án |
-| `/editor/chapter-review` | Editor | ChapterReview | Biên tập chương |
-| `/editor/review/:seriesId` | Editor | ReviewSeries | Duyệt bộ truyện |
-| `/editor/annotations` | Editor | Annotations | Ghim lỗi |
-| `/editor/disputes` | Editor | Disputes | Phân xử tranh chấp |
-| `/editor/settings` | Editor | Settings | Cài đặt |
-| `/board` | Board | Dashboard | Bảng tin hội đồng |
-| `/board/voting` | Board | Voting | Bỏ phiếu |
-| `/board/ranking` | Board | Ranking | Xếp hạng |
-| `/board/ranking-data` | Board | RankingData | Nhập liệu xếp hạng |
-| `/board/schedule` | Board | Schedule | Lịch xuất bản |
-| `/board/settings` | Board | Settings | Cài đặt |
-| `/admin` | Admin | Dashboard | Bảng tin admin |
-| `/admin/users` | Admin | Users | Quản lý người dùng |
-| `/admin/contracts` | Admin | Contracts | Hợp đồng |
-| `/admin/reconciliation` | Admin | Reconciliation | Đối soát giao dịch |
-| `/admin/withdraw-approval` | Admin | WithdrawApproval | Duyệt rút tiền |
-| `/admin/board-voting` | Admin | BoardVoting | Cấu hình biểu quyết |
-| `/admin/settings` | Admin | Settings | Cài đặt |
+`AuthLayout` is used for authentication pages:
+
+- Login.
+- Register.
+- Forgot password.
+- Reset password.
+
+This separates public/auth pages from the main dashboard shell.
+
+### 6.2 Route Groups
+
+| Route Group | Role | Main Pages |
+|---|---|---|
+| `/` | Public | Landing page |
+| `/login`, `/register` | Public | Authentication |
+| `/mangaka/*` | Mangaka | Dashboard, series, manuscripts, tasks, wallet, canvas |
+| `/assistant/*` | Assistant | Dashboard, task queue, invites, portfolio, profile, wallet |
+| `/editor/*` | Editor | Dashboard, series review, chapter review, annotations, disputes |
+| `/board/*` | Board | Dashboard, voting, ranking, schedule |
+| `/admin/*` | Admin | Dashboard, users, contracts, reconciliation, withdrawal approval |
+| `/wallet/deposit/callback` | Public callback | VNPay return page |
+
+### Why Routes Are Split by Role
+
+The same entity can mean different things to different users. A task for a Mangaka is something to assign and approve. A task for an Assistant is something to accept and submit. Role-specific routes keep user intent clear.
 
 ---
 
-## 7. Các Feature Module chi tiết
+## 7. Feature Modules
+
+This section explains the main feature modules and why each exists.
 
 ### 7.1 Landing Page
 
-**Thư mục**: `features/landing/`
+Folder: `features/landing`
 
-**Components:**
-| Component | Vai trò |
-|---|---|
-| `Navbar` | Navigation bar trên cùng |
-| `HeroSection` | Banner chính với CTA |
-| `FeaturesSection` | Giới thiệu tính năng |
-| `WorkflowSection` | Quy trình làm việc |
-| `RolesSection` | Mô tả 5 vai trò |
-| `MangaShowcaseSection` | Showcase tác phẩm |
-| `CTASection` | Call-to-Action |
-| `Footer` | Footer |
-| `BackToTop` | Nút scroll lên đầu |
-| `SectionDivider` | Phân cách section |
-| `PublisherContactModal` | Modal liên hệ NXB |
+Purpose:
 
-**Hooks**: `useScrollReveal` — animation hiện dần khi scroll vào viewport.
+- Presents the product entry point.
+- Introduces roles and workflow.
+- Provides navigation to login/register.
+- Contains sections such as hero, features, roles, workflow, contact, and footer.
 
----
+Why it exists:
 
-### 7.2 Auth (Đăng nhập/Đăng ký)
+The landing page is the public-facing entry point. It separates marketing/onboarding content from authenticated workflow screens.
 
-**Thư mục**: `features/auth/`
+### 7.2 Auth
 
-**Components (11 files):**
-| Component | Chức năng |
-|---|---|
-| `LoginForm` | Form đăng nhập (email + password + remember me) |
-| `LoginBackground` | Background animation cho trang login |
-| `LoginPageLayout` | Layout 2 cột cho trang login |
-| `RegisterForm` | Form đăng ký multi-step |
-| `RegisterHeroPanel` | Panel hero bên trái khi đăng ký |
-| `RegisterInput` | Input field riêng cho form đăng ký |
-| `RegisterConfirmModal` | Modal xác nhận sau khi đăng ký |
-| `StepIndicator` | Thanh tiến trình step đăng ký |
-| `ForgotPasswordForm` | Form gửi email quên mật khẩu |
-| `ResetPasswordForm` | Form đặt lại mật khẩu mới |
-| `ChangePasswordModal` | Modal đổi mật khẩu (dùng trong Settings) |
+Folder: `features/auth`
 
-**API** (`auth.api.ts`):
-- `login(dto)` → Gọi POST `/api/auth/login`
-- `register(dto)` → POST `/api/auth/register`
-- `refreshToken(dto)` → POST `/api/auth/refresh-token`
-- `logout(dto)` → POST `/api/auth/logout`
-- `forgotPassword(email)` → POST
-- `resetPassword(dto)` → POST
+Key files:
 
-**Luồng đăng nhập:**
-1. User nhập email + password
-2. Gọi `authApi.login()` → nhận `{ token, refreshToken, user }`
-3. Lưu vào `authStore.setAuth()` → tự lưu vào storage
-4. `getRoleRedirectPath()` → redirect về dashboard tương ứng role
+- `api/auth.api.ts`
+- `components/LoginForm.tsx`
+- `components/RegisterForm.tsx`
+- `components/ForgotPasswordForm.tsx`
+- `components/ResetPasswordForm.tsx`
+- `hooks/useRegisterForm.ts`
+- `utils/rememberCredentials.ts`
 
-**Luồng đăng ký:**
-1. Form multi-step: Thông tin cơ bản → Chọn role → Thông tin bổ sung
-2. `authApi.register()` → nhận response
-3. Hiện `RegisterConfirmModal` → redirect login
+Responsibilities:
 
----
+- Login.
+- Assistant registration.
+- OTP verification.
+- Forgot/reset password.
+- Change password.
+- Remember-me behavior.
 
-### 7.3 Dashboard (Bảng tin)
+Why it exists:
 
-**Thư mục**: `features/dashboard/`
+Authentication is a cross-cutting workflow. It must coordinate forms, backend API calls, token storage, role mapping, redirects, and user feedback.
 
-**Có 5 dashboard riêng cho 5 roles:**
+### 7.3 Dashboard
 
-| Component | Role | Nội dung |
-|---|---|---|
-| `MangakaDashboardFeature` | Mangaka | Stats tổng quan + series mới + hoạt động gần đây |
-| `AssistantDashboardFeature` | Assistant | Stats + tasks gần đây |
-| `EditorDashboardFeature` | Editor | Stats review + chapters cần duyệt |
-| `BoardDashboardFeature` | Board | Stats voting + ranking |
-| `AdminDashboardFeature` | Admin | Stats hệ thống + users + revenue |
+Folder: `features/dashboard`
 
-**Shared:**
-- `StatCard` — Card hiển thị metric (số, % thay đổi, icon, màu)
-- Chart components trong `charts/` — biểu đồ Recharts
+Responsibilities:
 
-**Hooks**: Mỗi role có hook riêng (`useMangakaDashboard`, `useAdminDashboard`...) gọi API `/api/dashboard/{role}`.
+- Role-specific dashboard cards and charts.
+- Admin, Assistant, Board, Editor, and Mangaka dashboard views.
+- Chart components built with Recharts.
 
----
+Why it exists:
 
-### 7.4 Series (Quản lý bộ truyện) ⭐ CORE FEATURE
+Each role needs different operational metrics. A shared dashboard feature allows common chart and stat components while still supporting role-specific data.
 
-**Thư mục**: `features/series/` — **28 components** (lớn nhất)
+### 7.4 Series
 
-**Đây là feature trung tâm**, bao gồm:
+Folder: `features/series`
 
-#### Danh sách & CRUD:
-| Component | Chức năng |
-|---|---|
-| `SeriesListFeature` | Danh sách truyện + filter + pagination |
-| `SeriesCard` / `SeriesRow` | Card/Row hiển thị thông tin truyện |
-| `CreateSeriesForm` | Form tạo truyện mới (21KB — form phức tạp) |
-| `SeriesDetailFeature` | Trang chi tiết bộ truyện |
-| `SeriesInfoCard` | Card thông tin meta |
-| `SeriesPreviewModal` | Modal xem trước truyện |
-| `StatusTimeline` | Timeline trạng thái series |
+Core responsibilities:
 
-#### Chapters & Pages:
-| Component | Chức năng |
-|---|---|
-| `ManuscriptsFeature` | Quản lý bản thảo (danh sách chapters) |
-| `ChapterDetailFeature` | Chi tiết chapter + danh sách pages |
-| `UploadChapterModal` | Upload chapter mới |
-| `AddPagesModal` | Thêm trang vào chapter |
-| `ReplacePageImageModal` | Thay ảnh trang |
-| `PageCard` | Card hiển thị 1 trang |
-| `PageLightbox` | Lightbox xem ảnh trang full-size |
-| `ChapterSubmitPanel` | Panel submit chapter để review (25KB) |
-| `SubmitChecklist` | Checklist trước khi submit |
-| `NameUploader` | Upload Name (bản phác thảo) |
+- Create and manage manga series.
+- Upload covers and manuscripts.
+- Manage chapters and pages.
+- Submit series for review.
+- View series status timeline.
+- Manage team invitations.
+- Edit budget-related information.
 
-#### Team Management:
-| Component | Chức năng |
-|---|---|
-| `SeriesTeamPanel` | Panel quản lý team (Mangaka mời Assistant) |
-| `AssistantInviteDrawer` | Drawer tìm & mời Assistant |
-| `AssistantInviteCandidateRow` | Row hiển thị ứng viên |
-| `AssistantInviteDetailPanel` | Chi tiết lời mời |
-| `SeriesInviteRespondFeature` | Assistant trả lời lời mời |
-| `TeamRoleChecklist` | Checklist phân vai trò trong team |
+Important components:
 
-#### Budget:
-| Component | Chức năng |
-|---|---|
-| `AcceptFundPanel` | Panel chấp nhận ngân sách |
-| `EditorRevisionPanel` | Panel yêu cầu chỉnh sửa từ Editor |
-| `GenrePicker` | Chọn thể loại (multi-select) |
+- `CreateSeriesForm`
+- `SeriesListFeature`
+- `SeriesDetailFeature`
+- `ChapterDetailFeature`
+- `UploadChapterModal`
+- `AddPagesModal`
+- `SeriesTeamPanel`
+- `StatusTimeline`
 
-**Hooks:**
-- `useSeries()` — CRUD series
-- `useNameUpload()` — upload Name
-- `useSeriesSubmit()` — submit series
-- `useAcceptFund()` — chấp nhận ngân sách
-- `useSeriesBudgetEdit()` — chỉnh sửa ngân sách
-- `useBrowseAssistants()` — tìm assistant
-- `useSeriesTeam()` — quản lý team
-- `useChapterProductionReadiness()` — kiểm tra chapter sẵn sàng submit
-- `useSubmitChapterForReview()` — submit chapter cho Editor
-- `useReplacePageImage()` — thay ảnh trang
+Why it exists:
 
-**Status flow quan trọng:**
-```
-Series: Draft → Submitted → PendingReview → Approved/Rejected/RevisionRequired → Voting → Published
-Chapter: Draft → InProgress → Submitted → UnderReview → Approved/Rejected → Published
-Page: Uploaded → RegionsCreated → TasksAssigned → InProduction → Completed → Composited
+Series is the central content aggregate in the application. Many workflows depend on it: review, voting, ranking, contracts, chapters, pages, and tasks.
+
+### 7.5 Canvas
+
+Folders:
+
+- `features/canvas`
+- `components/canvas`
+
+Core responsibilities:
+
+- Display manga pages.
+- Allow pan and zoom.
+- Draw and manage regions.
+- Review annotations.
+- Support task-related visual workflows.
+
+Important components:
+
+- `CanvasViewer`
+- `CanvasToolbar`
+- `MobileCanvasWarning`
+- `AnnotationPinPanel`
+- `PageCanvasFeature`
+- `AnnotationReviewFeature`
+
+Why Fabric.js is used:
+
+Fabric.js provides object-based canvas editing. Regions and annotations can be represented as selectable and editable objects rather than raw pixels. This is important for assigning precise page areas to Assistants.
+
+Typical region flow:
+
+```text
+1. Load a manga page into the canvas.
+2. Select the Region tool.
+3. Draw a rectangular or freeform area.
+4. Save region coordinates through the API.
+5. Use that region when creating a task for an Assistant.
 ```
 
----
-
-### 7.5 Canvas (Vẽ & Phân vùng trang) ⭐ HIGHLIGHT FEATURE
-
-**Thư mục**: `features/canvas/` + `components/canvas/`
-
-**Đây là tính năng đặc biệt nhất** — Canvas Editor dùng Fabric.js cho phép:
-1. **Vẽ region** (khoanh vùng) trên trang manga
-2. **Tạo annotation** (ghi chú lỗi) trên trang
-3. **Zoom/Pan** trang manga
-4. **Free-form drawing** mode
-
-**Components:**
-| Component | Size | Chức năng |
-|---|---|---|
-| `PageCanvasFeature` | **53KB** | Feature chính — canvas editor đầy đủ |
-| `AnnotationReviewFeature` | 13KB | Review annotations (Editor view) |
-| `CanvasViewer` | **30KB** | Fabric.js canvas component |
-| `CanvasToolbar` | 6KB | Toolbar: Select, Region, Freeform, Annotate, Pan |
-| `AnnotationPinPanel` | 8KB | Panel hiển thị danh sách pins |
-| `MobileCanvasWarning` | 3KB | Warning cho mobile (canvas cần desktop) |
-
-**Canvas Store** ([canvasStore.ts](file:///d:/Manga/frontend/src/stores/canvasStore.ts)):
-```typescript
-type CanvasTool = 'select' | 'region' | 'freeform' | 'annotate' | 'pan';
-
-interface CanvasState {
-  activeTool: CanvasTool;       // Tool đang chọn
-  zoomLevel: number;            // Mức zoom (0.1 → 5x)
-  selectedRegionId: string;     // Region đang focus
-  selectedAnnotationId: string; // Annotation đang focus
-  isDrawing: boolean;           // Đang vẽ hay không
-  annotationType: AnnotationType; // Loại annotation (Technical, Content...)
-}
-```
-
-**Hooks:**
-- `useCanvasPages()` — load danh sách pages
-- `useRegions()` — CRUD regions trên trang
-- `useAnnotations()` — CRUD annotations
-- `useMarkPageReady()` — đánh dấu trang hoàn thành
-
-**API calls**: `canvasApi` — `/api/pages/{pageId}/regions`, `/api/regions/{regionId}/annotations`
-
----
-
-### 7.6 Tasks (Giao việc & Tiến độ)
-
-**Thư mục**: `features/tasks/` — **9 components**
-
-| Component | Size | Chức năng |
-|---|---|---|
-| `MangakaTasksFeature` | 20KB | Mangaka xem/tạo/review tasks |
-| `TaskQueueFeature` | 19KB | Assistant xem bảng việc + việc của mình |
-| `CreateTaskModal` | **28KB** | Modal tạo task (chọn page, region, assign...) |
-| `TaskReviewModal` | **33KB** | Modal Mangaka review task đã submit |
-| `AssistantTaskDetailModal` | **37KB** | Modal Assistant xem chi tiết + submit task |
-| `AssistantTaskCard` | 8KB | Card hiển thị task trong queue |
-| `TaskLayerPreview` | 8KB | Preview layer vẽ của task |
-| `TaskRegionPreview` | 5KB | Preview region được giao |
-| `TaskRegionPreviewModal` | 4KB | Modal xem region lớn |
-
-**Hooks:**
-- `useMangakaTasks()` — tasks do Mangaka tạo
-- `useAvailableTasks()` — tasks chưa ai nhận (cho Assistant)
-- `useAssistantMyTasks()` — tasks Assistant đang làm
-- `useAcceptTask()` — Assistant nhận task
-- `useApproveTask()` — Mangaka duyệt task
-- `useRequestRevisionTask()` — Yêu cầu sửa
-- `useTaskVersions()` — Các version submit
-- `useTaskVersionAnnotations()` — Annotations trên version
-- `useRequestExtension()` — Xin gia hạn deadline
-- `useApproveExtension()` — Duyệt gia hạn
-
-**Luồng Task:**
-```
-Mangaka tạo Task → Assign cho region/page
-    → Assistant nhận (Accept)
-    → Assistant làm & Submit version
-    → Mangaka Review → Approve / Request Revision
-    → Nếu Revision → Assistant sửa & Submit lại
-    → Approve → Hoàn thành
-```
-
----
-
-### 7.7 Wallet (Ví tiền)
-
-**Thư mục**: `features/wallet/` — **6 components**
-
-| Component | Chức năng |
-|---|---|
-| `MangakaWalletFeature` | Ví Mangaka: số dư, nạp, rút, lịch sử GD |
-| `AssistantWalletFeature` | Ví Assistant: thu nhập, rút tiền |
-| `WalletActionModal` | Modal Nạp tiền (VNPay) / Rút tiền |
-| `DepositCallbackFeature` | Xử lý callback từ VNPay |
-| `TransactionDetailModal` | Chi tiết giao dịch |
-| `LockedFundsModal` | Modal xem số tiền bị lock |
-
-**Hooks:**
-- `useWallet()` — lấy thông tin ví + transactions
-- `useWalletActions()` — nạp/rút tiền mutations
-- `useDepositCallback()` — xử lý VNPay callback
-- `useWalletSignalR()` — real-time cập nhật ví
+### 7.6 Tasks
 
-**Luồng nạp tiền VNPay:**
-```
-User bấm "Nạp tiền" → Mở WalletActionModal → Nhập số tiền
-    → Gọi API deposit → Backend trả VNPay URL
-    → Redirect sang VNPay gateway
-    → User thanh toán xong → VNPay redirect về /wallet/deposit/callback
-    → DepositCallbackFeature check status → Hiện kết quả
-```
+Folder: `features/tasks`
 
----
+Responsibilities:
 
-### 7.8 Review (Biên tập & Duyệt)
+- Mangaka creates tasks.
+- Assistant views available tasks.
+- Assistant accepts tasks.
+- Assistant submits work.
+- Mangaka approves, rejects, requests revision, or reports disputes.
+- Task versions and annotations are displayed.
 
-**Thư mục**: `features/review/` — **5 components**
+Why it exists:
 
-| Component | Size | Chức năng |
-|---|---|---|
-| `ReviewQueue` | 13KB | Queue danh sách series cần duyệt |
-| `ReviewSeriesFeature` | **22KB** | Duyệt chi tiết bộ truyện |
-| `ChapterQCReview` | **51KB** | QC review chapter (component lớn nhất hệ thống!) |
-| `ChapterReviewFeature` | 500B | Wrapper |
-| `SeriesReviewQueueFeature` | 8KB | Queue duyệt series |
+Tasks connect creative production with collaboration and payment. This feature is one of the main workflow engines of the frontend.
 
-**ChapterQCReview** (51KB) là component phức tạp nhất — bao gồm:
-- Xem từng page của chapter
-- Tạo annotations/pins trên page
-- Checklist QC quality
-- Approve/Reject chapter
-- Yêu cầu revision
+### 7.7 Wallet
 
----
+Folder: `features/wallet`
 
-### 7.9 Voting (Bỏ phiếu Hội đồng)
+Responsibilities:
 
-**Thư mục**: `features/voting/` — **5 components**
+- Display wallet balances.
+- Display transaction history.
+- Start deposit flow.
+- Handle VNPay callback.
+- Request withdrawal.
+- Listen to wallet-related real-time updates.
 
-| Component | Chức năng |
-|---|---|
-| `VotingFeature` | Trang bỏ phiếu chính (28KB) |
-| `VoteModal` | Modal bỏ phiếu (Approve/Reject + lý do) |
-| `VoteProgressBar` | Thanh tiến trình votes |
-| `VotingRulesBanner` | Banner hiển thị quy tắc bỏ phiếu |
-| `BoardSeriesDossier` | Hồ sơ series để Board xem xét |
+Why it exists:
 
-**Hooks:**
-- `useVotingList()` — danh sách series cần vote
-- `useVotingDetail()` — chi tiết series
-- `useSubmitBoardVote()` — submit phiếu
+Money movement requires a dedicated UI because balances, locked funds, withdrawals, and transaction history must be visible and auditable.
 
-**Utils:**
-- `calcBoardVotesRequired()` — tính số phiếu cần thiết
-- `calcEffectiveThresholdPercent()` — tính ngưỡng phần trăm
+### 7.8 Review
 
----
+Folder: `features/review`
 
-### 7.10 Ranking (Xếp hạng)
+Responsibilities:
 
-**Thư mục**: `features/ranking/`
+- Editor reviews series and chapters.
+- QC checklist and review queue.
+- Annotation and revision workflows.
 
-| Component | Chức năng |
-|---|---|
-| `RankingFeature` | Bảng xếp hạng series |
-| `RankingDataEntryFeature` | Board nhập liệu xếp hạng |
+Why it exists:
 
----
+Publishing workflows require editorial quality control. This feature separates review responsibilities from content creation responsibilities.
 
-### 7.11 Schedule (Lịch xuất bản)
+### 7.9 Voting
 
-**Thư mục**: `features/schedule/`
+Folder: `features/voting`
 
-| Component | Chức năng |
-|---|---|
-| `PublishScheduleFeature` | Lịch xuất bản + reschedule |
+Responsibilities:
 
-**Hooks:** `useSchedule()`, `useReschedule()`, `useMarkPublished()`
+- Board members view series dossiers.
+- Board members vote approve/reject.
+- Voting progress is displayed.
 
----
+Why it exists:
 
-### 7.12 Contracts (Hợp đồng)
+Board decisions are governance actions. They should be represented as explicit workflows rather than informal comments.
 
-**Thư mục**: `features/contracts/`
+### 7.10 Ranking
 
-| Component | Chức năng |
-|---|---|
-| `ContractManagementFeature` | Admin xem/quản lý hợp đồng |
+Folder: `features/ranking`
 
----
+Responsibilities:
 
-### 7.13 Notifications (Thông báo real-time)
+- Display ranking tables and charts.
+- Input ranking data.
+- Normalize ranking values for presentation.
 
-**Thư mục**: `features/notifications/`
+Why it exists:
 
-| Component | Chức năng |
-|---|---|
-| `NotificationDropdown` | Dropdown bell icon ở Header |
+Ranking information supports publication and business decisions. It is separated from normal series CRUD because it has a reporting/analytics purpose.
 
-**API**: `notificationApi` — lấy/đánh dấu đã đọc notifications
+### 7.11 Schedule
 
-**Hooks**: `useNotifications()` — fetch + manage notifications
+Folder: `features/schedule`
 
-**Store**: `notificationStore` — quản lý in-memory danh sách notifications + unread count
+Responsibilities:
 
----
+- Manage or display publishing schedules.
+- Support board-level planning.
 
-### 7.14 Users & Admin
+Why it exists:
 
-**Admin User Management** (`features/users/`):
-- `UserManagementFeature` — CRUD users, activate/deactivate
+Publishing requires calendar-based coordination. Schedule data helps decision makers understand release timing.
 
-**Admin Board Voting Config** (`features/admin/`):
-- `AdminBoardVotingFeature` — cấu hình rules bỏ phiếu
-- Hooks: `useBoardMembers`, `useBoardVotingConfig`, `useEscalatedVotes`, `useManualResolveVote`
+### 7.12 Contracts
 
----
+Folder: `features/contracts`
 
-### 7.15 Portfolio & Assistant Profile
+Responsibilities:
 
-**Portfolio** (`features/portfolio/`):
-- `PortfolioFeature` — Assistant upload mẫu tác phẩm
-- Hooks: `usePortfolioSamples`, `useUploadPortfolioSample`, `useDeletePortfolioSample`
+- Display and manage contracts.
+- Support contract-related workflows.
 
-**Assistant Profile** (`features/assistant-profile/`):
-- `AssistantProfileFeature` — hồ sơ nghề nghiệp (skills, experience...)
+Why it exists:
 
----
+Contracts formalize production and publication agreements. They are operational records, not just UI documents.
 
-### 7.16 Reconciliation & Withdraw Approval
+### 7.13 Notifications
 
-**Reconciliation** (`features/reconciliation/`):
-- `ReconciliationFeature` — Admin đối soát giao dịch
-- Types: `ReconciliationRecord`, `ReconciliationSummary`, `ReconciliationStatus`
+Folder: `features/notifications`
 
-**Withdraw Approval** (`features/withdraw-approval/`):
-- `WithdrawApprovalFeature` — Admin duyệt yêu cầu rút tiền
-- Hooks: `usePendingWithdrawals`, `useApproveWithdraw`
+Responsibilities:
 
----
+- Fetch notifications.
+- Display notification dropdown.
+- Mark notifications as read.
+- Integrate with SignalR updates.
 
-### 7.17 Settings (Cài đặt)
+Why it exists:
 
-**Thư mục**: `features/settings/`
-- `SettingsFeature` — Trang cài đặt chung (đổi mật khẩu, cập nhật profile...)
+Notifications connect asynchronous workflows. Users should know when tasks, wallets, reviews, or system events change.
 
----
+### 7.14 Users and Admin
+
+Folders:
+
+- `features/users`
+- `features/admin`
+
+Responsibilities:
+
+- Manage users.
+- Approve or reject accounts.
+- Configure board voting rules.
+- Manage administrative system settings.
+
+Why it exists:
+
+Administrative workflows require higher privilege and must be separated from normal role workflows.
+
+### 7.15 Portfolio and Assistant Profile
+
+Folders:
+
+- `features/portfolio`
+- `features/assistant-profile`
+
+Responsibilities:
+
+- Assistant uploads portfolio samples.
+- Assistant maintains professional profile.
+- Mangaka and system users can assess Assistant capability.
+
+Why it exists:
+
+Assistant matching depends on skills, experience, samples, and profile quality.
+
+### 7.16 Reconciliation and Withdraw Approval
+
+Folders:
+
+- `features/reconciliation`
+- `features/withdraw-approval`
+
+Responsibilities:
+
+- Admin reconciles payment records.
+- Admin reviews and approves withdrawal requests.
+- Platform wallet information is displayed.
+
+Why it exists:
+
+Financial operations need administrative oversight, traceability, and explicit approval steps.
+
+### 7.17 Settings
+
+Folder: `features/settings`
+
+Responsibilities:
+
+- User profile editing.
+- Avatar upload.
+- Mangaka leave status.
+- Account settings.
+
+Why it exists:
+
+Settings are cross-role user preferences and account maintenance workflows.
 
 ### 7.18 AI Features
 
-**Thư mục**: `features/ai/`
+Folder: `features/ai`
 
-**API** (`ai.api.ts`):
-| Function | Chức năng |
-|---|---|
-| `colorizeImage()` | Tô màu ảnh manga bằng AI |
-| `segmentImage()` | Phân đoạn ảnh (tách foreground/background) |
-| `suggestTags()` | Gợi ý tags cho truyện |
+Responsibilities:
 
-**Hooks:**
-- `useColorizeImage()` — mutation tô màu
-- `useSegmentImage()` — mutation phân đoạn
-- `useSuggestTags()` — mutation gợi ý tags
+- Colorize image.
+- Segment image.
+- Suggest tags.
 
----
+Why it exists:
 
-### 7.19 Disputes (Tranh chấp)
+AI assists creative and metadata workflows. It is separated into its own feature to prevent AI-specific integration logic from leaking into unrelated modules.
 
-**Thư mục**: `features/disputes/`
-- `DisputeManagementFeature` — Editor phân xử tranh chấp giữa Mangaka và Assistant
+### 7.19 Disputes
 
----
+Folder: `features/disputes`
+
+Responsibilities:
+
+- Editor reviews disputes.
+- Dispute status and decision workflows are displayed.
+
+Why it exists:
+
+Creative work and payments can produce conflicts. Dispute workflows need transparent handling.
 
 ### 7.20 Assistant Management
 
-**Thư mục**: `features/assistant-management/`
-- `AssistantManagementFeature` — Mangaka browse & mời Assistant
-- `AssistantInvitesFeature` — Assistant xem danh sách lời mời
-- `useAssistantInvites()` — lấy danh sách invites
+Folder: `features/assistant-management`
+
+Responsibilities:
+
+- Mangaka browses Assistants.
+- Mangaka invites Assistants to a series team.
+- Assistant invitation responses are displayed.
+- Team composition is managed.
+
+Why it exists:
+
+Production depends on collaboration. Assistant management connects talent discovery with series staffing.
 
 ---
 
-## 8. Hệ thống Real-time (SignalR)
+## 8. Real-Time Communication with SignalR
 
-**File**: [useSignalR.ts](file:///d:/Manga/frontend/src/hooks/useSignalR.ts) — **350 dòng**
+### 8.1 Connection Location
 
-### 8.1 Kết nối
+SignalR is initialized in `MainLayout` by calling `useSignalR()`. This is intentional because `MainLayout` wraps authenticated pages. The connection starts only after login and is shared across role workspaces.
 
-```typescript
-// URL: /api/v1/hubs/notification (qua Gateway) hoặc /hubs/notification (trực tiếp)
-const connection = new HubConnectionBuilder()
-  .withUrl(getHubUrl(), { accessTokenFactory: () => token })
-  .withAutomaticReconnect([0, 2000, 10000, 30000])  // Retry: 0s → 2s → 10s → 30s
-  .build();
+### 8.2 Hub URL Resolution
+
+The hub URL is resolved from environment variables or development defaults:
+
+```ts
+const getHubUrl = () => {
+  if (import.meta.env.VITE_SIGNALR_URL) return import.meta.env.VITE_SIGNALR_URL;
+  if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
+    return '/api/v1/hubs/notification';
+  }
+  return `${import.meta.env.VITE_API_URL}/api/v1/hubs/notification`;
+};
 ```
 
-### 8.2 Events lắng nghe
+### 8.3 Events
 
-| Event | Payload | Hành động |
-|---|---|---|
-| `NewNotification` | `{Id, Title, Message, Type, Link, CreateAt}` | Thêm notification + toast + invalidate queries |
-| `ReceiveNotification` | `(content, type)` | Format cũ — tương tự NewNotification |
-| `TaskStatusChanged` | `{TaskId, NewStatus}` | Invalidate `['tasks']`, `['canvas']` |
-| `WalletUpdated` | `{UserId, Balance}` | Invalidate `['wallet']`, `['reconciliation']` |
-| `UnreadCountUpdated` | `{Count}` | Cập nhật unread count |
-| `BoardDataChanged` | — | Invalidate `['voting']`, `['series']` |
+The hook listens for events such as:
 
-### 8.3 Smart invalidation
+| Event | Purpose |
+|---|---|
+| `NewNotification` | Adds notification and may show toast |
+| `TaskStatusChanged` | Refreshes task-related data |
+| `WalletUpdated` | Refreshes wallet data |
+| `UnreadCountUpdated` | Updates unread notification count |
 
-Khi nhận notification, hook phân tích `rawType` để invalidate đúng queries:
-- `Series_Submitted` → invalidate `['series']`
-- `Task_*` → invalidate `['tasks']`
-- `Wallet_*` → invalidate `['wallet']`
-- `Series_Team_Invite` → invalidate `['assistant-invites']`
-- `Contract_Created` → invalidate `['series']`
+### 8.4 Smart Invalidation
 
-### 8.4 Toast suppression
+When real-time events arrive, the app does not manually patch every UI object. Instead, it invalidates relevant TanStack Query keys. React Query then refetches the authoritative data from the backend.
 
-Một số event **không** hiện toast vì UI đã có toast inline:
-- `Wallet_Deposit_Success`, `Wallet_Withdrawal_Pending` (user vừa thao tác)
-- `Series_Submitted`, `Wallet_Fund_Accepted` (self-action)
+Example:
+
+```text
+SignalR receives WalletUpdated
+-> notificationStore updates notification badge
+-> queryClient.invalidateQueries(['wallet'])
+-> wallet UI refetches and re-renders
+```
+
+### 8.5 Toast Suppression
+
+Some events are triggered by the current user's own action. Showing an extra real-time toast for the same action would create duplicate feedback. The hook suppresses some notification types to avoid noisy UX.
 
 ---
 
-## 9. Shared Hooks & Utilities
+## 9. Shared Hooks, Utilities, and Components
 
-### Custom Hooks (`hooks/`)
+### Shared Hooks
 
-| Hook | Chức năng |
+| Hook | Responsibility |
 |---|---|
-| `useSignalR` | WebSocket connection (xem mục 8) |
-| `usePagination` | Client-side pagination logic (pageRange, ellipsis...) |
-| `useClickOutside` | Đóng dropdown khi click ngoài |
-| `useDebounce` | Debounce giá trị (search, input...) |
-| `useScrollReveal` | Animate khi element vào viewport |
+| `useSignalR` | SignalR connection, event handling, cache invalidation |
+| `usePagination` | Client-side pagination and ellipsis page range |
+| `useClickOutside` | Detect click outside an element |
+| `useDebounce` | Delay value updates for search/input |
+| `useScrollReveal` | Trigger animation when an element enters viewport |
 | `useWindowSize` | Reactive window dimensions |
 
-### Utilities (`utils/`)
+### Utilities
 
-| Utility | Chức năng |
+| Utility | Responsibility |
 |---|---|
-| `currency.ts` | Format tiền VNĐ |
-| `status.ts` | Map status code → label/color |
-| `parseApiDate.ts` | Parse date từ API |
-| `resolveMediaUrl.ts` | Resolve URL ảnh/media |
-| `notificationLink.ts` | Tạo link từ notification type |
-| `roleDisplay.ts` | Map role → tên tiếng Việt |
-| `fixMojibake.ts` | Sửa lỗi encoding tiếng Việt |
-| `validatePngTransparent.ts` | Validate ảnh PNG có transparent |
-| `appToast.tsx` | Wrapper toast notification |
-| `shadcn.ts` | CN utility cho class merging |
+| `currency.ts` | Format currency values |
+| `status.ts` | Normalize status values and map labels/colors |
+| `parseApiDate.ts` | Parse API date strings |
+| `resolveMediaUrl.ts` | Resolve image/media URLs |
+| `notificationLink.ts` | Build links from notification types |
+| `roleDisplay.ts` | Map role values to display labels |
+| `fixMojibake.ts` | Repair encoding issues in display text |
+| `validatePngTransparent.ts` | Validate transparent PNG uploads |
+| `appToast.tsx` | Toast helper wrapper |
+| `shadcn.ts` | Class name merge helper |
 
-### Shared Components (`components/common/`)
+### Shared Components
 
-| Component | Chức năng |
+| Component | Responsibility |
 |---|---|
-| `Pagination` | UI pagination buttons |
-| `CustomSelect` | Custom select dropdown |
-| `CustomDatePicker` | Date picker |
-| `PageScaffold` | Page wrapper (title + description) |
-| `Logo` | Logo component |
-| `HelpTip` | Tooltip help icon |
-| `ToastProvider` | Toast container |
-| `animation/` | AnimatedPage, AnimationProvider (Framer Motion) |
+| `Pagination` | Page navigation UI |
+| `CustomSelect` | Reusable select dropdown |
+| `CustomDatePicker` | Date input UI |
+| `PageScaffold` | Common page wrapper |
+| `Logo` | Brand logo component |
+| `HelpTip` | Tooltip helper |
+| `ToastProvider` | Toast rendering container |
+| `animation/` | Page and element animation utilities |
+
+### Why Shared Code Must Be Controlled
+
+Shared code should only contain genuinely reusable behavior. If a helper is only meaningful for one feature, it should stay inside that feature. This prevents `utils/` and `components/common/` from becoming dumping grounds.
 
 ---
 
-## 10. Luồng Demo theo vai trò
+## 10. Role-Based Demo Flows
 
-### 🎨 Demo Mangaka (Tác giả)
+### 10.1 Mangaka Demo
 
-```
-1. Đăng nhập bằng tài khoản Mangaka
-2. Dashboard → Xem thống kê tổng quan
-3. Series → Tạo bộ truyện mới (chọn thể loại, upload cover, mô tả)
-4. Series Detail → Upload Name (bản phác thảo)
-5. Submit series để Editor duyệt
-6. Sau khi Approved → Upload Chapter
-7. Chapter Detail → Thêm pages
-8. Canvas → Vẽ region trên trang (phân vùng cho Assistant vẽ)
-9. Tasks → Tạo task giao việc cho Assistant (chọn region, deadline)
-10. Review task khi Assistant submit
-11. Submit chapter cho Editor review
-12. Wallet → Nạp tiền (demo VNPay flow)
-13. Tìm & Mời Assistant vào team
-```
-
-### ✏️ Demo Assistant (Trợ lý vẽ)
-
-```
-1. Đăng nhập bằng tài khoản Assistant
-2. Dashboard → Xem thống kê
-3. Invites → Xem & trả lời lời mời từ Mangaka
-4. Task Queue → Xem việc có sẵn → Accept task
-5. Task Detail → Xem region được giao → Submit work
-6. Portfolio → Upload mẫu tác phẩm
-7. Profile → Cập nhật hồ sơ nghề nghiệp
-8. Wallet → Xem thu nhập, rút tiền
+```text
+1. Log in with a Mangaka account.
+2. Open Dashboard and explain overview statistics.
+3. Open Series and create a new manga series.
+4. Upload cover/name/manuscript information.
+5. Submit the series for Editor review.
+6. After approval, upload a chapter.
+7. Add pages to the chapter.
+8. Open Canvas and draw regions on a manga page.
+9. Create tasks for Assistants based on selected regions.
+10. Review Assistant submissions.
+11. Submit chapter for Editor review.
+12. Open Wallet and demonstrate deposit flow.
+13. Invite Assistants to the series team.
 ```
 
-### 📝 Demo Editor (Biên tập viên)
+### 10.2 Assistant Demo
 
-```
-1. Đăng nhập bằng tài khoản Editor
-2. Dashboard → Xem thống kê
-3. Series Review → Duyệt series (Approve/Reject/Request Revision)
-4. Chapter Review → Duyệt chapter (QC checklist, annotations)
-5. Disputes → Phân xử tranh chấp
-```
-
-### 🗳️ Demo Board (Hội đồng)
-
-```
-1. Đăng nhập bằng tài khoản Board
-2. Dashboard → Xem thống kê
-3. Voting → Bỏ phiếu Approve/Reject series
-4. Ranking → Xem bảng xếp hạng
-5. Ranking Data → Nhập liệu xếp hạng
-6. Schedule → Xem/quản lý lịch xuất bản
+```text
+1. Log in with an Assistant account.
+2. Open Dashboard.
+3. Open Invites and respond to a Mangaka invitation.
+4. Open Task Queue and accept an available task.
+5. Open task detail, inspect assigned region, and submit work.
+6. Open Portfolio and upload a sample.
+7. Open Profile and update professional information.
+8. Open Wallet and review income/withdrawal actions.
 ```
 
-### 👑 Demo Admin
+### 10.3 Editor Demo
 
+```text
+1. Log in with an Editor account.
+2. Open Dashboard.
+3. Open Series Review and approve/reject/request revision.
+4. Open Chapter Review and explain QC/annotation workflow.
+5. Open Disputes and explain dispute resolution.
 ```
-1. Đăng nhập bằng tài khoản Admin
-2. Dashboard → Xem thống kê hệ thống
-3. Users → Quản lý người dùng (CRUD, activate/deactivate)
-4. Contracts → Xem hợp đồng
-5. Reconciliation → Đối soát giao dịch
-6. Withdraw Approval → Duyệt yêu cầu rút tiền
-7. Board Voting → Cấu hình quy tắc biểu quyết
+
+### 10.4 Board Demo
+
+```text
+1. Log in with a Board account.
+2. Open Dashboard.
+3. Open Voting and vote on a series.
+4. Open Ranking and explain ranking data.
+5. Open Ranking Data and input/update ranking values.
+6. Open Schedule and review publishing schedule.
+```
+
+### 10.5 Admin Demo
+
+```text
+1. Log in with an Admin account.
+2. Open Dashboard.
+3. Open Users and explain account management.
+4. Open Contracts and review contract records.
+5. Open Reconciliation and explain transaction reconciliation.
+6. Open Withdraw Approval and approve/reject withdrawal requests.
+7. Open Board Voting and explain voting configuration.
 ```
 
 ---
 
-## 11. Các câu hỏi Cô có thể hỏi & Gợi ý trả lời
+## 11. Assessment and Interview Questions
 
-### ❓ Kiến trúc & Cấu trúc
+### Architecture and Structure
 
-**Q: "Tại sao chọn cấu trúc feature-based thay vì kiểu MVC?"**
-> Vì dự án có nhiều nghiệp vụ phức tạp (23 feature modules). Feature-based giúp:
-> - Mỗi feature tự chứa (api, components, hooks, types) → dễ maintain
-> - Team member có thể làm độc lập feature của mình
-> - Import/export qua barrel file (`index.ts`) → clean API
-> - Dễ code-split nếu cần lazy loading
+**Q: Why does this project use feature-based architecture instead of a simple MVC-style folder structure?**
 
-**Q: "Giải thích data flow từ user click đến hiển thị dữ liệu?"**
-> User click → Page render Feature component → Feature gọi custom hook → Hook dùng React Query (`useQuery`) gọi Axios → Axios interceptor thêm token + rewrite URL → Gọi API backend → Nhận response → React Query cache → Hook trả data + loading state → Component render UI
+Because the frontend contains many business workflows. Feature-based architecture colocates API calls, hooks, components, types, constants, and utilities for each workflow. This improves maintainability, reduces cross-folder searching, and allows team members to work independently on separate features.
 
-**Q: "Tại sao dùng Zustand mà không dùng Redux?"**
-> Zustand nhẹ hơn Redux rất nhiều (~1KB vs ~7KB). Dự án chỉ cần 3 global stores:
-> - `authStore` — auth state (persist)
-> - `notificationStore` — notifications
-> - `canvasStore` — canvas tool state
-> 
-> Còn server state (series, tasks, wallet...) dùng React Query quản lý — nó xử lý caching, refetch, background sync tốt hơn Redux.
+**Q: Explain the data flow from user action to rendered data.**
 
----
+User action triggers a route or event. The page renders a feature component. The feature calls a custom hook. The hook uses TanStack Query and a feature API function. The feature API uses the shared Axios instance. Axios adds token and gateway prefix. The backend returns `ApiResponse<T>`. React Query caches the result and returns loading/error/data state to the component.
 
-### ❓ Authentication
+**Q: Why is Zustand used instead of Redux?**
 
-**Q: "Cơ chế refresh token hoạt động như thế nào?"**
-> Khi API trả 401 (token hết hạn):
-> 1. Kiểm tra xem có đang refresh chưa (`isRefreshing`)
-> 2. Nếu chưa → gọi `authApi.refreshToken()` với accessToken + refreshToken
-> 3. Nhận token mới → cập nhật authStore → retry original request
-> 4. Nếu đang refresh → đưa request vào `failedQueue` → khi refresh xong → retry tất cả
-> 5. Nếu refresh thất bại → logout + redirect `/login`
+Zustand is lightweight and sufficient for the project's global client state: auth, notifications, and canvas state. Server state is not stored in Zustand because TanStack Query is better suited for caching, refetching, retry, and invalidation.
 
-**Q: "Remember Me hoạt động thế nào?"**
-> Dùng `customStorage` adapter tự viết:
-> - Remember Me **ON**: lưu vào `localStorage` → persist sau khi đóng browser
-> - Remember Me **OFF**: lưu vào `sessionStorage` → mất khi đóng tab
-> - Khi đọc: tìm ở `localStorage` trước, rồi `sessionStorage`
+### Authentication
 
-**Q: "Authorization frontend hoạt động thế nào?"**
-> - `RoleGuard` component bọc mỗi nhóm route → kiểm tra role
-> - Sidebar tự render menu items theo role (hàm `getNavSections(role)`)
-> - Backend vẫn validate role ở API layer (frontend chỉ là UI protection)
+**Q: How does refresh-token handling work?**
 
----
+When an API call returns 401, Axios checks whether a refresh is already running. If not, it calls the refresh-token endpoint, updates the auth store, and retries the original request. If a refresh is already running, the request waits in a queue. If refresh fails, the user is logged out and redirected to `/login`.
 
-### ❓ Real-time
+**Q: How does Remember Me work?**
 
-**Q: "SignalR connect ở đâu trong app?"**
-> Ở `MainLayout` — component bọc tất cả trang sau khi đăng nhập. `useSignalR()` hook được gọi 1 lần duy nhất tại đây → kết nối WebSocket → lắng nghe tất cả events.
+The auth store uses a custom storage adapter. With Remember Me enabled, auth data is persisted to `localStorage`. Without Remember Me, auth data is stored in `sessionStorage`, which is cleared when the browser session ends.
 
-**Q: "Khi nhận SignalR event thì UI update thế nào?"**
-> Dùng React Query `invalidateQueries`. Ví dụ nhận event `TaskStatusChanged` → invalidate key `['tasks']` → React Query tự gọi lại API → UI tự re-render với data mới. Không cần setState thủ công.
+**Q: Is frontend authorization enough?**
 
-**Q: "Auto-reconnect hoạt động thế nào?"**
-> SignalR builder config: `.withAutomaticReconnect([0, 2000, 10000, 30000])` → thử kết nối lại ngay (0ms), rồi sau 2s, 10s, 30s. Có logging `onreconnecting`, `onreconnected`, `onclose`.
+No. `RoleGuard` prevents incorrect navigation and improves UX, but real security must be enforced by backend authorization. Frontend code can be inspected or manipulated.
 
----
+### Real-Time
 
-### ❓ Canvas
+**Q: Where is SignalR connected?**
 
-**Q: "Canvas editor dùng thư viện gì? Tại sao?"**
-> Fabric.js — thư viện canvas 2D mạnh nhất cho web. Hỗ trợ:
-> - Object-based: mỗi region là 1 object (rect, circle) → dễ select, move, resize
-> - Built-in pan/zoom
-> - Event system (click, drag, draw)
-> - Export tọa độ vùng vẽ
+SignalR is initialized in `MainLayout`, which wraps authenticated pages. This ensures one connection is available across the authenticated workspace.
 
-**Q: "Flow vẽ region trên canvas?"**
-> 1. Load ảnh trang manga lên canvas
-> 2. Chọn tool "Region" từ toolbar
-> 3. Vẽ hình chữ nhật lên trang → tạo region
-> 4. Gọi API `POST /api/pages/{pageId}/regions` → lưu tọa độ (x, y, width, height)
-> 5. Region này sau đó được giao cho Assistant thông qua Task
+**Q: How does the UI update after a SignalR event?**
 
----
+The event handler updates notification state if needed and invalidates relevant TanStack Query keys. React Query then refetches authoritative backend data and re-renders affected UI.
 
-### ❓ API Layer
+**Q: How does reconnect work?**
 
-**Q: "API types được tạo thế nào?"**
-> Chạy `npm run generate-api` → dùng `openapi-typescript` đọc Swagger JSON từ backend → sinh ra `schema.ts` (242KB) + `types.ts` (17KB) chứa tất cả DTO interfaces. Frontend import trực tiếp → đảm bảo type-safe 100%.
+SignalR is configured with automatic reconnect intervals. This allows the app to recover from temporary network interruptions without forcing the user to reload the page.
 
-**Q: "Interceptor trong axios làm gì?"**
-> 3 interceptors:
-> 1. **URL Rewrite**: `/api/` → `/api/v1/` (cho API Gateway routing)
-> 2. **Auth**: Tự động gắn `Authorization: Bearer <token>` 
-> 3. **401 Handler**: Auto refresh token, queue concurrent requests
+### Canvas
 
-**Q: "Helper functions cho API response?"**
-> - `isApiSuccess(payload)` — check `success === true`
-> - `getApiData(payload)` — extract `data` field
-> - `unwrapPaged(payload)` — unwrap paginated response (`items`, `totalPages`, `totalItems`)
-> - `getAxiosErrorMessage(error)` — extract error message, bao gồm validation errors
+**Q: Why use Fabric.js for the canvas editor?**
+
+Fabric.js provides object-based canvas editing. Regions and annotations can be selected, moved, resized, and serialized as objects. This is more maintainable than raw pixel manipulation.
+
+**Q: Explain the region drawing workflow.**
+
+The user loads a manga page, selects the region tool, draws a region, saves region coordinates through the API, and then uses that region when creating a task for an Assistant.
+
+### API Layer
+
+**Q: Why use generated API types?**
+
+Generated types reduce contract mismatch between frontend and backend. They make DTO fields explicit and allow TypeScript to detect many integration errors during development.
+
+**Q: What do Axios interceptors do?**
+
+The interceptors rewrite `/api/` to `/api/v1/`, attach the Bearer token, handle 401 responses, refresh tokens, queue concurrent failed requests, and retry original requests.
+
+**Q: What do API response helpers do?**
+
+They extract `data`, `message`, validation errors, and paged result information from the backend's consistent `ApiResponse<T>` structure.
+
+### UX and Performance
+
+**Q: Is the application responsive?**
+
+Yes. Tailwind breakpoints are used for responsive layouts. Sidebar supports mobile mode. Canvas workflows are optimized for larger screens and display a mobile warning when necessary.
+
+**Q: What performance techniques are used?**
+
+The app uses TanStack Query caching, query invalidation, memoized derived values, selective polling, SignalR push updates, and cleanup of external resources such as Blob URLs and WebSocket connections.
+
+**Q: How does pagination work?**
+
+The app supports server-side pagination from backend `PagedResult<T>` responses and client-side pagination through `usePagination()` for local arrays.
 
 ---
 
-### ❓ UX & Performance
+## 12. Final Preparation Checklist
 
-**Q: "App có responsive không?"**
-> Có — dùng TailwindCSS responsive breakpoints (`sm`, `md`, `lg`). Sidebar có mobile mode (hamburger menu + overlay). Canvas có `MobileCanvasWarning` vì canvas cần màn hình lớn.
+Before the assessment demo:
 
-**Q: "Animation sử dụng gì?"**
-> Framer Motion cho page transitions (`AnimatedPage` wrapper) + CSS animations cho micro-interactions (hover, fade-in...). File `animations.css` chứa keyframes.
+1. Be ready to explain the feature-based architecture.
+2. Be ready to draw the data flow from page to hook to Axios to backend.
+3. Understand the difference between Zustand and TanStack Query.
+4. Understand how token refresh and failed-request queueing work.
+5. Know why `RoleGuard` is only a frontend UX guard, not final security.
+6. Practice the Mangaka, Assistant, Editor, Board, and Admin demo flows.
+7. Prepare test data for series, tasks, wallets, notifications, and review workflows.
+8. Highlight the strongest technical features: Canvas, SignalR, token refresh, generated API types, and role-based routing.
 
-**Q: "Pagination hoạt động thế nào?"**
-> 2 loại:
-> 1. **Server-side pagination**: Backend trả `PagedResult<T>` → Frontend dùng `unwrapPaged()` → Pagination component
-> 2. **Client-side pagination**: Hook `usePagination()` — slice array local, tạo page range với ellipsis
-
----
-
-> [!NOTE]
-> Tài liệu này được tạo dựa trên phân tích toàn bộ codebase frontend. Để chuẩn bị demo tốt nhất, Phúc nên:
-> 1. Đọc kỹ từng phần liên quan đến role mình sẽ demo
-> 2. Chuẩn bị test data sẵn cho mỗi luồng
-> 3. Tập demo thử ít nhất 1 lần trước buổi chấm
-> 4. Đặc biệt nắm rõ các phần **highlight**: Canvas Editor, SignalR real-time, Token Refresh
+This guide was prepared from the frontend codebase and is intended to help explain the architecture clearly during assessment and technical review.

@@ -25,7 +25,7 @@ export const GENRE_PICKER_HELP = [
 export const NEMU_BUDGET_HELP = [
   'Mức bạn nhập chỉ là đề xuất — không phải số tiền chắc chắn được cấp.',
   'Hội đồng biên tập quyết định ngân sách thực tế khi biểu quyết; có thể cao hoặc thấp hơn đề xuất.',
-  'Vốn chỉ chuyển vào ví sau khi Hội đồng duyệt và bạn xác nhận nhận vốn.',
+  'Vốn chỉ chuyển vào ví sau khi hợp đồng được lập và bạn xác nhận ký kết.',
   'Dùng các mức gợi ý số tiền đầy đủ để chọn nhanh, hoặc nhập số tùy chỉnh.',
 ] as const;
 

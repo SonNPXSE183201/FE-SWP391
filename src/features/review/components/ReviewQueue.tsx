@@ -6,8 +6,6 @@ import {
   Calendar,
   Layers,
   Banknote,
-  AlertTriangle,
-  Clock,
   ChevronRight,
   Inbox,
   BookOpen,
@@ -24,8 +22,7 @@ import {
 } from '../../../components/common/animation';
 import { motion } from 'framer-motion';
 import { useReviewQueue } from '../hooks/useReview';
-import { formatVND, getDeadlineStatus } from '../constants/review.constants';
-import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
+import { formatVND } from '../constants/review.constants';
 import {
   EDITOR_CHAPTER_REVIEW_FILTER_OPTIONS,
   getChapterStatusConfig,
@@ -247,11 +244,8 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
               >
                 {filteredChapters.map((c) => {
                   const status = getChapterStatusConfig(c.status);
-                  const deadline = getDeadlineStatus(c.submissionDeadline || new Date().toISOString());
+                  const StatusIcon = status.icon;
                   const seriesTitle = c.series?.title || `Bộ truyện #${c.seriesId}`;
-                  const coverUrl = c.series?.coverImageUrl
-                    ? resolveMediaUrl(c.series.coverImageUrl)
-                    : '';
                   const mangakaName = c.series?.mangaka?.fullName || 'Tác giả';
                   const pageCount = c.pages?.length || c.validPageCount || 0;
                   const genkouryoPrice = c.appliedGenkouryoPrice || 0;
@@ -261,72 +255,63 @@ export const ReviewQueue = ({ onSelect }: ReviewQueueProps) => {
                     <button
                       type="button"
                       onClick={() => onSelect(String(c.id))}
-                      className="group w-full text-left rounded-xl border border-border-custom bg-bg-primary/50 p-4 hover:border-brand/35 hover:bg-brand/[0.02] transition-all cursor-pointer"
+                      className="group w-full text-left rounded-xl border border-border-custom bg-bg-primary/50 p-4 hover:border-brand/35 hover:bg-brand/[0.02] hover:shadow-md hover:shadow-black/10 transition-all cursor-pointer"
                     >
-                      <div className="flex gap-3">
-                        <div className="w-14 h-[72px] rounded-lg overflow-hidden bg-bg-surface shrink-0 border border-border-custom">
-                          {coverUrl ? (
-                            <img src={coverUrl} alt={seriesTitle} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-text-muted">
-                              <FileText size={18} />
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 items-start gap-3">
+                          <div className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${status.bg} ${status.color}`}>
+                            <StatusIcon size={18} />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="mb-1 flex flex-wrap items-center gap-2">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${status.bg} ${status.color}`}>
+                              {status.label}
+                              </span>
+                              <span className="rounded-full bg-bg-surface px-2 py-0.5 text-[10px] font-medium text-text-muted">
+                                Chương {c.chapterNumber}
+                              </span>
                             </div>
-                          )}
+                            <h3 className="line-clamp-1 text-base font-semibold text-text-primary transition-colors group-hover:text-brand">
+                              {c.title || `Chương ${c.chapterNumber}`}
+                            </h3>
+                            <p className="mt-0.5 line-clamp-1 text-xs text-text-secondary">
+                              {seriesTitle}
+                            </p>
+                          </div>
                         </div>
 
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${status.bg} ${status.color}`}>
-                              {status.label}
-                            </span>
-                            <ChevronRight
-                              size={16}
-                              className="text-text-muted group-hover:text-brand transition-colors shrink-0"
-                            />
-                          </div>
-                          <h3 className="text-sm font-semibold text-text-primary mt-1 truncate group-hover:text-brand transition-colors">
-                            {seriesTitle}
-                          </h3>
-                          <p className="text-xs text-text-secondary truncate">
-                            Chương {c.chapterNumber} · {c.title}
-                          </p>
-                          <div className="flex items-center gap-1.5 mt-1 text-[11px] text-text-muted">
-                            <User size={11} />
-                            <span className="truncate">{mangakaName}</span>
-                          </div>
-                        </div>
+                        <ChevronRight
+                          size={17}
+                          className="mt-2 shrink-0 text-text-muted transition-colors group-hover:text-brand"
+                        />
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-border-custom/60">
-                        <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
-                          <Layers size={12} className="text-brand/70" />
-                          {pageCount} trang
+                      <div className="mt-3 flex items-center gap-1.5 text-[11px] text-text-muted">
+                        <User size={12} />
+                        <span className="truncate">{mangakaName}</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-2 mt-3 pt-3 border-t border-border-custom/60 sm:grid-cols-3">
+                        <div className="rounded-lg bg-bg-surface/70 px-3 py-2">
+                          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-text-muted">
+                            <Layers size={11} className="text-brand/70" />
+                            Trang
+                          </div>
+                          <p className="mt-1 text-xs font-semibold text-text-primary">{pageCount}</p>
                         </div>
-                        <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
-                          <Banknote size={12} className="text-success/70" />
-                          {formatVND(genkouryoPrice)}/trang
+                        <div className="rounded-lg bg-bg-surface/70 px-3 py-2">
+                          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-text-muted">
+                            <Banknote size={11} className="text-success/70" />
+                            Đơn giá
+                          </div>
+                          <p className="mt-1 text-xs font-semibold text-text-primary">{formatVND(genkouryoPrice)}/trang</p>
                         </div>
-                        <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
-                          <Calendar size={12} />
-                          {formatDate(c.createAt)}
-                        </div>
-                        <div
-                          className={`flex items-center gap-1.5 text-[11px] font-medium ${
-                            deadline.isOverdue
-                              ? 'text-danger'
-                              : deadline.isUrgent
-                                ? 'text-amber-400'
-                                : 'text-text-muted'
-                          }`}
-                        >
-                          {deadline.isOverdue || deadline.isUrgent ? (
-                            <AlertTriangle size={12} />
-                          ) : (
-                            <Clock size={12} />
-                          )}
-                          {deadline.isOverdue
-                            ? `Trễ ${Math.abs(deadline.diffDays)} ngày`
-                            : `Còn ${deadline.diffDays} ngày`}
+                        <div className="rounded-lg bg-bg-surface/70 px-3 py-2">
+                          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-text-muted">
+                            <Calendar size={11} />
+                            Ngày nộp
+                          </div>
+                          <p className="mt-1 text-xs font-semibold text-text-primary">{formatDate(c.createAt)}</p>
                         </div>
                       </div>
                     </button>

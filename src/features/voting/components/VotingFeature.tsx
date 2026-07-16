@@ -121,6 +121,7 @@ export const VotingFeature = () => {
   const [voteDecision, setVoteDecision] = useState<VoteUiChoice>('Approve');
   const [voteComment, setVoteComment] = useState('');
   const [voteBudget, setVoteBudget] = useState<number>(0);
+  const [votePublicationSchedule, setVotePublicationSchedule] = useState<string>('Weekly');
 
   const { data: votingData, isLoading, isError, refetch } = useVotingList();
   const votingList = useMemo(() => votingData?.series ?? [], [votingData?.series]);
@@ -155,6 +156,7 @@ export const VotingFeature = () => {
     setVoteDecision('Approve');
     setVoteComment('');
     setVoteBudget(item.estimatedProductionBudget ?? 0);
+    setVotePublicationSchedule(item.publicationSchedule || 'Weekly');
     setShowVoteModal(true);
   };
 
@@ -165,7 +167,7 @@ export const VotingFeature = () => {
     try {
       await submitVoteMutation.mutateAsync({
         seriesId: getSeriesIdString(voteTarget),
-        body: uiChoiceToVoteSeriesRequest(voteDecision, voteComment, voteBudget),
+        body: uiChoiceToVoteSeriesRequest(voteDecision, voteComment, voteBudget, votePublicationSchedule),
       });
       showAppSuccess(`Bỏ phiếu "${getVoteDecisionConfig(voteDecision).label}" cho "${voteTarget.title}" thành công!`);
       setShowVoteModal(false);
@@ -377,6 +379,8 @@ export const VotingFeature = () => {
             setVoteComment={setVoteComment}
             voteBudget={voteBudget}
             setVoteBudget={setVoteBudget}
+            publicationSchedule={votePublicationSchedule}
+            setPublicationSchedule={setVotePublicationSchedule}
             boardTotal={boardTotal || 6}
             approveRequired={votingRules?.approveRequired}
             totalWeight={votingRules?.totalWeight}
@@ -627,6 +631,8 @@ export const VotingFeature = () => {
           setVoteComment={setVoteComment}
           voteBudget={voteBudget}
           setVoteBudget={setVoteBudget}
+          publicationSchedule={votePublicationSchedule}
+          setPublicationSchedule={setVotePublicationSchedule}
           boardTotal={boardTotal || 6}
           approveRequired={votingRules?.approveRequired}
           totalWeight={votingRules?.totalWeight}

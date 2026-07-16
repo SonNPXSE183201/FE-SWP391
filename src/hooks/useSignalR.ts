@@ -78,6 +78,8 @@ const normalizeNotificationType = (type: string): NotificationItem['type'] => {
     || type === 'Series_Submitted'
     || type === 'Series_Submitted_To_Board'
     || type === 'Chapter_Submitted'
+    || type === 'Chapter_Rejected'
+    || type === 'Chapter_Revision_Required'
   ) {
     return 'Review';
   }
@@ -101,12 +103,19 @@ const SERIES_DATA_REFRESH_TYPES = new Set([
   'Series_Submitted_To_Board',
   'Series_Revision_Required',
   'Series_Approved',
+  'Series_Fund_Approved',
   'Series_Rejected',
   'Series_Approved_Manual',
   'Series_Rejected_Manual',
   'Series_Pending_Review',
   'Series_Team_Accepted',
   'Series_Team_Declined',
+]);
+
+const CHAPTER_DATA_REFRESH_TYPES = new Set([
+  'Chapter_Submitted',
+  'Chapter_Rejected',
+  'Chapter_Revision_Required',
 ]);
 
 const refreshSeriesQueries = (queryClient: QueryClient) => {
@@ -141,6 +150,11 @@ const shouldShowNotificationToast = (rawType: string) =>
 const refreshEditorReviewQueries = (queryClient: QueryClient) => {
   queryClient.invalidateQueries({ queryKey: ['review'] });
   queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+};
+
+const refreshChapterQueries = (queryClient: QueryClient) => {
+  refreshActiveQueries(queryClient, ['chapters']);
+  refreshActiveQueries(queryClient, ['chapter']);
 };
 
 /**
@@ -188,13 +202,18 @@ export const useSignalR = () => {
       if (SERIES_DATA_REFRESH_TYPES.has(rawType)) {
         refreshSeriesQueries(queryClient);
       }
+      if (CHAPTER_DATA_REFRESH_TYPES.has(rawType)) {
+        refreshChapterQueries(queryClient);
+        refreshEditorReviewQueries(queryClient);
+        queryClient.invalidateQueries({ queryKey: ['chapter-revision-annotations'] });
+      }
       if (rawType === WITHDRAW_ADMIN_PENDING) {
         queryClient.invalidateQueries({ queryKey: ['admin', 'withdraw-pending'] });
       }
       if (item.type === 'WalletUpdate') {
         queryClient.invalidateQueries({ queryKey: ['wallet'] });
       }
-      if (rawType === 'Fund_Accepted') {
+      if (rawType === 'Fund_Accepted' || rawType === 'Contract_Ready_To_Create') {
         refreshActiveQueries(queryClient, ['contracts']);
         refreshSeriesQueries(queryClient);
       }
@@ -248,7 +267,12 @@ export const useSignalR = () => {
       if (SERIES_DATA_REFRESH_TYPES.has(type)) {
         refreshSeriesQueries(queryClient);
       }
-      if (type === 'Fund_Accepted' || type === 'Contract_Created') {
+      if (CHAPTER_DATA_REFRESH_TYPES.has(type)) {
+        refreshChapterQueries(queryClient);
+        refreshEditorReviewQueries(queryClient);
+        queryClient.invalidateQueries({ queryKey: ['chapter-revision-annotations'] });
+      }
+      if (type === 'Fund_Accepted' || type === 'Contract_Ready_To_Create' || type === 'Contract_Created') {
         refreshSeriesQueries(queryClient);
         refreshActiveQueries(queryClient, ['contracts']);
       }

@@ -10,6 +10,9 @@ const toUserPatch = (data: UpdateProfileDto): Partial<User> => ({
   skills: data.skills ?? undefined,
   phoneNumber: data.phoneNumber ?? undefined,
   avatarUrl: data.avatarUrl ?? undefined,
+  citizenId: data.citizenId ?? undefined,
+  citizenIdIssueDate: data.citizenIdIssueDate ?? undefined,
+  citizenIdIssuePlace: data.citizenIdIssuePlace ?? undefined,
 });
 
 export const useUpdateProfile = () => {
@@ -18,8 +21,8 @@ export const useUpdateProfile = () => {
 
   return useMutation({
     mutationFn: (data: UpdateProfileDto) => profileApi.updateProfile(data),
-    onSuccess: (_, variables) => {
-      updateUser(toUserPatch(variables));
+    onSuccess: (response, variables) => {
+      updateUser(toUserPatch(response.data.data ?? variables));
       queryClient.invalidateQueries({ queryKey: ['profile'] });
     },
     onError: (error) => {
