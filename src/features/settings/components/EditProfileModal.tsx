@@ -13,6 +13,8 @@ interface EditProfileModalProps {
 
 const FIELD_CLASS =
   'w-full px-4 py-2.5 bg-bg-secondary border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all';
+const IMMUTABLE_FIELD_CLASS =
+  'w-full px-4 py-2.5 bg-bg-surface/50 border border-border-custom rounded-xl text-sm text-text-muted cursor-not-allowed outline-none';
 
 const toDateInputValue = (value?: string | null) => {
   if (!value) return '';
@@ -106,9 +108,6 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
         skills: form.skills,
         phoneNumber: form.phoneNumber,
         avatarUrl: user?.avatarUrl,
-        citizenId: isMangaka ? form.citizenId.trim() : undefined,
-        citizenIdIssueDate: isMangaka ? form.citizenIdIssueDate : undefined,
-        citizenIdIssuePlace: isMangaka ? form.citizenIdIssuePlace.trim() : undefined,
       },
       {
         onSuccess: () => {
@@ -227,8 +226,8 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
                   type="text"
                   inputMode="numeric"
                   value={form.citizenId}
-                  onChange={(e) => setField('citizenId', e.target.value.replace(/\D/g, '').slice(0, 12))}
-                  className={inputClass('citizenId')}
+                  disabled
+                  className={IMMUTABLE_FIELD_CLASS}
                   placeholder="079099001125"
                 />
                 {errors.citizenId && <p className="text-xs text-danger mt-1">{errors.citizenId}</p>}
@@ -242,8 +241,8 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
                   type="date"
                   max={new Date().toISOString().split('T')[0]}
                   value={form.citizenIdIssueDate}
-                  onChange={(e) => setField('citizenIdIssueDate', e.target.value)}
-                  className={inputClass('citizenIdIssueDate')}
+                  disabled
+                  className={IMMUTABLE_FIELD_CLASS}
                 />
                 {errors.citizenIdIssueDate && (
                   <p className="text-xs text-danger mt-1">{errors.citizenIdIssueDate}</p>
@@ -257,8 +256,8 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
                 <input
                   type="text"
                   value={form.citizenIdIssuePlace}
-                  onChange={(e) => setField('citizenIdIssuePlace', e.target.value)}
-                  className={inputClass('citizenIdIssuePlace')}
+                  disabled
+                  className={IMMUTABLE_FIELD_CLASS}
                   placeholder="Cục CSQLHC"
                 />
                 {errors.citizenIdIssuePlace && (
