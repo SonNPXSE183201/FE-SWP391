@@ -17,6 +17,7 @@ import type { CanvasViewerHandle } from '../../../components/canvas/CanvasViewer
 import type { CanvasTool } from '../../../stores/canvasStore';
 import { useTaskVersions, useApproveTask, useRequestRevisionTask, useCompositedPageUrl, useReportDisputeTask } from '../hooks/useTasks';
 import { TaskLayerPreview } from './TaskLayerPreview';
+import { AcceptanceCriteriaViewer } from './AcceptanceCriteriaViewer';
 import { ANNOTATION_TYPE_CONFIG } from '../../../constants/annotation';
 import { formatDeadline } from '../constants';
 import { formatVND } from '../../wallet';
@@ -440,6 +441,12 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
               </div>
             </div>
 
+            {task.acceptanceCriteria && (
+              <div className="shrink-0">
+                <AcceptanceCriteriaViewer criteria={task.acceptanceCriteria} />
+              </div>
+            )}
+
             {isLoading ? (
               <div className="flex-1 flex items-center justify-center bg-bg-surface rounded-xl border border-border-custom">
                 <Loader2 size={28} className="animate-spin text-brand" />
@@ -479,6 +486,7 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
                       <CanvasViewer
                         ref={canvasRef}
                         imageUrl={activeUrl}
+                        backdrop="checkerboard"
                         annotations={viewerAnnotations}
                         mode={activeTool === 'annotate' ? 'annotate' : 'view'}
                         onAnnotationCreated={handleAddPin}
@@ -532,12 +540,12 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
                             key={v.id}
                             type="button"
                             onClick={() => setActiveIdx(idx)}
-                            className={`relative flex-shrink-0 w-16 h-20 rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${idx === activeIdx ? 'border-brand' : 'border-border-custom hover:border-text-muted'
+                            className={`relative flex-shrink-0 w-16 h-20 rounded-lg overflow-hidden border-2 bg-white transition-all cursor-pointer ${idx === activeIdx ? 'border-brand' : 'border-border-custom hover:border-text-muted'
                               }`}
                             title={`Phiên bản ${v.versionNumber}`}
                           >
                             {thumb ? (
-                              <img src={thumb} alt={`v${v.versionNumber}`} className="w-full h-full object-cover" />
+                              <img src={thumb} alt={`v${v.versionNumber}`} className="w-full h-full object-contain" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-bg-surface">
                                 <ImageOff size={14} className="text-text-muted" />
@@ -562,6 +570,7 @@ export const TaskReviewModal = ({ task, onClose }: TaskReviewModalProps) => {
                         overlayImageUrl={activeUrl}
                         coordinatesJson={task.regionCoordinatesJson}
                         regionName={task.regionName}
+                        overlayMode="region"
                         heightClassName="flex-1"
                         className="rounded-none border-0 w-full"
                       />

@@ -10,7 +10,7 @@ import type { ApiResponse, ChapterDto } from '../../../api/generated/types';
 
 interface UploadChapterModalProps {
   onClose: () => void;
-  /** Optional — pre-select a series (e.g. from SeriesDetail page) */
+  /** Optional: pre-select a series, for example from the series detail page. */
   seriesId?: string;
 }
 
@@ -38,7 +38,7 @@ export const UploadChapterModal = ({ onClose, seriesId: preselectedSeriesId }: U
     const files = Array.from(e.target.files || []);
     const imageFiles = files.filter((f) => f.type.startsWith('image/'));
     if (imageFiles.length === 0) {
-      toast.error('Vui lòng chọn file ảnh');
+      toast.error('Vui lòng chọn tệp ảnh');
       return;
     }
     setPages((prev) => [...prev, ...imageFiles]);
@@ -55,19 +55,19 @@ export const UploadChapterModal = ({ onClose, seriesId: preselectedSeriesId }: U
 
   const handleSubmit = useCallback(async () => {
     if (!selectedSeriesId) {
-      toast.error('Vui lòng chọn Series');
+      toast.error('Vui lòng chọn bộ truyện');
       return;
     }
     if (!title.trim()) {
-      toast.error('Vui lòng nhập tiêu đề Chapter');
+      toast.error('Vui lòng nhập tiêu đề chương');
       return;
     }
     if (!chapterNum || parseInt(chapterNum) < 1) {
-      toast.error('Số Chapter phải lớn hơn 0');
+      toast.error('Số chương phải lớn hơn 0');
       return;
     }
     if (pages.length === 0) {
-      toast.error('Vui lòng upload ít nhất 1 trang bản thảo');
+      toast.error('Vui lòng tải lên ít nhất 1 trang bản thảo');
       return;
     }
 
@@ -86,7 +86,7 @@ export const UploadChapterModal = ({ onClose, seriesId: preselectedSeriesId }: U
 
       if (isApiSuccess(apiData)) {
         toast.success(
-          `Đã tạo Chapter ${chapterNum}: ${title} (${pages.length} trang). Tiếp theo: Canvas → giao task → nộp Editor.`,
+          `Đã tạo chương ${chapterNum}: ${title} (${pages.length} trang). Tiếp theo: dựng trên khung vẽ, giao việc rồi nộp cho biên tập viên.`,
           { icon: <CheckCircle2 size={18} className="text-success" />, duration: 5000 },
         );
 
@@ -99,10 +99,10 @@ export const UploadChapterModal = ({ onClose, seriesId: preselectedSeriesId }: U
 
         onClose();
       } else {
-        toast.error(apiData.message || 'Tạo chapter thất bại');
+        toast.error(apiData.message || 'Tạo chương thất bại');
       }
     } catch (err) {
-      const msg = getAxiosErrorMessage(err, 'Upload thất bại. Vui lòng thử lại.');
+      const msg = getAxiosErrorMessage(err, 'Tải lên thất bại. Vui lòng thử lại.');
       toast.error(msg);
     } finally {
       setUploading(false);
@@ -126,8 +126,8 @@ export const UploadChapterModal = ({ onClose, seriesId: preselectedSeriesId }: U
               <Upload size={18} className="text-brand" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-text-primary">Tạo Chapter nháp</h2>
-              <p className="text-[11px] text-text-muted">Upload trang phác thảo — sau đó sản xuất trên Canvas rồi nộp Editor</p>
+              <h2 className="text-base font-semibold text-text-primary">Tạo chương nháp</h2>
+              <p className="text-[11px] text-text-muted">Tải trang phác thảo lên, sau đó dựng trên khung vẽ rồi nộp cho biên tập viên</p>
             </div>
           </div>
           <button
@@ -139,11 +139,11 @@ export const UploadChapterModal = ({ onClose, seriesId: preselectedSeriesId }: U
         </div>
 
         <div className="p-6 space-y-5">
-          {/* Series selector — only show if no preselected seriesId */}
+          {/* Series selector: only show if no preselected seriesId */}
           {!preselectedSeriesId && (
             <div>
               <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                Series <span className="text-danger">*</span>
+                Bộ truyện <span className="text-danger">*</span>
               </label>
               <div className="relative">
                 <BookOpen size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
@@ -154,7 +154,7 @@ export const UploadChapterModal = ({ onClose, seriesId: preselectedSeriesId }: U
                   className="w-full pl-9 pr-3 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm text-text-primary focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all appearance-none cursor-pointer"
                 >
                   <option value="">
-                    {seriesLoading ? 'Đang tải...' : '— Chọn Series —'}
+                    {seriesLoading ? 'Đang tải...' : '-- Chọn bộ truyện --'}
                   </option>
                   {eligibleSeries.map((s) => (
                     <option key={s.id} value={s.id}>
@@ -166,7 +166,7 @@ export const UploadChapterModal = ({ onClose, seriesId: preselectedSeriesId }: U
               {eligibleSeries.length === 0 && !seriesLoading && (
                 <p className="text-[11px] text-warning mt-1 flex items-center gap-1">
                   <AlertCircle size={11} />
-                  Không có Series nào khả dụng. Hãy tạo Series trước.
+                  Không có bộ truyện nào khả dụng. Hãy tạo bộ truyện trước.
                 </p>
               )}
             </div>
@@ -176,7 +176,7 @@ export const UploadChapterModal = ({ onClose, seriesId: preselectedSeriesId }: U
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                Số Chapter <span className="text-danger">*</span>
+                Số chương <span className="text-danger">*</span>
               </label>
               <input
                 type="number"
@@ -189,7 +189,7 @@ export const UploadChapterModal = ({ onClose, seriesId: preselectedSeriesId }: U
             </div>
             <div className="col-span-2">
               <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                Tiêu đề Chapter <span className="text-danger">*</span>
+                Tiêu đề chương <span className="text-danger">*</span>
               </label>
               <input
                 type="text"
@@ -205,7 +205,7 @@ export const UploadChapterModal = ({ onClose, seriesId: preselectedSeriesId }: U
           <div>
             <label className="block text-xs font-medium text-text-secondary mb-2">
               Trang bản thảo <span className="text-danger">*</span>
-              <span className="text-text-muted font-normal ml-1">({pages.length} trang đã chọn{pages.length > 0 ? ` — ${totalSizeMB} MB` : ''})</span>
+              <span className="text-text-muted font-normal ml-1">({pages.length} trang đã chọn{pages.length > 0 ? ` - ${totalSizeMB} MB` : ''})</span>
             </label>
             <div
               onClick={() => fileInputRef.current?.click()}
@@ -214,8 +214,8 @@ export const UploadChapterModal = ({ onClose, seriesId: preselectedSeriesId }: U
               <div className="w-10 h-10 rounded-lg bg-bg-surface flex items-center justify-center mx-auto group-hover:bg-brand/10 transition-colors">
                 <ImagePlus size={20} className="text-text-muted group-hover:text-brand transition-colors" />
               </div>
-              <p className="text-xs text-text-secondary mt-2 font-medium">Click để chọn hoặc kéo thả</p>
-              <p className="text-[10px] text-text-muted mt-0.5">PNG, JPG, WebP — có thể chọn nhiều file</p>
+              <p className="text-xs text-text-secondary mt-2 font-medium">Nhấn để chọn hoặc kéo thả</p>
+              <p className="text-[10px] text-text-muted mt-0.5">PNG, JPG, WebP - có thể chọn nhiều tệp</p>
             </div>
             <input
               ref={fileInputRef}
@@ -234,7 +234,7 @@ export const UploadChapterModal = ({ onClose, seriesId: preselectedSeriesId }: U
               <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-[200px] overflow-y-auto pr-1">
                 {previews.map((url, i) => (
                   <div key={i} className="relative group aspect-[3/4] rounded-lg overflow-hidden border border-border-custom">
-                    <img src={url} alt={`Page ${i + 1}`} className="w-full h-full object-cover" />
+                    <img src={url} alt={`Trang ${i + 1}`} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <button
                         onClick={() => removePage(i)}
@@ -256,7 +256,7 @@ export const UploadChapterModal = ({ onClose, seriesId: preselectedSeriesId }: U
           {uploading && uploadProgress > 0 && (
             <div className="space-y-1">
               <div className="flex items-center justify-between text-[11px]">
-                <span className="text-text-muted">Đang upload...</span>
+                <span className="text-text-muted">Đang tải lên...</span>
                 <span className="text-brand font-medium">{Math.round(uploadProgress)}%</span>
               </div>
               <div className="h-1.5 bg-bg-surface rounded-full overflow-hidden">
@@ -290,12 +290,12 @@ export const UploadChapterModal = ({ onClose, seriesId: preselectedSeriesId }: U
             {uploading ? (
               <>
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Đang upload...
+                Đang tải lên...
               </>
             ) : (
               <>
                 <Upload size={14} />
-                Tạo chapter nháp
+                Tạo chương nháp
               </>
             )}
           </button>

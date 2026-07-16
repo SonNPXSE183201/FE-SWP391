@@ -13,10 +13,10 @@ const SERIES_STATUS_ALIASES: Record<string, SeriesStatus> = {
   pendingapproval: 'PendingApproval',
   pending_board_vote: 'PendingBoardVote',
   pendingboardvote: 'PendingBoardVote',
-  fund_pending: 'Approved',
+  fund_pending: 'Fund_Pending',
   active: 'Published',
-  'in production': 'Published',
-  in_production: 'Published',
+  'in production': 'In Production',
+  in_production: 'In Production',
   approved: 'Approved',
   published: 'Published',
   onhold: 'OnHold',
@@ -47,6 +47,10 @@ const CHAPTER_STATUS_ALIASES: Record<string, ChapterStatus> = {
   Draft: 'Draft',
   Submitted: 'UnderReview',
   UnderReview: 'UnderReview',
+  Pending_Review: 'UnderReview',
+  PendingReview: 'UnderReview',
+  pending_review: 'UnderReview',
+  pendingreview: 'UnderReview',
   Approved: 'Approved',
   Revision: 'Revision',
   Rejected: 'Revision',
@@ -54,8 +58,11 @@ const CHAPTER_STATUS_ALIASES: Record<string, ChapterStatus> = {
 };
 
 export const normalizeChapterStatus = (status: unknown): ChapterStatus => {
-  const key = String(status ?? '');
+  const raw = String(status ?? '').trim();
+  const key = raw;
   if (CHAPTER_STATUS_ALIASES[key]) return CHAPTER_STATUS_ALIASES[key];
+  const lowerKey = raw.toLowerCase();
+  if (CHAPTER_STATUS_ALIASES[lowerKey]) return CHAPTER_STATUS_ALIASES[lowerKey];
   return 'Draft';
 };
 

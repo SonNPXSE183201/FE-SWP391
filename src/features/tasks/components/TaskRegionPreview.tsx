@@ -115,7 +115,8 @@ export const TaskRegionPreview = ({
       <img
         src={displayUrl}
         alt={regionName ? `Vùng vẽ: ${regionName}` : 'Ảnh trang truyện'}
-        className="absolute inset-0 h-full w-full object-contain"
+        draggable={false}
+        className="absolute inset-0 h-full w-full select-none object-contain"
         onLoad={(e) => {
           const img = e.currentTarget;
           setNaturalSize({ w: img.naturalWidth, h: img.naturalHeight });

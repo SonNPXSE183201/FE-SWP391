@@ -63,7 +63,6 @@ import {
 import {
   AdminDashboardPage,
   AdminUsersPage,
-  AdminRolesPage,
   AdminContractsPage,
   AdminReconciliationPage,
   AdminWithdrawApprovalPage,
@@ -180,7 +179,6 @@ function App() {
 
             <Route path="/admin/users" element={<AdminUsersPage />} />
 
-            <Route path="/admin/roles" element={<AdminRolesPage />} />
             <Route path="/admin/contracts" element={<AdminContractsPage />} />
             <Route path="/admin/reconciliation" element={<AdminReconciliationPage />} />
             <Route path="/admin/withdraw-approval" element={<AdminWithdrawApprovalPage />} />

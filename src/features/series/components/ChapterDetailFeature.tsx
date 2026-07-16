@@ -43,7 +43,8 @@ export const ChapterDetailFeature = () => {
 
   const { data: chapter, isLoading: chapterLoading, error: chapterError } = useChapterDetail(chapterId);
   const { data: allPages = [], isLoading: pagesLoading, error: pagesError } = useChapterPages(chapterId);
-  const { data: revisionAnnotations = [] } = useQuery({
+  const isRevision = chapter ? normalizeChapterStatus(chapter.status) === 'Revision' : false;
+  const { data: fetchedRevisionAnnotations = [] } = useQuery({
     queryKey: ['chapter-revision-annotations', chapterId, allPages.map((p) => String(p.id)).join(',')],
     queryFn: async () => {
       if (!allPages.length) return [] as Array<{ id: string; pageId: string; pageNumber: number; comment: string; type: string }>;
@@ -61,12 +62,15 @@ export const ChapterDetailFeature = () => {
       }));
       return byPage.flat();
     },
-    enabled: !!chapterId && allPages.length > 0,
+    enabled: !!chapterId && allPages.length > 0 && isRevision,
     staleTime: 15_000,
   });
+  const revisionAnnotations = useMemo(
+    () => (isRevision ? fetchedRevisionAnnotations : []),
+    [isRevision, fetchedRevisionAnnotations],
+  );
 
   const showSubmitPanel = chapter ? isChapterSubmittableStatus(chapter.status) : false;
-  const isRevision = chapter ? normalizeChapterStatus(chapter.status) === 'Revision' : false;
   const {
     data: readiness,
     isLoading: readinessLoading,
@@ -206,13 +210,15 @@ export const ChapterDetailFeature = () => {
               <Image size={16} className="text-brand" />
               Mở khung vẽ
             </button>
-            <button
-              onClick={() => setShowAddPages(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition-all duration-200 border-none cursor-pointer shadow-brand hover:shadow-brand-hover hover:-translate-y-0.5"
-            >
-              <ImagePlus size={16} />
-              Tải thêm trang
-            </button>
+            {canReplacePageImage && (
+              <button
+                onClick={() => setShowAddPages(true)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition-all duration-200 border-none cursor-pointer shadow-brand hover:shadow-brand-hover hover:-translate-y-0.5"
+              >
+                <ImagePlus size={16} />
+                Tải thêm trang
+              </button>
+            )}
           </div>
         </div>
       </div>
