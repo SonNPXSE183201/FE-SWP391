@@ -34,6 +34,7 @@ import { formatVND, formatVNDInput } from '../../../utils/currency';
 import { getGenreLabel } from '../../../constants/genres';
 import { MotionStagger, MotionItem, MotionListItem, containerVariants } from '../../../components/common/animation';
 import { motion } from 'framer-motion';
+import { ContractTemplatesModal } from './ContractTemplatesModal';
 
 type FilterStatus = 'all' | 'pending' | 'contracted';
 type EffectiveDateMode = 'immediate' | 'scheduled';
@@ -121,6 +122,7 @@ export const ContractManagementFeature = () => {
   const [showContractModal, setShowContractModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showTemplatesModal, setShowTemplatesModal] = useState(false);
   const [selectedSeries, setSelectedSeries] = useState<ApprovedSeriesContractDto | null>(null);
   const [baseGenkouryoPrice, setBaseGenkouryoPrice] = useState('');
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
@@ -364,6 +366,15 @@ export const ContractManagementFeature = () => {
           >
             <RefreshCw size={13} className={isFetching ? 'animate-spin' : ''} />
             Làm mới
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowTemplatesModal(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium rounded-xl border border-border-custom bg-bg-secondary hover:bg-bg-surface text-text-secondary cursor-pointer transition-colors"
+          >
+            <FileText size={13} />
+            Mẫu hợp đồng
           </button>
         </div>
       </div>
@@ -1064,6 +1075,8 @@ export const ContractManagementFeature = () => {
             </div>
         </AnimatedModal>
       )}
+      {/* Manage Templates Modal */}
+      <ContractTemplatesModal open={showTemplatesModal} onClose={() => setShowTemplatesModal(false)} />
 
     </div>
   );

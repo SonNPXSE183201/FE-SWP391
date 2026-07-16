@@ -41,7 +41,9 @@ interface AcceptFundPanelProps {
   contractSignedDate?: string | null;
   contractFileUrl?: string | null;
   isSigning: boolean;
+  isRejecting: boolean;
   onSign: () => void;
+  onReject: (contractId: number) => void;
 }
 
 export const AcceptFundPanel = ({
@@ -54,10 +56,13 @@ export const AcceptFundPanel = ({
   contractSignedDate,
   contractFileUrl,
   isSigning,
+  isRejecting,
   onSign,
+  onReject,
 }: AcceptFundPanelProps) => {
   const diff = approvedBudget - estimatedBudget;
   const [showSignModal, setShowSignModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
 
   const handleConfirmSign = () => {
     setShowSignModal(false);
@@ -161,15 +166,27 @@ export const AcceptFundPanel = ({
                 Sau khi xác nhận ký kết, vốn mới được nạp vào quỹ thiết lập để khóa trả lương trợ lý.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowSignModal(true)}
-              disabled={isSigning || isContractSigned(contractStatus)}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-medium border-none bg-success text-white cursor-pointer hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSigning ? <Loader2 size={16} className="animate-spin" /> : <FileSignature size={16} />}
-              {isSigning ? 'Đang ký...' : 'Xác nhận ký kết'}
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setShowRejectModal(true)}
+                disabled={isSigning || isRejecting || isContractSigned(contractStatus)}
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-medium border border-danger/30 bg-transparent text-danger cursor-pointer hover:bg-danger/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isRejecting ? <Loader2 size={16} className="animate-spin" /> : <X size={16} />}
+                Từ chối ký
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowSignModal(true)}
+                disabled={isSigning || isRejecting || isContractSigned(contractStatus)}
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-medium border-none bg-success text-white cursor-pointer hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSigning ? <Loader2 size={16} className="animate-spin" /> : <FileSignature size={16} />}
+                {isSigning ? 'Đang ký...' : 'Xác nhận ký kết'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -249,6 +266,64 @@ export const AcceptFundPanel = ({
             >
               {isSigning ? <Loader2 size={16} className="animate-spin" /> : <FileSignature size={16} />}
               {isSigning ? 'Đang ký...' : 'Xác nhận ký hợp đồng'}
+            </button>
+          </div>
+        </AnimatedModal>
+      )}
+
+      {showRejectModal && (
+        <AnimatedModal
+          open
+          onClose={() => setShowRejectModal(false)}
+          panelClassName="relative w-full max-w-md bg-bg-secondary border border-border-custom rounded-2xl shadow-2xl overflow-hidden"
+        >
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border-custom">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-danger/10 border border-danger/20 flex items-center justify-center">
+                <X size={18} className="text-danger" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-text-primary">Từ chối ký hợp đồng</h3>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowRejectModal(false)}
+              className="w-8 h-8 rounded-lg bg-bg-surface hover:bg-danger/10 text-text-muted hover:text-danger flex items-center justify-center transition-colors border-none cursor-pointer"
+            >
+              <X size={16} />
+            </button>
+          </div>
+          <div className="p-5 space-y-4">
+            <p className="text-sm text-text-secondary leading-relaxed">
+              Bạn có chắc chắn muốn <strong>từ chối ký</strong> bản hợp đồng này không?
+            </p>
+            <p className="text-xs text-text-muted leading-relaxed bg-bg-primary/50 p-3 rounded-xl border border-border-custom">
+              Hệ thống sẽ chuyển trạng thái bộ truyện về <strong>Bản nháp (Draft)</strong> để bạn có thể chỉnh sửa lại thông tin, cập nhật bản thảo và nộp lên phê duyệt vốn lại từ đầu.
+            </p>
+            <p className="text-xs text-danger font-medium">
+              * Lưu ý: Nếu từ chối ký hợp đồng quá 3 lần, bộ truyện sẽ bị hệ thống tự động Hủy bỏ (Cancelled).
+            </p>
+          </div>
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 px-5 py-4 border-t border-border-custom bg-bg-primary/30">
+            <button
+              type="button"
+              onClick={() => setShowRejectModal(false)}
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-border-custom bg-transparent text-sm text-text-secondary hover:bg-bg-surface cursor-pointer transition-colors"
+            >
+              Hủy
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowRejectModal(false);
+                if (contractId) onReject(contractId);
+              }}
+              disabled={isRejecting}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-danger text-white text-sm font-semibold border-none cursor-pointer hover:opacity-90 transition-colors disabled:opacity-50 shadow-sm shadow-danger/20"
+            >
+              {isRejecting ? <Loader2 size={16} className="animate-spin" /> : <X size={16} />}
+              Xác nhận từ chối
             </button>
           </div>
         </AnimatedModal>
