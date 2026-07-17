@@ -627,42 +627,7 @@ export const AssistantTaskDetailModal = ({
         </div>
       )}
 
-      {criteriaItems.length > 0 && (
-        <div className="max-h-36 shrink-0 overflow-y-auto rounded-xl border border-brand/20 bg-brand/5 p-3 space-y-2.5">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-xs font-bold text-brand flex items-center gap-1.5">
-              <CheckCircle2 size={14} />
-              Tiêu chí nghiệm thu
-            </p>
-            <span className="text-[11px] text-text-muted tabular-nums">
-              {checkedCriteriaCount}/{criteriaItems.length}
-            </span>
-          </div>
-          <div className="space-y-2">
-            {criteriaItems.map((item) => {
-              const checked = checkedCriteria.has(item.id);
-              return (
-                <label
-                  key={item.id}
-                  className="flex items-start gap-2 rounded-lg px-2 py-1.5 cursor-pointer hover:bg-bg-surface/70 transition-colors"
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => toggleCriterion(item.id)}
-                    className="mt-0.5 h-4 w-4 accent-brand shrink-0"
-                  />
-                  <span
-                    className={`text-[12px] leading-relaxed ${checked ? "text-text-muted line-through" : "text-text-secondary"}`}
-                  >
-                    {item.text}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </div>
-      )}
+
     </div>
   );
 
@@ -842,11 +807,10 @@ export const AssistantTaskDetailModal = ({
             {task.pageNumber ?? "?"}
           </span>
           <span
-            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium ${
-              dl.urgent
-                ? "bg-danger/10 text-danger"
-                : "bg-bg-surface text-text-muted"
-            }`}
+            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium ${dl.urgent
+              ? "bg-danger/10 text-danger"
+              : "bg-bg-surface text-text-muted"
+              }`}
           >
             <Calendar size={12} className={dl.urgent ? "" : "opacity-60"} />{" "}
             {dl.text}
@@ -977,11 +941,10 @@ export const AssistantTaskDetailModal = ({
                           key={v.id}
                           type="button"
                           onClick={() => setActiveIdx(idx)}
-                          className={`relative shrink-0 w-14 h-16 rounded-lg overflow-hidden border-2 cursor-pointer ${
-                            idx === activeIdx
-                              ? "border-brand"
-                              : "border-border-custom hover:border-text-muted"
-                          }`}
+                          className={`relative shrink-0 w-14 h-16 rounded-lg overflow-hidden border-2 cursor-pointer ${idx === activeIdx
+                            ? "border-brand"
+                            : "border-border-custom hover:border-text-muted"
+                            }`}
                         >
                           {thumb ? (
                             <img
@@ -1064,14 +1027,13 @@ export const AssistantTaskDetailModal = ({
                   !previewConfirmed ||
                   !criteriaSatisfied
                 }
-                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border-none cursor-pointer transition-all ${
-                  isSubmitting ||
+                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border-none cursor-pointer transition-all ${isSubmitting ||
                   !selectedFile ||
                   !previewConfirmed ||
                   !criteriaSatisfied
-                    ? "bg-success/40 text-white/70 cursor-not-allowed"
-                    : "bg-success hover:bg-green-600 text-white"
-                }`}
+                  ? "bg-success/40 text-white/70 cursor-not-allowed"
+                  : "bg-success hover:bg-green-600 text-white"
+                  }`}
               >
                 {isSubmitting ? (
                   <Loader2 size={15} className="animate-spin" />
@@ -1134,11 +1096,10 @@ export const AssistantTaskDetailModal = ({
                     disabled={
                       extensionMutation.isPending || !!task.extensionRequestDays
                     }
-                    className={`rounded-xl border px-4 py-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                      selected
-                        ? "border-brand/50 bg-brand/15 text-brand"
-                        : "border-border-custom bg-bg-surface text-text-secondary hover:border-brand/35 hover:text-text-primary"
-                    }`}
+                    className={`rounded-xl border px-4 py-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${selected
+                      ? "border-brand/50 bg-brand/15 text-brand"
+                      : "border-border-custom bg-bg-surface text-text-secondary hover:border-brand/35 hover:text-text-primary"
+                      }`}
                   >
                     <span className="block text-sm font-bold">
                       Thêm {days * 24}h
@@ -1241,11 +1202,10 @@ export const AssistantTaskDetailModal = ({
                   },
                 );
               }}
-              className={`px-4 py-2 text-sm font-bold rounded-xl flex items-center gap-2 ${
-                !disputeReason.trim() || reportDisputeTask.isPending
-                  ? "bg-warning/50 text-white/70 cursor-not-allowed"
-                  : "bg-warning text-white hover:bg-orange-600"
-              }`}
+              className={`px-4 py-2 text-sm font-bold rounded-xl flex items-center gap-2 ${!disputeReason.trim() || reportDisputeTask.isPending
+                ? "bg-warning/50 text-white/70 cursor-not-allowed"
+                : "bg-warning text-white hover:bg-orange-600"
+                }`}
             >
               {reportDisputeTask.isPending && (
                 <Loader2 size={14} className="animate-spin" />
@@ -1304,11 +1264,10 @@ function RevisionPinList({
                 key={p.id}
                 type="button"
                 onClick={() => onSelectPin(p.id)}
-                className={`focus:outline-none w-full text-left flex items-start gap-3 p-3 rounded-xl border cursor-pointer relative overflow-hidden group ${
-                  isSelected
-                    ? `${cfg.bg} ${cfg.border} shadow-md`
-                    : "bg-bg-surface border-border-custom hover:border-text-muted/30 hover:bg-bg-surface/80"
-                }`}
+                className={`focus:outline-none w-full text-left flex items-start gap-3 p-3 rounded-xl border cursor-pointer relative overflow-hidden group ${isSelected
+                  ? `${cfg.bg} ${cfg.border} shadow-md`
+                  : "bg-bg-surface border-border-custom hover:border-text-muted/30 hover:bg-bg-surface/80"
+                  }`}
               >
                 {isSelected && (
                   <div
@@ -1317,11 +1276,10 @@ function RevisionPinList({
                 )}
 
                 <div
-                  className={`flex items-center justify-center w-5 h-5 mt-0.5 rounded-full shrink-0 text-[10px] font-bold transition-colors ${
-                    isSelected
-                      ? `${bgMuted} ${cfg.color}`
-                      : "bg-bg-secondary text-text-muted group-hover:bg-bg-primary group-hover:text-text-primary"
-                  }`}
+                  className={`flex items-center justify-center w-5 h-5 mt-0.5 rounded-full shrink-0 text-[10px] font-bold transition-colors ${isSelected
+                    ? `${bgMuted} ${cfg.color}`
+                    : "bg-bg-secondary text-text-muted group-hover:bg-bg-primary group-hover:text-text-primary"
+                    }`}
                 >
                   {i + 1}
                 </div>
