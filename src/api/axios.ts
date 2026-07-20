@@ -74,11 +74,15 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    const isAuthEndpoint =
+      originalRequest?.url?.includes('/auth/login') ||
+      originalRequest?.url?.includes('/auth/register') ||
+      originalRequest?.url?.includes('/auth/refresh-token');
+
     if (
       error.response?.status === 401 &&
-      !originalRequest._retry &&
-      originalRequest.url !== '/api/auth/refresh-token' &&
-      originalRequest.url !== '/api/v1/auth/refresh-token'
+      !originalRequest?._retry &&
+      !isAuthEndpoint
     ) {
       if (isRefreshing) {
         return new Promise(function (resolve, reject) {
@@ -130,6 +134,7 @@ axiosInstance.interceptors.response.use(
           isRefreshing = false;
         }
       } else {
+        isRefreshing = false;
         useAuthStore.getState().logout();
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
