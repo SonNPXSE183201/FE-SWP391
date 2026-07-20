@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-import { 
+import {
   TASK_STATUS_FILTER_OPTIONS,
   OPEN_TASK_STATUSES,
   REVIEWABLE_TASK_STATUSES,
@@ -145,19 +145,19 @@ export const MangakaTasksFeature = () => {
         <MotionItem><StatPill label="Đang làm" value={String(stats.inProgress)} icon={Clock} tone="text-info" /></MotionItem>
         <MotionItem><StatPill label="Chờ duyệt" value={String(stats.pendingReview)} icon={Eye} tone="text-warning" /></MotionItem>
         <MotionItem>
-        <StatPill
-          label="Tiền tạm giữ"
-          value={formatVND(stats.totalLocked)}
-          icon={DollarSign}
-          tone="text-danger"
-          help={(
-            <div className="space-y-2">
-              <p className="text-xs text-text-secondary leading-relaxed">
-                Là tổng tiền đang giữ cho các công việc chưa kết thúc (Chờ nhận việc/Đang làm/Chờ duyệt/Yêu cầu sửa).
-              </p>
-            </div>
-          )}
-        />
+          <StatPill
+            label="Tiền tạm giữ"
+            value={formatVND(stats.totalLocked)}
+            icon={DollarSign}
+            tone="text-danger"
+            help={(
+              <div className="space-y-2">
+                <p className="text-xs text-text-secondary leading-relaxed">
+                  Là tổng tiền đang giữ cho các công việc chưa kết thúc (Chờ nhận việc/Đang làm/Chờ duyệt/Yêu cầu sửa).
+                </p>
+              </div>
+            )}
+          />
         </MotionItem>
       </MotionStagger>
 
@@ -265,8 +265,8 @@ export const MangakaTasksFeature = () => {
                   >
                     <td className="px-4 py-3 align-top">
                       <div className="flex flex-col gap-1.5">
-                        <h3 className="text-sm font-semibold text-text-primary group-hover:text-brand transition-colors">
-                          {task.description || `Công việc ${task.id}`}
+                        <h3 className="text-sm font-semibold text-text-primary group-hover:text-brand transition-colors whitespace-pre-line">
+                          {task.description ? task.description.replace(/\\n/g, '\n') : `Công việc ${task.id}`}
                         </h3>
                         <p className="text-[11px] text-text-muted mt-0.5">
                           {[`Vùng ${task.regionId}`, `Trang ${task.pageNumber || '—'}`].filter(Boolean).join(' · ')}
@@ -413,7 +413,7 @@ const StatPill = ({
   <div className="relative overflow-hidden group flex items-center gap-4 px-5 py-4 rounded-2xl bg-bg-secondary border border-border-custom shadow-sm hover:border-brand/30 hover:shadow-md transition-all duration-300">
     {/* Decorative background circle */}
     <div className={`absolute right-0 top-0 w-24 h-24 rounded-full ${tone.replace('text-', 'bg-')}/5 -mr-8 -mt-8 transition-transform duration-500 group-hover:scale-110`} />
-    
+
     <div className={`w-12 h-12 rounded-xl bg-bg-surface flex items-center justify-center flex-shrink-0 ${tone} shadow-sm group-hover:scale-105 transition-transform duration-300`}>
       <Icon size={24} />
     </div>

@@ -72,7 +72,7 @@ export const useAuthStore = create<AuthStore>()(
       rememberMe: false,
       setAuth: (user, token, refreshToken, rememberMe = false) => set({ user, token, refreshToken, rememberMe }),
       setLoading: (isLoading) => set({ isLoading }),
-      logout: () => set({ user: null, token: null, refreshToken: null, rememberMe: false }),
+      logout: () => set({ user: null, token: null, refreshToken: null, rememberMe: false, isLoading: false }),
       updateUser: (data) => set((state) => ({ 
         user: state.user ? { ...state.user, ...data } : null 
       })),
