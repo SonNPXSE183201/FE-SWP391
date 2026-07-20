@@ -149,6 +149,7 @@ export const AssistantTaskDetailModal = ({
   const [showExtension, setShowExtension] = useState(false);
   const [extensionReason, setExtensionReason] = useState("");
   const [extensionDays, setExtensionDays] = useState<1 | 2>(1);
+  const [aiColorizedUrl, setAiColorizedUrl] = useState<string | null>(null);
   const [versionResetSeen, setVersionResetSeen] = useState("");
   const [showDisputeModal, setShowDisputeModal] = useState(false);
   const [disputeReason, setDisputeReason] = useState("");
@@ -173,9 +174,15 @@ export const AssistantTaskDetailModal = ({
       imageUrl = `${window.location.origin}${imageUrl}`;
     }
     colorize(imageUrl, {
-      onSuccess: (url) => {
-        toast.success("Tô màu thành công! Đang mở ảnh màu nền...");
-        window.open(url, "_blank");
+      onSuccess: async (url) => {
+        const obj = typeof url === "object" && url !== null ? (url as Record<string, unknown>) : {};
+        const cleanUrl = typeof url === "string" ? url : String(obj.colorizedImageUrl || obj.imageUrl || obj.url || "");
+        if (!cleanUrl) {
+          toast.error("Không thể lấy dữ liệu ảnh tô màu từ AI");
+          return;
+        }
+        setAiColorizedUrl(cleanUrl);
+        toast.success("Đã tô màu ảnh gốc thành công! Ảnh màu đã hiển thị bên ô Ảnh tham khảo.");
       },
       onError: (err) => {
         toast.error(err.message || "Lỗi khi gọi AI tô màu");
@@ -255,7 +262,7 @@ export const AssistantTaskDetailModal = ({
     [pins, task.mangakaName],
   );
 
-  const buildPngValidationOptions = () => ({ minTransparentRatio: 0.15 });
+  const buildPngValidationOptions = () => ({ minTransparentRatio: 0.02 });
 
   const handleFileSelect = async (file: File | null) => {
     if (filePreviewUrl) URL.revokeObjectURL(filePreviewUrl);
@@ -412,6 +419,71 @@ export const AssistantTaskDetailModal = ({
     }
   };
 
+  const cropImageToRegionBlob = async (imageUrl: string): Promise<Blob> => {
+    const colorizedImg = await loadImageForCanvas(imageUrl);
+    const originalImg = refUrl ? await loadImageForCanvas(refUrl) : colorizedImg;
+
+    const rawCoords = parseCoordinatesJson(task.regionCoordinatesJson) as Record<string, number | undefined>;
+    const baseW = rawCoords.pageWidth && rawCoords.pageWidth > 0 ? rawCoords.pageWidth : (originalImg.naturalWidth || 1);
+    const baseH = rawCoords.pageHeight && rawCoords.pageHeight > 0 ? rawCoords.pageHeight : (originalImg.naturalHeight || 1);
+
+    const scaleX = colorizedImg.naturalWidth / baseW;
+    const scaleY = colorizedImg.naturalHeight / baseH;
+
+    const cropX = Math.max(0, Math.round(targetRegionSize.x * scaleX));
+    const cropY = Math.max(0, Math.round(targetRegionSize.y * scaleY));
+    const cropW = Math.min(colorizedImg.naturalWidth - cropX, Math.round(targetRegionSize.width * scaleX));
+    const cropH = Math.min(colorizedImg.naturalHeight - cropY, Math.round(targetRegionSize.height * scaleY));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = cropW;
+    canvas.height = cropH;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas context error");
+
+    ctx.drawImage(
+      colorizedImg,
+      cropX,
+      cropY,
+      cropW,
+      cropH,
+      0,
+      0,
+      cropW,
+      cropH,
+    );
+
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error("Blob creation failed"));
+      }, "image/png");
+    });
+  };
+
+  const handleDownloadColorizedRegionImage = async () => {
+    if (!aiColorizedUrl) return;
+
+    if (!hasTargetRegionSize) {
+      window.open(aiColorizedUrl, "_blank");
+      return;
+    }
+
+    try {
+      const blob = await cropImageToRegionBlob(aiColorizedUrl);
+      const width = Math.round(targetRegionSize.width);
+      const height = Math.round(targetRegionSize.height);
+      downloadBlob(
+        blob,
+        `vung-to-mau-ai-task-${taskId}-${width}x${height}.png`,
+      );
+      toast.success("Đã cắt và tải vùng màu AI về máy!");
+    } catch {
+      toast.error("Không thể cắt ảnh màu AI. Đang mở ảnh màu...");
+      window.open(aiColorizedUrl, "_blank");
+    }
+  };
+
   const HeaderIcon = isRevision ? RotateCcw : canSubmit ? ClipboardList : Eye;
   const headerIconCls = isRevision
     ? "bg-danger/10 text-danger"
@@ -459,45 +531,69 @@ export const AssistantTaskDetailModal = ({
     ) : null;
 
   const submitPanel = (
-    <div className="flex h-full min-w-0 flex-col gap-3 overflow-hidden">
-      <div className="flex items-center gap-2">
-        <div className="w-7 h-7 rounded-lg bg-success/10 flex items-center justify-center shrink-0">
-          <FileCheck2 size={15} className="text-success" />
-        </div>
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <p className="text-sm font-semibold text-text-primary leading-tight">
-              {isRevision ? "Nộp bản sửa" : "Nộp kết quả"}
-            </p>
-            <HelpTip
-              size="sm"
-              placement="bottom-end"
-              title="Quy định file nộp"
-              content={
-                <div className="space-y-1">
-                  <p>Có thể nộp ảnh JPEG/PNG/WebP để phục vụ kiểm thử.</p>
-                  <p>
-                    Nếu nộp PNG, file cần có nền trong suốt đủ rõ để khi ghép
-                    không che layer gốc.
-                  </p>
-                  {hasTargetRegionSize && (
-                    <p>
-                      Vùng tham chiếu hiện tại:{" "}
-                      {Math.round(targetRegionSize.width)}x
-                      {Math.round(targetRegionSize.height)}px.
-                    </p>
-                  )}
-                </div>
-              }
-            />
+    <div className="flex min-h-[380px] min-w-0 flex-col gap-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-7 h-7 rounded-lg bg-success/10 flex items-center justify-center shrink-0">
+            <FileCheck2 size={15} className="text-success" />
           </div>
-          {hasTargetRegionSize && (
-            <p className="mt-0.5 text-[11px] font-medium text-brand">
-              Vùng tham chiếu: {Math.round(targetRegionSize.width)}x
-              {Math.round(targetRegionSize.height)}px
-            </p>
-          )}
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <p className="text-sm font-semibold text-text-primary leading-tight">
+                {isRevision ? "Nộp bản sửa" : "Nộp kết quả"}
+              </p>
+              <HelpTip
+                size="sm"
+                placement="bottom-end"
+                title="Quy định file nộp"
+                content={
+                  <div className="space-y-1">
+                    <p>Có thể nộp ảnh JPEG/PNG/WebP để phục vụ kiểm thử.</p>
+                    <p>
+                      Nếu nộp PNG, file cần có nền trong suốt đủ rõ để khi ghép
+                      không che layer gốc.
+                    </p>
+                    {hasTargetRegionSize && (
+                      <p>
+                        Vùng tham chiếu hiện tại:{" "}
+                        {Math.round(targetRegionSize.width)}x
+                        {Math.round(targetRegionSize.height)}px.
+                      </p>
+                    )}
+                  </div>
+                }
+              />
+            </div>
+            {hasTargetRegionSize && (
+              <p className="mt-0.5 text-[11px] font-medium text-brand">
+                Vùng tham chiếu: {Math.round(targetRegionSize.width)}x
+                {Math.round(targetRegionSize.height)}px
+              </p>
+            )}
+          </div>
         </div>
+
+        {aiColorizedUrl && (
+          <div className="flex items-center gap-1.5 shrink-0">
+            <a
+              href={aiColorizedUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 rounded-lg border border-brand/30 bg-brand/10 px-2.5 py-1 text-[11px] font-semibold text-brand transition-colors hover:bg-brand/15 no-underline"
+              title="Mở nguyên trang ảnh màu ở tab mới"
+            >
+              <ExternalLink size={12} /> Mở trang màu
+            </a>
+            <button
+              type="button"
+              onClick={handleDownloadColorizedRegionImage}
+              className="inline-flex items-center gap-1 rounded-lg border border-brand/30 bg-brand/10 px-2.5 py-1 text-[11px] font-semibold text-brand transition-colors hover:bg-brand/15 border-none cursor-pointer"
+              title="Tự động cắt và tải duy nhất vùng được giao đã tô màu"
+            >
+              <Download size={12} /> Tải vùng màu
+            </button>
+          </div>
+        )}
       </div>
 
       {acceptanceChecklist}
@@ -514,27 +610,29 @@ export const AssistantTaskDetailModal = ({
           "phủ màu",
         ].some((kw) => desc.includes(kw));
         return isColoringTask ? (
-          <div className="flex justify-between items-center bg-brand/5 border border-brand/20 p-3 rounded-xl">
+          <div className="flex flex-wrap justify-between items-center bg-brand/5 border border-brand/20 p-3 rounded-xl gap-2">
             <div>
               <p className="text-xs font-semibold text-brand">
                 ✨ AI Trợ lý màu
               </p>
               <p className="text-[10px] text-text-muted mt-0.5">
-                Tạo base color nhanh trong 5s để tô tiếp
+                Tạo base color nhanh trong 10s để tô tiếp
               </p>
             </div>
-            <button
-              type="button"
-              onClick={handleAIColorize}
-              disabled={isColorizing}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-brand hover:bg-brand-hover rounded-lg transition-colors disabled:opacity-50 disabled:cursor-wait shadow-sm"
-            >
-              <Sparkles
-                size={14}
-                className={isColorizing ? "animate-pulse" : ""}
-              />
-              {isColorizing ? "Đang tô màu..." : "Tô màu ảnh gốc"}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleAIColorize}
+                disabled={isColorizing}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-brand hover:bg-brand-hover rounded-lg transition-colors disabled:opacity-50 disabled:cursor-wait shadow-sm border-none cursor-pointer"
+              >
+                <Sparkles
+                  size={14}
+                  className={isColorizing ? "animate-pulse" : ""}
+                />
+                {isColorizing ? "Đang tô màu..." : "Tô màu ảnh gốc"}
+              </button>
+            </div>
           </div>
         ) : null;
       })()}
@@ -578,6 +676,15 @@ export const AssistantTaskDetailModal = ({
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
+              <a
+                href={filePreviewUrl}
+                download={selectedFile?.name || `ai_colorized_task_${task.id || 'result'}.png`}
+                className="px-3 py-1.5 rounded-lg bg-bg-surface border border-border-custom text-[11px] font-semibold text-text-secondary hover:text-text-primary hover:border-brand/40 transition-colors inline-flex items-center gap-1 no-underline"
+                title="Tải ảnh về máy"
+              >
+                <Download size={13} />
+                Tải về
+              </a>
               <label className="px-3 py-1.5 rounded-lg bg-bg-surface border border-border-custom text-[11px] font-semibold text-text-secondary cursor-pointer hover:text-text-primary hover:border-brand/40 transition-colors">
                 Đổi ảnh
                 <input
@@ -630,35 +737,21 @@ export const AssistantTaskDetailModal = ({
   );
 
   const referencePanel = (
-    <div className="flex min-w-0 flex-col h-full min-h-0 overflow-hidden">
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <p className="text-sm font-semibold text-text-primary flex min-w-0 items-center gap-2">
+    <div className="flex min-h-[380px] min-w-0 flex-col overflow-hidden">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0 shrink-0">
           <span className="w-7 h-7 rounded-lg bg-bg-surface flex items-center justify-center shrink-0">
             <ImageIcon size={14} className="text-text-muted" />
           </span>
-          <span className="truncate">Ảnh tham khảo</span>
-          <HelpTip
-            size="sm"
-            placement="bottom-start"
-            title="Ảnh tham khảo"
-            content={
-              <div className="space-y-1">
-                <p>Khung tím là vùng tác giả đã giao cho trợ lý xử lý.</p>
-                <p>
-                  Nút tải vùng cần vẽ sẽ cắt đúng vùng này từ trang gốc để dùng
-                  làm reference khi vẽ.
-                </p>
-              </div>
-            }
-          />
-        </p>
+          <span className="text-sm font-semibold text-text-primary truncate">Ảnh tham khảo</span>
+        </div>
         {refUrl && (
-          <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+          <div className="flex items-center gap-1.5 shrink-0">
             <a
               href={refUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border-custom bg-bg-surface px-2.5 py-1.5 text-[11px] font-medium text-text-secondary transition-colors hover:border-brand/35 hover:text-text-primary no-underline"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border-custom bg-bg-surface px-2.5 py-1.5 text-[11px] font-medium text-text-secondary transition-colors hover:border-brand/35 hover:text-text-primary no-underline shrink-0"
             >
               <ExternalLink size={12} /> Mở ảnh gốc
             </a>
@@ -666,7 +759,7 @@ export const AssistantTaskDetailModal = ({
               type="button"
               onClick={handleDownloadRegionImage}
               disabled={!hasTargetRegionSize}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-brand/30 bg-brand/10 px-2.5 py-1.5 text-[11px] font-semibold text-brand transition-colors hover:bg-brand/15 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border-custom bg-bg-surface px-2.5 py-1.5 text-[11px] font-medium text-text-secondary transition-colors hover:border-brand/35 hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer shrink-0"
             >
               <Download size={12} /> Tải vùng cần vẽ
             </button>
@@ -675,29 +768,14 @@ export const AssistantTaskDetailModal = ({
       </div>
       <div className="flex-1 min-h-0 rounded-xl border border-border-custom overflow-hidden bg-bg-surface relative">
         {refUrl ? (
-          <>
-            {!canSubmit && activeUrl ? (
-              <TaskLayerPreview
-                baseImageUrl={task.pageImageUrl}
-                overlayImageUrl={activeUrl}
-                coordinatesJson={task.regionCoordinatesJson}
-                regionName={task.regionName}
-                heightClassName="h-full"
-                className="rounded-none border-0"
-                label="Đã lồng ghép"
-                overlayMode="region"
-                backdrop="checkerboard"
-              />
-            ) : (
-              <TaskRegionPreview
-                imageUrl={task.pageImageUrl}
-                coordinatesJson={task.regionCoordinatesJson}
-                regionName={undefined}
-                heightClassName="h-full"
-                className="rounded-none border-0"
-              />
-            )}
-          </>
+          <TaskRegionPreview
+            imageUrl={aiColorizedUrl || task.pageImageUrl}
+            baseImageUrl={task.pageImageUrl}
+            coordinatesJson={task.regionCoordinatesJson}
+            regionName={undefined}
+            heightClassName="h-full"
+            className="rounded-none border-0"
+          />
         ) : (
           <div className="h-full flex flex-col items-center justify-center gap-2 text-text-muted p-6 text-center">
             <ImageOff size={32} />
@@ -729,7 +807,7 @@ export const AssistantTaskDetailModal = ({
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-base font-semibold text-text-primary truncate">
-                  {task.description || `Công việc ${taskId}`}
+                  {task.description ? task.description.split(/\\n|\n/)[0] : `Công việc ${taskId}`}
                 </h2>
                 <span
                   className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${statusCfg.bg} ${statusCfg.color}`}
@@ -816,7 +894,7 @@ export const AssistantTaskDetailModal = ({
         </div>
 
         {/* Body */}
-        <div className="flex-1 min-h-0 overflow-hidden overscroll-contain p-6">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-6 space-y-6">
           {task.feedbackComment && (
             <div className="bg-danger/5 border border-danger/20 rounded-xl p-4 mb-4">
               <p className="text-xs font-semibold text-danger mb-1 flex items-center gap-1.5">
@@ -835,7 +913,7 @@ export const AssistantTaskDetailModal = ({
             </div>
           ) : canSubmit ? (
             /* Submit mode: reference + form */
-            <div className="grid h-full min-w-0 min-h-0 items-stretch gap-6 lg:grid-cols-2">
+            <div className="grid min-w-0 gap-6 lg:grid-cols-2">
               {referencePanel}
               {submitPanel}
               {isRevision && versions.length > 0 && (
@@ -878,7 +956,7 @@ export const AssistantTaskDetailModal = ({
             </div>
           ) : (
             /* Read-only: submitted work + reference */
-            <div className="grid lg:grid-cols-[1fr_280px] gap-6">
+            <div className="grid lg:grid-cols-2 gap-6 h-full min-h-0 items-stretch">
               <div className="space-y-3">
                 <p className="text-sm font-semibold text-text-primary flex items-center gap-2">
                   <span className="w-7 h-7 rounded-lg bg-bg-surface flex items-center justify-center shrink-0">

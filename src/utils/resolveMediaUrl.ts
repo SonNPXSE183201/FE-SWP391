@@ -1,8 +1,16 @@
 /**
  * Chuẩn hóa URL media từ BE (MinIO / Local / Firebase) để FE dev load same-origin qua Vite proxy.
  */
-export const resolveMediaUrl = (url: string): string => {
+export const resolveMediaUrl = (url: unknown): string => {
   if (!url) return '';
+  if (typeof url !== 'string') {
+    if (typeof url === 'object' && url !== null) {
+      const obj = url as Record<string, unknown>;
+      const candidate = obj.colorizedImageUrl || obj.imageUrl || obj.url || obj.src || obj.resultUrl || obj.drawnImageUrl;
+      if (typeof candidate === 'string') return resolveMediaUrl(candidate);
+    }
+    return '';
+  }
   if (url.startsWith('data:') || url.startsWith('blob:')) return url;
 
   if (import.meta.env.DEV) {
