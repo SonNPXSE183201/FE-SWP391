@@ -57,3 +57,37 @@ export const useUpdateContract = () => {
     },
   });
 };
+
+export const useCreateTemplate = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ content, isActive }: { content: string; isActive: boolean }) =>
+      contractApi.createContractTemplate(content, isActive),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: KEYS.contractTemplates });
+    },
+  });
+};
+
+export const useUpdateTemplate = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, content, isActive }: { id: number; content: string; isActive: boolean }) =>
+      contractApi.updateContractTemplate(id, content, isActive),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: KEYS.contractTemplates });
+      // Invalidate approvedSeries too since the active template choice might affect UI dropdowns
+      await qc.invalidateQueries({ queryKey: KEYS.approvedSeries });
+    },
+  });
+};
+
+export const useDeleteTemplate = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => contractApi.deleteContractTemplate(id),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: KEYS.contractTemplates });
+    },
+  });
+};

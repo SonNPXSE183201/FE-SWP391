@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { seriesApi } from '../api/series.api';
+import { contractApi } from '../../contracts/api/contract.api';
 import { isApiSuccess } from '../../../api/apiResponse';
 import type { ApiResponse } from '../../../api/generated/types';
 import type { SeriesStatus } from '../../../types/status.types';
@@ -16,6 +17,7 @@ export const useAcceptFund = ({ seriesId, onStatusChange }: UseAcceptFundOptions
   const [isAccepting, setIsAccepting] = useState(false);
   const [isDeclining, setIsDeclining] = useState(false);
   const [isSigning, setIsSigning] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
 
   const invalidateSeries = useCallback(async () => {
     await Promise.all([
@@ -113,12 +115,39 @@ export const useAcceptFund = ({ seriesId, onStatusChange }: UseAcceptFundOptions
     }
   }, [seriesId, onStatusChange, invalidateSeries]);
 
+  const rejectContract = useCallback(async (contractId: number) => {
+    if (!seriesId) {
+      toast.error('Không xác định được bộ truyện. Vui lòng tải lại trang.');
+      return;
+    }
+
+    setIsRejecting(true);
+    try {
+      const res = await contractApi.rejectContract(contractId);
+      if (!isApiSuccess(res)) {
+        toast.error(res.message || 'Từ chối ký hợp đồng thất bại.');
+        return;
+      }
+
+      onStatusChange('Draft');
+      await invalidateSeries();
+      toast.success('Đã từ chối ký hợp đồng. Trạng thái truyện quay về bản nháp.');
+    } catch (error: unknown) {
+      const msg = (error as { response?: { data?: { message?: string } } }).response?.data?.message;
+      toast.error(msg || 'Có lỗi xảy ra. Vui lòng thử lại.');
+    } finally {
+      setIsRejecting(false);
+    }
+  }, [seriesId, onStatusChange, invalidateSeries]);
+
   return {
     isAccepting,
     isDeclining,
     isSigning,
+    isRejecting,
     acceptFund,
     declineFund,
     signContract,
+    rejectContract,
   };
 };
