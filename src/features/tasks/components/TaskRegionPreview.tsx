@@ -31,6 +31,7 @@ const computeObjectContainLayout = (
 
 export interface TaskRegionPreviewProps {
   imageUrl?: string | null;
+  baseImageUrl?: string | null;
   coordinatesJson?: string | null;
   regionName?: string | null;
   className?: string;
@@ -41,6 +42,7 @@ export interface TaskRegionPreviewProps {
 
 export const TaskRegionPreview = ({
   imageUrl,
+  baseImageUrl,
   coordinatesJson,
   regionName,
   className = '',
@@ -50,10 +52,21 @@ export const TaskRegionPreview = ({
 }: TaskRegionPreviewProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [naturalSize, setNaturalSize] = useState<{ w: number; h: number } | null>(null);
+  const [baseNaturalSize, setBaseNaturalSize] = useState<{ w: number; h: number } | null>(null);
   const [layout, setLayout] = useState<ImageLayout | null>(null);
   const coords = parseCoordinatesJson(coordinatesJson);
   const displayUrl = imageUrl ? resolveMediaUrl(imageUrl) : '';
+  const resolvedBaseUrl = baseImageUrl ? resolveMediaUrl(baseImageUrl) : displayUrl;
   const hasRegion = coords.width > 0 && coords.height > 0;
+
+  useEffect(() => {
+    if (!resolvedBaseUrl) return;
+    const img = new Image();
+    img.src = resolvedBaseUrl;
+    img.onload = () => {
+      setBaseNaturalSize({ w: img.naturalWidth, h: img.naturalHeight });
+    };
+  }, [resolvedBaseUrl]);
 
   const updateLayout = useCallback(() => {
     const container = containerRef.current;
@@ -81,12 +94,20 @@ export const TaskRegionPreview = ({
     );
   }
 
-  const regionStyle = layout && hasRegion
+  const rawCoords = coords as Record<string, number | undefined>;
+  const baseW = rawCoords.pageWidth && rawCoords.pageWidth > 0
+    ? rawCoords.pageWidth
+    : (baseNaturalSize?.w || naturalSize?.w || 1);
+  const baseH = rawCoords.pageHeight && rawCoords.pageHeight > 0
+    ? rawCoords.pageHeight
+    : (baseNaturalSize?.h || naturalSize?.h || 1);
+
+  const regionStyle = layout && hasRegion && naturalSize
     ? {
-        left: layout.offsetX + (coords.x / naturalSize!.w) * layout.displayW,
-        top: layout.offsetY + (coords.y / naturalSize!.h) * layout.displayH,
-        width: (coords.width / naturalSize!.w) * layout.displayW,
-        height: (coords.height / naturalSize!.h) * layout.displayH,
+        left: layout.offsetX + (coords.x / baseW) * layout.displayW,
+        top: layout.offsetY + (coords.y / baseH) * layout.displayH,
+        width: (coords.width / baseW) * layout.displayW,
+        height: (coords.height / baseH) * layout.displayH,
       }
     : null;
 
