@@ -14,7 +14,7 @@ export const suggestTags = async (synopsis: string): Promise<string[]> => {
 };
 
 export const colorizeImage = async (imageUrl: string): Promise<string> => {
-  const res = await axiosInstance.post<ApiResponse<string>>('/api/ai/colorize', `"${imageUrl}"`, {
+  const res = await axiosInstance.post<ApiResponse<Record<string, unknown> | string>>('/api/ai/colorize', `"${imageUrl}"`, {
     headers: { 'Content-Type': 'application/json' },
   });
   
@@ -22,7 +22,13 @@ export const colorizeImage = async (imageUrl: string): Promise<string> => {
     throw new Error(res.data.message || 'Lỗi khi tô màu ảnh');
   }
   
-  return res.data.data || '';
+  const raw = res.data.data;
+  if (typeof raw === 'string') return raw;
+  if (raw && typeof raw === 'object') {
+    const candidate = raw.colorizedImageUrl || raw.imageUrl || raw.url || raw.resultUrl || raw.src || '';
+    return typeof candidate === 'string' ? candidate : '';
+  }
+  return '';
 };
 
 export const segmentImage = async (imageUrl: string): Promise<number[][]> => {

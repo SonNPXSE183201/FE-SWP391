@@ -232,6 +232,8 @@ export const ContractManagementFeature = () => {
       },
     );
   };
+  void handleOpenUpdateModal;
+  void handleUpdateContract;
 
   const handleCreateContract = () => {
     if (!baseGenkouryoPrice || Number(baseGenkouryoPrice) <= 0) {
@@ -529,16 +531,12 @@ export const ContractManagementFeature = () => {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (isSigned) {
-                                handleOpenUpdateModal(series);
-                              } else {
-                                handleOpenDetailModal(series);
-                              }
+                              handleOpenDetailModal(series);
                             }}
                             className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-bg-surface hover:bg-brand/10 text-text-secondary hover:text-brand rounded-xl text-xs font-medium border border-border-custom cursor-pointer transition-all hover:border-brand/30 hover:shadow-sm"
                           >
-                            <Pencil size={12} />
-                            {isSigned ? 'Phụ lục' : 'Chi tiết'}
+                            <Eye size={12} />
+                            Chi tiết
                           </button>
                         </>
                       ) : (
@@ -1059,19 +1057,6 @@ export const ContractManagementFeature = () => {
               >
                 Đóng
               </button>
-              {isSignedContract(selectedSeries.contractStatus) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowDetailModal(false);
-                    handleOpenUpdateModal(selectedSeries);
-                  }}
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium border-none cursor-pointer transition-colors shadow-sm shadow-brand/20"
-                >
-                  <Pencil size={14} />
-                  Tạo phụ lục mới
-                </button>
-              )}
             </div>
         </AnimatedModal>
       )}
