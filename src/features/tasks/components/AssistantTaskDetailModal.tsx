@@ -626,8 +626,6 @@ export const AssistantTaskDetailModal = ({
           </div>
         </div>
       )}
-
-
     </div>
   );
 
