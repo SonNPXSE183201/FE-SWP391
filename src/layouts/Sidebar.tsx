@@ -68,6 +68,11 @@ const getNavSections = (role: UserRole, invitesCount: number = 0): NavSectionCon
               icon: <BookOpen size={20} />,
             },
             {
+              label: "Bảng xếp hạng",
+              path: "/mangaka/ranking",
+              icon: <BarChart3 size={20} />,
+            },
+            {
               label: "Quản lý bản thảo",
               path: "/mangaka/manuscripts",
               icon: <FileText size={20} />,

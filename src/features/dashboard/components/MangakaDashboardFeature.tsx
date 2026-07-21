@@ -18,12 +18,18 @@ import { StatCard } from '../index';
 import { useMangakaDashboard, getGreeting } from '../hooks/useMangakaDashboard';
 import { ChartCard, TrendAreaChart, DonutChart, CHART_COLORS, formatCompactVND } from './charts';
 import { TrendingUp, PieChart } from 'lucide-react';
+import { useRankingList } from '../../ranking/hooks/useRanking';
 
 export const MangakaDashboardFeature = () => {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const greeting = getGreeting();
   const { stats, activities, seriesOverview, charts, isLoading, error } = useMangakaDashboard();
+  
+  const { data: rankings } = useRankingList();
+  const myRankings = rankings?.filter((r) => r.series?.mangakaId === user?.id) || [];
+  const topRank = myRankings.length > 0 ? Math.min(...myRankings.map(r => r.rankPosition || 999)) : null;
+  const totalRankings = rankings?.length || 0;
 
   if (isLoading) {
     return (
@@ -111,6 +117,14 @@ export const MangakaDashboardFeature = () => {
           color="text-success"
           navigateTo="/mangaka/wallet"
           trend={`+${formatVND(stats.monthlyGenkouryo)} tháng này`}
+        />
+        <StatCard
+          label="Xếp hạng cao nhất"
+          value={topRank ? `#${topRank}` : 'N/A'}
+          icon={BarChart3}
+          color="text-brand"
+          navigateTo="/mangaka/ranking"
+          trend={totalRankings > 0 ? `Trên ${totalRankings} bộ truyện` : ''}
         />
       </div>
 

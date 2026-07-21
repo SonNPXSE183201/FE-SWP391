@@ -10,3 +10,4 @@ export { ChapterDetailPage } from './ChapterDetailPage';
 export { SeriesDetailPage } from './SeriesDetailPage';
 export { PageCanvasPage } from './PageCanvasPage';
 export { MangakaAssistantsPage } from './MangakaAssistantsPage';
+export { MangakaRankingPage } from './MangakaRankingPage';

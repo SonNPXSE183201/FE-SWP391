@@ -10,6 +10,7 @@ import {
   Loader2,
   ScrollText,
   Eye,
+  BarChart3,
 } from 'lucide-react';
 
 import {
@@ -27,6 +28,7 @@ import {
   useSeriesBudgetEdit,
   useSeriesDetail,
 } from '../index';
+import { useRankingList } from '../../ranking/hooks/useRanking';
 import type { SeriesStatus } from '../../../types/status.types';
 import type { SeriesNameUpdateSnapshot } from '../api/series.api';
 import { NEMU_BUDGET_LABEL_SHORT, NEMU_MANUSCRIPT_LABEL } from '../../../constants/seriesCopy';
@@ -51,6 +53,9 @@ export const SeriesDetailFeature = () => {
 
   // Fetch series via API hook
   const { data: series, isLoading } = useSeriesDetail(seriesId);
+  
+  const { data: rankings } = useRankingList();
+  const seriesRanking = rankings?.find((r) => r.seriesId?.toString() === seriesId);
 
   const [statusOverride, setStatusOverride] = useState<SeriesStatus | null>(null);
   const [resubmitNote, setResubmitNote] = useState('');
@@ -235,6 +240,25 @@ export const SeriesDetailFeature = () => {
 
           {/* Series Info (Feature Component) */}
           <SeriesInfoCard series={series} />
+
+          {/* Ranking Widget */}
+          {seriesRanking && (
+            <div className="bg-bg-secondary border border-brand/20 rounded-xl p-4 flex items-center justify-between shadow-sm cursor-pointer hover:bg-bg-surface/50 transition-colors" onClick={() => navigate('/mangaka/ranking')}>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
+                  <BarChart3 size={20} className="text-brand" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">Bảng xếp hạng độc giả</p>
+                  <p className="text-xs text-text-muted mt-0.5">Thứ hạng hiện tại của bộ truyện</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-xl font-bold text-brand">#{seriesRanking.rankPosition}</div>
+                <div className="text-[11px] text-text-muted mt-0.5">{seriesRanking.voteCount?.toLocaleString()} phiếu bầu</div>
+              </div>
+            </div>
+          )}
 
           {canManageTeam && seriesId && (
             <SeriesTeamPanel seriesId={seriesId} seriesTitle={series.title ?? ''} />

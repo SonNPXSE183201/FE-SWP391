@@ -24,6 +24,7 @@ import {
   SeriesDetailPage,
   PageCanvasPage,
   MangakaAssistantsPage,
+  MangakaRankingPage,
 } from './pages/mangaka';
 
 // ─── Assistant Pages ───
@@ -120,6 +121,7 @@ function App() {
           <Route element={<MainLayout />}>
             <Route path="/mangaka" element={<MangakaDashboardPage />} />
             <Route path="/mangaka/series" element={<SeriesListPage />} />
+            <Route path="/mangaka/ranking" element={<MangakaRankingPage />} />
             <Route path="/mangaka/series/create" element={<CreateSeriesPage />} />
             <Route path="/mangaka/series/:seriesId" element={<SeriesDetailPage />} />
             <Route path="/mangaka/manuscripts" element={<ManuscriptsPage />} />
