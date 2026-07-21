@@ -96,7 +96,7 @@ const shouldRefreshAdminUsers = (type: string, link?: string) =>
   type === 'SystemAlert' || link?.includes('/admin/users');
 
 const shouldRefreshEditorReview = (type: string, link?: string) =>
-  type === 'Series_Pending_Review' || type === 'Review' || link?.includes('/editor/review');
+  type === 'Series_Pending_Review' || type === 'Review' || type === 'Series_Cancel_Vote_Warning' || link?.includes('/editor/review');
 
 const SERIES_DATA_REFRESH_TYPES = new Set([
   'Series_Submitted',
@@ -110,6 +110,7 @@ const SERIES_DATA_REFRESH_TYPES = new Set([
   'Series_Pending_Review',
   'Series_Team_Accepted',
   'Series_Team_Declined',
+  'Series_Axing_Warning',
 ]);
 
 const CHAPTER_DATA_REFRESH_TYPES = new Set([

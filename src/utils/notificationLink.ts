@@ -116,6 +116,8 @@ export const getNotificationTitle = (type: string): string => {
     Wallet_Withdrawal_Approve: 'Rút tiền được duyệt',
     Wallet_Withdrawal_Reject: 'Rút tiền bị từ chối',
     Wallet_Withdrawal_Admin_Pending: 'Yêu cầu rút tiền mới',
+    Series_Axing_Warning: 'Cảnh báo nguy cơ Hủy xuất bản!',
+    Series_Cancel_Vote_Warning: 'Cảnh báo phiếu Hủy xuất bản!',
   };
 
   if (titles[type]) return titles[type];
@@ -153,6 +155,14 @@ export const resolveNotificationLink = (
 
   if (type === 'Series_Revision_Required' && userRole === 'Mangaka') {
     return seriesId ? `/mangaka/series/${seriesId}` : '/mangaka/series';
+  }
+
+  if (type === 'Series_Axing_Warning' && userRole === 'Mangaka') {
+    return seriesId ? `/mangaka/series/${seriesId}` : '/mangaka/ranking';
+  }
+
+  if (type === 'Series_Cancel_Vote_Warning' && userRole === 'Editor') {
+    return seriesId ? `/editor/review/${seriesId}` : '/editor/series-review';
   }
 
   if (type === 'Wallet_Withdrawal_Admin_Pending' && userRole === 'Admin') {

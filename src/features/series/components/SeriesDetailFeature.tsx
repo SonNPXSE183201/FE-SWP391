@@ -11,6 +11,7 @@ import {
   ScrollText,
   Eye,
   BarChart3,
+  AlertTriangle,
 } from 'lucide-react';
 
 import {
@@ -56,6 +57,10 @@ export const SeriesDetailFeature = () => {
   
   const { data: rankings } = useRankingList();
   const seriesRanking = rankings?.find((r) => r.seriesId?.toString() === seriesId);
+  
+  const totalSeries = rankings?.length || 0;
+  const axingThreshold = totalSeries > 0 ? Math.ceil(totalSeries * 0.8) : 999;
+  const isAxingWarning = seriesRanking && seriesRanking.rankPosition && seriesRanking.rankPosition >= axingThreshold;
 
   const [statusOverride, setStatusOverride] = useState<SeriesStatus | null>(null);
   const [resubmitNote, setResubmitNote] = useState('');
@@ -202,6 +207,19 @@ export const SeriesDetailFeature = () => {
           {statusConfig.label}
         </span>
       </div>
+
+      {/* ─── Axing Warning Banner ─── */}
+      {isAxingWarning && (
+        <div className="mb-6 bg-danger/10 border border-danger/20 rounded-xl p-4 flex items-start gap-3">
+          <AlertTriangle className="text-danger flex-shrink-0 mt-0.5" size={24} />
+          <div>
+            <h3 className="text-danger font-bold text-sm">Cảnh báo nguy cơ Hủy xuất bản (Axing)</h3>
+            <p className="text-sm text-text-secondary mt-1">
+              Bộ truyện của bạn đang ở nhóm chót Bảng xếp hạng (Hạng #{seriesRanking?.rankPosition} / {totalSeries}). Nếu tình trạng này kéo dài, Hội đồng có thể sẽ quyết định ngừng xuất bản. Hãy cố gắng cải thiện chất lượng ở các chương tiếp theo!
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ─── Status Timeline ─── */}
       {!hasRevisionRequest && <StatusTimeline currentStatus={currentStatus} />}
