@@ -317,7 +317,7 @@ export const SeriesDetailFeature = () => {
 
           {/* Banners Cảnh báo & Trạng thái */}
           {/* Banner 1: Amber Alert (Nguy cơ Axing) */}
-          {(rankPosition && rankingList.length >= 4 && (rankPosition > rankingList.length - 3 || rankPosition > rankingList.length * 0.8) || currentStatus === 'UnderReview') && (
+          {(rankPosition && rankingList.length >= 4 && (rankPosition > rankingList.length - 3 || rankPosition > rankingList.length * 0.8) || (currentStatus as string) === 'UnderReview') && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -337,7 +337,7 @@ export const SeriesDetailFeature = () => {
           )}
 
           {/* Banner 2: Red Danger (Bộ truyện bị Hủy xuất bản) */}
-          {(currentStatus === 'Cancelled' || currentStatus === 'Axed') && (
+          {((currentStatus as string) === 'Cancelled' || (currentStatus as string) === 'Axed') && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -360,7 +360,7 @@ export const SeriesDetailFeature = () => {
           )}
 
           {/* Banner 3: Board Rejection Panel */}
-          {currentStatus === 'Rejected' && (
+          {(currentStatus as string) === 'Rejected' && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
