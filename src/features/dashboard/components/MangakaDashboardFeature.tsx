@@ -18,12 +18,27 @@ import { StatCard } from '../index';
 import { useMangakaDashboard, getGreeting } from '../hooks/useMangakaDashboard';
 import { ChartCard, TrendAreaChart, DonutChart, CHART_COLORS, formatCompactVND } from './charts';
 import { TrendingUp, PieChart } from 'lucide-react';
+import { useRankingList } from '../../ranking';
 
 export const MangakaDashboardFeature = () => {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const greeting = getGreeting();
-  const { stats, activities, seriesOverview, charts, isLoading, error } = useMangakaDashboard();
+  const { stats, activities, seriesOverview, charts, isLoading: isDashboardLoading, error } = useMangakaDashboard();
+  
+  const { data: rankingList = [] } = useRankingList({ period: 'month' });
+  
+  const myRankings = rankingList
+    .filter((r) => r.series?.mangakaId === user?.id)
+    .map((r) => r.rankPosition ?? 999);
+  
+  const bestRank = myRankings.length > 0 ? Math.min(...myRankings) : null;
+  const rankDisplay = bestRank ? `#${bestRank}` : 'Chưa xếp hạng';
+  const totalRanked = rankingList.length;
+  const trendText = bestRank ? `trên tổng số ${totalRanked} truyện` : undefined;
+
+  const isLoading = isDashboardLoading;
+
 
   if (isLoading) {
     return (
@@ -82,7 +97,7 @@ export const MangakaDashboardFeature = () => {
       </div>
 
       {/* ─── Stat Cards ─── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-stagger>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3" data-stagger>
         <StatCard
           label="Bộ truyện đang hoạt động"
           value={stats.activeSeries}
@@ -111,6 +126,14 @@ export const MangakaDashboardFeature = () => {
           color="text-success"
           navigateTo="/mangaka/wallet"
           trend={`+${formatVND(stats.monthlyGenkouryo)} tháng này`}
+        />
+        <StatCard
+          label="Thứ hạng tốt nhất"
+          value={rankDisplay}
+          icon={BarChart3}
+          color="text-brand"
+          navigateTo="/mangaka/ranking"
+          trend={trendText}
         />
       </div>
 
