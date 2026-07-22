@@ -14,6 +14,8 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  AlertTriangle,
+  XCircle,
 } from 'lucide-react';
 import { useRankingList } from '../../ranking';
 
@@ -311,6 +313,72 @@ export const SeriesDetailFeature = () => {
               onSaveBudget={budgetEdit.saveBudget}
               onScrollToSubmit={scrollToSubmit}
             />
+          )}
+
+          {/* Banners Cảnh báo & Trạng thái */}
+          {/* Banner 1: Amber Alert (Nguy cơ Axing) */}
+          {(rankPosition && rankingList.length >= 4 && (rankPosition > rankingList.length - 3 || rankPosition > rankingList.length * 0.8) || currentStatus === 'UnderReview') && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-5 text-amber-500"
+            >
+              <div className="flex items-start gap-3">
+                <AlertTriangle size={20} className="shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-sm font-semibold text-amber-400">Cảnh báo nguy cơ Hủy xuất bản (Axing)</h3>
+                  <p className="text-xs text-text-secondary mt-1 leading-relaxed">
+                    Bộ truyện hiện đang ở thứ hạng thấp và có nguy cơ bị Hội đồng xem xét Hủy xuất bản (Axing).
+                    Vui lòng làm việc với Tantou Editor để nâng cao chất lượng các chương tiếp theo!
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Banner 2: Red Danger (Bộ truyện bị Hủy xuất bản) */}
+          {(currentStatus === 'Cancelled' || currentStatus === 'Axed') && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-5 text-rose-500"
+            >
+              <div className="flex items-start gap-3">
+                <XCircle size={20} className="shrink-0 mt-0.5 text-rose-400" />
+                <div>
+                  <h3 className="text-sm font-semibold text-rose-400">Bộ truyện đã bị Hủy xuất bản</h3>
+                  <p className="text-xs text-text-secondary mt-1 leading-relaxed">
+                    Hội đồng biên tập đã quyết định dừng sản xuất (Hủy xuất bản) bộ truyện này.
+                  </p>
+                  <p className="text-xs text-text-muted mt-1.5 leading-relaxed">
+                    Hệ thống đã tự động hủy các Task chờ, hoàn trả 100% tiền ký quỹ về ví tác giả.
+                    Các task đang làm dở đã được kích hoạt 24h ân hạn để nghiệm thu dọn dẹp.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Banner 3: Board Rejection Panel */}
+          {currentStatus === 'Rejected' && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-5 text-rose-500"
+            >
+              <div className="flex items-start gap-3">
+                <XCircle size={20} className="shrink-0 mt-0.5 text-rose-400" />
+                <div>
+                  <h3 className="text-sm font-semibold text-rose-400">Hội đồng biên tập từ chối phê duyệt</h3>
+                  {series.editorNote?.trim() && (
+                    <div className="mt-2 p-3 bg-bg-surface border border-border-custom rounded-lg">
+                      <p className="text-xs font-semibold text-text-secondary">Lý do từ chối chính thức:</p>
+                      <p className="text-xs text-text-muted mt-1 leading-relaxed">{series.editorNote}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
           )}
 
           {/* Series Info (Feature Component) */}

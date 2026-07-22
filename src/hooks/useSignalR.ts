@@ -110,6 +110,13 @@ const SERIES_DATA_REFRESH_TYPES = new Set([
   'Series_Pending_Review',
   'Series_Team_Accepted',
   'Series_Team_Declined',
+  'Series_Axing_Warning',
+  'Series_Warning_Axing',
+  'Series_Cancelled',
+  'Series_Axed',
+  'Series_Board_Approved',
+  'Series_Board_Rejected',
+  'Series_Board_Escalated',
 ]);
 
 const CHAPTER_DATA_REFRESH_TYPES = new Set([
@@ -121,6 +128,7 @@ const CHAPTER_DATA_REFRESH_TYPES = new Set([
 const refreshSeriesQueries = (queryClient: QueryClient) => {
   queryClient.invalidateQueries({ queryKey: ['series'] });
   queryClient.refetchQueries({ queryKey: ['series'], type: 'active' });
+  queryClient.invalidateQueries({ queryKey: ['ranking'] });
 };
 
 const refreshActiveQueries = (queryClient: QueryClient, queryKey: readonly unknown[]) => {
