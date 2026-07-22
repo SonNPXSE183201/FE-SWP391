@@ -22,6 +22,7 @@ interface CustomSelectProps {
   menuAlign?: 'left' | 'right';
   size?: 'sm' | 'md';
   searchable?: boolean;
+  menuMaxHeight?: string;
 }
 
 // ─── Component ───────────────────────────────────────────────
@@ -38,6 +39,7 @@ export const CustomSelect = ({
   size = 'md',
   searchable = false,
   searchPlaceholder = 'Tìm kiếm...',
+  menuMaxHeight = '260px',
 }: CustomSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState(-1);
@@ -199,7 +201,7 @@ export const CustomSelect = ({
             animate-dropdown-enter
             ${menuAlign === 'right' ? 'right-0' : 'left-0'}
           `}
-          style={{ maxHeight: '260px' }}
+          style={{ maxHeight: menuMaxHeight }}
         >
           {searchable && (
             <div className="p-2 border-b border-border-custom sticky top-0 bg-bg-secondary z-10">
