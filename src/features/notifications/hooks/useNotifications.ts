@@ -185,15 +185,12 @@ export const useUnreadCount = () => {
   });
 };
 
-/**
- * Mark a single notification as read.
- */
 export const useMarkAsRead = () => {
   const queryClient = useQueryClient();
   const { markAsRead } = useNotificationStore();
 
   return useMutation({
-    mutationFn: (notificationId: string) => {
+    mutationFn: async (notificationId: string) => {
       if (notificationId.startsWith('local_notif_')) {
         const localNotifsStr = localStorage.getItem('local_notifications');
         if (localNotifsStr) {
@@ -215,9 +212,9 @@ export const useMarkAsRead = () => {
             console.error(e);
           }
         }
-        return Promise.resolve();
+        return;
       }
-      return notificationApi.markAsRead(notificationId);
+      await notificationApi.markAsRead(notificationId);
     },
     onMutate: (notificationId) => {
       markAsRead(notificationId);
@@ -236,7 +233,7 @@ export const useMarkAllAsRead = () => {
   const { markAllAsRead } = useNotificationStore();
 
   return useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       const localNotifsStr = localStorage.getItem('local_notifications');
       if (localNotifsStr) {
         try {
@@ -251,7 +248,7 @@ export const useMarkAllAsRead = () => {
           console.error(e);
         }
       }
-      return notificationApi.markAllAsRead();
+      await notificationApi.markAllAsRead();
     },
     onMutate: () => {
       markAllAsRead();
