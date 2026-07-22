@@ -116,6 +116,14 @@ export const getNotificationTitle = (type: string): string => {
     Wallet_Withdrawal_Approve: 'Rút tiền được duyệt',
     Wallet_Withdrawal_Reject: 'Rút tiền bị từ chối',
     Wallet_Withdrawal_Admin_Pending: 'Yêu cầu rút tiền mới',
+    Series_Axing_Warning: '⚠️ Cảnh báo nguy cơ Hủy xuất bản',
+    Series_Warning_Axing: '⚠️ Cảnh báo nguy cơ Hủy xuất bản',
+    Series_Cancelled: '🛑 Bộ truyện đã bị Hủy xuất bản',
+    Series_Axed: '🛑 Bộ truyện đã bị Hủy xuất bản',
+    Series_Board_Approved: '🎉 Hội đồng biên tập đã duyệt',
+    Series_Board_Rejected: '❌ Hội đồng biên tập từ chối',
+    Series_Board_Escalated: '⚖️ Hồ sơ được chuyển Admin xử lý',
+    Chapter_Submitted: 'Chương mới chờ duyệt',
   };
 
   if (titles[type]) return titles[type];
@@ -134,11 +142,18 @@ export const resolveNotificationLink = (
   const seriesId = parseSeriesIdFromNotification(content);
   const userRole = role ?? 'Mangaka';
 
+  if (type === 'Chapter_Submitted' && userRole === 'Editor') {
+    return '/editor/chapter-review';
+  }
+
   if (seriesId) {
     if (userRole === 'Editor' && (type === 'Series_Pending_Review' || type.startsWith('Series'))) {
       return `/editor/review/${seriesId}`;
     }
     if (userRole === 'Mangaka') {
+      if (type === 'Series_Axing_Warning' || type === 'Series_Warning_Axing') {
+        return `/mangaka/ranking`;
+      }
       return `/mangaka/series/${seriesId}`;
     }
   }
