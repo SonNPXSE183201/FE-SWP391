@@ -19,6 +19,7 @@ import { useMangakaDashboard, getGreeting } from '../hooks/useMangakaDashboard';
 import { ChartCard, TrendAreaChart, DonutChart, CHART_COLORS, formatCompactVND } from './charts';
 import { TrendingUp, PieChart } from 'lucide-react';
 import { useRankingList } from '../../ranking';
+import { getRankingRecordTitle } from '../../ranking/utils/ranking.utils';
 
 export const MangakaDashboardFeature = () => {
   const navigate = useNavigate();
@@ -28,12 +29,19 @@ export const MangakaDashboardFeature = () => {
   
   const { data: rankingList = [] } = useRankingList({ period: 'month' });
   
-  const myRankings = rankingList
-    .filter((r) => r.series?.mangakaId === user?.id)
-    .map((r) => r.rankPosition ?? 999);
+  const myRankedRecords = rankingList
+    .filter((r) => r.series?.mangakaId !== undefined && String(r.series.mangakaId) === String(user?.id));
   
-  const bestRank = myRankings.length > 0 ? Math.min(...myRankings) : null;
-  const rankDisplay = bestRank ? `#${bestRank}` : 'Chưa xếp hạng';
+  let bestRecord = null;
+  if (myRankedRecords.length > 0) {
+    bestRecord = myRankedRecords.reduce((prev, curr) => 
+      (prev.rankPosition ?? 999) < (curr.rankPosition ?? 999) ? prev : curr
+    );
+  }
+  
+  const bestRank = bestRecord ? bestRecord.rankPosition : null;
+  const bestSeriesTitle = bestRecord ? getRankingRecordTitle(bestRecord) : '';
+  const rankDisplay = bestRank ? `#${bestRank} - ${bestSeriesTitle}` : 'Chưa xếp hạng';
   const totalRanked = rankingList.length;
   const trendText = bestRank ? `trên tổng số ${totalRanked} truyện` : undefined;
 

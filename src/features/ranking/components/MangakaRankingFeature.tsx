@@ -66,11 +66,14 @@ export const MangakaRankingFeature = () => {
   // Helper to calculate trend
   const getTrendElement = (record: RankingRecord, rank: number) => {
     // Try to get from series.rankingRecords
-    const history = record.series?.rankingRecords;
+    const rawHistory = record.series?.rankingRecords;
+    const history = rawHistory ? rawHistory.filter(Boolean) : [];
     if (history && history.length > 1) {
-      const sorted = [...history].sort(
-        (a, b) => new Date(b.recordedDate || '').getTime() - new Date(a.recordedDate || '').getTime()
-      );
+      const sorted = [...history].sort((a, b) => {
+        const dateB = b?.recordedDate ? new Date(b.recordedDate).getTime() : 0;
+        const dateA = a?.recordedDate ? new Date(a.recordedDate).getTime() : 0;
+        return dateB - dateA;
+      });
       const currentPos = sorted[0]?.rankPosition ?? rank;
       const prevPos = sorted[1]?.rankPosition;
       if (prevPos !== undefined) {
@@ -198,7 +201,7 @@ export const MangakaRankingFeature = () => {
                   const title = getRankingRecordTitle(record);
                   const genres = getRankingGenres(record);
                   const status = getRankingUiStatus(record);
-                  const isMySeries = record.series?.mangakaId === user?.id;
+                  const isMySeries = record.series?.mangakaId !== undefined && String(record.series.mangakaId) === String(user?.id);
                   const needsAxingWarning = isBottomGroup(rank) || status === 'ProposedCancel';
 
                   return (
