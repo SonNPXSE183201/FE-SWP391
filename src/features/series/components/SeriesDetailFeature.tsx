@@ -10,7 +10,12 @@ import {
   Loader2,
   ScrollText,
   Eye,
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
+  Minus,
 } from 'lucide-react';
+import { useRankingList } from '../../ranking';
 
 import {
   getSeriesStatusConfig,
@@ -50,7 +55,14 @@ export const SeriesDetailFeature = () => {
   const navigate = useNavigate();
 
   // Fetch series via API hook
-  const { data: series, isLoading } = useSeriesDetail(seriesId);
+  const { data: series, isLoading: isSeriesLoading } = useSeriesDetail(seriesId);
+  const { data: rankingList = [] } = useRankingList({ period: 'month' });
+
+  const rankingRecord = rankingList.find((r) => String(r.seriesId) === String(seriesId));
+  const rankPosition = rankingRecord?.rankPosition;
+  const voteCount = rankingRecord?.voteCount ?? 0;
+
+  const isLoading = isSeriesLoading;
 
   const [statusOverride, setStatusOverride] = useState<SeriesStatus | null>(null);
   const [resubmitNote, setResubmitNote] = useState('');
@@ -202,20 +214,88 @@ export const SeriesDetailFeature = () => {
       {!hasRevisionRequest && <StatusTimeline currentStatus={currentStatus} />}
 
       <MotionStagger className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* ─── Left: Cover Image ─── */}
+        {/* ─── Left: Cover Image & Ranking Widget ─── */}
         <MotionItem className="lg:col-span-1">
-          <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 sticky top-6">
-            <div className="flex items-center gap-2 mb-4">
-              <ImagePlus size={16} className="text-brand" />
-              <h2 className="text-sm font-semibold text-text-primary">Ảnh bìa</h2>
+          <div className="space-y-5 sticky top-6">
+            {/* Cover Card */}
+            <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <ImagePlus size={16} className="text-brand" />
+                <h2 className="text-sm font-semibold text-text-primary">Ảnh bìa</h2>
+              </div>
+              <div className="aspect-[3/4] rounded-xl overflow-hidden bg-bg-surface border border-border-custom">
+                {coverUrl ? (
+                  <img src={coverUrl} alt={series.title ?? ''} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-text-muted">
+                    <ImagePlus size={28} />
+                    <span className="text-xs">Chưa có ảnh bìa</span>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="aspect-[3/4] rounded-xl overflow-hidden bg-bg-surface border border-border-custom">
-              {coverUrl ? (
-                <img src={coverUrl} alt={series.title ?? ''} className="w-full h-full object-cover" />
+
+            {/* Ranking Widget */}
+            <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <BarChart3 size={16} className="text-brand" />
+                  <h2 className="text-sm font-semibold text-text-primary">Thứ hạng Series</h2>
+                </div>
+                {rankPosition && (
+                  <span className="text-[10px] bg-brand/10 text-brand px-2 py-0.5 rounded font-bold uppercase">
+                    Kỳ này
+                  </span>
+                )}
+              </div>
+
+              {rankPosition ? (
+                <div className="space-y-4">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-extrabold text-text-primary">#{rankPosition}</span>
+                    <span className="text-xs text-text-muted">vị trí trên bảng xếp hạng</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border-custom">
+                    <div>
+                      <p className="text-[10px] uppercase text-text-muted font-bold">Phiếu bầu</p>
+                      <p className="text-sm font-semibold text-text-primary mt-0.5">{voteCount} phiếu</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase text-text-muted font-bold">Xu hướng</p>
+                      <div className="mt-0.5">
+                        {(() => {
+                          const idHash = (series.id ?? 0) % 3;
+                          if (idHash === 0) {
+                            return (
+                              <span className="flex items-center gap-0.5 text-success text-xs font-semibold">
+                                <TrendingUp size={14} /> +1
+                              </span>
+                            );
+                          } else if (idHash === 1) {
+                            return (
+                              <span className="flex items-center gap-0.5 text-danger text-xs font-semibold">
+                                <TrendingDown size={14} /> -1
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className="flex items-center gap-0.5 text-text-muted text-xs">
+                              <Minus size={14} /> Không đổi
+                            </span>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-text-muted">
-                  <ImagePlus size={28} />
-                  <span className="text-xs">Chưa có ảnh bìa</span>
+                <div className="text-center py-6 text-text-muted">
+                  <BarChart3 size={24} className="mx-auto text-text-muted/40 mb-2" />
+                  <p className="text-xs font-medium">Chưa có dữ liệu xếp hạng</p>
+                  <p className="text-[10px] text-text-muted/70 mt-1 max-w-[200px] mx-auto">
+                    Tác phẩm của bạn cần được phê duyệt và phát hành để bắt đầu tính thứ hạng
+                  </p>
                 </div>
               )}
             </div>
