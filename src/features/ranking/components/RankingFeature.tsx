@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AnimatedModal } from '../../../components/common/animation';
 import toast from 'react-hot-toast';
+import { useAuthStore } from '../../../stores/authStore';
 import {
-  BarChart3,
   Search,
   ThumbsUp,
   ThumbsDown,
@@ -51,14 +51,27 @@ export const RankingFeature = () => {
   const [selectedRecord, setSelectedRecord] = useState<RankingRecord | null>(null);
   const [voteAction, setVoteAction] = useState<'maintain' | 'cancel'>('maintain');
   const [comment, setComment] = useState('');
-  const [votedSeriesIds, setVotedSeriesIds] = useState<Record<string, 'maintain' | 'cancel'>>(() => {
-    try {
-      const stored = localStorage.getItem('votedSeriesIds');
-      return stored ? JSON.parse(stored) : {};
-    } catch {
-      return {};
-    }
-  });
+  
+  const { user } = useAuthStore();
+  const userId = user?.id;
+
+  const [votedSeriesIds, setVotedSeriesIds] = useState<Record<string, 'maintain' | 'cancel'>>({});
+
+  useEffect(() => {
+    const loadVotes = () => {
+      if (!userId) {
+        setVotedSeriesIds({});
+        return;
+      }
+      try {
+        const stored = localStorage.getItem(`votedSeriesIds_${userId}`);
+        setVotedSeriesIds(stored ? JSON.parse(stored) : {});
+      } catch {
+        setVotedSeriesIds({});
+      }
+    };
+    Promise.resolve().then(loadVotes);
+  }, [userId]);
 
   const { data: rankingList = [], isLoading } = useRankingList({ period, genre });
   const submitVoteMutation = useSubmitRankingVote();
@@ -81,17 +94,61 @@ export const RankingFeature = () => {
         comment,
       });
       toast.success(`Bỏ phiếu thành công cho "${getRankingRecordTitle(selectedRecord)}"!`);
+
+      // Create and save local notification for the Editor (simulated via localStorage)
+      const targetEditorId = selectedRecord.series?.editorId;
+      const actionLabel = voteAction === 'cancel' ? 'đề xuất hủy' : 'duy trì';
+      const newNotif = {
+        id: `local_notif_${Date.now()}`,
+        title: 'Thông báo hệ thống',
+        message: `Hội đồng đã bỏ phiếu ${actionLabel} cho bộ truyện "${getRankingRecordTitle(selectedRecord)}". Ghi chú: ${comment || 'Không có ghi chú'}`,
+        isRead: false,
+        type: 'SystemAlert',
+        rawType: 'Ranking_Vote',
+        createdAt: new Date().toISOString(),
+        targetUserId: targetEditorId ? String(targetEditorId) : undefined
+      };
+
+      try {
+        const existingLocal = localStorage.getItem('local_notifications');
+        const localList = existingLocal ? JSON.parse(existingLocal) : [];
+        localList.push(newNotif);
+        localStorage.setItem('local_notifications', JSON.stringify(localList));
+      } catch (e) {
+        console.error('Error saving local notification', e);
+      }
+
       setVotedSeriesIds(prev => {
         const next = {
           ...prev,
           [getRankingRecordId(selectedRecord)]: voteAction
         };
-        localStorage.setItem('votedSeriesIds', JSON.stringify(next));
+        if (userId) {
+          localStorage.setItem(`votedSeriesIds_${userId}`, JSON.stringify(next));
+        }
         return next;
       });
       setShowVoteModal(false);
-    } catch {
-      toast.error('Gửi phiếu thất bại. Vui lòng thử lại.');
+    } catch (err: unknown) {
+      const errWithCause = err as { cause?: unknown; response?: { status?: number }; status?: number; message?: string } | null;
+      const originalError = errWithCause?.cause as { response?: { status?: number }; status?: number } | null || errWithCause;
+      const status = originalError?.response?.status || originalError?.status;
+      if (status === 409) {
+        toast.error('Bạn đã bỏ phiếu cho tác phẩm này rồi!');
+        setVotedSeriesIds(prev => {
+          const next = {
+            ...prev,
+            [getRankingRecordId(selectedRecord)]: voteAction
+          };
+          if (userId) {
+            localStorage.setItem(`votedSeriesIds_${userId}`, JSON.stringify(next));
+          }
+          return next;
+        });
+        setShowVoteModal(false);
+      } else {
+        toast.error(errWithCause?.message || 'Gửi phiếu thất bại. Vui lòng thử lại.');
+      }
     }
   };
 
@@ -101,7 +158,7 @@ export const RankingFeature = () => {
 
   return (
     <div className="space-y-6">
-      <div className="page-header">
+      {/* <div className="page-header">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
             <BarChart3 size={20} className="text-brand" />
@@ -111,7 +168,7 @@ export const RankingFeature = () => {
             <p className="page-header__subtitle">Giám sát và bỏ phiếu duy trì / đề xuất hủy tác phẩm</p>
           </div>
         </div>
-      </div>
+      </div> */}
 
       <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
         <div className="relative flex-1 max-w-md">
@@ -131,11 +188,10 @@ export const RankingFeature = () => {
               <button
                 key={p.value}
                 onClick={() => setPeriod(p.value)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border-none transition-all ${
-                  period === p.value
-                    ? 'bg-brand text-white shadow-brand'
-                    : 'bg-transparent text-text-secondary hover:text-text-primary'
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border-none transition-all ${period === p.value
+                  ? 'bg-brand text-white shadow-brand'
+                  : 'bg-transparent text-text-secondary hover:text-text-primary'
+                  }`}
               >
                 {p.label.split(' (')[0]}
               </button>
@@ -186,17 +242,16 @@ export const RankingFeature = () => {
 
                   return (
                     <MotionTableRow
-                      key={getRankingRecordId(record, index)}
+                      key={`${getRankingRecordId(record, index)}_${index}`}
                       variants={listItemVariants}
                       className="hover:bg-bg-surface/30 transition-colors"
                     >
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg font-bold text-xs ${
-                          rank === 1 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                        <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg font-bold text-xs ${rank === 1 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
                           rank === 2 ? 'bg-slate-400/20 text-slate-300 border border-slate-400/30' :
-                          rank === 3 ? 'bg-amber-700/20 text-amber-600 border border-amber-700/30' :
-                          'bg-bg-surface text-text-muted'
-                        }`}>
+                            rank === 3 ? 'bg-amber-700/20 text-amber-600 border border-amber-700/30' :
+                              'bg-bg-surface text-text-muted'
+                          }`}>
                           {rank}
                         </span>
                       </td>
@@ -223,14 +278,13 @@ export const RankingFeature = () => {
                         {record.voteCount ?? 0} phiếu
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
-                          status === 'Active' ? 'bg-success/10 text-success' :
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${status === 'Active' ? 'bg-success/10 text-success' :
                           status === 'UnderReview' ? 'bg-warning/10 text-warning' :
-                          'bg-danger/10 text-danger'
-                        }`}>
+                            'bg-danger/10 text-danger'
+                          }`}>
                           {status === 'Active' ? 'Hoạt động tốt' :
-                           status === 'UnderReview' ? 'Đang xem xét' :
-                           'Đề xuất hủy'}
+                            status === 'UnderReview' ? 'Đang xem xét' :
+                              'Đề xuất hủy'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -268,67 +322,65 @@ export const RankingFeature = () => {
 
       {showVoteModal && selectedRecord && (
         <AnimatedModal open onClose={() => setShowVoteModal(false)} panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl w-full max-w-md p-6 shadow-xl">
-            <div className="flex justify-between items-center border-b border-border-custom pb-4 mb-4">
-              <div>
-                <h3 className="text-base font-bold text-text-primary flex items-center gap-2">
-                  Bỏ phiếu xét duyệt
-                </h3>
-                <p className="text-[10px] text-text-muted mt-0.5">{getRankingRecordTitle(selectedRecord)}</p>
-              </div>
-              <button
-                onClick={() => setShowVoteModal(false)}
-                className="p-1 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-surface transition-colors bg-transparent border-none cursor-pointer"
-              >
-                <X size={18} />
-              </button>
+          <div className="flex justify-between items-center border-b border-border-custom pb-4 mb-4">
+            <div>
+              <h3 className="text-base font-bold text-text-primary flex items-center gap-2">
+                Bỏ phiếu xét duyệt
+              </h3>
+              <p className="text-[10px] text-text-muted mt-0.5">{getRankingRecordTitle(selectedRecord)}</p>
+            </div>
+            <button
+              onClick={() => setShowVoteModal(false)}
+              className="p-1 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-surface transition-colors bg-transparent border-none cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          <form onSubmit={handleVoteSubmit} className="space-y-4">
+            <div className="bg-bg-surface border border-border-custom rounded-xl p-4 flex items-center justify-between">
+              <span className="text-xs text-text-secondary">Loại phiếu quyết định</span>
+              <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold ${voteAction === 'maintain' ? 'bg-success/15 text-success' : 'bg-danger/15 text-danger'
+                }`}>
+                {voteAction === 'maintain' ? 'Ủng hộ DUY TRÌ' : 'Yêu cầu HỦY BỎ'}
+              </span>
             </div>
 
-            <form onSubmit={handleVoteSubmit} className="space-y-4">
-              <div className="bg-bg-surface border border-border-custom rounded-xl p-4 flex items-center justify-between">
-                <span className="text-xs text-text-secondary">Loại phiếu quyết định</span>
-                <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold ${
-                  voteAction === 'maintain' ? 'bg-success/15 text-success' : 'bg-danger/15 text-danger'
-                }`}>
-                  {voteAction === 'maintain' ? 'Ủng hộ DUY TRÌ' : 'Yêu cầu HỦY BỎ'}
-                </span>
-              </div>
+            <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                Ý kiến / Lý do đóng góp <span className="text-danger">*</span>
+              </label>
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Vui lòng cung cấp phân tích hoặc lý do chi tiết..."
+                rows={4}
+                className="w-full bg-bg-surface border border-border-custom rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-brand resize-none"
+                required
+              />
+            </div>
 
-              <div>
-                <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                  Ý kiến / Lý do đóng góp <span className="text-danger">*</span>
-                </label>
-                <textarea
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Vui lòng cung cấp phân tích hoặc lý do chi tiết..."
-                  rows={4}
-                  className="w-full bg-bg-surface border border-border-custom rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-brand resize-none"
-                  required
-                />
-              </div>
-
-              <div className="pt-4 border-t border-border-custom flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowVoteModal(false)}
-                  className="px-4 py-2 border border-border-custom bg-transparent hover:bg-bg-surface text-text-secondary rounded-xl text-sm font-semibold cursor-pointer"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitVoteMutation.isPending}
-                  className={`px-5 py-2 rounded-xl text-sm font-semibold cursor-pointer border-none flex items-center gap-1.5 text-white ${
-                    voteAction === 'maintain' ? 'bg-success shadow-sm hover:bg-success/90' : 'bg-danger shadow-sm hover:bg-danger/90'
+            <div className="pt-4 border-t border-border-custom flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowVoteModal(false)}
+                className="px-4 py-2 border border-border-custom bg-transparent hover:bg-bg-surface text-text-secondary rounded-xl text-sm font-semibold cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                disabled={submitVoteMutation.isPending}
+                className={`px-5 py-2 rounded-xl text-sm font-semibold cursor-pointer border-none flex items-center gap-1.5 text-white ${voteAction === 'maintain' ? 'bg-success shadow-sm hover:bg-success/90' : 'bg-danger shadow-sm hover:bg-danger/90'
                   }`}
-                >
-                  {submitVoteMutation.isPending && (
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  )}
-                  Xác nhận bỏ phiếu
-                </button>
-              </div>
-            </form>
+              >
+                {submitVoteMutation.isPending && (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                )}
+                Xác nhận bỏ phiếu
+              </button>
+            </div>
+          </form>
         </AnimatedModal>
       )}
     </div>
