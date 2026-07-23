@@ -193,7 +193,7 @@ export const RankingDataEntryFeature = () => {
                         value={row.seriesId}
                         onChange={(value) => updateRow(row.key, 'seriesId', value)}
                         placeholder="Chọn bộ truyện..."
-                        searchable
+                        menuMaxHeight="160px"
                         className="w-full"
                       />
                     </td>
