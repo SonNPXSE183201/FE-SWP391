@@ -58,11 +58,15 @@ export const rankingApi = {
   },
 
   submitRankingData: async (payload: components['schemas']['CreateRankingsDto']) => {
-    const res = await axiosInstance.post<ApiResponse<unknown>>('/api/rankings', payload);
-    const ok = res.data?.success;
-    if (ok === false) {
-      throw new Error(res.data?.message || 'API từ chối nhập liệu');
+    try {
+      const res = await axiosInstance.post<ApiResponse<unknown>>('/api/rankings', payload);
+      const ok = res.data?.success;
+      if (ok === false) {
+        throw new Error(res.data?.message || 'API từ chối nhập liệu');
+      }
+      return res.data;
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, 'Nhập dữ liệu bảng xếp hạng thất bại'), { cause: error });
     }
-    return res.data;
   },
 };

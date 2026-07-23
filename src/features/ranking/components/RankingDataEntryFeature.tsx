@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { generateUUID } from '../../../utils/uuid';
 import toast from 'react-hot-toast';
-import { Plus, Trash2, Upload, Loader2, Database, ListChecks } from 'lucide-react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Plus, Trash2, Upload, Loader2, Database, ListChecks, ShieldAlert, ArrowLeft } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { rankingApi } from '../api/ranking.api';
 import type { components } from '../../../api/generated/schema';
 import { useSeriesList } from '../../series';
+import { useAuthStore } from '../../../stores/authStore';
+import { votingApi } from '../../voting/api/voting.api';
 import { CustomDatePicker } from '../../../components/common/CustomDatePicker';
 import { CustomSelect } from '../../../components/common/CustomSelect';
 import { HelpTip } from '../../../components/common/HelpTip';
@@ -29,9 +32,21 @@ const emptyRow = (): RankingInputRow => ({
 });
 
 export const RankingDataEntryFeature = () => {
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [recordedDate, setRecordedDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [rows, setRows] = useState<RankingInputRow[]>([emptyRow(), emptyRow(), emptyRow()]);
   const queryClient = useQueryClient();
+
+  const { data: rules, isLoading: isLoadingRules } = useQuery({
+    queryKey: ['board-voting-rules'],
+    queryFn: votingApi.fetchVotingRules,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const isChairOrAdmin =
+    user?.role === 'Admin' ||
+    Boolean(rules?.effectiveChairUserId && Number(user?.id) === Number(rules.effectiveChairUserId));
 
   // UX Improvement: Only fetch series that are "In Production"
   const { data: seriesList = [] } = useSeriesList({ pageSize: 1000, status: 'In Production' });
@@ -106,6 +121,42 @@ export const RankingDataEntryFeature = () => {
     };
     reader.readAsText(file);
   };
+
+  if (isLoadingRules) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 size={32} className="animate-spin text-brand" />
+      </div>
+    );
+  }
+
+  if (!isChairOrAdmin) {
+    return (
+      <div className="space-y-6 w-full max-w-2xl mx-auto py-10">
+        <div className="bg-warning/10 border border-warning/30 rounded-2xl p-8 text-center space-y-4 shadow-sm">
+          <div className="w-14 h-14 rounded-full bg-warning/20 text-warning flex items-center justify-center mx-auto">
+            <ShieldAlert size={30} />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold text-text-primary">Quyền truy cập bị giới hạn</h2>
+            <p className="text-sm text-text-secondary leading-relaxed">
+              Chỉ <span className="font-semibold text-warning">{rules?.chairUserName || 'Chủ tịch Hội đồng biên tập'}</span> hoặc <span className="font-semibold text-brand">Admin</span> mới có quyền nhập và chốt số liệu Bảng xếp hạng.
+            </p>
+          </div>
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => navigate('/board/ranking')}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-bg-surface hover:bg-bg-secondary border border-border-custom rounded-xl text-sm font-medium text-text-primary transition-all cursor-pointer shadow-sm"
+            >
+              <ArrowLeft size={18} />
+              Quay lại Xem Bảng xếp hạng
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 w-full">

@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../stores/authStore";
 import type { UserRole } from "../stores/authStore";
 import { Logo } from "../components/common/Logo";
@@ -24,6 +25,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useAssistantInvites } from "../features/assistant-management";
+import { votingApi } from "../features/voting/api/voting.api";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -45,7 +47,11 @@ interface NavSectionConfig {
 }
 
 // Navigation configs per role
-const getNavSections = (role: UserRole, invitesCount: number = 0): NavSectionConfig[] => {
+const getNavSections = (
+  role: UserRole,
+  invitesCount: number = 0,
+  isChair: boolean = true
+): NavSectionConfig[] => {
   switch (role) {
     case "Mangaka":
       return [
@@ -216,11 +222,15 @@ const getNavSections = (role: UserRole, invitesCount: number = 0): NavSectionCon
               path: "/board/ranking",
               icon: <BarChart3 size={20} />,
             },
-            {
-              label: "Nhập liệu xếp hạng",
-              path: "/board/ranking-data",
-              icon: <FileSignature size={20} />,
-            },
+            ...(isChair
+              ? [
+                  {
+                    label: "Nhập liệu xếp hạng",
+                    path: "/board/ranking-data",
+                    icon: <FileSignature size={20} />,
+                  },
+                ]
+              : []),
             {
               label: "Lịch xuất bản",
               path: "/board/schedule",
@@ -289,9 +299,23 @@ export const Sidebar = ({
   const location = useLocation();
   const { data: invites = [] } = useAssistantInvites();
 
+  const { data: rules } = useQuery({
+    queryKey: ["board-voting-rules"],
+    queryFn: votingApi.fetchVotingRules,
+    enabled: user?.role === "Board",
+    staleTime: 1000 * 60 * 5,
+  });
+
   if (!user) return null;
 
-  const navSections = getNavSections(user.role, invites.length);
+  const isChair =
+    user.role === "Admin" ||
+    Boolean(
+      rules?.effectiveChairUserId &&
+        Number(user.id) === Number(rules.effectiveChairUserId)
+    );
+
+  const navSections = getNavSections(user.role, invites.length, isChair);
 
   return (
     <>
