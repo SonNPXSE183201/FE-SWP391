@@ -24,6 +24,7 @@ import {
   SeriesDetailPage,
   PageCanvasPage,
   MangakaAssistantsPage,
+  MangakaRankingPage,
 } from './pages/mangaka';
 
 // ─── Assistant Pages ───
@@ -130,6 +131,7 @@ function App() {
             <Route path="/mangaka/canvas" element={<PageCanvasPage />} />
             <Route path="/mangaka/canvas/:chapterId" element={<PageCanvasPage />} />
             <Route path="/mangaka/settings" element={<MangakaSettingsPage />} />
+            <Route path="/mangaka/ranking" element={<MangakaRankingPage />} />
           </Route>
         </Route>
 

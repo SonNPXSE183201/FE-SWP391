@@ -6,6 +6,7 @@ import type { NotificationDto } from '../../../api/generated/types';
 import { isApiSuccess, getApiMessage } from '../../../api/apiResponse';
 import { toApiDateIso } from '../../../utils/parseApiDate';
 import { stripSeriesIdPrefix, getNotificationTitle } from '../../../utils/notificationLink';
+import { useAuthStore } from '../../../stores/authStore';
 
 // ─── Mapper ──────────────────────────────────────────────────
 
@@ -53,10 +54,55 @@ export const useNotificationList = (page: number = 1, pageSize: number = 20) => 
       const response = await notificationApi.getAll(page, pageSize);
       const payload = response.data;
 
+      // Load local notifications from localStorage
+      const currentUser = useAuthStore.getState().user;
+      const localNotifsStr = localStorage.getItem('local_notifications');
+      let localItems: NotificationItem[] = [];
+      if (localNotifsStr) {
+        try {
+          const parsed = JSON.parse(localNotifsStr) as Array<{
+            id: string;
+            title: string;
+            message: string;
+            isRead: boolean;
+            type?: string;
+            rawType?: string;
+            createdAt: string;
+            targetUserId?: string;
+          }>;
+          if (Array.isArray(parsed)) {
+            localItems = parsed
+              .filter((item) => {
+                if (item.isRead) return false;
+                if (currentUser?.role === 'Editor') {
+                  if (item.targetUserId) {
+                    return String(item.targetUserId) === String(currentUser.id);
+                  }
+                  return true;
+                }
+                return false;
+              })
+              .map((item) => ({
+                id: item.id,
+                title: item.title,
+                message: item.message,
+                isRead: !!item.isRead,
+                type: (item.type as NotificationItem['type']) || 'SystemAlert',
+                rawType: item.rawType,
+                createdAt: item.createdAt,
+              }));
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
       if (isApiSuccess(payload) && payload.data) {
-        const allItems = payload.data
+        const apiItems = payload.data
           .map(mapDtoToItem)
           .filter((n) => !n.isRead);
+        
+        const allItems = [...localItems, ...apiItems];
         const start = (page - 1) * pageSize;
         const items = allItems.slice(start, start + pageSize);
         const unreadCount = allItems.filter((n) => !n.isRead).length;
@@ -64,6 +110,18 @@ export const useNotificationList = (page: number = 1, pageSize: number = 20) => 
         return {
           items,
           totalCount: allItems.length,
+          unreadCount,
+        };
+      }
+
+      if (localItems.length > 0) {
+        const start = (page - 1) * pageSize;
+        const items = localItems.slice(start, start + pageSize);
+        const unreadCount = localItems.length;
+        setNotifications(items, unreadCount);
+        return {
+          items,
+          totalCount: localItems.length,
           unreadCount,
         };
       }
@@ -87,28 +145,77 @@ export const useUnreadCount = () => {
       const response = await notificationApi.getUnreadCount();
       const payload = response.data;
 
+      let localUnreadCount = 0;
+      const currentUser = useAuthStore.getState().user;
+      const localNotifsStr = localStorage.getItem('local_notifications');
+      if (localNotifsStr) {
+        try {
+          const parsed = JSON.parse(localNotifsStr) as Array<{
+            id: string;
+            isRead: boolean;
+            targetUserId?: string;
+          }>;
+          if (Array.isArray(parsed)) {
+            localUnreadCount = parsed.filter((item) => {
+              if (item.isRead) return false;
+              if (currentUser?.role === 'Editor') {
+                if (item.targetUserId) {
+                  return String(item.targetUserId) === String(currentUser.id);
+                }
+                return true;
+              }
+              return false;
+            }).length;
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
       if (isApiSuccess(payload) && payload.data !== undefined) {
-        const count = typeof payload.data === 'number' ? payload.data : 0;
+        const count = (typeof payload.data === 'number' ? payload.data : 0) + localUnreadCount;
         setUnreadCount(count);
         return count;
       }
 
-      return 0;
+      return localUnreadCount;
     },
     refetchInterval: 15_000,
     staleTime: 5_000,
   });
 };
 
-/**
- * Mark a single notification as read.
- */
 export const useMarkAsRead = () => {
   const queryClient = useQueryClient();
   const { markAsRead } = useNotificationStore();
 
   return useMutation({
-    mutationFn: (notificationId: string) => notificationApi.markAsRead(notificationId),
+    mutationFn: async (notificationId: string) => {
+      if (notificationId.startsWith('local_notif_')) {
+        const localNotifsStr = localStorage.getItem('local_notifications');
+        if (localNotifsStr) {
+          try {
+            const parsed = JSON.parse(localNotifsStr) as Array<{
+              id: string;
+              isRead: boolean;
+            }>;
+            if (Array.isArray(parsed)) {
+              const updated = parsed.map((item) => {
+                if (item.id === notificationId) {
+                  return { ...item, isRead: true };
+                }
+                return item;
+              });
+              localStorage.setItem('local_notifications', JSON.stringify(updated));
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        }
+        return;
+      }
+      await notificationApi.markAsRead(notificationId);
+    },
     onMutate: (notificationId) => {
       markAsRead(notificationId);
     },
@@ -126,7 +233,23 @@ export const useMarkAllAsRead = () => {
   const { markAllAsRead } = useNotificationStore();
 
   return useMutation({
-    mutationFn: () => notificationApi.markAllAsRead(),
+    mutationFn: async () => {
+      const localNotifsStr = localStorage.getItem('local_notifications');
+      if (localNotifsStr) {
+        try {
+          const parsed = JSON.parse(localNotifsStr) as Array<{
+            isRead: boolean;
+          }>;
+          if (Array.isArray(parsed)) {
+            const updated = parsed.map((item) => ({ ...item, isRead: true }));
+            localStorage.setItem('local_notifications', JSON.stringify(updated));
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      await notificationApi.markAllAsRead();
+    },
     onMutate: () => {
       markAllAsRead();
     },

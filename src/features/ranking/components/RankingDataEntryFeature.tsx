@@ -93,7 +93,9 @@ export const RankingDataEntryFeature = () => {
       const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
       const parsed: RankingInputRow[] = lines.map((line) => {
         const [seriesId, voteCount] = line.split(/[,;\t]/).map((s) => s.trim());
-        return { key: generateUUID(), seriesId: seriesId || '', voteCount: voteCount || '' };
+        const cleanSeriesId = seriesId ? seriesId.replace(/[^0-9]/g, '') : '';
+        const cleanVoteCount = voteCount ? voteCount.replace(/[^0-9]/g, '') : '';
+        return { key: generateUUID(), seriesId: cleanSeriesId, voteCount: cleanVoteCount };
       });
       if (parsed.length === 0) {
         toast.error('File CSV trống hoặc không đúng định dạng');
@@ -134,7 +136,7 @@ export const RankingDataEntryFeature = () => {
           </div>
           <label className="inline-flex items-center gap-2.5 px-5 py-2.5 bg-bg-surface border border-border-custom rounded-xl text-sm font-medium text-text-primary hover:bg-brand/5 hover:text-brand hover:border-brand/30 cursor-pointer transition-all shadow-sm group">
             <Upload size={18} className="text-text-muted group-hover:text-brand transition-colors" />
-            Nhập từ tệp CSV
+            Nhập từ tệp CSV, TXT
             <input
               type="file"
               accept=".csv,.txt"
@@ -144,14 +146,14 @@ export const RankingDataEntryFeature = () => {
           </label>
         </div>
 
-        <div className="overflow-hidden border border-border-custom rounded-xl bg-bg-surface">
+        <div className="overflow-visible border border-border-custom rounded-xl bg-bg-surface">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-bg-secondary text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
                 <th className="py-3 px-4 w-1/2">
                   <div className="flex items-center gap-2">
                     Bộ truyện
-                    <HelpTip content="Chỉ hiển thị các bộ truyện đang xuất bản. Bạn có thể chọn truyện từ danh sách hoặc nhập bằng CSV (Cột SeriesId)" />
+                    <HelpTip content="Chỉ hiển thị các bộ truyện đang xuất bản. Bạn có thể chọn truyện từ danh sách hoặc nhập bằng CSV, TXT (Cột SeriesId)" />
                   </div>
                 </th>
                 <th className="py-3 px-4">
@@ -176,7 +178,7 @@ export const RankingDataEntryFeature = () => {
                       <div className="w-12 h-12 rounded-full bg-bg-secondary flex items-center justify-center">
                         <Database size={24} className="opacity-40" />
                       </div>
-                      <p>Chưa có dòng dữ liệu nào.<br/>Hãy thêm mới hoặc import từ file CSV.</p>
+                      <p>Chưa có dòng dữ liệu nào.<br/>Hãy thêm mới hoặc import từ file CSV, TXT.</p>
                     </div>
                   </td>
                 </tr>
@@ -193,16 +195,20 @@ export const RankingDataEntryFeature = () => {
                         value={row.seriesId}
                         onChange={(value) => updateRow(row.key, 'seriesId', value)}
                         placeholder="Chọn bộ truyện..."
-                        searchable
+                        menuMaxHeight="160px"
                         className="w-full"
                       />
                     </td>
                     <td className="py-3 px-4">
                       <input
-                        type="number"
-                        min={0}
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         value={row.voteCount}
-                        onChange={(e) => updateRow(row.key, 'voteCount', e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9]/g, '');
+                          updateRow(row.key, 'voteCount', val);
+                        }}
                         placeholder="VD: 1500"
                         className="w-full px-4 py-2.5 bg-bg-secondary border border-border-custom focus:border-brand focus:ring-1 focus:ring-brand rounded-xl text-text-primary outline-none transition-all"
                       />

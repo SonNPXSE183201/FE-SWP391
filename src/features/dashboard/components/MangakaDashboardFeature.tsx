@@ -18,12 +18,35 @@ import { StatCard } from '../index';
 import { useMangakaDashboard, getGreeting } from '../hooks/useMangakaDashboard';
 import { ChartCard, TrendAreaChart, DonutChart, CHART_COLORS, formatCompactVND } from './charts';
 import { TrendingUp, PieChart } from 'lucide-react';
+import { useRankingList } from '../../ranking';
+import { getRankingRecordTitle } from '../../ranking/utils/ranking.utils';
 
 export const MangakaDashboardFeature = () => {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const greeting = getGreeting();
-  const { stats, activities, seriesOverview, charts, isLoading, error } = useMangakaDashboard();
+  const { stats, activities, seriesOverview, charts, isLoading: isDashboardLoading, error } = useMangakaDashboard();
+  
+  const { data: rankingList = [] } = useRankingList({ period: 'month' });
+  
+  const myRankedRecords = rankingList
+    .filter((r) => r.series?.mangakaId !== undefined && String(r.series.mangakaId) === String(user?.id));
+  
+  let bestRecord = null;
+  if (myRankedRecords.length > 0) {
+    bestRecord = myRankedRecords.reduce((prev, curr) => 
+      (prev.rankPosition ?? 999) < (curr.rankPosition ?? 999) ? prev : curr
+    );
+  }
+  
+  const bestRank = bestRecord ? bestRecord.rankPosition : null;
+  const bestSeriesTitle = bestRecord ? getRankingRecordTitle(bestRecord) : '';
+  const rankDisplay = bestRank ? `#${bestRank} - ${bestSeriesTitle}` : 'Chưa xếp hạng';
+  const totalRanked = rankingList.length;
+  const trendText = bestRank ? `trên tổng số ${totalRanked} truyện` : undefined;
+
+  const isLoading = isDashboardLoading;
+
 
   if (isLoading) {
     return (
@@ -82,7 +105,7 @@ export const MangakaDashboardFeature = () => {
       </div>
 
       {/* ─── Stat Cards ─── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-stagger>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3" data-stagger>
         <StatCard
           label="Bộ truyện đang hoạt động"
           value={stats.activeSeries}
@@ -111,6 +134,14 @@ export const MangakaDashboardFeature = () => {
           color="text-success"
           navigateTo="/mangaka/wallet"
           trend={`+${formatVND(stats.monthlyGenkouryo)} tháng này`}
+        />
+        <StatCard
+          label="Thứ hạng tốt nhất"
+          value={rankDisplay}
+          icon={BarChart3}
+          color="text-brand"
+          navigateTo="/mangaka/ranking"
+          trend={trendText}
         />
       </div>
 

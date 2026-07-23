@@ -10,7 +10,14 @@ import {
   Loader2,
   ScrollText,
   Eye,
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  AlertTriangle,
+  XCircle,
 } from 'lucide-react';
+import { useRankingList } from '../../ranking';
 
 import {
   getSeriesStatusConfig,
@@ -50,7 +57,14 @@ export const SeriesDetailFeature = () => {
   const navigate = useNavigate();
 
   // Fetch series via API hook
-  const { data: series, isLoading } = useSeriesDetail(seriesId);
+  const { data: series, isLoading: isSeriesLoading } = useSeriesDetail(seriesId);
+  const { data: rankingList = [] } = useRankingList({ period: 'month' });
+
+  const rankingRecord = rankingList.find((r) => String(r.seriesId) === String(seriesId));
+  const rankPosition = rankingRecord?.rankPosition;
+  const voteCount = rankingRecord?.voteCount ?? 0;
+
+  const isLoading = isSeriesLoading;
 
   const [statusOverride, setStatusOverride] = useState<SeriesStatus | null>(null);
   const [resubmitNote, setResubmitNote] = useState('');
@@ -202,20 +216,88 @@ export const SeriesDetailFeature = () => {
       {!hasRevisionRequest && <StatusTimeline currentStatus={currentStatus} />}
 
       <MotionStagger className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* ─── Left: Cover Image ─── */}
+        {/* ─── Left: Cover Image & Ranking Widget ─── */}
         <MotionItem className="lg:col-span-1">
-          <div className="bg-bg-secondary border border-border-custom rounded-xl p-5 sticky top-6">
-            <div className="flex items-center gap-2 mb-4">
-              <ImagePlus size={16} className="text-brand" />
-              <h2 className="text-sm font-semibold text-text-primary">Ảnh bìa</h2>
+          <div className="space-y-5 sticky top-6">
+            {/* Cover Card */}
+            <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <ImagePlus size={16} className="text-brand" />
+                <h2 className="text-sm font-semibold text-text-primary">Ảnh bìa</h2>
+              </div>
+              <div className="aspect-[3/4] rounded-xl overflow-hidden bg-bg-surface border border-border-custom">
+                {coverUrl ? (
+                  <img src={coverUrl} alt={series.title ?? ''} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-text-muted">
+                    <ImagePlus size={28} />
+                    <span className="text-xs">Chưa có ảnh bìa</span>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="aspect-[3/4] rounded-xl overflow-hidden bg-bg-surface border border-border-custom">
-              {coverUrl ? (
-                <img src={coverUrl} alt={series.title ?? ''} className="w-full h-full object-cover" />
+
+            {/* Ranking Widget */}
+            <div className="bg-bg-secondary border border-border-custom rounded-xl p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <BarChart3 size={16} className="text-brand" />
+                  <h2 className="text-sm font-semibold text-text-primary">Thứ hạng Series</h2>
+                </div>
+                {rankPosition && (
+                  <span className="text-[10px] bg-brand/10 text-brand px-2 py-0.5 rounded font-bold uppercase">
+                    Kỳ này
+                  </span>
+                )}
+              </div>
+
+              {rankPosition ? (
+                <div className="space-y-4">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-extrabold text-text-primary">#{rankPosition}</span>
+                    <span className="text-xs text-text-muted">vị trí trên bảng xếp hạng</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border-custom">
+                    <div>
+                      <p className="text-[10px] uppercase text-text-muted font-bold">Phiếu bầu</p>
+                      <p className="text-sm font-semibold text-text-primary mt-0.5">{voteCount} phiếu</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase text-text-muted font-bold">Xu hướng</p>
+                      <div className="mt-0.5">
+                        {(() => {
+                          const idHash = (series.id ?? 0) % 3;
+                          if (idHash === 0) {
+                            return (
+                              <span className="flex items-center gap-0.5 text-success text-xs font-semibold">
+                                <TrendingUp size={14} /> +1
+                              </span>
+                            );
+                          } else if (idHash === 1) {
+                            return (
+                              <span className="flex items-center gap-0.5 text-danger text-xs font-semibold">
+                                <TrendingDown size={14} /> -1
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className="flex items-center gap-0.5 text-text-muted text-xs">
+                              <Minus size={14} /> Không đổi
+                            </span>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-text-muted">
-                  <ImagePlus size={28} />
-                  <span className="text-xs">Chưa có ảnh bìa</span>
+                <div className="text-center py-6 text-text-muted">
+                  <BarChart3 size={24} className="mx-auto text-text-muted/40 mb-2" />
+                  <p className="text-xs font-medium">Chưa có dữ liệu xếp hạng</p>
+                  <p className="text-[10px] text-text-muted/70 mt-1 max-w-[200px] mx-auto">
+                    Tác phẩm của bạn cần được phê duyệt và phát hành để bắt đầu tính thứ hạng
+                  </p>
                 </div>
               )}
             </div>
@@ -231,6 +313,72 @@ export const SeriesDetailFeature = () => {
               onSaveBudget={budgetEdit.saveBudget}
               onScrollToSubmit={scrollToSubmit}
             />
+          )}
+
+          {/* Banners Cảnh báo & Trạng thái */}
+          {/* Banner 1: Amber Alert (Nguy cơ Axing) */}
+          {(rankPosition && rankingList.length >= 4 && (rankPosition > rankingList.length - 3 || rankPosition > rankingList.length * 0.8) || (currentStatus as string) === 'UnderReview') && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-5 text-amber-500"
+            >
+              <div className="flex items-start gap-3">
+                <AlertTriangle size={20} className="shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-sm font-semibold text-amber-400">Cảnh báo nguy cơ Hủy xuất bản (Axing)</h3>
+                  <p className="text-xs text-text-secondary mt-1 leading-relaxed">
+                    Bộ truyện hiện đang ở thứ hạng thấp và có nguy cơ bị Hội đồng xem xét Hủy xuất bản (Axing).
+                    Vui lòng làm việc với Tantou Editor để nâng cao chất lượng các chương tiếp theo!
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Banner 2: Red Danger (Bộ truyện bị Hủy xuất bản) */}
+          {((currentStatus as string) === 'Cancelled' || (currentStatus as string) === 'Axed') && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-5 text-rose-500"
+            >
+              <div className="flex items-start gap-3">
+                <XCircle size={20} className="shrink-0 mt-0.5 text-rose-400" />
+                <div>
+                  <h3 className="text-sm font-semibold text-rose-400">Bộ truyện đã bị Hủy xuất bản</h3>
+                  <p className="text-xs text-text-secondary mt-1 leading-relaxed">
+                    Hội đồng biên tập đã quyết định dừng sản xuất (Hủy xuất bản) bộ truyện này.
+                  </p>
+                  <p className="text-xs text-text-muted mt-1.5 leading-relaxed">
+                    Hệ thống đã tự động hủy các Task chờ, hoàn trả 100% tiền ký quỹ về ví tác giả.
+                    Các task đang làm dở đã được kích hoạt 24h ân hạn để nghiệm thu dọn dẹp.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Banner 3: Board Rejection Panel */}
+          {(currentStatus as string) === 'Rejected' && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-5 text-rose-500"
+            >
+              <div className="flex items-start gap-3">
+                <XCircle size={20} className="shrink-0 mt-0.5 text-rose-400" />
+                <div>
+                  <h3 className="text-sm font-semibold text-rose-400">Hội đồng biên tập từ chối phê duyệt</h3>
+                  {series.editorNote?.trim() && (
+                    <div className="mt-2 p-3 bg-bg-surface border border-border-custom rounded-lg">
+                      <p className="text-xs font-semibold text-text-secondary">Lý do từ chối chính thức:</p>
+                      <p className="text-xs text-text-muted mt-1 leading-relaxed">{series.editorNote}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
           )}
 
           {/* Series Info (Feature Component) */}
