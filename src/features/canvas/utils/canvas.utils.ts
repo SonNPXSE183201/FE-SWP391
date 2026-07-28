@@ -71,10 +71,10 @@ export const toCoordinatesJson = (coords: {
   height: number;
 }): string =>
   JSON.stringify({
-    top: coords.y,
-    left: coords.x,
-    width: coords.width,
-    height: coords.height,
+    top: Math.round(coords.y),
+    left: Math.round(coords.x),
+    width: Math.round(coords.width),
+    height: Math.round(coords.height),
   });
 
 export const mapRegionDtoToEntity = (dto: RegionDto): CanvasRegion => {
