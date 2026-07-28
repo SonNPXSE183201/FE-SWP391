@@ -311,7 +311,7 @@ export const InviteConfirmPopover = ({
           ) : isAlreadyInTeam ? (
             <div className="flex items-center gap-2 rounded-xl bg-info/10 px-3 py-2.5 text-xs text-info">
               <CheckCircle2 size={13} className="shrink-0" />
-              Trợ lý đang ở trong team. Vai trò mới sẽ được bổ sung ngay.
+              Trợ lý đang ở trong team. Lời mời vai trò mới sẽ được gửi để trợ lý xác nhận.
             </div>
           ) : null}
         </div>
