@@ -6,13 +6,37 @@ interface PngValidationOptions {
  * F2.8 — If the uploaded file is PNG, validate it has transparent background.
  * Other image formats are allowed for testing/flexible upload flows.
  */
+export async function convertToPng(file: File): Promise<File> {
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const img = await loadImage(objectUrl);
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Cannot get canvas context');
+    ctx.drawImage(img, 0, 0);
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (!blob) return reject(new Error('Canvas toBlob failed'));
+        const fileName = file.name.replace(/\.[^/.]+$/, "") + ".png";
+        const newFile = new File([blob], fileName, { type: 'image/png' });
+        resolve(newFile);
+      }, 'image/png');
+    });
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
 export async function validatePngTransparent(
   file: File,
   options: PngValidationOptions = {},
 ): Promise<{ valid: boolean; message?: string }> {
+  // Always validate transparency regardless of extension, because we auto-convert to PNG.
   const isPng = file.type.includes('png') || file.name.toLowerCase().endsWith('.png');
   if (!isPng) {
-    return { valid: true };
+    return { valid: false, message: 'Vui lòng nộp định dạng PNG hoặc để hệ thống tự động chuyển đổi.' };
   }
 
   const objectUrl = URL.createObjectURL(file);

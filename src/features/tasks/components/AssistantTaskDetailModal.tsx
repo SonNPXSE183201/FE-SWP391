@@ -35,7 +35,6 @@ import type { TasksDto } from "../../../api/generated/types";
 import type { CanvasAnnotation } from "../../canvas/types/canvas.types";
 import type { AnnotationType, TaskStatus } from "../../../types/status.types";
 import { CanvasViewer } from "../../../components/canvas/CanvasViewer";
-import { TaskRegionPreview } from "./TaskRegionPreview";
 import { TaskLayerPreview } from "./TaskLayerPreview";
 import {
   useTaskVersions,
@@ -52,7 +51,7 @@ import { ANNOTATION_TYPE_CONFIG } from "../../../constants/annotation";
 import { TASK_STATUS_CONFIG, formatDeadline } from "../constants";
 import { formatVND } from "../../wallet";
 import { resolveMediaUrl } from "../../../utils/resolveMediaUrl";
-import { validatePngTransparent } from "../../../utils/validatePngTransparent";
+import { validatePngTransparent, convertToPng } from "../../../utils/validatePngTransparent";
 
 interface AssistantTaskDetailModalProps {
   task: TasksDto & {
@@ -206,7 +205,7 @@ export const AssistantTaskDetailModal = ({
   const activeUrl = active?.submittedFileUrl
     ? resolveMediaUrl(active.submittedFileUrl)
     : "";
-  const refUrl = task.pageImageUrl ? resolveMediaUrl(task.pageImageUrl) : "";
+  const refUrl = task.baseLayerUrl ? resolveMediaUrl(task.baseLayerUrl) : task.pageImageUrl ? resolveMediaUrl(task.pageImageUrl) : "";
   const dl = formatDeadline(task.deadline || "");
   const targetRegionSize = useMemo(
     () => parseCoordinatesJson(task.regionCoordinatesJson),
@@ -272,9 +271,21 @@ export const AssistantTaskDetailModal = ({
 
     if (!file) return;
 
+    let finalFile = file;
+    const isPng = file.type.includes('png') || file.name.toLowerCase().endsWith('.png');
+    
+    if (!isPng) {
+      try {
+        finalFile = await convertToPng(file);
+      } catch {
+        toast.error("Không thể tự động chuyển đổi ảnh sang PNG. Vui lòng tự xuất ảnh PNG nền trong suốt.");
+        return;
+      }
+    }
+
     try {
       const validation = await validatePngTransparent(
-        file,
+        finalFile,
         buildPngValidationOptions(),
       );
       if (!validation.valid) {
@@ -286,8 +297,8 @@ export const AssistantTaskDetailModal = ({
       return;
     }
 
-    setSelectedFile(file);
-    setFilePreviewUrl(URL.createObjectURL(file));
+    setSelectedFile(finalFile);
+    setFilePreviewUrl(URL.createObjectURL(finalFile));
   };
 
   const toggleCriterion = (criterionId: string) => {
@@ -371,53 +382,7 @@ export const AssistantTaskDetailModal = ({
     }
   };
 
-  const handleDownloadRegionImage = async () => {
-    if (!refUrl || !hasTargetRegionSize) {
-      toast.error("Không tìm thấy vùng cần sửa để tải xuống");
-      return;
-    }
 
-    try {
-      const image = await loadImageForCanvas(refUrl);
-      const canvas = document.createElement("canvas");
-      const width = Math.round(targetRegionSize.width);
-      const height = Math.round(targetRegionSize.height);
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        toast.error("Không thể tạo ảnh vùng cần sửa");
-        return;
-      }
-
-      ctx.drawImage(
-        image,
-        Math.round(targetRegionSize.x),
-        Math.round(targetRegionSize.y),
-        width,
-        height,
-        0,
-        0,
-        width,
-        height,
-      );
-
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          toast.error("Không thể xuất ảnh vùng cần sửa");
-          return;
-        }
-        downloadBlob(
-          blob,
-          `vung-can-sua-task-${taskId}-${width}x${height}.png`,
-        );
-      }, "image/png");
-    } catch {
-      toast.error(
-        "Không thể tải vùng cần sửa. Vui lòng kiểm tra cấu hình CORS ảnh.",
-      );
-    }
-  };
 
   const cropImageToRegionBlob = async (imageUrl: string): Promise<Blob> => {
     const colorizedImg = await loadImageForCanvas(imageUrl);
@@ -709,7 +674,7 @@ export const AssistantTaskDetailModal = ({
           </div>
           <div className="flex flex-1 min-h-0 flex-col gap-2.5 p-3">
             <TaskLayerPreview
-              baseImageUrl={task.pageImageUrl}
+              baseImageUrl={refUrl}
               overlayImageUrl={filePreviewUrl}
               coordinatesJson={task.regionCoordinatesJson}
               regionName={task.regionName}
@@ -755,24 +720,32 @@ export const AssistantTaskDetailModal = ({
             >
               <ExternalLink size={12} /> Mở ảnh gốc
             </a>
-            <button
-              type="button"
-              onClick={handleDownloadRegionImage}
-              disabled={!hasTargetRegionSize}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border-custom bg-bg-surface px-2.5 py-1.5 text-[11px] font-medium text-text-secondary transition-colors hover:border-brand/35 hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer shrink-0"
-            >
-              <Download size={12} /> Tải vùng cần vẽ
-            </button>
           </div>
         )}
       </div>
-      <div className="flex-1 min-h-0 rounded-xl border border-border-custom overflow-hidden bg-bg-surface relative">
-        {refUrl ? (
-          <TaskRegionPreview
-            imageUrl={aiColorizedUrl || task.pageImageUrl}
-            baseImageUrl={task.pageImageUrl}
+      <div 
+        className="flex-1 min-h-0 rounded-xl border border-border-custom overflow-hidden relative"
+        style={!canSubmit && activeUrl ? {
+          backgroundColor: '#ffffff',
+          backgroundImage: 'linear-gradient(45deg, #e5e7eb 25%, transparent 25%), linear-gradient(-45deg, #e5e7eb 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e5e7eb 75%), linear-gradient(-45deg, transparent 75%, #e5e7eb 75%)',
+          backgroundPosition: '0 0, 0 12px, 12px -12px, -12px 0',
+          backgroundSize: '24px 24px',
+        } : { backgroundImage: 'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAMUlEQVQ4T2NkYNgGw31lzaRx49cnhGkAAwN+w6gBpGkYNYA0DaMGkKZh1ADSNAwtQwEA/M0Q2x0w9AAAAABJRU5ErkJggg==")', backgroundRepeat: 'repeat' }}
+      >
+        {!canSubmit && activeUrl ? (
+          <img
+            src={refUrl || activeUrl}
+            alt="Ảnh tham khảo"
+            className="absolute inset-0 w-full h-full object-contain select-none"
+            draggable={false}
+          />
+        ) : refUrl ? (
+          <TaskLayerPreview
+            baseImageUrl={aiColorizedUrl || refUrl}
+            overlayImageUrl={undefined}
             coordinatesJson={task.regionCoordinatesJson}
             regionName={undefined}
+            backdrop="checkerboard"
             heightClassName="h-full"
             className="rounded-none border-0"
           />
@@ -984,7 +957,7 @@ export const AssistantTaskDetailModal = ({
                         href={activeUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="absolute top-2 right-2 inline-flex items-center gap-1 text-[10px] font-medium bg-black/60 text-white px-2 py-1 rounded hover:bg-black/80 no-underline"
+                        className="absolute top-2 right-2 inline-flex items-center gap-1 text-[10px] font-medium bg-black/60 text-white px-2 py-1 rounded hover:bg-black/80 no-underline z-10"
                       >
                         <ExternalLink size={11} /> Mở ảnh gốc
                       </a>
