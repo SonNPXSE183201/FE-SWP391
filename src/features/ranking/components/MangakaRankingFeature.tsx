@@ -4,14 +4,10 @@ import {
   BarChart3,
   Search,
   Loader2,
-  TrendingUp,
-  TrendingDown,
-  Minus,
   AlertTriangle,
 } from 'lucide-react';
 import { CustomSelect } from '../../../components/common/CustomSelect';
 import { useRankingList } from '../hooks/useRanking';
-import type { RankingRecord } from '../../../api/generated/types';
 import {
   getRankingCoverUrl,
   getRankingGenres,
@@ -63,58 +59,6 @@ export const MangakaRankingFeature = () => {
     return rank > totalCount - 3 || rank > totalCount * 0.8;
   };
 
-  // Helper to calculate trend
-  const getTrendElement = (record: RankingRecord, rank: number) => {
-    // Try to get from series.rankingRecords
-    const rawHistory = record.series?.rankingRecords;
-    const history = rawHistory ? rawHistory.filter(Boolean) : [];
-    if (history && history.length > 1) {
-      const sorted = [...history].sort((a, b) => {
-        const dateB = b?.recordedDate ? new Date(b.recordedDate).getTime() : 0;
-        const dateA = a?.recordedDate ? new Date(a.recordedDate).getTime() : 0;
-        return dateB - dateA;
-      });
-      const currentPos = sorted[0]?.rankPosition ?? rank;
-      const prevPos = sorted[1]?.rankPosition;
-      if (prevPos !== undefined) {
-        if (currentPos < prevPos) {
-          return (
-            <span className="flex items-center gap-1 text-success text-xs font-semibold">
-              <TrendingUp size={14} /> +{prevPos - currentPos}
-            </span>
-          );
-        } else if (currentPos > prevPos) {
-          return (
-            <span className="flex items-center gap-1 text-danger text-xs font-semibold">
-              <TrendingDown size={14} /> -{currentPos - prevPos}
-            </span>
-          );
-        }
-      }
-    }
-
-    // Stable fallback based on title length or id hash to avoid random flickering
-    const idHash = (record.seriesId ?? 0) % 3;
-    if (idHash === 0) {
-      return (
-        <span className="flex items-center gap-1 text-success text-xs font-semibold">
-          <TrendingUp size={14} /> +1
-        </span>
-      );
-    } else if (idHash === 1) {
-      return (
-        <span className="flex items-center gap-1 text-danger text-xs font-semibold">
-          <TrendingDown size={14} /> -1
-        </span>
-      );
-    }
-    return (
-      <span className="flex items-center gap-1 text-text-muted text-xs">
-        <Minus size={14} /> Không đổi
-      </span>
-    );
-  };
-
   return (
     <div className="space-y-6">
       <div className="page-header">
@@ -149,11 +93,10 @@ export const MangakaRankingFeature = () => {
               <button
                 key={p.value}
                 onClick={() => setPeriod(p.value)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border-none transition-all ${
-                  period === p.value
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border-none transition-all ${period === p.value
                     ? 'bg-brand text-white shadow-brand'
                     : 'bg-transparent text-text-secondary hover:text-text-primary'
-                }`}
+                  }`}
               >
                 {p.label.split(' (')[0]}
               </button>
@@ -186,7 +129,6 @@ export const MangakaRankingFeature = () => {
                   <th className="px-6 py-4 w-16">Hạng</th>
                   <th className="px-6 py-4">Tác phẩm</th>
                   <th className="px-6 py-4">Phiếu hiện tại</th>
-                  <th className="px-6 py-4">Xu hướng</th>
                   <th className="px-6 py-4">Trạng thái / Cảnh báo</th>
                 </tr>
               </thead>
@@ -201,24 +143,22 @@ export const MangakaRankingFeature = () => {
                   const title = getRankingRecordTitle(record);
                   const genres = getRankingGenres(record);
                   const status = getRankingUiStatus(record);
-                  const isMySeries = record.series?.mangakaId !== undefined && String(record.series.mangakaId) === String(user?.id);
+                  const isMySeries = record.series?.mangakaId === user?.id;
                   const needsAxingWarning = isBottomGroup(rank) || status === 'ProposedCancel';
 
                   return (
                     <MotionTableRow
                       key={getRankingRecordId(record, index)}
                       variants={listItemVariants}
-                      className={`transition-colors hover:bg-bg-surface/30 ${
-                        isMySeries ? 'bg-brand/5 border-l-2 border-l-brand' : ''
-                      }`}
+                      className={`transition-colors hover:bg-bg-surface/30 ${isMySeries ? 'bg-brand/5 border-l-2 border-l-brand' : ''
+                        }`}
                     >
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg font-bold text-xs ${
-                          rank === 1 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
-                          rank === 2 ? 'bg-slate-400/20 text-slate-300 border border-slate-400/30' :
-                          rank === 3 ? 'bg-amber-700/20 text-amber-600 border border-amber-700/30' :
-                          'bg-bg-surface text-text-muted'
-                        }`}>
+                        <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg font-bold text-xs ${rank === 1 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                            rank === 2 ? 'bg-slate-400/20 text-slate-300 border border-slate-400/30' :
+                              rank === 3 ? 'bg-amber-700/20 text-amber-600 border border-amber-700/30' :
+                                'bg-bg-surface text-text-muted'
+                          }`}>
                           {rank}
                         </span>
                       </td>
@@ -250,20 +190,16 @@ export const MangakaRankingFeature = () => {
                         {record.voteCount ?? 0} phiếu
                       </td>
                       <td className="px-6 py-4">
-                        {getTrendElement(record, rank)}
-                      </td>
-                      <td className="px-6 py-4">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
-                            status === 'Active' ? 'bg-success/10 text-success' :
-                            status === 'UnderReview' ? 'bg-warning/10 text-warning' :
-                            'bg-danger/10 text-danger'
-                          }`}>
+                          <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${status === 'Active' ? 'bg-success/10 text-success' :
+                              status === 'UnderReview' ? 'bg-warning/10 text-warning' :
+                                'bg-danger/10 text-danger'
+                            }`}>
                             {status === 'Active' ? 'Hoạt động tốt' :
-                             status === 'UnderReview' ? 'Đang xem xét' :
-                             'Đề xuất hủy'}
+                              status === 'UnderReview' ? 'Đang xem xét' :
+                                'Đề xuất hủy'}
                           </span>
-                          
+
                           {needsAxingWarning && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 text-xs font-semibold animate-pulse">
                               <AlertTriangle size={12} /> Nguy cơ Axing
