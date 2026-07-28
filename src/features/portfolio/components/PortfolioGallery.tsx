@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2, Plus, Image as ImageIcon, X } from 'lucide-react';
+import { Trash2, Plus, Image as ImageIcon, X, AlertTriangle } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { usePortfolioSamples, useDeletePortfolioSample } from '../hooks/usePortfolio';
-import { MotionStagger, MotionItem } from '../../../components/common/animation';
+import { MotionStagger, MotionItem, AnimatedModal } from '../../../components/common/animation';
 import { AddPortfolioSampleModal } from './AddPortfolioSampleModal';
 
 interface PortfolioGalleryProps {
@@ -14,18 +15,26 @@ export const PortfolioGallery = ({ assistantId, readonly = false }: PortfolioGal
   const { data: samples, isLoading } = usePortfolioSamples(assistantId);
   const deleteSampleMutation = useDeletePortfolioSample();
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
-  const handleDelete = async (id: number) => {
+  const requestDelete = (id: number) => {
     if (readonly) return;
-    if (!window.confirm('Bạn có chắc chắn muốn xóa ảnh này khỏi Portfolio?')) return;
+    setConfirmDeleteId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!confirmDeleteId) return;
+    const id = confirmDeleteId;
+    setConfirmDeleteId(null);
     setDeletingId(id);
     try {
       await deleteSampleMutation.mutateAsync(id);
+      toast.success('Đã xóa ảnh khỏi Portfolio');
     } catch (error) {
       console.error('Delete failed:', error);
-      alert('Không thể xóa ảnh lúc này.');
+      toast.error('Không thể xóa ảnh lúc này.');
     } finally {
       setDeletingId(null);
     }
@@ -88,7 +97,7 @@ export const PortfolioGallery = ({ assistantId, readonly = false }: PortfolioGal
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (sample.id) handleDelete(sample.id);
+                          if (sample.id) requestDelete(sample.id);
                         }}
                         disabled={deletingId === sample.id}
                         className="p-2 rounded-lg bg-danger/90 text-white hover:bg-danger transition-colors"
@@ -151,6 +160,43 @@ export const PortfolioGallery = ({ assistantId, readonly = false }: PortfolioGal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
       />
+
+      {/* Delete Confirmation Modal */}
+      <AnimatedModal
+        open={confirmDeleteId !== null}
+        onClose={() => setConfirmDeleteId(null)}
+        panelClassName="relative bg-bg-secondary border border-border-custom rounded-2xl shadow-xl w-full max-w-sm overflow-hidden"
+      >
+        <div className="p-6">
+          <div className="flex flex-col items-center text-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-danger/10 flex items-center justify-center">
+              <AlertTriangle size={24} className="text-danger" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-text-primary mb-2">Xóa ảnh mẫu</h3>
+              <p className="text-sm text-text-secondary">
+                Bạn có chắc chắn muốn xóa ảnh này khỏi Portfolio? Thao tác này không thể hoàn tác.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 mt-8">
+            <button
+              type="button"
+              onClick={() => setConfirmDeleteId(null)}
+              className="flex-1 px-4 py-2 border border-border-custom hover:bg-bg-surface text-text-secondary rounded-xl text-sm font-semibold bg-transparent cursor-pointer transition-colors"
+            >
+              Hủy
+            </button>
+            <button
+              type="button"
+              onClick={confirmDelete}
+              className="flex-1 px-4 py-2 bg-danger hover:bg-danger/90 text-white rounded-xl text-sm font-semibold border-none cursor-pointer transition-colors"
+            >
+              Xóa ảnh
+            </button>
+          </div>
+        </div>
+      </AnimatedModal>
     </div>
   );
 };

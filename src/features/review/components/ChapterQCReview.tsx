@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import {
   ArrowLeft, MapPin, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Loader2, ImageOff,
   RotateCcw, CheckCircle2, AlertCircle, Banknote, Send, X,
-  ClipboardCheck, Ban, Minus, Plus, Layers, User, FileText,
+  ClipboardCheck, Ban, Layers, User, FileText,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CanvasViewer } from '../../../components/canvas/CanvasViewer';
@@ -42,7 +42,6 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
   const [annoComment, setAnnoComment] = useState('');
   const [showApprove, setShowApprove] = useState(false);
   const [showRevision, setShowRevision] = useState(false);
-  const [manualValidPageCount, setManualValidPageCount] = useState<number | null>(null);
   const [checklist, setChecklist] = useState<boolean[]>(QC_CHECKLIST_ITEMS.map(() => false));
   const canvasRef = useRef<CanvasViewerHandle>(null);
 
@@ -170,7 +169,7 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
     [pages, pageHasError],
   );
   
-  const validPageCount = manualValidPageCount !== null ? manualValidPageCount : autoValidPageCount;
+  const validPageCount = autoValidPageCount;
 
   const genkouryoUnitPrice = chapter?.appliedGenkouryoPrice ?? 0;
   const genkouryo = validPageCount * genkouryoUnitPrice;
@@ -347,7 +346,6 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
   const allChecked = checklist.every(Boolean);
   const checklistDoneCount = checklist.filter(Boolean).length;
   const checklistTotal = QC_CHECKLIST_ITEMS.length;
-  const isManualPageCount = manualValidPageCount !== null;
   const canDisburse = genkouryoUnitPrice > 0 && validPageCount > 0;
 
   useEffect(() => {
@@ -871,36 +869,9 @@ export const ChapterQCReview = ({ chapterId, onBack }: ChapterQCReviewProps) => 
                   <div className="bg-bg-surface border border-border-custom rounded-xl p-5 space-y-4 flex-1 min-h-0 flex flex-col justify-center">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-text-secondary font-medium">Số trang hợp lệ</span>
-                      <div className="flex items-center gap-2">
-                        {isManualPageCount && (
-                          <button
-                            type="button"
-                            onClick={() => setManualValidPageCount(null)}
-                            className="text-[11px] font-semibold text-brand hover:text-brand-hover cursor-pointer bg-transparent border-none mr-2"
-                          >
-                            Tự động tính
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => setManualValidPageCount(Math.max(0, validPageCount - 1))}
-                          disabled={validPageCount <= 0}
-                          className="w-7 h-7 rounded-md bg-bg-primary border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary hover:border-brand/30 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                        >
-                          <Minus size={14} />
-                        </button>
-                        <div className="min-w-[4.5rem] text-center">
-                          <span className="text-base font-bold text-text-primary tabular-nums">{validPageCount}</span>
-                          <span className="text-xs text-text-muted ml-0.5">/ {pages.length}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setManualValidPageCount(Math.min(pages.length, validPageCount + 1))}
-                          disabled={validPageCount >= pages.length}
-                          className="w-7 h-7 rounded-md bg-bg-primary border border-border-custom flex items-center justify-center text-text-muted hover:text-text-primary hover:border-brand/30 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                        >
-                          <Plus size={14} />
-                        </button>
+                      <div className="text-right">
+                        <span className="text-base font-bold text-text-primary tabular-nums">{validPageCount}</span>
+                        <span className="text-xs text-text-muted ml-0.5">/ {pages.length}</span>
                       </div>
                     </div>
 
